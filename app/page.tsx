@@ -19,7 +19,7 @@ import { Header, NavTabs } from '@/components/layout';
 import { Button, Input, Select, Modal, Card, AIAlert } from '@/components/ui';
 import { ProductTable } from '@/components/productos';
 import { MovementList, MovementTypeSelector } from '@/components/movimientos';
-import { StatsGrid, AlertList, PredictionCard } from '@/components/analytics';
+import { StatsGrid, AlertList, PredictionCard, ConsumptionChart } from '@/components/analytics';
 
 export default function HomePage() {
   // ============================================
@@ -280,6 +280,11 @@ export default function HomePage() {
                 <AlertList products={stockAlerts} predictions={predictions} maxItems={100} />
               </Card>
             )}
+
+            {/* Gráfica de consumo */}
+            <Card>
+              <ConsumptionChart movements={movements} products={products} />
+            </Card>
 
             <div className="grid grid-cols-2 gap-4">
               <button

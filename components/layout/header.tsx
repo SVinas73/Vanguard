@@ -18,7 +18,7 @@ export function Header() {
             </div>
             <div>
               <h1 className="text-lg font-semibold tracking-tight">
-                Vanguard<span className="text-emerald-400">Control</span>
+                Vanguard<span className="text-emerald-400"></span>
               </h1>
               <p className="text-xs text-slate-500">Sistema de Gestión Inteligente</p>
             </div>
