@@ -14,7 +14,7 @@ export function Header() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img 
-              src="/logo.png" 
+              src="/vang.png" 
               alt="Vanguard" 
               className="w-10 h-10 rounded-xl object-cover"
             />
