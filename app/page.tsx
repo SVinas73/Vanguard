@@ -1,5 +1,7 @@
 'use client';
 
+import { ExecutiveDashboard } from '@/components/reports';
+import { QuickScanner } from '@/components/scanner';
 import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadge } from '@/components/ai';
 import { useAuth } from '@/hooks/useAuth';
 import { Bot, Search, ArrowLeftRight, Plus, Package, User, Clock, DollarSign, Box, AlertTriangle } from 'lucide-react';
@@ -388,6 +390,12 @@ export default function HomePage() {
         )}
       </div>
 
+      {/* ==================== REPORTES ==================== */}
+      {activeTab === 'reportes' && (
+        <div className="max-w-7xl mx-auto">
+          <ExecutiveDashboard products={products} movements={movements} />
+        </div>
+      )}
       {/* ==================== MODAL: NUEVO PRODUCTO ==================== */}
       <Modal isOpen={showNewProduct} onClose={() => setShowNewProduct(false)} title="Nuevo Producto">
         <div className="space-y-4">
@@ -610,6 +618,15 @@ export default function HomePage() {
           </Button>
         </div>
       </Modal>
+      {/* Scanner de código de barras */}
+      <QuickScanner
+        products={products}
+        onProductFound={(product) => console.log('Producto encontrado:', product)}
+        onOpenMovement={(product, tipo) => {
+          setNewMovement({ ...newMovement, codigo: product.codigo, tipo });
+          setShowNewMovement(true);
+        }}
+      />
     </div>
   );
 }

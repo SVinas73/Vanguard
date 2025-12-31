@@ -14,6 +14,7 @@ const tabs: Array<{ id: TabType; label: string; icon: string }> = [
   { id: 'productos', label: 'Productos', icon: '▤' },
   { id: 'movimientos', label: 'Movimientos', icon: '↹' },
   { id: 'analytics', label: 'Analytics IA', icon: '◎' },
+  { id: 'reportes', label: 'Reportes', icon: '▦' },
 ];
 
 export function NavTabs({ activeTab, onTabChange }: NavTabsProps) {
