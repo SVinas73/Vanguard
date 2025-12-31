@@ -380,8 +380,9 @@ export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) 
   // Productos con mayor valor en stock
   const productosPorValor = [...products]
     .map(p => ({
-      ...p,
-      valorStock: p.stock * (p.costoPromedio || 0)
+        ...p,
+        valorStock: p.stock * (p.costoPromedio || p.precio || 0),
+        usaCosto: (p.costoPromedio || 0) > 0
     }))
     .filter(p => p.valorStock > 0)
     .sort((a, b) => b.valorStock - a.valorStock)
@@ -480,7 +481,8 @@ export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) 
                     ${p.valorStock.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
                   </div>
                   <div className="text-xs text-slate-500">
-                    {p.stock} × ${p.costoPromedio?.toLocaleString('es-UY') || 0}
+                    {p.stock} × ${(p.costoPromedio || p.precio)?.toLocaleString('es-UY') || 0}
+                    {!p.costoPromedio && <span className="text-amber-400 ml-1">(precio venta)</span>}
                   </div>
                 </div>
               </div>

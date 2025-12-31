@@ -1,5 +1,6 @@
 'use client';
 
+import { AuditLogPanel } from '@/components/audit';
 import { CostAnalysisDashboard } from '@/components/costs';
 import { ChatbotWidget } from '@/components/chatbot';
 import { ExecutiveDashboard } from '@/components/reports';
@@ -405,6 +406,13 @@ export default function HomePage() {
       {activeTab === 'costos' && (
         <div className="max-w-5xl mx-auto">
           <CostAnalysisDashboard products={products} />
+        </div>
+      )}
+
+      {/* ==================== AUDITORÍA ==================== */}
+      {activeTab === 'auditoria' && (
+        <div className="max-w-5xl mx-auto">
+          <AuditLogPanel />
         </div>
       )}
 
