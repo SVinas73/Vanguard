@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Bot, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
+
 
 // ============================================
 // BUTTON
@@ -77,13 +79,16 @@ export function Input({ className, label, error, ...props }: InputProps) {
 }
 
 // ============================================
-// SELECT
+// SELECT (Custom Dropdown)
 // ============================================
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps {
   label?: string;
   options: Array<{ value: string; label: string }>;
   placeholder?: string;
+  value?: string;
+  onChange?: (e: { target: { value: string } }) => void;
+  className?: string;
 }
 
 export function Select({
@@ -91,31 +96,104 @@ export function Select({
   label,
   options,
   placeholder,
-  ...props
+  value,
+  onChange,
 }: SelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selected, setSelected] = useState(value || '');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sync with external value
+  useEffect(() => {
+    if (value !== undefined) {
+      setSelected(value);
+    }
+  }, [value]);
+
+  // Close on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = (optValue: string) => {
+    setSelected(optValue);
+    setIsOpen(false);
+    if (onChange) {
+      onChange({ target: { value: optValue } });
+    }
+  };
+
+  const selectedLabel = options.find((o) => o.value === selected)?.label || placeholder || 'Seleccionar...';
+
   return (
-    <div className="space-y-1">
+    <div className={cn('space-y-1 relative', className)} ref={dropdownRef}>
       {label && (
         <label className="block text-sm text-slate-400">{label}</label>
       )}
-      <select
+      
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50',
-          'focus:border-emerald-500/50 focus:outline-none text-sm',
-          'appearance-none cursor-pointer',
-          className
+          'focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20',
+          'text-sm text-left flex items-center justify-between transition-all',
+          isOpen && 'border-emerald-500/50 ring-2 ring-emerald-500/20'
         )}
-        {...props}
       >
-        {placeholder && (
-          <option value="">{placeholder}</option>
-        )}
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        <span className={selected ? 'text-slate-200' : 'text-slate-500'}>
+          {selectedLabel}
+        </span>
+        <ChevronDown 
+          size={16} 
+          className={cn(
+            'text-slate-400 transition-transform duration-200',
+            isOpen && 'rotate-180'
+          )} 
+        />
+      </button>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 py-1 rounded-xl bg-slate-800 border border-slate-700/50 shadow-xl shadow-black/20 max-h-60 overflow-y-auto">
+          {placeholder && (
+            <button
+              type="button"
+              onClick={() => handleSelect('')}
+              className={cn(
+                'w-full px-4 py-2 text-sm text-left transition-colors',
+                selected === '' 
+                  ? 'bg-emerald-500/20 text-emerald-400' 
+                  : 'text-slate-400 hover:bg-slate-700/50'
+              )}
+            >
+              {placeholder}
+            </button>
+          )}
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => handleSelect(opt.value)}
+              className={cn(
+                'w-full px-4 py-2 text-sm text-left transition-colors',
+                selected === opt.value
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : 'text-slate-200 hover:bg-slate-700/50'
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
