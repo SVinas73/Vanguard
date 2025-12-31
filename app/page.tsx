@@ -393,28 +393,28 @@ export default function HomePage() {
             </Card>
           </div>
         )}
+
+        {/* ==================== REPORTES ==================== */}
+        {activeTab === 'reportes' && (
+          <div className="max-w-5xl mx-auto">
+            <ExecutiveDashboard products={products} movements={movements} />
+          </div>
+        )}
+
+        {/* ==================== COSTOS ==================== */}
+        {activeTab === 'costos' && (
+          <div className="max-w-5xl mx-auto">
+            <CostAnalysisDashboard products={products} />
+          </div>
+        )}
+
+        {/* ==================== AUDITORÍA ==================== */}
+        {activeTab === 'auditoria' && (
+          <div className="max-w-5xl mx-auto">
+            <AuditLogPanel />
+          </div>
+        )}
       </div>
-
-      {/* ==================== REPORTES ==================== */}
-      {activeTab === 'reportes' && (
-        <div className="max-w-7xl mx-auto">
-          <ExecutiveDashboard products={products} movements={movements} />
-        </div>
-      )}
-
-      {/* ==================== COSTOS ==================== */}
-      {activeTab === 'costos' && (
-        <div className="max-w-5xl mx-auto">
-          <CostAnalysisDashboard products={products} />
-        </div>
-      )}
-
-      {/* ==================== AUDITORÍA ==================== */}
-      {activeTab === 'auditoria' && (
-        <div className="max-w-5xl mx-auto">
-          <AuditLogPanel />
-        </div>
-      )}
 
       {/* ==================== MODAL: NUEVO PRODUCTO ==================== */}
       <Modal isOpen={showNewProduct} onClose={() => setShowNewProduct(false)} title="Nuevo Producto">
@@ -591,7 +591,6 @@ export default function HomePage() {
             placeholder="0"
           />
 
-          {/* Campo de costo de compra - solo visible para entradas */}
           {newMovement.tipo === 'entrada' && (
             <Input
               label="Costo de Compra (por unidad)"
@@ -638,6 +637,7 @@ export default function HomePage() {
           </Button>
         </div>
       </Modal>
+
       {/* Scanner de código de barras */}
       <QuickScanner
         products={products}
@@ -647,6 +647,7 @@ export default function HomePage() {
           setShowNewMovement(true);
         }}
       />
+
       {/* Chatbot IA */}
       <ChatbotWidget />
     </div>
