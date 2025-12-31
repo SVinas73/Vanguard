@@ -16,7 +16,8 @@ export function Header() {
             <img 
               src="/vang.png" 
               alt="Vanguard" 
-              className="w-12 h-12 rounded-xl object-cover"
+              className="w-10 h-10 object-contain rounded-lg"
+              style={{ backgroundColor: '#020617' }}
             />
             <div>
               <h1 className="text-lg font-semibold tracking-tight">
