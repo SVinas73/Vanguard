@@ -1,5 +1,6 @@
 'use client';
 
+import { ChatbotWidget } from '@/components/chatbot';
 import { ExecutiveDashboard } from '@/components/reports';
 import { QuickScanner } from '@/components/scanner';
 import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadge } from '@/components/ai';
@@ -627,6 +628,8 @@ export default function HomePage() {
           setShowNewMovement(true);
         }}
       />
+      {/* Chatbot IA */}
+      <ChatbotWidget />
     </div>
   );
 }
