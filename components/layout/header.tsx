@@ -23,7 +23,7 @@ export function Header() {
               <h1 className="text-lg font-semibold tracking-tight">
                 Vanguard<span className="text-emerald-400"></span>
               </h1>
-              <p className="text-xs text-slate-500">Sistema de Gestión de Inventario</p>
+              <p className="text-xs text-slate-500">Sistema de Gestión de Inventarios</p>
             </div>
           </div>
 
