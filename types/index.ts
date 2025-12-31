@@ -12,6 +12,7 @@ export interface Product {
   stockMinimo: number;
   createdAt?: Date;
   updatedAt?: Date;
+  costoPromedio?: number;
 }
 
 export interface ProductFormData {
@@ -100,7 +101,7 @@ export interface StatsData {
   todayMovements: number;
 }
 
-export type TabType = 'dashboard' | 'productos' | 'movimientos' | 'analytics' | 'reportes';
+export type TabType = 'dashboard' | 'productos' | 'movimientos' | 'analytics' | 'reportes' | 'costos';
 
 export interface ModalState {
   showNewProduct: boolean;

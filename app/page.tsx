@@ -1,5 +1,6 @@
 'use client';
 
+import { CostAnalysisDashboard } from '@/components/costs';
 import { ChatbotWidget } from '@/components/chatbot';
 import { ExecutiveDashboard } from '@/components/reports';
 import { QuickScanner } from '@/components/scanner';
@@ -211,7 +212,8 @@ export default function HomePage() {
       precio: parseFloat(newProduct.precio),
       categoria: newProduct.categoria,
       stockMinimo: parseInt(newProduct.stockMinimo) || 10,
-    });
+    }, user?.email || 'Sistema');
+
     setNewProduct({ codigo: '', descripcion: '', precio: '', categoria: '', stockMinimo: '10' });
     setShowNewProduct(false);
     setAiSuggestion(null);
@@ -226,7 +228,8 @@ export default function HomePage() {
       categoria: editProduct.categoria,
       stockMinimo: editProduct.stockMinimo,
       stock: editProduct.stock,
-    });
+    }, user?.email || 'Sistema');
+
     setEditProduct(null);
     setShowEditProduct(false);
     setAiSuggestion(null);
@@ -347,7 +350,7 @@ export default function HomePage() {
             <ProductTable 
               products={filteredProducts} 
               predictions={predictions} 
-              onDelete={deleteProduct}
+              onDelete={(codigo) => deleteProduct(codigo, user?.email || 'Sistema')}
               onEdit={handleOpenEdit}
             />
           </div>
@@ -397,6 +400,14 @@ export default function HomePage() {
           <ExecutiveDashboard products={products} movements={movements} />
         </div>
       )}
+
+      {/* ==================== COSTOS ==================== */}
+      {activeTab === 'costos' && (
+        <div className="max-w-5xl mx-auto">
+          <CostAnalysisDashboard products={products} />
+        </div>
+      )}
+
       {/* ==================== MODAL: NUEVO PRODUCTO ==================== */}
       <Modal isOpen={showNewProduct} onClose={() => setShowNewProduct(false)} title="Nuevo Producto">
         <div className="space-y-4">
