@@ -16,13 +16,13 @@ export function Header() {
             <img 
               src="/vang.png" 
               alt="Vanguard" 
-              className="w-10 h-10 rounded-xl object-cover"
+              className="w-12 h-12 rounded-xl object-cover"
             />
             <div>
               <h1 className="text-lg font-semibold tracking-tight">
                 Vanguard<span className="text-emerald-400"></span>
               </h1>
-              <p className="text-xs text-slate-500">Sistema de Gestión Inteligente</p>
+              <p className="text-xs text-slate-500">Sistema de Gestión de Inventario</p>
             </div>
           </div>
 

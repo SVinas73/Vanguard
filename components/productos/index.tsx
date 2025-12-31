@@ -14,9 +14,18 @@ interface CategoryBadgeProps {
 }
 
 export function CategoryBadge({ categoria }: CategoryBadgeProps) {
-  const colorClass = CATEGORY_COLORS[categoria] || 'bg-slate-500/20 text-slate-300 border-slate-500/30';
+  const textColors: Record<string, string> = {
+    'Estación de Servicio': 'text-blue-400',
+    'Ferretería': 'text-orange-400',
+    'Edintor': 'text-purple-400',
+    'Papelería': 'text-green-400',
+    'Oficina': 'text-cyan-400',
+    'Embalaje': 'text-pink-400',
+  };
+
+  const colorClass = textColors[categoria] || 'text-slate-400';
   
-  return <Badge color={colorClass}>{categoria}</Badge>;
+  return <span className={`text-sm font-medium ${colorClass}`}>{categoria}</span>;
 }
 
 // ============================================
