@@ -1,5 +1,6 @@
 'use client';
 
+import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadge } from '@/components/ai';
 import { useAuth } from '@/hooks/useAuth';
 import { Bot, Search, ArrowLeftRight, Plus, Package, User, Clock, DollarSign, Box, AlertTriangle } from 'lucide-react';
 import React, { useState, useMemo, useEffect } from 'react';
@@ -285,6 +286,13 @@ export default function HomePage() {
             <Card>
               <ConsumptionChart movements={movements} products={products} />
             </Card>
+
+            {/* Paneles de IA */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <AIPredictionsPanel />
+              <AIAnomaliesPanel />
+              <AIAssociationsPanel />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <button
