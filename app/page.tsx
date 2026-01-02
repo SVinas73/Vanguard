@@ -1,5 +1,6 @@
 'use client';
 
+import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { AuditLogPanel } from '@/components/audit';
 import { CostAnalysisDashboard } from '@/components/costs';
 import { ChatbotWidget } from '@/components/chatbot';
@@ -33,7 +34,7 @@ export default function HomePage() {
   // ============================================
   
   // Auth
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission, isAdmin, rol } = useAuth();
   
   // Store
   const {
@@ -151,7 +152,12 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-emerald-400">Cargando...</div>
+        <div className="text-center">
+          <div className="text-emerald-400 mb-2">Cargando...</div>
+          {!navigator.onLine && (
+            <div className="text-amber-400 text-sm">Modo offline - Usando datos en cache</div>
+          )}
+        </div>
       </div>
     );
   }
@@ -273,7 +279,15 @@ export default function HomePage() {
       <Header />
 
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <NavTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <NavTabs 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+          permissions={{
+            canViewCosts: hasPermission('canViewCosts'),
+            canViewAudit: hasPermission('canViewAudit'),
+            canViewReports: hasPermission('canViewReports'),
+          }}
+        />
 
         {/* ==================== DASHBOARD ==================== */}
         {activeTab === 'dashboard' && (
@@ -345,13 +359,15 @@ export default function HomePage() {
                 options={[{ value: 'all', label: 'Todas las categorías' }, ...categoryOptions]}
                 className="min-w-[180px]"
               />
-              <Button onClick={() => setShowNewProduct(true)}>+ Nuevo</Button>
+              {hasPermission('canCreateProducts') && (
+                <Button onClick={() => setShowNewProduct(true)}>+ Nuevo</Button>
+              )}
             </div>
 
             <ProductTable 
               products={filteredProducts} 
               predictions={predictions} 
-              onDelete={(codigo) => deleteProduct(codigo, user?.email || 'Sistema')}
+              onDelete={hasPermission('canDeleteProducts') ? (codigo) => deleteProduct(codigo, user?.email || 'Sistema') : undefined}
               onEdit={handleOpenEdit}
             />
           </div>
@@ -650,6 +666,10 @@ export default function HomePage() {
 
       {/* Chatbot IA */}
       <ChatbotWidget />
+
+      {/* Indicador offline */}
+      <OfflineIndicator />
+      
     </div>
   );
 }

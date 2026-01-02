@@ -52,14 +52,73 @@ export interface Category {
   color?: string;
 }
 
+// Roles de usuario
+export type UserRole = 'admin' | 'vendedor' | 'bodeguero' | 'operador';
+
 // Usuario
 export interface User {
   id: string;
   nombre: string;
   email: string;
-  rol: 'admin' | 'operador' | 'viewer';
+  rol: UserRole;
   createdAt?: Date;
 }
+
+// Permisos por rol
+export const ROLE_PERMISSIONS = {
+  admin: {
+    label: 'Administrador',
+    canCreateProducts: true,
+    canEditProducts: true,
+    canDeleteProducts: true,
+    canCreateMovements: true,
+    canMakeEntradas: true,
+    canMakeSalidas: true,
+    canViewCosts: true,
+    canViewAudit: true,
+    canViewReports: true,
+    canManageUsers: true,
+  },
+  vendedor: {
+    label: 'Vendedor',
+    canCreateProducts: false,
+    canEditProducts: false,
+    canDeleteProducts: false,
+    canCreateMovements: true,
+    canMakeEntradas: false,
+    canMakeSalidas: true,
+    canViewCosts: false,
+    canViewAudit: false,
+    canViewReports: true,
+    canManageUsers: false,
+  },
+  bodeguero: {
+    label: 'Bodeguero',
+    canCreateProducts: false,
+    canEditProducts: true,
+    canDeleteProducts: false,
+    canCreateMovements: true,
+    canMakeEntradas: true,
+    canMakeSalidas: false,
+    canViewCosts: true,
+    canViewAudit: false,
+    canViewReports: false,
+    canManageUsers: false,
+  },
+  operador: {
+    label: 'Operador',
+    canCreateProducts: true,
+    canEditProducts: true,
+    canDeleteProducts: false,
+    canCreateMovements: true,
+    canMakeEntradas: true,
+    canMakeSalidas: true,
+    canViewCosts: true,
+    canViewAudit: false,
+    canViewReports: false,
+    canManageUsers: false,
+  },
+} as const;
 
 // ============================================
 // TIPOS DE IA

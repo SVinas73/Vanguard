@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { exportInventoryReportToExcel } from '@/lib/export-excel';
 import { Card, Button } from '@/components/ui';
 import { 
   FileText, 
@@ -334,24 +335,33 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
 
   return (
     <div className="space-y-4">
-      {/* Header con botón de descarga */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <BarChart3 className="text-emerald-400" />
-            Dashboard Ejecutivo
-          </h2>
-          <p className="text-sm text-slate-500">Resumen de KPIs e indicadores clave</p>
-        </div>
-        <Button onClick={generatePDF} disabled={generatingPDF}>
-          {generatingPDF ? (
-            <Loader2 size={18} className="animate-spin mr-2" />
-          ) : (
-            <Download size={18} className="mr-2" />
-          )}
-          Descargar PDF
-        </Button>
-      </div>
+          {/* Header con botones de descarga */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <BarChart3 className="text-emerald-400" />
+                Dashboard Ejecutivo
+              </h2>
+              <p className="text-sm text-slate-500">Resumen de KPIs e indicadores clave</p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={generatePDF} disabled={generatingPDF}>
+                {generatingPDF ? (
+                  <Loader2 size={18} className="animate-spin mr-2" />
+                ) : (
+                  <Download size={18} className="mr-2" />
+                )}
+                PDF
+              </Button>
+              <Button 
+                variant="secondary"
+                onClick={() => exportInventoryReportToExcel(products, movements)}
+              >
+                <Download size={18} className="mr-2" />
+                Excel
+              </Button>
+            </div>
+          </div>
 
       {/* KPIs Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

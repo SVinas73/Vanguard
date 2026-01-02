@@ -355,10 +355,23 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
 }
 
 // ============================================
-// CONSUMPTION CHART (Top products by usage)
+// CONSUMPTION CHART (Interactive - Click to see details)
 // ============================================
 
 type PeriodFilter = 'semana' | 'mes' | 'semestre' | 'año';
+
+interface ProductDetail {
+  codigo: string;
+  descripcion: string;
+  categoria: string;
+  stock: number;
+  stockMinimo: number;
+  precio: number;
+  consumoTotal: number;
+  consumoDiario: number;
+  diasRestantes: number | null;
+  movimientos: Movement[];
+}
 
 interface ConsumptionChartProps {
   movements: Movement[];
@@ -367,40 +380,38 @@ interface ConsumptionChartProps {
 
 export function ConsumptionChart({ movements, products }: ConsumptionChartProps) {
   const [period, setPeriod] = useState<PeriodFilter>('mes');
+  const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null);
+  const [hoveredBar, setHoveredBar] = useState<string | null>(null);
 
-  const { chartData, trendLine, maxValue } = useMemo(() => {
-    // Calculate date range based on period
+  const { chartData, trendLine, maxValue, startDate } = useMemo(() => {
     const now = new Date();
-    let startDate: Date;
+    let start: Date;
     
     switch (period) {
       case 'semana':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
       case 'mes':
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
       case 'semestre':
-        startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+        start = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
         break;
       case 'año':
-        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         break;
     }
 
-    // Filter movements by period and type (only salidas = consumption)
     const filteredMovements = movements.filter((m) => {
       const movDate = new Date(m.timestamp);
-      return movDate >= startDate && m.tipo === 'salida';
+      return movDate >= start && m.tipo === 'salida';
     });
 
-    // Aggregate by product
     const productConsumption: Record<string, number> = {};
     filteredMovements.forEach((m) => {
       productConsumption[m.codigo] = (productConsumption[m.codigo] || 0) + m.cantidad;
     });
 
-    // Get top 10 products
     const sorted = Object.entries(productConsumption)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 10);
@@ -410,6 +421,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
       return {
         codigo,
         descripcion: product?.descripcion || codigo,
+        categoria: product?.categoria || 'Sin categoría',
         cantidad,
         index,
       };
@@ -417,10 +429,9 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
 
     const max = Math.max(...data.map((d) => d.cantidad), 1);
 
-    // Calculate trend line (linear regression)
     const n = data.length;
     if (n < 2) {
-      return { chartData: data, trendLine: null, maxValue: max };
+      return { chartData: data, trendLine: null, maxValue: max, startDate: start };
     }
 
     const sumX = data.reduce((sum, _, i) => sum + i, 0);
@@ -436,14 +447,54 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
       end: slope * (n - 1) + intercept,
     };
 
-    return { chartData: data, trendLine: trend, maxValue: max };
+    return { chartData: data, trendLine: trend, maxValue: max, startDate: start };
   }, [movements, products, period]);
+
+  // Handle bar click - show product details
+  const handleBarClick = (codigo: string) => {
+    const product = products.find((p) => p.codigo === codigo);
+    if (!product) return;
+
+    // Get movements for this product in the period
+    const productMovements = movements.filter((m) => {
+      const movDate = new Date(m.timestamp);
+      return m.codigo === codigo && movDate >= startDate;
+    });
+
+    const salidas = productMovements.filter((m) => m.tipo === 'salida');
+    const consumoTotal = salidas.reduce((sum, m) => sum + m.cantidad, 0);
+    
+    // Calculate days in period
+    const daysInPeriod = Math.ceil((new Date().getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
+    const consumoDiario = consumoTotal / daysInPeriod;
+    const diasRestantes = consumoDiario > 0 ? Math.round(product.stock / consumoDiario) : null;
+
+    setSelectedProduct({
+      codigo: product.codigo,
+      descripcion: product.descripcion,
+      categoria: product.categoria,
+      stock: product.stock,
+      stockMinimo: product.stockMinimo,
+      precio: product.precio,
+      consumoTotal,
+      consumoDiario: Math.round(consumoDiario * 100) / 100,
+      diasRestantes,
+      movimientos: productMovements.slice(0, 10),
+    });
+  };
 
   const periodLabels: Record<PeriodFilter, string> = {
     semana: 'Última semana',
     mes: 'Último mes',
     semestre: 'Último semestre',
     año: 'Último año',
+  };
+
+  const periodDays: Record<PeriodFilter, number> = {
+    semana: 7,
+    mes: 30,
+    semestre: 180,
+    año: 365,
   };
 
   return (
@@ -481,6 +532,11 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
         </div>
       ) : (
         <div className="relative">
+          {/* Instruction */}
+          <p className="text-xs text-slate-500 mb-3">
+            💡 Click en una barra para ver detalles del producto
+          </p>
+
           {/* Bars */}
           <div className="space-y-2">
             {chartData.map((item, index) => {
@@ -488,20 +544,35 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
               const trendPercentage = trendLine
                 ? ((trendLine.start + (trendLine.end - trendLine.start) * (index / (chartData.length - 1))) / maxValue) * 100
                 : 0;
+              const isHovered = hoveredBar === item.codigo;
 
               return (
-                <div key={item.codigo} className="group">
+                <div 
+                  key={item.codigo} 
+                  className="group cursor-pointer"
+                  onClick={() => handleBarClick(item.codigo)}
+                  onMouseEnter={() => setHoveredBar(item.codigo)}
+                  onMouseLeave={() => setHoveredBar(null)}
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-24 text-xs text-slate-400 truncate" title={item.descripcion}>
                       {item.codigo}
                     </div>
                     <div className="flex-1 relative h-8">
                       {/* Background */}
-                      <div className="absolute inset-0 bg-slate-800/50 rounded-lg" />
+                      <div className={cn(
+                        "absolute inset-0 rounded-lg transition-all",
+                        isHovered ? "bg-slate-700/70" : "bg-slate-800/50"
+                      )} />
                       
                       {/* Bar */}
                       <div
-                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 to-emerald-500 rounded-lg transition-all duration-500 flex items-center justify-end pr-2"
+                        className={cn(
+                          "absolute inset-y-0 left-0 rounded-lg transition-all duration-300 flex items-center justify-end pr-2",
+                          isHovered 
+                            ? "bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-lg shadow-cyan-500/20" 
+                            : "bg-gradient-to-r from-cyan-500 to-emerald-500"
+                        )}
                         style={{ width: `${Math.max(percentage, 5)}%` }}
                       >
                         <span className="text-xs font-mono font-semibold text-slate-950">
@@ -516,12 +587,15 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                           style={{ left: `${Math.min(Math.max(trendPercentage, 0), 100)}%` }}
                         />
                       )}
+
+                      {/* Hover tooltip */}
+                      {isHovered && (
+                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800 rounded-lg shadow-xl border border-slate-700 z-10 whitespace-nowrap">
+                          <span className="text-xs text-slate-200">{item.descripcion}</span>
+                          <span className="text-xs text-cyan-400 ml-2">({item.categoria})</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  
-                  {/* Tooltip on hover */}
-                  <div className="hidden group-hover:block text-xs text-slate-400 pl-28 mt-1">
-                    {item.descripcion}
                   </div>
                 </div>
               );
@@ -550,6 +624,118 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Product Detail Modal */}
+      {selectedProduct && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={() => setSelectedProduct(null)}
+        >
+          <div 
+            className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-lg w-full mx-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-100">{selectedProduct.descripcion}</h3>
+                <p className="text-sm text-slate-500">{selectedProduct.codigo} • {selectedProduct.categoria}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedProduct(null)}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <span className="text-slate-400 text-xl">×</span>
+              </button>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
+                <div className="text-xs text-slate-500 mb-1">Stock Actual</div>
+                <div className={cn(
+                  "text-xl font-bold font-mono",
+                  selectedProduct.stock <= selectedProduct.stockMinimo ? "text-red-400" : "text-emerald-400"
+                )}>
+                  {selectedProduct.stock}
+                </div>
+                <div className="text-xs text-slate-500">Mínimo: {selectedProduct.stockMinimo}</div>
+              </div>
+              
+              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
+                <div className="text-xs text-slate-500 mb-1">Consumo ({periodLabels[period]})</div>
+                <div className="text-xl font-bold font-mono text-cyan-400">
+                  {selectedProduct.consumoTotal}
+                </div>
+                <div className="text-xs text-slate-500">{selectedProduct.consumoDiario}/día promedio</div>
+              </div>
+              
+              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
+                <div className="text-xs text-slate-500 mb-1">Días Restantes</div>
+                <div className={cn(
+                  "text-xl font-bold font-mono",
+                  selectedProduct.diasRestantes === null ? "text-slate-400" :
+                  selectedProduct.diasRestantes < 7 ? "text-red-400" :
+                  selectedProduct.diasRestantes < 14 ? "text-amber-400" : "text-emerald-400"
+                )}>
+                  {selectedProduct.diasRestantes ?? '∞'}
+                </div>
+                <div className="text-xs text-slate-500">Estimado al ritmo actual</div>
+              </div>
+              
+              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
+                <div className="text-xs text-slate-500 mb-1">Precio Venta</div>
+                <div className="text-xl font-bold font-mono text-purple-400">
+                  ${selectedProduct.precio.toLocaleString('es-UY')}
+                </div>
+                <div className="text-xs text-slate-500">Por unidad</div>
+              </div>
+            </div>
+
+            {/* Recent movements */}
+            <div>
+              <h4 className="text-sm font-semibold text-slate-400 mb-2">Últimos Movimientos</h4>
+              <div className="max-h-40 overflow-y-auto space-y-1">
+                {selectedProduct.movimientos.length === 0 ? (
+                  <p className="text-xs text-slate-500 text-center py-4">No hay movimientos en este período</p>
+                ) : (
+                  selectedProduct.movimientos.map((mov, i) => (
+                    <div 
+                      key={i}
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-800/30 text-xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "px-2 py-0.5 rounded font-medium",
+                          mov.tipo === 'entrada' 
+                            ? "bg-emerald-500/20 text-emerald-400" 
+                            : "bg-orange-500/20 text-orange-400"
+                        )}>
+                          {mov.tipo === 'entrada' ? '↓ Entrada' : '↑ Salida'}
+                        </span>
+                        <span className="text-slate-400">
+                          {new Date(mov.timestamp).toLocaleDateString('es-UY')}
+                        </span>
+                      </div>
+                      <span className="font-mono font-semibold text-slate-200">
+                        {mov.tipo === 'entrada' ? '+' : '-'}{mov.cantidad}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedProduct(null)}
+              className="w-full mt-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       )}
     </div>

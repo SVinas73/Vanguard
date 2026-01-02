@@ -10,6 +10,8 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'Vanguard - Sistema de Gestión Inteligente',
   description: 'Sistema de gestión de inventarios con inteligencia artificial',
+  manifest: '/manifest.json',
+  themeColor: '#10b981',
 };
 
 export default function RootLayout({

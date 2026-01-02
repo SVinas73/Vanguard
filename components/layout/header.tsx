@@ -1,12 +1,23 @@
 'use client';
 
 import React from 'react';
-import { User, LogOut } from 'lucide-react';
+import { User, LogOut, Shield, ShoppingCart, Package } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { AIStatusIndicator } from '@/components/analytics';
+import { cn } from '@/lib/utils';
+
+const rolConfig = {
+  admin: { label: 'Admin', color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: Shield },
+  vendedor: { label: 'Vendedor', color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: ShoppingCart },
+  bodeguero: { label: 'Bodeguero', color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Package },
+  operador: { label: 'Operador', color: 'text-purple-400', bg: 'bg-purple-500/20', icon: User },
+};
 
 export function Header() {
-  const { user, signOut } = useAuth(false);
+  const { user, signOut, rol } = useAuth(false);
+
+  const currentRol = rolConfig[rol] || rolConfig.vendedor;
+  const RolIcon = currentRol.icon;
 
   return (
     <header className="border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
@@ -33,7 +44,16 @@ export function Header() {
             {user && (
               <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50">
                 <User size={16} className="text-slate-400" />
-                <span className="text-sm font-medium">{user.email}</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{user.nombre || user.email}</span>
+                  <span className={cn(
+                    'text-xs flex items-center gap-1',
+                    currentRol.color
+                  )}>
+                    <RolIcon size={10} />
+                    {currentRol.label}
+                  </span>
+                </div>
                 <button
                   onClick={signOut}
                   className="p-1 rounded hover:bg-slate-700/50 text-slate-400 hover:text-red-400 transition-colors"
