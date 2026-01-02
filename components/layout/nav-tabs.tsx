@@ -27,8 +27,11 @@ const tabs: Array<{
   { id: 'productos', label: 'Productos', icon: '▤' },
   { id: 'movimientos', label: 'Movimientos', icon: '↹' },
   { id: 'analytics', label: 'Analytics IA', icon: '◎' },
+  { id: 'compras', label: 'Compras', icon: '🛒' },
+  { id: 'ventas', label: 'Ventas', icon: '↹' },
   { id: 'reportes', label: 'Reportes', icon: '▦', requiredPermission: 'canViewReports' },
   { id: 'costos', label: 'Costos', icon: '◆', requiredPermission: 'canViewCosts' },
+  { id: 'integraciones', label: 'Integraciones', icon: '⚡' },
   { id: 'auditoria', label: 'Auditoría', icon: '◉', requiredPermission: 'canViewAudit' }
 ];
 

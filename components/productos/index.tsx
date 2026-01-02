@@ -4,6 +4,7 @@ import { Product, StockPrediction } from '@/types';
 import { CATEGORY_COLORS } from '@/lib/constants';
 import { Badge } from '@/components/ui';
 import { Check, AlertTriangle, Pencil, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ProductThumbnail } from './product-image';
 
 // ============================================
 // CATEGORY BADGE
@@ -78,11 +79,11 @@ interface TrendIndicatorProps {
 
 export function TrendIndicator({ trend }: TrendIndicatorProps) {
   const config = {
-  acelerando: { icon: <TrendingUp size={18} />, color: 'text-red-400', label: 'Subiendo' },
-  desacelerando: { icon: <TrendingDown size={18} />, color: 'text-emerald-400', label: 'Bajando' },
-  estable: { icon: <Minus size={18} />, color: 'text-slate-500', label: 'Estable' },
-  sin_datos: { icon: <Minus size={18} />, color: 'text-slate-600', label: 'Sin datos' },
-};
+    acelerando: { icon: <TrendingUp size={18} />, color: 'text-red-400', label: 'Subiendo' },
+    desacelerando: { icon: <TrendingDown size={18} />, color: 'text-emerald-400', label: 'Bajando' },
+    estable: { icon: <Minus size={18} />, color: 'text-slate-500', label: 'Estable' },
+    sin_datos: { icon: <Minus size={18} />, color: 'text-slate-600', label: 'Sin datos' },
+  };
 
   const { icon, color, label } = config[trend];
 
@@ -124,6 +125,9 @@ export function ProductTable({ products, predictions, onRowClick, onDelete, onEd
         <thead className="bg-slate-900/80">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Imagen
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Código
             </th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -135,10 +139,10 @@ export function ProductTable({ products, predictions, onRowClick, onDelete, onEd
             <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Precio
             </th>
-            <th className="px-4 py-5 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Stock
             </th>
-            <th className="px-4 py-2 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
               IA
             </th>
             <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -154,37 +158,40 @@ export function ProductTable({ products, predictions, onRowClick, onDelete, onEd
                 key={product.codigo}
                 className="hover:bg-slate-800/30 transition-colors"
               >
-                <td className="px-4 py-4">
+                <td className="px-4 py-3">
+                  <ProductThumbnail imageUrl={product.imagenUrl} />
+                </td>
+                <td className="px-4 py-3">
                   <span className="font-mono text-sm text-slate-300">
                     {product.codigo}
                   </span>
                 </td>
-                <td className="px-4 py-4">
+                <td className="px-4 py-3">
                   <span className="text-sm">{product.descripcion}</span>
                 </td>
-                <td className="px-4 py-4">
+                <td className="px-4 py-3">
                   <CategoryBadge categoria={product.categoria} />
                 </td>
-                <td className="px-4 py-4 text-right">
+                <td className="px-4 py-3 text-right">
                   <span className="font-mono text-sm text-slate-300">
                     ${product.precio.toFixed(2)}
                   </span>
                 </td>
-                <td className="px-4 py-4">
+                <td className="px-4 py-3">
                   <div className="flex justify-center">
                     <StockIndicator
-                    stock={product.stock}
-                    stockMinimo={product.stockMinimo}
-                    prediction={pred}
-                  />
+                      stock={product.stock}
+                      stockMinimo={product.stockMinimo}
+                      prediction={pred}
+                    />
                   </div>
                 </td>
-                <td className="px-4 py-4 text-center">
+                <td className="px-4 py-3 text-center">
                   {pred && pred.trend !== 'sin_datos' && (
                     <TrendIndicator trend={pred.trend} />
                   )}
                 </td>
-                <td className="px-4 py-4 text-center">
+                <td className="px-4 py-3 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <button
                       onClick={(e) => handleEdit(e, product)}
@@ -193,13 +200,15 @@ export function ProductTable({ products, predictions, onRowClick, onDelete, onEd
                     >
                       <Pencil size={16} />
                     </button>
-                    <button
-                      onClick={(e) => handleDelete(e, product.codigo)}
-                      className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
-                      title="Eliminar producto"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {onDelete && (
+                      <button
+                        onClick={(e) => handleDelete(e, product.codigo)}
+                        className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
+                        title="Eliminar producto"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -251,3 +260,5 @@ export function ProductCard({ product, prediction, onClick }: ProductCardProps) 
     </div>
   );
 }
+
+export { ProductImage, ProductThumbnail } from './product-image';

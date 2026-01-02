@@ -1,5 +1,9 @@
 'use client';
 
+import { IntegracionesDashboard } from '@/components/integraciones';
+import { ProductImage } from '@/components/productos';
+import { VentasDashboard } from '@/components/ventas';
+import { ComprasDashboard } from '@/components/compras';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { AuditLogPanel } from '@/components/audit';
 import { CostAnalysisDashboard } from '@/components/costs';
@@ -152,12 +156,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-emerald-400 mb-2">Cargando...</div>
-          {!navigator.onLine && (
-            <div className="text-amber-400 text-sm">Modo offline - Usando datos en cache</div>
-          )}
-        </div>
+        <div className="text-emerald-400">Cargando...</div>
       </div>
     );
   }
@@ -384,6 +383,20 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* ==================== COMPRAS ==================== */}
+        {activeTab === 'compras' && (
+          <div className="space-y-4">
+            <ComprasDashboard products={products} userEmail={user?.email || ''} />
+          </div>
+        )}
+
+        {/* ==================== VENTAS ==================== */}
+        {activeTab === 'ventas' && (
+          <div className="space-y-4">
+            <VentasDashboard products={products} userEmail={user?.email || ''} />
+          </div>
+        )}
+
         {/* ==================== ANALYTICS ==================== */}
         {activeTab === 'analytics' && (
           <div className="space-y-6">
@@ -431,6 +444,13 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      {/* ==================== INTEGRACIONES ==================== */}
+        {activeTab === 'integraciones' && (
+          <div className="max-w-4xl mx-auto">
+            <IntegracionesDashboard />
+          </div>
+        )}
 
       {/* ==================== MODAL: NUEVO PRODUCTO ==================== */}
       <Modal isOpen={showNewProduct} onClose={() => setShowNewProduct(false)} title="Nuevo Producto">
@@ -505,6 +525,20 @@ export default function HomePage() {
         {editProduct && (
           <>
             <div className="space-y-4">
+              {/* Imagen del producto */}
+              <div className="flex items-center gap-4">
+                <ProductImage 
+                  productoCodigo={editProduct.codigo} 
+                  imageUrl={editProduct.imagenUrl}
+                  size="lg"
+                  onImageChange={(url) => setEditProduct({ ...editProduct, imagenUrl: url })}
+                />
+                <div className="text-sm text-slate-400">
+                  <div className="font-medium text-slate-200 mb-1">Imagen del producto</div>
+                  <div>Click para subir o cambiar</div>
+                  <div className="text-xs">Máximo 2MB (JPG, PNG)</div>
+                </div>
+              </div>
               <Input
                 label="Código"
                 value={editProduct.codigo}

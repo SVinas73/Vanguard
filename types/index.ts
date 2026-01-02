@@ -13,6 +13,7 @@ export interface Product {
   createdAt?: Date;
   updatedAt?: Date;
   costoPromedio?: number;
+  imagenUrl?: string | null;
 }
 
 export interface ProductFormData {
@@ -160,7 +161,7 @@ export interface StatsData {
   todayMovements: number;
 }
 
-export type TabType = 'dashboard' | 'productos' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria';
+export type TabType = 'dashboard' | 'productos' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones';
 
 export interface ModalState {
   showNewProduct: boolean;
@@ -185,4 +186,166 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   hasMore: boolean;
+}
+
+// ============================================
+// PROVEEDORES
+// ============================================
+
+export interface Proveedor {
+  id: string;
+  codigo: string;
+  nombre: string;
+  nombreContacto?: string;
+  email?: string;
+  telefono?: string;
+  direccion?: string;
+  ciudad?: string;
+  pais: string;
+  notas?: string;
+  activo: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface ProductoProveedor {
+  id: string;
+  productoCodigo: string;
+  proveedorId: string;
+  codigoProveedor?: string;
+  costoUnitario?: number;
+  tiempoEntregaDias: number;
+  cantidadMinima: number;
+  esPreferido: boolean;
+}
+
+// ============================================
+// ÓRDENES DE COMPRA
+// ============================================
+
+export type OrdenCompraEstado = 'borrador' | 'enviada' | 'parcial' | 'recibida' | 'cancelada';
+
+export interface OrdenCompra {
+  id: string;
+  numero: string;
+  proveedorId: string;
+  proveedor?: Proveedor;
+  estado: OrdenCompraEstado;
+  fechaOrden: Date;
+  fechaEsperada?: Date;
+  fechaRecibida?: Date;
+  subtotal: number;
+  impuestos: number;
+  total: number;
+  moneda: string;
+  notas?: string;
+  creadoPor: string;
+  items?: OrdenCompraItem[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface OrdenCompraItem {
+  id: string;
+  ordenId: string;
+  productoCodigo: string;
+  producto?: Product;
+  cantidadOrdenada: number;
+  cantidadRecibida: number;
+  costoUnitario: number;
+  subtotal: number;
+  notas?: string;
+}
+
+// ============================================
+// CLIENTES
+// ============================================
+
+export interface Cliente {
+  id: string;
+  codigo: string;
+  tipo: 'persona' | 'empresa';
+  nombre: string;
+  rut?: string;
+  email?: string;
+  telefono?: string;
+  direccion?: string;
+  ciudad?: string;
+  pais: string;
+  notas?: string;
+  limiteCredito: number;
+  saldoPendiente: number;
+  activo: boolean;
+  createdAt?: Date;
+}
+
+// ============================================
+// ÓRDENES DE VENTA
+// ============================================
+
+export type OrdenVentaEstado = 'borrador' | 'confirmada' | 'en_proceso' | 'enviada' | 'entregada' | 'cancelada';
+
+export interface OrdenVenta {
+  id: string;
+  numero: string;
+  clienteId: string;
+  cliente?: Cliente;
+  estado: OrdenVentaEstado;
+  fechaOrden: Date;
+  fechaEntregaEsperada?: Date;
+  fechaEntregada?: Date;
+  subtotal: number;
+  descuento: number;
+  impuestos: number;
+  total: number;
+  moneda: string;
+  metodoPago?: string;
+  pagado: boolean;
+  notas?: string;
+  direccionEnvio?: string;
+  creadoPor: string;
+  items?: OrdenVentaItem[];
+  createdAt?: Date;
+}
+
+export interface OrdenVentaItem {
+  id: string;
+  ordenId: string;
+  productoCodigo: string;
+  producto?: Product;
+  cantidad: number;
+  precioUnitario: number;
+  descuentoItem: number;
+  subtotal: number;
+  notas?: string;
+}
+
+// ============================================
+// IMÁGENES DE PRODUCTOS
+// ============================================
+
+export interface ImagenProducto {
+  id: string;
+  productoCodigo: string;
+  url: string;
+  esPrincipal: boolean;
+  orden: number;
+}
+
+// ============================================
+// INTEGRACIONES ECOMMERCE
+// ============================================
+
+export type PlataformaEcommerce = 'shopify' | 'woocommerce' | 'mercadolibre' | 'tiendanube';
+
+export interface IntegracionEcommerce {
+  id: string;
+  plataforma: PlataformaEcommerce;
+  nombreTienda: string;
+  apiKey?: string;
+  apiSecret?: string;
+  urlTienda?: string;
+  activo: boolean;
+  ultimaSincronizacion?: Date;
+  config: Record<string, any>;
 }

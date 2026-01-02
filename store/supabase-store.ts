@@ -2,6 +2,15 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { Product, Movement, StockPrediction } from '@/types';
 import { predictAllProducts } from '@/lib/ai';
+import { 
+  cacheProducts, 
+  getCachedProducts, 
+  cacheMovements, 
+  getCachedMovements,
+  addPendingAction,
+  getPendingActions,
+  removePendingAction 
+} from '@/lib/offline-storage';
 
 interface InventoryState {
   // Data
@@ -13,6 +22,7 @@ interface InventoryState {
   currentUser: string;
   isLoading: boolean;
   error: string | null;
+  isOffline: boolean;
   
   // Actions - Products
   fetchProducts: () => Promise<void>;
@@ -29,6 +39,9 @@ interface InventoryState {
   
   // Actions - Auditoria
   fetchAuditoria: (codigo?: string) => Promise<any[]>;
+  
+  // Actions - Offline
+  syncPendingActions: () => Promise<void>;
   
   // Actions - General
   refreshPredictions: () => void;
@@ -59,6 +72,11 @@ async function registrarAuditoria(
   }
 }
 
+// Verificar si hay conexión
+function isOnline(): boolean {
+  return typeof navigator !== 'undefined' ? navigator.onLine : true;
+}
+
 export const useInventoryStore = create<InventoryState>()((set, get) => ({
   // Initial state
   products: [],
@@ -67,10 +85,22 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
   currentUser: '',
   isLoading: false,
   error: null,
+  isOffline: false,
 
   // Fetch all products from Supabase
   fetchProducts: async () => {
     set({ isLoading: true, error: null });
+    
+    // Si no hay conexión, usar cache
+    if (!isOnline()) {
+      const cachedProducts = getCachedProducts();
+      if (cachedProducts.length > 0) {
+        set({ products: cachedProducts, isLoading: false, isOffline: true });
+        get().refreshPredictions();
+        return;
+      }
+    }
+    
     try {
       const { data, error } = await supabase
         .from('productos')
@@ -78,6 +108,16 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         .order('codigo');
 
       if (error) throw error;
+
+      // Obtener imágenes
+      const { data: imagenesData } = await supabase
+        .from('imagenes_productos')
+        .select('producto_codigo, url')
+        .eq('es_principal', true);
+
+      const imagenesMap = new Map(
+        (imagenesData || []).map(img => [img.producto_codigo, img.url])
+      );
 
       const products: Product[] = (data || []).map((p) => ({
         codigo: p.codigo,
@@ -91,18 +131,52 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         creadoAt: p.creado_at,
         actualizadoPor: p.actualizado_por,
         actualizadoAt: p.actualizado_at,
+        imagenUrl: imagenesMap.get(p.codigo) || null,
       }));
 
-      set({ products, isLoading: false });
+      set({ products, isLoading: false, isOffline: false });
+      cacheProducts(products); // Guardar en cache
       get().refreshPredictions();
     } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+      // Si falla, intentar usar cache
+      const cachedProducts = getCachedProducts();
+      if (cachedProducts.length > 0) {
+        set({ products: cachedProducts, isLoading: false, isOffline: true, error: null });
+        get().refreshPredictions();
+      } else {
+        set({ error: error.message, isLoading: false });
+      }
     }
   },
 
   // Add product to Supabase
   addProduct: async (product, userEmail) => {
     set({ isLoading: true, error: null });
+    
+    // Si no hay conexión, guardar acción pendiente
+    if (!isOnline()) {
+      addPendingAction({
+        type: 'CREATE_PRODUCT',
+        data: product,
+        userEmail,
+      });
+      
+      // Actualizar estado local
+      const newProduct: Product = {
+        ...product,
+        stock: 0,
+        costoPromedio: 0,
+      };
+      const currentProducts = get().products;
+      set({ 
+        products: [...currentProducts, newProduct], 
+        isLoading: false,
+        isOffline: true 
+      });
+      cacheProducts([...currentProducts, newProduct]);
+      return;
+    }
+    
     try {
       const newProduct = {
         codigo: product.codigo,
@@ -141,6 +215,24 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
   // Update product in Supabase
   updateProduct: async (codigo, updates, userEmail) => {
     set({ isLoading: true, error: null });
+    
+    // Si no hay conexión, guardar acción pendiente
+    if (!isOnline()) {
+      addPendingAction({
+        type: 'UPDATE_PRODUCT',
+        data: { codigo, updates },
+        userEmail,
+      });
+      
+      // Actualizar estado local
+      const currentProducts = get().products.map(p => 
+        p.codigo === codigo ? { ...p, ...updates } : p
+      );
+      set({ products: currentProducts, isLoading: false, isOffline: true });
+      cacheProducts(currentProducts);
+      return;
+    }
+    
     try {
       // Obtener datos actuales para auditoría
       const { data: currentProduct } = await supabase
@@ -197,6 +289,22 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
   // Delete product from Supabase
   deleteProduct: async (codigo, userEmail) => {
     set({ isLoading: true, error: null });
+    
+    // Si no hay conexión, guardar acción pendiente
+    if (!isOnline()) {
+      addPendingAction({
+        type: 'DELETE_PRODUCT',
+        data: { codigo },
+        userEmail,
+      });
+      
+      // Actualizar estado local
+      const currentProducts = get().products.filter(p => p.codigo !== codigo);
+      set({ products: currentProducts, isLoading: false, isOffline: true });
+      cacheProducts(currentProducts);
+      return;
+    }
+    
     try {
       // Obtener datos actuales para auditoría
       const { data: currentProduct } = await supabase
@@ -231,6 +339,17 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
   // Fetch all movements from Supabase
   fetchMovements: async () => {
     set({ isLoading: true, error: null });
+    
+    // Si no hay conexión, usar cache
+    if (!isOnline()) {
+      const cachedMovements = getCachedMovements();
+      if (cachedMovements.length > 0) {
+        set({ movements: cachedMovements, isLoading: false, isOffline: true });
+        get().refreshPredictions();
+        return;
+      }
+    }
+    
     try {
       const { data, error } = await supabase
         .from('movimientos')
@@ -250,16 +369,68 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         costoCompra: m.costo_compra ? parseFloat(m.costo_compra) : undefined,
       }));
 
-      set({ movements, isLoading: false });
+      set({ movements, isLoading: false, isOffline: false });
+      cacheMovements(movements); // Guardar en cache
       get().refreshPredictions();
     } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+      // Si falla, intentar usar cache
+      const cachedMovements = getCachedMovements();
+      if (cachedMovements.length > 0) {
+        set({ movements: cachedMovements, isLoading: false, isOffline: true, error: null });
+        get().refreshPredictions();
+      } else {
+        set({ error: error.message, isLoading: false });
+      }
     }
   },
 
   // Add movement to Supabase (con lotes FIFO)
   addMovement: async (movementData, userEmail) => {
     set({ isLoading: true, error: null });
+    
+    // Si no hay conexión, guardar acción pendiente
+    if (!isOnline()) {
+      addPendingAction({
+        type: 'CREATE_MOVEMENT',
+        data: movementData,
+        userEmail,
+      });
+      
+      // Actualizar estado local
+      const newMovement: Movement = {
+        id: Date.now(),
+        codigo: movementData.codigo,
+        tipo: movementData.tipo,
+        cantidad: movementData.cantidad,
+        usuario: userEmail,
+        timestamp: new Date(),
+        notas: movementData.notas,
+        costoCompra: movementData.costoCompra,
+      };
+      
+      const currentMovements = get().movements;
+      const currentProducts = get().products.map(p => {
+        if (p.codigo === movementData.codigo) {
+          const newStock = movementData.tipo === 'entrada' 
+            ? p.stock + movementData.cantidad 
+            : Math.max(0, p.stock - movementData.cantidad);
+          return { ...p, stock: newStock };
+        }
+        return p;
+      });
+      
+      set({ 
+        movements: [newMovement, ...currentMovements],
+        products: currentProducts,
+        isLoading: false,
+        isOffline: true 
+      });
+      cacheMovements([newMovement, ...currentMovements]);
+      cacheProducts(currentProducts);
+      get().refreshPredictions();
+      return;
+    }
+    
     try {
       // Get the product
       const { data: productData, error: productError } = await supabase
@@ -381,6 +552,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
 
   // Fetch lotes for a product
   fetchLotes: async (codigo: string) => {
+    if (!isOnline()) return [];
+    
     try {
       const { data, error } = await supabase
         .from('lotes')
@@ -398,6 +571,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
 
   // Fetch auditoría
   fetchAuditoria: async (codigo?: string) => {
+    if (!isOnline()) return [];
+    
     try {
       let query = supabase
         .from('auditoria')
@@ -417,6 +592,40 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       console.error('Error fetching auditoria:', error);
       return [];
     }
+  },
+
+  // Sincronizar acciones pendientes
+  syncPendingActions: async () => {
+    if (!isOnline()) return;
+    
+    const pendingActions = getPendingActions();
+    if (pendingActions.length === 0) return;
+    
+    for (const action of pendingActions) {
+      try {
+        switch (action.type) {
+          case 'CREATE_PRODUCT':
+            await get().addProduct(action.data, action.userEmail);
+            break;
+          case 'UPDATE_PRODUCT':
+            await get().updateProduct(action.data.codigo, action.data.updates, action.userEmail);
+            break;
+          case 'DELETE_PRODUCT':
+            await get().deleteProduct(action.data.codigo, action.userEmail);
+            break;
+          case 'CREATE_MOVEMENT':
+            await get().addMovement(action.data, action.userEmail);
+            break;
+        }
+        removePendingAction(action.id);
+      } catch (error) {
+        console.error('Error syncing action:', action, error);
+      }
+    }
+    
+    // Refrescar datos después de sincronizar
+    await get().fetchProducts();
+    await get().fetchMovements();
   },
 
   // Refresh predictions (local calculation)

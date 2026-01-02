@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: 'Vanguard - Sistema de Gestión Inteligente',
   description: 'Sistema de gestión de inventarios con inteligencia artificial',
   manifest: '/manifest.json',
+};
+
+export const viewport = {
   themeColor: '#10b981',
 };
 
