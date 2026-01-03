@@ -104,7 +104,10 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     try {
       const { data, error } = await supabase
         .from('productos')
-        .select('*')
+        .select(`
+          *,
+          almacen:almacenes(id, codigo, nombre)
+        `)
         .order('codigo');
 
       if (error) throw error;

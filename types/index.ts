@@ -14,6 +14,8 @@ export interface Product {
   updatedAt?: Date;
   costoPromedio?: number;
   imagenUrl?: string | null;
+  almacenId?: string | null;
+  almacen?: Almacen | null;
 }
 
 export interface ProductFormData {
@@ -161,7 +163,7 @@ export interface StatsData {
   todayMovements: number;
 }
 
-export type TabType = 'dashboard' | 'productos' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes';
+export type TabType = 'dashboard' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes';
 
 export interface ModalState {
   showNewProduct: boolean;

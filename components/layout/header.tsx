@@ -2,19 +2,22 @@
 
 import React from 'react';
 import { User, LogOut, Shield, ShoppingCart, Package } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { AIStatusIndicator } from '@/components/analytics';
+import { LanguageSelector } from '@/components/ui/language-selector';
 import { cn } from '@/lib/utils';
 
-const rolConfig = {
-  admin: { label: 'Admin', color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: Shield },
-  vendedor: { label: 'Vendedor', color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: ShoppingCart },
-  bodeguero: { label: 'Bodeguero', color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Package },
-  operador: { label: 'Operador', color: 'text-purple-400', bg: 'bg-purple-500/20', icon: User },
-};
-
 export function Header() {
+  const { t } = useTranslation();
   const { user, signOut, rol } = useAuth(false);
+
+  const rolConfig = {
+    admin: { label: 'Admin', color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: Shield },
+    vendedor: { label: t('roles.seller') || 'Vendedor', color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: ShoppingCart },
+    bodeguero: { label: t('roles.warehouse') || 'Bodeguero', color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Package },
+    operador: { label: t('roles.operator') || 'Operador', color: 'text-purple-400', bg: 'bg-purple-500/20', icon: User },
+  };
 
   const currentRol = rolConfig[rol] || rolConfig.vendedor;
   const RolIcon = currentRol.icon;
@@ -34,12 +37,14 @@ export function Header() {
               <h1 className="text-lg font-semibold tracking-tight">
                 Vanguard<span className="text-emerald-400"></span>
               </h1>
-              <p className="text-xs text-slate-500">Sistema de Gestión de Inventarios</p>
+              <p className="text-xs text-slate-500">{t('header.subtitle') || 'Sistema de Gestión de Inventarios'}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <AIStatusIndicator />
+            
+            <LanguageSelector />
             
             {user && (
               <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50">
@@ -57,7 +62,7 @@ export function Header() {
                 <button
                   onClick={signOut}
                   className="p-1 rounded hover:bg-slate-700/50 text-slate-400 hover:text-red-400 transition-colors"
-                  title="Cerrar sesión"
+                  title={t('header.logout') || 'Cerrar sesión'}
                 >
                   <LogOut size={16} />
                 </button>

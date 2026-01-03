@@ -1,9 +1,10 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Product, StockPrediction } from '@/types';
+import { useTranslation } from 'react-i18next';
 import { CATEGORY_COLORS } from '@/lib/constants';
 import { Badge } from '@/components/ui';
-import { Check, AlertTriangle, Pencil, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Check, AlertTriangle, Pencil, Trash2, TrendingUp, TrendingDown, Minus, Warehouse } from 'lucide-react';
 import { ProductThumbnail } from './product-image';
 
 // ============================================
@@ -27,6 +28,34 @@ export function CategoryBadge({ categoria }: CategoryBadgeProps) {
   const colorClass = textColors[categoria] || 'text-slate-400';
   
   return <span className={`text-sm font-medium ${colorClass}`}>{categoria}</span>;
+}
+
+// ============================================
+// ALMACEN BADGE
+// ============================================
+
+interface AlmacenBadgeProps {
+  almacen?: { id: string; codigo: string; nombre: string } | null;
+}
+
+export function AlmacenBadge({ almacen }: AlmacenBadgeProps) {
+  const { t } = useTranslation();
+  
+  if (!almacen) {
+    return (
+      <span className="flex items-center gap-1 text-xs text-slate-500 italic">
+        <Warehouse size={12} />
+        {t('stock.noWarehouse')}
+      </span>
+    );
+  }
+
+  return (
+    <span className="flex items-center gap-1 text-xs text-amber-400">
+      <Warehouse size={12} />
+      {almacen.nombre}
+    </span>
+  );
 }
 
 // ============================================
@@ -78,11 +107,13 @@ interface TrendIndicatorProps {
 }
 
 export function TrendIndicator({ trend }: TrendIndicatorProps) {
+  const { t } = useTranslation();
+  
   const config = {
-    acelerando: { icon: <TrendingUp size={18} />, color: 'text-red-400', label: 'Subiendo' },
-    desacelerando: { icon: <TrendingDown size={18} />, color: 'text-emerald-400', label: 'Bajando' },
-    estable: { icon: <Minus size={18} />, color: 'text-slate-500', label: 'Estable' },
-    sin_datos: { icon: <Minus size={18} />, color: 'text-slate-600', label: 'Sin datos' },
+    acelerando: { icon: <TrendingUp size={18} />, color: 'text-red-400', label: t('trends.increasing') },
+    desacelerando: { icon: <TrendingDown size={18} />, color: 'text-emerald-400', label: t('trends.decreasing') },
+    estable: { icon: <Minus size={18} />, color: 'text-slate-500', label: t('trends.stable') },
+    sin_datos: { icon: <Minus size={18} />, color: 'text-slate-600', label: t('trends.noData') },
   };
 
   const { icon, color, label } = config[trend];
@@ -107,9 +138,11 @@ interface ProductTableProps {
 }
 
 export function ProductTable({ products, predictions, onRowClick, onDelete, onEdit }: ProductTableProps) {
+  const { t } = useTranslation();
+  
   const handleDelete = (e: React.MouseEvent, codigo: string) => {
     e.stopPropagation();
-    if (window.confirm('¿Estás seguro de eliminar este producto?')) {
+    if (window.confirm(t('stock.confirmDelete'))) {
       onDelete?.(codigo);
     }
   };
@@ -125,28 +158,31 @@ export function ProductTable({ products, predictions, onRowClick, onDelete, onEd
         <thead className="bg-slate-900/80">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Imagen
+              {t('stock.image')}
             </th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Código
+              {t('stock.code')}
             </th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Descripción
+              {t('stock.description')}
             </th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Categoría
+              {t('stock.category')}
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              {t('stock.warehouse')}
             </th>
             <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Precio
+              {t('stock.price')}
             </th>
             <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Stock
+              {t('stock.stockCol')}
             </th>
             <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
               IA
             </th>
             <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Acciones
+              {t('stock.actions')}
             </th>
           </tr>
         </thead>
@@ -172,6 +208,9 @@ export function ProductTable({ products, predictions, onRowClick, onDelete, onEd
                 <td className="px-4 py-3">
                   <CategoryBadge categoria={product.categoria} />
                 </td>
+                <td className="px-4 py-3">
+                  <AlmacenBadge almacen={product.almacen} />
+                </td>
                 <td className="px-4 py-3 text-right">
                   <span className="font-mono text-sm text-slate-300">
                     ${product.precio.toFixed(2)}
@@ -196,7 +235,7 @@ export function ProductTable({ products, predictions, onRowClick, onDelete, onEd
                     <button
                       onClick={(e) => handleEdit(e, product)}
                       className="p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 transition-all"
-                      title="Editar producto"
+                      title={t('common.edit')}
                     >
                       <Pencil size={16} />
                     </button>
@@ -204,7 +243,7 @@ export function ProductTable({ products, predictions, onRowClick, onDelete, onEd
                       <button
                         onClick={(e) => handleDelete(e, product.codigo)}
                         className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
-                        title="Eliminar producto"
+                        title={t('common.delete')}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -219,7 +258,7 @@ export function ProductTable({ products, predictions, onRowClick, onDelete, onEd
       
       {products.length === 0 && (
         <div className="p-8 text-center text-slate-500">
-          No se encontraron productos
+          {t('stock.noProducts')}
         </div>
       )}
     </div>
@@ -256,6 +295,10 @@ export function ProductCard({ product, prediction, onClick }: ProductCardProps) 
           stockMinimo={product.stockMinimo}
           prediction={prediction}
         />
+      </div>
+      
+      <div className="mt-2">
+        <AlmacenBadge almacen={product.almacen} />
       </div>
     </div>
   );

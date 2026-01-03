@@ -338,7 +338,7 @@ export default function HomePage() {
         )}
 
         {/* ==================== PRODUCTOS ==================== */}
-        {activeTab === 'productos' && (
+        {activeTab === 'stock' && (
           <div className="space-y-4">
             <div className="flex gap-4 items-center">
               <div className="flex-1 relative">
