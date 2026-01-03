@@ -1,5 +1,7 @@
 'use client';
 
+import { AlmacenesDashboard } from '@/components/almacenes';
+import { ImportCSV } from '@/components/import';
 import { IntegracionesDashboard } from '@/components/integraciones';
 import { ProductImage } from '@/components/productos';
 import { VentasDashboard } from '@/components/ventas';
@@ -359,7 +361,10 @@ export default function HomePage() {
                 className="min-w-[180px]"
               />
               {hasPermission('canCreateProducts') && (
-                <Button onClick={() => setShowNewProduct(true)}>+ Nuevo</Button>
+                <div className="flex gap-2">
+                  <ImportCSV onImportComplete={fetchProducts} userEmail={user?.email || ''} />
+                  <Button onClick={() => setShowNewProduct(true)}>+ Nuevo</Button>
+                </div>
               )}
             </div>
 
@@ -443,14 +448,21 @@ export default function HomePage() {
             <AuditLogPanel />
           </div>
         )}
-      </div>
 
-      {/* ==================== INTEGRACIONES ==================== */}
+        {/* ==================== INTEGRACIONES ==================== */}
         {activeTab === 'integraciones' && (
           <div className="max-w-4xl mx-auto">
             <IntegracionesDashboard />
           </div>
         )}
+
+        {/* ==================== ALMACENES ==================== */}
+        {activeTab === 'almacenes' && (
+          <div className="max-w-5xl mx-auto">
+            <AlmacenesDashboard products={products} userEmail={user?.email || ''} />
+          </div>
+        )}
+      </div>
 
       {/* ==================== MODAL: NUEVO PRODUCTO ==================== */}
       <Modal isOpen={showNewProduct} onClose={() => setShowNewProduct(false)} title="Nuevo Producto">

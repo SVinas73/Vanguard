@@ -32,6 +32,7 @@ const tabs: Array<{
   { id: 'reportes', label: 'Reportes', icon: '▦', requiredPermission: 'canViewReports' },
   { id: 'costos', label: 'Costos', icon: '◆', requiredPermission: 'canViewCosts' },
   { id: 'integraciones', label: 'Integraciones', icon: '⚡' },
+  { id: 'almacenes', label: 'Almacenes', icon: '⊞' },
   { id: 'auditoria', label: 'Auditoría', icon: '◉', requiredPermission: 'canViewAudit' }
 ];
 

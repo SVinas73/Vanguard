@@ -161,7 +161,7 @@ export interface StatsData {
   todayMovements: number;
 }
 
-export type TabType = 'dashboard' | 'productos' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones';
+export type TabType = 'dashboard' | 'productos' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes';
 
 export interface ModalState {
   showNewProduct: boolean;
@@ -348,4 +348,56 @@ export interface IntegracionEcommerce {
   activo: boolean;
   ultimaSincronizacion?: Date;
   config: Record<string, any>;
+}
+
+// ============================================
+// MULTI-ALMACÉN
+// ============================================
+
+export interface Almacen {
+  id: string;
+  codigo: string;
+  nombre: string;
+  direccion?: string;
+  ciudad?: string;
+  telefono?: string;
+  responsable?: string;
+  esPrincipal: boolean;
+  activo: boolean;
+}
+
+export interface StockAlmacen {
+  id: string;
+  productoCodigo: string;
+  almacenId: string;
+  almacen?: Almacen;
+  cantidad: number;
+  ubicacion?: string;
+}
+
+export type TransferenciaEstado = 'pendiente' | 'en_transito' | 'completada' | 'cancelada';
+
+export interface Transferencia {
+  id: string;
+  numero: string;
+  almacenOrigenId: string;
+  almacenOrigen?: Almacen;
+  almacenDestinoId: string;
+  almacenDestino?: Almacen;
+  estado: TransferenciaEstado;
+  fechaSolicitud: Date;
+  fechaEnvio?: Date;
+  fechaRecepcion?: Date;
+  notas?: string;
+  creadoPor: string;
+  items?: TransferenciaItem[];
+}
+
+export interface TransferenciaItem {
+  id: string;
+  transferenciaId: string;
+  productoCodigo: string;
+  cantidadSolicitada: number;
+  cantidadEnviada: number;
+  cantidadRecibida: number;
 }
