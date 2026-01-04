@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Product, Movement, StockPrediction } from '@/types';
 import { CategoryBadge } from '@/components/productos';
@@ -21,13 +22,15 @@ interface ConfidenceBarProps {
   label?: string;
 }
 
-export function ConfidenceBar({ confidence, label = 'Confianza del modelo' }: ConfidenceBarProps) {
+export function ConfidenceBar({ confidence, label }: ConfidenceBarProps) {
+  const { t } = useTranslation();
+  const displayLabel = label || t('analytics.modelConfidence');
   const percentage = Math.round(confidence * 100);
 
   return (
     <div>
       <div className="flex justify-between text-xs text-slate-500 mb-1">
-        <span>{label}</span>
+        <span>{displayLabel}</span>
         <span>{percentage}%</span>
       </div>
       <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
@@ -50,14 +53,16 @@ interface PredictionCardProps {
 }
 
 export function PredictionCard({ product, prediction }: PredictionCardProps) {
+  const { t } = useTranslation();
+
   const getTrendConfig = () => {
     switch (prediction.trend) {
       case 'acelerando':
-        return { icon: <TrendingUp size={16} />, color: 'text-red-400', label: 'Subiendo' };
+        return { icon: <TrendingUp size={16} />, color: 'text-red-400', label: t('trends.increasing') };
       case 'desacelerando':
-        return { icon: <TrendingDown size={16} />, color: 'text-emerald-400', label: 'Bajando' };
+        return { icon: <TrendingDown size={16} />, color: 'text-emerald-400', label: t('trends.decreasing') };
       default:
-        return { icon: <Minus size={16} />, color: 'text-slate-400', label: 'Estable' };
+        return { icon: <Minus size={16} />, color: 'text-slate-400', label: t('trends.stable') };
     }
   };
 
@@ -82,25 +87,25 @@ export function PredictionCard({ product, prediction }: PredictionCardProps) {
 
       <div className="grid grid-cols-4 gap-4 text-center mb-3">
         <div className="p-2 rounded-lg bg-slate-900/50">
-          <div className="text-xs text-slate-500 mb-1">Stock Actual</div>
+          <div className="text-xs text-slate-500 mb-1">{t('analytics.currentStock')}</div>
           <div className="font-mono font-semibold text-emerald-400">
             {product.stock}
           </div>
         </div>
         <div className="p-2 rounded-lg bg-slate-900/50">
-          <div className="text-xs text-slate-500 mb-1">Días Restantes</div>
+          <div className="text-xs text-slate-500 mb-1">{t('analytics.daysLeft')}</div>
           <div className={cn('font-mono font-semibold', getDaysColor())}>
             {prediction.days === null ? '—' : prediction.days === Infinity ? '∞' : prediction.days}
           </div>
         </div>
         <div className="p-2 rounded-lg bg-slate-900/50">
-          <div className="text-xs text-slate-500 mb-1">Consumo/Día</div>
+          <div className="text-xs text-slate-500 mb-1">{t('analytics.dailyConsumption')}</div>
           <div className="font-mono font-semibold text-cyan-400">
             {prediction.dailyRate || '—'}
           </div>
         </div>
         <div className="p-2 rounded-lg bg-slate-900/50">
-          <div className="text-xs text-slate-500 mb-1">Tendencia</div>
+          <div className="text-xs text-slate-500 mb-1">{t('analytics.trend')}</div>
           <div className={cn('font-semibold flex items-center justify-center gap-1', trend.color)}>
             {trend.icon} {trend.label}
           </div>
@@ -172,6 +177,7 @@ interface AlertListProps {
 }
 
 export function AlertList({ products, predictions, maxItems = 100 }: AlertListProps) {
+  const { t } = useTranslation();
   const [urgencyFilter, setUrgencyFilter] = useState<UrgencyFilter>('todas');
 
   // Classify and filter products with alerts
@@ -235,11 +241,11 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
   const getUrgencyConfig = (urgency: 'critica' | 'media' | 'baja') => {
     switch (urgency) {
       case 'critica':
-        return { color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30', label: 'Crítica' };
+        return { color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30', label: t('alerts.critical') };
       case 'media':
-        return { color: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30', label: 'Media' };
+        return { color: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30', label: t('alerts.medium') };
       case 'baja':
-        return { color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', label: 'Baja' };
+        return { color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', label: t('alerts.low') };
     }
   };
 
@@ -247,7 +253,7 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
     return (
       <div className="p-6 text-center text-slate-500 rounded-xl border border-slate-800/50">
         <CheckCircle size={24} className="mx-auto mb-2" />
-        No hay alertas de stock
+        {t('alerts.noAlerts')}
       </div>
     );
   }
@@ -266,7 +272,7 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
               : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
           )}
         >
-          Todas ({urgencyCounts.critica + urgencyCounts.media + urgencyCounts.baja})
+          {t('common.all')} ({urgencyCounts.critica + urgencyCounts.media + urgencyCounts.baja})
         </button>
         <button
           onClick={() => setUrgencyFilter('critica')}
@@ -277,7 +283,7 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
               : 'bg-slate-800/50 text-slate-400 hover:bg-red-500/20'
           )}
         >
-          🔴 Crítica ({urgencyCounts.critica})
+          🔴 {t('alerts.critical')} ({urgencyCounts.critica})
         </button>
         <button
           onClick={() => setUrgencyFilter('media')}
@@ -288,7 +294,7 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
               : 'bg-slate-800/50 text-slate-400 hover:bg-amber-500/20'
           )}
         >
-          🟠 Media ({urgencyCounts.media})
+          🟠 {t('alerts.medium')} ({urgencyCounts.media})
         </button>
         <button
           onClick={() => setUrgencyFilter('baja')}
@@ -299,7 +305,7 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
               : 'bg-slate-800/50 text-slate-400 hover:bg-yellow-500/20'
           )}
         >
-          🟡 Baja ({urgencyCounts.baja})
+          🟡 {t('alerts.low')} ({urgencyCounts.baja})
         </button>
       </div>
 
@@ -307,7 +313,7 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
       <div className="max-h-[400px] overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800/50">
         {alertProducts.length === 0 ? (
           <div className="p-4 text-center text-slate-500">
-            No hay alertas con este filtro
+            {t('alerts.noAlertsFilter')}
           </div>
         ) : (
           alertProducts.slice(0, maxItems).map(({ product, prediction, urgency }) => {
@@ -341,7 +347,7 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
                   </div>
                   {prediction && prediction.days !== null && prediction.days !== Infinity && (
                     <div className="text-xs text-slate-500">
-                      ~{prediction.days} días restantes
+                      ~{prediction.days} {t('analytics.daysRemaining')}
                     </div>
                   )}
                 </div>
@@ -379,9 +385,24 @@ interface ConsumptionChartProps {
 }
 
 export function ConsumptionChart({ movements, products }: ConsumptionChartProps) {
+  const { t } = useTranslation();
   const [period, setPeriod] = useState<PeriodFilter>('mes');
   const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null);
   const [hoveredBar, setHoveredBar] = useState<string | null>(null);
+
+  const periodLabels: Record<PeriodFilter, string> = {
+    semana: t('periods.week'),
+    mes: t('periods.month'),
+    semestre: t('periods.semester'),
+    año: t('periods.year'),
+  };
+
+  const periodFullLabels: Record<PeriodFilter, string> = {
+    semana: t('periods.lastWeek'),
+    mes: t('periods.lastMonth'),
+    semestre: t('periods.lastSemester'),
+    año: t('periods.lastYear'),
+  };
 
   const { chartData, trendLine, maxValue, startDate } = useMemo(() => {
     const now = new Date();
@@ -421,7 +442,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
       return {
         codigo,
         descripcion: product?.descripcion || codigo,
-        categoria: product?.categoria || 'Sin categoría',
+        categoria: product?.categoria || t('common.noCategory'),
         cantidad,
         index,
       };
@@ -448,7 +469,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
     };
 
     return { chartData: data, trendLine: trend, maxValue: max, startDate: start };
-  }, [movements, products, period]);
+  }, [movements, products, period, t]);
 
   // Handle bar click - show product details
   const handleBarClick = (codigo: string) => {
@@ -483,28 +504,14 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
     });
   };
 
-  const periodLabels: Record<PeriodFilter, string> = {
-    semana: 'Última semana',
-    mes: 'Último mes',
-    semestre: 'Último semestre',
-    año: 'Último año',
-  };
-
-  const periodDays: Record<PeriodFilter, number> = {
-    semana: 7,
-    mes: 30,
-    semestre: 180,
-    año: 365,
-  };
-
   return (
     <div className="space-y-4">
       {/* Header with period selector */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BarChart3 size={20} className="text-cyan-400" />
-          <h3 className="font-semibold">Productos Más Consumidos</h3>
-          <span className="text-xs text-slate-500">({periodLabels[period]})</span>
+          <h3 className="font-semibold">{t('analytics.topConsumed')}</h3>
+          <span className="text-xs text-slate-500">({periodFullLabels[period]})</span>
         </div>
         <div className="flex gap-1">
           {(['semana', 'mes', 'semestre', 'año'] as PeriodFilter[]).map((p) => (
@@ -518,7 +525,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                   : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
               )}
             >
-              {p.charAt(0).toUpperCase() + p.slice(1)}
+              {periodLabels[p]}
             </button>
           ))}
         </div>
@@ -528,13 +535,13 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
       {chartData.length === 0 ? (
         <div className="p-8 text-center text-slate-500 rounded-xl border border-slate-800/50">
           <BarChart3 size={32} className="mx-auto mb-2 opacity-50" />
-          No hay datos de consumo en este período
+          {t('analytics.noConsumptionData')}
         </div>
       ) : (
         <div className="relative">
           {/* Instruction */}
           <p className="text-xs text-slate-500 mb-3">
-            💡 Click en una barra para ver detalles del producto
+            💡 {t('analytics.clickBarDetails')}
           </p>
 
           {/* Bars */}
@@ -607,19 +614,19 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
             <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-800/50">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-3 bg-gradient-to-r from-cyan-500 to-emerald-500 rounded" />
-                <span className="text-xs text-slate-400">Consumo real</span>
+                <span className="text-xs text-slate-400">{t('analytics.realConsumption')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-0.5 bg-amber-400/60" />
-                <span className="text-xs text-slate-400">Línea de tendencia</span>
+                <span className="text-xs text-slate-400">{t('analytics.trendLine')}</span>
               </div>
               <div className="ml-auto text-xs text-slate-500">
-                Tendencia: {trendLine.end > trendLine.start ? (
-                  <span className="text-red-400">↗ Consumo en aumento</span>
+                {t('analytics.trend')}: {trendLine.end > trendLine.start ? (
+                  <span className="text-red-400">↗ {t('analytics.consumptionIncreasing')}</span>
                 ) : trendLine.end < trendLine.start ? (
-                  <span className="text-emerald-400">↘ Consumo en descenso</span>
+                  <span className="text-emerald-400">↘ {t('analytics.consumptionDecreasing')}</span>
                 ) : (
-                  <span className="text-slate-400">→ Estable</span>
+                  <span className="text-slate-400">→ {t('trends.stable')}</span>
                 )}
               </div>
             </div>
@@ -654,26 +661,26 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                <div className="text-xs text-slate-500 mb-1">Stock Actual</div>
+                <div className="text-xs text-slate-500 mb-1">{t('analytics.currentStock')}</div>
                 <div className={cn(
                   "text-xl font-bold font-mono",
                   selectedProduct.stock <= selectedProduct.stockMinimo ? "text-red-400" : "text-emerald-400"
                 )}>
                   {selectedProduct.stock}
                 </div>
-                <div className="text-xs text-slate-500">Mínimo: {selectedProduct.stockMinimo}</div>
+                <div className="text-xs text-slate-500">{t('stock.minStock')}: {selectedProduct.stockMinimo}</div>
               </div>
               
               <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                <div className="text-xs text-slate-500 mb-1">Consumo ({periodLabels[period]})</div>
+                <div className="text-xs text-slate-500 mb-1">{t('analytics.consumption')} ({periodFullLabels[period]})</div>
                 <div className="text-xl font-bold font-mono text-cyan-400">
                   {selectedProduct.consumoTotal}
                 </div>
-                <div className="text-xs text-slate-500">{selectedProduct.consumoDiario}/día promedio</div>
+                <div className="text-xs text-slate-500">{selectedProduct.consumoDiario}/{t('analytics.dayAvg')}</div>
               </div>
               
               <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                <div className="text-xs text-slate-500 mb-1">Días Restantes</div>
+                <div className="text-xs text-slate-500 mb-1">{t('analytics.daysLeft')}</div>
                 <div className={cn(
                   "text-xl font-bold font-mono",
                   selectedProduct.diasRestantes === null ? "text-slate-400" :
@@ -682,24 +689,24 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                 )}>
                   {selectedProduct.diasRestantes ?? '∞'}
                 </div>
-                <div className="text-xs text-slate-500">Estimado al ritmo actual</div>
+                <div className="text-xs text-slate-500">{t('analytics.estimatedCurrentRate')}</div>
               </div>
               
               <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                <div className="text-xs text-slate-500 mb-1">Precio Venta</div>
+                <div className="text-xs text-slate-500 mb-1">{t('stock.salePrice')}</div>
                 <div className="text-xl font-bold font-mono text-purple-400">
                   ${selectedProduct.precio.toLocaleString('es-UY')}
                 </div>
-                <div className="text-xs text-slate-500">Por unidad</div>
+                <div className="text-xs text-slate-500">{t('common.perUnit')}</div>
               </div>
             </div>
 
             {/* Recent movements */}
             <div>
-              <h4 className="text-sm font-semibold text-slate-400 mb-2">Últimos Movimientos</h4>
+              <h4 className="text-sm font-semibold text-slate-400 mb-2">{t('analytics.recentMovements')}</h4>
               <div className="max-h-40 overflow-y-auto space-y-1">
                 {selectedProduct.movimientos.length === 0 ? (
-                  <p className="text-xs text-slate-500 text-center py-4">No hay movimientos en este período</p>
+                  <p className="text-xs text-slate-500 text-center py-4">{t('analytics.noMovementsPeriod')}</p>
                 ) : (
                   selectedProduct.movimientos.map((mov, i) => (
                     <div 
@@ -713,7 +720,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                             ? "bg-emerald-500/20 text-emerald-400" 
                             : "bg-orange-500/20 text-orange-400"
                         )}>
-                          {mov.tipo === 'entrada' ? '↓ Entrada' : '↑ Salida'}
+                          {mov.tipo === 'entrada' ? `↓ ${t('movements.entry')}` : `↑ ${t('movements.exit')}`}
                         </span>
                         <span className="text-slate-400">
                           {new Date(mov.timestamp).toLocaleDateString('es-UY')}
@@ -733,7 +740,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
               onClick={() => setSelectedProduct(null)}
               className="w-full mt-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
             >
-              Cerrar
+              {t('common.close')}
             </button>
           </div>
         </div>
@@ -747,10 +754,12 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
 // ============================================
 
 export function AIStatusIndicator() {
+  const { t } = useTranslation();
+  
   return (
     <div className="flex items-center gap-2 text-sm">
       <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-      <span className="text-slate-400">IA Activa</span>
+      <span className="text-slate-400">{t('ai.active')}</span>
     </div>
   );
 }

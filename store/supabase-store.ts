@@ -135,6 +135,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         actualizadoPor: p.actualizado_por,
         actualizadoAt: p.actualizado_at,
         imagenUrl: imagenesMap.get(p.codigo) || null,
+        almacenId: p.almacen_id,
+        almacen: p.almacen,
       }));
 
       set({ products, isLoading: false, isOffline: false });

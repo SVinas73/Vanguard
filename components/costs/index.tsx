@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import {
@@ -54,6 +55,7 @@ interface LotesPanelProps {
 }
 
 export function LotesPanel({ product }: LotesPanelProps) {
+  const { t } = useTranslation();
   const [lotes, setLotes] = useState<Lote[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -94,9 +96,9 @@ export function LotesPanel({ product }: LotesPanelProps) {
       >
         <div className="flex items-center gap-3">
           <Layers size={18} className="text-cyan-400" />
-          <span className="font-medium">Lotes de Inventario</span>
+          <span className="font-medium">{t('costs.inventoryLots')}</span>
           <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400">
-            {lotesDisponibles.length} activos
+            {lotesDisponibles.length} {t('common.active').toLowerCase()}
           </span>
         </div>
         {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -111,7 +113,7 @@ export function LotesPanel({ product }: LotesPanelProps) {
           ) : lotesDisponibles.length === 0 ? (
             <div className="text-center py-4 text-slate-500 text-sm">
               <AlertCircle size={20} className="mx-auto mb-2 opacity-50" />
-              No hay lotes registrados
+              {t('costs.noLotsRegistered')}
             </div>
           ) : (
             <>
@@ -133,7 +135,7 @@ export function LotesPanel({ product }: LotesPanelProps) {
                         </span>
                       )}
                       <span className="text-xs text-slate-500">
-                        Lote #{index + 1}
+                        {t('costs.lot')} #{index + 1}
                       </span>
                     </div>
                     <span className="text-xs text-slate-500">
@@ -143,7 +145,7 @@ export function LotesPanel({ product }: LotesPanelProps) {
 
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <div>
-                      <div className="text-slate-500 text-xs">Disponible</div>
+                      <div className="text-slate-500 text-xs">{t('costs.available')}</div>
                       <div className="font-mono font-semibold">
                         {lote.cantidad_disponible}
                         <span className="text-slate-500 text-xs">
@@ -152,13 +154,13 @@ export function LotesPanel({ product }: LotesPanelProps) {
                       </div>
                     </div>
                     <div>
-                      <div className="text-slate-500 text-xs">Costo Unit.</div>
+                      <div className="text-slate-500 text-xs">{t('costs.unitCost')}</div>
                       <div className="font-mono font-semibold text-cyan-400">
                         ${lote.costo_unitario.toLocaleString('es-UY')}
                       </div>
                     </div>
                     <div>
-                      <div className="text-slate-500 text-xs">Valor Lote</div>
+                      <div className="text-slate-500 text-xs">{t('costs.lotValue')}</div>
                       <div className="font-mono font-semibold">
                         ${(lote.cantidad_disponible * lote.costo_unitario).toLocaleString('es-UY')}
                       </div>
@@ -177,13 +179,13 @@ export function LotesPanel({ product }: LotesPanelProps) {
               {/* Resumen */}
               <div className="p-3 rounded-xl bg-gradient-to-r from-cyan-500/10 to-emerald-500/10 border border-cyan-500/20">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Valor Total en Stock (FIFO)</span>
+                  <span className="text-sm text-slate-400">{t('costs.totalStockValue')}</span>
                   <span className="font-mono font-bold text-lg text-emerald-400">
                     ${valorTotal.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-slate-500">Costo Promedio Ponderado</span>
+                  <span className="text-xs text-slate-500">{t('costs.weightedAvgCost')}</span>
                   <span className="font-mono text-sm text-cyan-400">
                     ${product.costoPromedio?.toLocaleString('es-UY', { minimumFractionDigits: 2 }) || '0.00'}
                   </span>
@@ -206,6 +208,7 @@ interface HistorialPreciosPanelProps {
 }
 
 export function HistorialPreciosPanel({ product }: HistorialPreciosPanelProps) {
+  const { t } = useTranslation();
   const [historial, setHistorial] = useState<HistorialPrecio[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -240,9 +243,9 @@ export function HistorialPreciosPanel({ product }: HistorialPreciosPanelProps) {
       >
         <div className="flex items-center gap-3">
           <History size={18} className="text-purple-400" />
-          <span className="font-medium">Historial de Precios</span>
+          <span className="font-medium">{t('costs.priceHistory')}</span>
           <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">
-            {historial.length} cambios
+            {historial.length} {t('costs.changes')}
           </span>
         </div>
         {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -257,7 +260,7 @@ export function HistorialPreciosPanel({ product }: HistorialPreciosPanelProps) {
           ) : historial.length === 0 ? (
             <div className="text-center py-4 text-slate-500 text-sm">
               <History size={20} className="mx-auto mb-2 opacity-50" />
-              No hay cambios de precio registrados
+              {t('costs.noPriceChanges')}
             </div>
           ) : (
             historial.map((h) => {
@@ -294,14 +297,14 @@ export function HistorialPreciosPanel({ product }: HistorialPreciosPanelProps) {
 
                   <div className="flex items-center gap-3 text-sm">
                     <div className="flex items-center gap-1">
-                      <span className="text-slate-500">De:</span>
+                      <span className="text-slate-500">{t('costs.from')}:</span>
                       <span className="font-mono line-through text-slate-400">
                         ${h.precio_anterior.toLocaleString('es-UY')}
                       </span>
                     </div>
                     <span className="text-slate-600">→</span>
                     <div className="flex items-center gap-1">
-                      <span className="text-slate-500">A:</span>
+                      <span className="text-slate-500">{t('costs.to')}:</span>
                       <span className="font-mono font-semibold">
                         ${h.precio_nuevo.toLocaleString('es-UY')}
                       </span>
@@ -333,6 +336,7 @@ interface CostAnalysisDashboardProps {
 }
 
 export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) {
+  const { t } = useTranslation();
   const [lotes, setLotes] = useState<Lote[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -395,7 +399,7 @@ export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) 
         <Card className="p-4">
           <div className="flex items-center gap-2 text-cyan-400 mb-2">
             <Layers size={18} />
-            <span className="text-xs text-slate-500">Costo Inventario (FIFO)</span>
+            <span className="text-xs text-slate-500">{t('costs.inventoryCost')}</span>
           </div>
           <div className="text-2xl font-bold font-mono">
             ${valorTotalFIFO.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
@@ -405,7 +409,7 @@ export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) 
         <Card className="p-4">
           <div className="flex items-center gap-2 text-emerald-400 mb-2">
             <DollarSign size={18} />
-            <span className="text-xs text-slate-500">Valor Venta</span>
+            <span className="text-xs text-slate-500">{t('costs.saleValue')}</span>
           </div>
           <div className="text-2xl font-bold font-mono">
             ${valorTotalVenta.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
@@ -415,7 +419,7 @@ export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) 
         <Card className="p-4">
           <div className="flex items-center gap-2 text-purple-400 mb-2">
             <TrendingUp size={18} />
-            <span className="text-xs text-slate-500">Margen Bruto</span>
+            <span className="text-xs text-slate-500">{t('costs.grossMargin')}</span>
           </div>
           <div className="text-2xl font-bold font-mono text-emerald-400">
             ${margenBruto.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
@@ -425,7 +429,7 @@ export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) 
         <Card className="p-4">
           <div className="flex items-center gap-2 text-amber-400 mb-2">
             <TrendingUp size={18} />
-            <span className="text-xs text-slate-500">% Margen</span>
+            <span className="text-xs text-slate-500">{t('costs.marginPercent')}</span>
           </div>
           <div className={cn(
             'text-2xl font-bold font-mono',
@@ -441,7 +445,7 @@ export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) 
       <Card>
         <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
           <Package size={18} className="text-cyan-400" />
-          Top 5 Productos por Valor en Stock
+          {t('costs.topProducts')}
         </h3>
         
         {loading ? (
@@ -450,7 +454,7 @@ export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) 
           </div>
         ) : productosPorValor.length === 0 ? (
           <div className="text-center py-4 text-slate-500 text-sm">
-            No hay productos con costo registrado
+            {t('costs.noProductsWithCost')}
           </div>
         ) : (
           <div className="space-y-2">
@@ -482,7 +486,7 @@ export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) 
                   </div>
                   <div className="text-xs text-slate-500">
                     {p.stock} × ${(p.costoPromedio || p.precio)?.toLocaleString('es-UY') || 0}
-                    {!p.costoPromedio && <span className="text-amber-400 ml-1">(precio venta)</span>}
+                    {!p.costoPromedio && <span className="text-amber-400 ml-1">({t('costs.salePrice')})</span>}
                   </div>
                 </div>
               </div>
@@ -495,7 +499,7 @@ export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) 
       <Card>
         <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
           <Layers size={18} className="text-purple-400" />
-          Lotes Activos ({lotes.length})
+          {t('costs.activeLots')} ({lotes.length})
         </h3>
 
         {loading ? (
@@ -504,7 +508,7 @@ export function CostAnalysisDashboard({ products }: CostAnalysisDashboardProps) 
           </div>
         ) : lotes.length === 0 ? (
           <div className="text-center py-4 text-slate-500 text-sm">
-            No hay lotes activos
+            {t('costs.noLots')}
           </div>
         ) : (
           <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">

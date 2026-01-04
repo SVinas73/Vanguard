@@ -316,3 +316,5 @@ export function AIAlert({ type, children }: AIAlertProps) {
     </div>
   );
 }
+
+export { LanguageSelector } from './language-selector';

@@ -14,6 +14,7 @@ import { ExecutiveDashboard } from '@/components/reports';
 import { QuickScanner } from '@/components/scanner';
 import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadge } from '@/components/ai';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 import { Bot, Search, ArrowLeftRight, Plus, Package, User, Clock, DollarSign, Box, AlertTriangle } from 'lucide-react';
 import React, { useState, useMemo, useEffect } from 'react';
 import { TabType, CategorySuggestion, AnomalyResult, Product } from '@/types';
@@ -38,6 +39,9 @@ export default function HomePage() {
   // ============================================
   // TODOS LOS HOOKS PRIMERO (antes de cualquier return)
   // ============================================
+  
+  // i18n
+  const { t } = useTranslation();
   
   // Auth
   const { user, loading, hasPermission, isAdmin, rol } = useAuth();
@@ -125,12 +129,12 @@ export default function HomePage() {
     ).length;
 
     return [
-      { label: 'Valor Total', value: formatCurrency(totalValue), icon: <DollarSign size={24} />, color: 'emerald' },
-      { label: 'Items en Stock', value: formatNumber(totalItems), icon: <Box size={24} />, color: 'cyan' },
-      { label: 'Stock Bajo', value: lowStockCount.toString(), icon: <AlertTriangle size={24} />, color: lowStockCount > 0 ? 'amber' : 'slate' },
-      { label: 'Movimientos Hoy', value: todayMovements.toString(), icon: <ArrowLeftRight size={24} />, color: 'purple' },
+      { label: t('dashboard.totalValue'), value: formatCurrency(totalValue), icon: <DollarSign size={24} />, color: 'emerald' },
+      { label: t('dashboard.itemsInStock'), value: formatNumber(totalItems), icon: <Box size={24} />, color: 'cyan' },
+      { label: t('dashboard.lowStock'), value: lowStockCount.toString(), icon: <AlertTriangle size={24} />, color: lowStockCount > 0 ? 'amber' : 'slate' },
+      { label: t('dashboard.movementsToday'), value: todayMovements.toString(), icon: <ArrowLeftRight size={24} />, color: 'purple' },
     ];
-  }, [products, movements]);
+  }, [products, movements, t]);
 
   // Products with predictions for analytics
   const productsWithPredictions = useMemo(() => {
@@ -158,7 +162,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-emerald-400">Cargando...</div>
+        <div className="text-emerald-400">{t('common.loading')}</div>
       </div>
     );
   }
@@ -298,7 +302,7 @@ export default function HomePage() {
             {stockAlerts.length > 0 && (
               <Card variant="gradient">
                 <h3 className="text-sm font-semibold text-amber-400 mb-4 flex items-center gap-2">
-                  <Bot size={18} /> Alertas Inteligentes
+                  <Bot size={18} /> {t('dashboard.smartAlerts')}
                 </h3>
                 <AlertList products={stockAlerts} predictions={predictions} maxItems={100} />
               </Card>
@@ -322,16 +326,16 @@ export default function HomePage() {
                 className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 hover:border-emerald-500/40 transition-all text-left group"
               >
                 <div className="mb-2 group-hover:scale-110 transition-transform inline-block"><ArrowLeftRight size={28} /></div>
-                <div className="font-semibold text-emerald-400">Registrar Movimiento</div>
-                <div className="text-sm text-slate-500">Entrada o salida de inventario</div>
+                <div className="font-semibold text-emerald-400">{t('dashboard.registerMovement')}</div>
+                <div className="text-sm text-slate-500">{t('dashboard.entryOrExit')}</div>
               </button>
               <button
                 onClick={() => setShowNewProduct(true)}
                 className="p-5 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 hover:border-purple-500/40 transition-all text-left group"
               >
                 <div className="mb-2 group-hover:scale-110 transition-transform inline-block"><Plus size={28} /></div>
-                <div className="font-semibold text-purple-400">Nuevo Producto</div>
-                <div className="text-sm text-slate-500">Agregar al catálogo</div>
+                <div className="font-semibold text-purple-400">{t('dashboard.newProduct')}</div>
+                <div className="text-sm text-slate-500">{t('dashboard.addToCatalog')}</div>
               </button>
             </div>
           </div>
@@ -344,26 +348,26 @@ export default function HomePage() {
               <div className="flex-1 relative">
                 <input
                   type="text"
-                  placeholder="Buscar productos (búsqueda inteligente)..."
+                  placeholder={t('stock.search')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full px-4 py-3 pl-10 rounded-xl bg-slate-900/50 border border-slate-800/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
                 />
                 <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 {searchQuery && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400">IA activa</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400">{t('stock.aiActive')}</span>
                 )}
               </div>
               <Select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                options={[{ value: 'all', label: 'Todas las categorías' }, ...categoryOptions]}
+                options={[{ value: 'all', label: t('stock.allCategories') }, ...categoryOptions]}
                 className="min-w-[180px]"
               />
               {hasPermission('canCreateProducts') && (
                 <div className="flex gap-2">
                   <ImportCSV onImportComplete={fetchProducts} userEmail={user?.email || ''} />
-                  <Button onClick={() => setShowNewProduct(true)}>+ Nuevo</Button>
+                  <Button onClick={() => setShowNewProduct(true)}>+ {t('stock.new')}</Button>
                 </div>
               )}
             </div>
@@ -381,8 +385,8 @@ export default function HomePage() {
         {activeTab === 'movimientos' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Historial de Movimientos</h2>
-              <Button onClick={() => setShowNewMovement(true)}>+ Registrar</Button>
+              <h2 className="text-lg font-semibold">{t('movements.title')}</h2>
+              <Button onClick={() => setShowNewMovement(true)}>+ {t('movements.register')}</Button>
             </div>
             <MovementList movements={movements} products={products} />
           </div>
@@ -408,10 +412,10 @@ export default function HomePage() {
             <Card variant="gradient">
               <div className="flex items-center gap-3 mb-4">
                 <Bot size={28} />
-                <h2 className="text-lg font-semibold">Análisis Predictivo de Inventario</h2>
+                <h2 className="text-lg font-semibold">{t('analytics.title')}</h2>
               </div>
               <p className="text-sm text-slate-400 mb-6">
-                Predicciones basadas en patrones históricos de consumo usando modelos estadísticos locales.
+                {t('analytics.description')}
               </p>
 
               <div className="grid gap-4">
@@ -420,7 +424,7 @@ export default function HomePage() {
                 ))}
                 {productsWithPredictions.length === 0 && (
                   <div className="p-8 text-center text-slate-500">
-                    No hay suficientes datos para generar predicciones. Registra más movimientos.
+                    {t('analytics.noData')}
                   </div>
                 )}
               </div>
@@ -465,24 +469,24 @@ export default function HomePage() {
       </div>
 
       {/* ==================== MODAL: NUEVO PRODUCTO ==================== */}
-      <Modal isOpen={showNewProduct} onClose={() => setShowNewProduct(false)} title="Nuevo Producto">
+      <Modal isOpen={showNewProduct} onClose={() => setShowNewProduct(false)} title={t('stock.newProduct')}>
         <div className="space-y-4">
           <Input
-            label="Código"
+            label={t('stock.code')}
             value={newProduct.codigo}
             onChange={(e) => setNewProduct({ ...newProduct, codigo: e.target.value.toUpperCase() })}
             placeholder="EJ: ACE-001"
           />
           <Input
-            label="Descripción"
+            label={t('stock.description')}
             value={newProduct.descripcion}
             onChange={(e) => handleDescriptionChange(e.target.value)}
-            placeholder="Descripción del producto..."
+            placeholder={t('stock.description')}
           />
 
           {aiSuggestion && aiSuggestion.categoria && (
             <AIAlert type="info">
-              Sugerencia: <strong>{aiSuggestion.categoria}</strong> ({Math.round(aiSuggestion.confidence * 100)}% confianza)
+              {t('common.suggestion')}: <strong>{aiSuggestion.categoria}</strong> ({Math.round(aiSuggestion.confidence * 100)}% {t('common.confidence')})
               <button
                 onClick={() => {
                   setNewProduct({ ...newProduct, categoria: aiSuggestion.categoria! });
@@ -490,14 +494,14 @@ export default function HomePage() {
                 }}
                 className="ml-2 text-emerald-400 hover:underline"
               >
-                Aplicar
+                {t('common.apply')}
               </button>
             </AIAlert>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Precio de Venta"
+              label={t('stock.salePrice')}
               type="number"
               step="0.01"
               value={newProduct.precio}
@@ -505,7 +509,7 @@ export default function HomePage() {
               placeholder="0.00"
             />
             <Input
-              label="Stock Mínimo"
+              label={t('stock.minStock')}
               type="number"
               value={newProduct.stockMinimo}
               onChange={(e) => setNewProduct({ ...newProduct, stockMinimo: e.target.value })}
@@ -514,26 +518,26 @@ export default function HomePage() {
           </div>
 
           <Select
-            label="Categoría"
+            label={t('stock.category')}
             value={newProduct.categoria}
             onChange={(e) => setNewProduct({ ...newProduct, categoria: e.target.value })}
             options={categoryOptions}
-            placeholder="Seleccionar categoría..."
+            placeholder={t('stock.selectCategory')}
           />
         </div>
 
         <div className="flex gap-3 mt-6">
           <Button variant="secondary" onClick={() => setShowNewProduct(false)} className="flex-1">
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleAddProduct} className="flex-1">
-            Agregar Producto
+            {t('stock.addProduct')}
           </Button>
         </div>
       </Modal>
 
       {/* ==================== MODAL: EDITAR PRODUCTO ==================== */}
-      <Modal isOpen={showEditProduct} onClose={() => setShowEditProduct(false)} title="Editar Producto">
+      <Modal isOpen={showEditProduct} onClose={() => setShowEditProduct(false)} title={t('stock.editProduct')}>
         {editProduct && (
           <>
             <div className="space-y-4">
@@ -546,27 +550,27 @@ export default function HomePage() {
                   onImageChange={(url) => setEditProduct({ ...editProduct, imagenUrl: url })}
                 />
                 <div className="text-sm text-slate-400">
-                  <div className="font-medium text-slate-200 mb-1">Imagen del producto</div>
-                  <div>Click para subir o cambiar</div>
-                  <div className="text-xs">Máximo 2MB (JPG, PNG)</div>
+                  <div className="font-medium text-slate-200 mb-1">{t('stock.productImage')}</div>
+                  <div>{t('stock.clickToUpload')}</div>
+                  <div className="text-xs">{t('stock.maxSize')}</div>
                 </div>
               </div>
               <Input
-                label="Código"
+                label={t('stock.code')}
                 value={editProduct.codigo}
                 disabled
                 className="opacity-50"
               />
               <Input
-                label="Descripción"
+                label={t('stock.description')}
                 value={editProduct.descripcion}
                 onChange={(e) => handleDescriptionChange(e.target.value, true)}
-                placeholder="Descripción del producto..."
+                placeholder={t('stock.description')}
               />
 
               {aiSuggestion && aiSuggestion.categoria && (
                 <AIAlert type="info">
-                  Sugerencia: <strong>{aiSuggestion.categoria}</strong> ({Math.round(aiSuggestion.confidence * 100)}% confianza)
+                  {t('common.suggestion')}: <strong>{aiSuggestion.categoria}</strong> ({Math.round(aiSuggestion.confidence * 100)}% {t('common.confidence')})
                   <button
                     onClick={() => {
                       setEditProduct({ ...editProduct, categoria: aiSuggestion.categoria! });
@@ -574,14 +578,14 @@ export default function HomePage() {
                     }}
                     className="ml-2 text-emerald-400 hover:underline"
                   >
-                    Aplicar
+                    {t('common.apply')}
                   </button>
                 </AIAlert>
               )}
 
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="Precio de Venta"
+                  label={t('stock.salePrice')}
                   type="number"
                   step="0.01"
                   value={editProduct.precio.toString()}
@@ -589,7 +593,7 @@ export default function HomePage() {
                   placeholder="0.00"
                 />
                 <Input
-                  label="Stock Mínimo"
+                  label={t('stock.minStock')}
                   type="number"
                   value={editProduct.stockMinimo.toString()}
                   onChange={(e) => setEditProduct({ ...editProduct, stockMinimo: parseInt(e.target.value) || 0 })}
@@ -598,15 +602,15 @@ export default function HomePage() {
               </div>
 
               <Select
-                label="Categoría"
+                label={t('stock.category')}
                 value={editProduct.categoria}
                 onChange={(e) => setEditProduct({ ...editProduct, categoria: e.target.value })}
                 options={categoryOptions}
-                placeholder="Seleccionar categoría..."
+                placeholder={t('stock.selectCategory')}
               />
 
               <Input
-                label="Stock Actual (para ajuste de inventario)"
+                label={t('stock.currentStock')}
                 type="number"
                 value={editProduct.stock.toString()}
                 onChange={(e) => setEditProduct({ ...editProduct, stock: parseInt(e.target.value) || 0 })}
@@ -616,10 +620,10 @@ export default function HomePage() {
 
             <div className="flex gap-3 mt-6">
               <Button variant="secondary" onClick={() => setShowEditProduct(false)} className="flex-1">
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button onClick={handleEditProduct} className="flex-1">
-                Guardar Cambios
+                {t('stock.saveChanges')}
               </Button>
             </div>
           </>
@@ -627,18 +631,18 @@ export default function HomePage() {
       </Modal>
 
       {/* ==================== MODAL: NUEVO MOVIMIENTO ==================== */}
-      <Modal isOpen={showNewMovement} onClose={() => setShowNewMovement(false)} title="Registrar Movimiento">
+      <Modal isOpen={showNewMovement} onClose={() => setShowNewMovement(false)} title={t('movements.register')}>
         <div className="space-y-4">
           <Select
-            label="Producto"
+            label={t('movements.product')}
             value={newMovement.codigo}
             onChange={(e) => setNewMovement({ ...newMovement, codigo: e.target.value })}
             options={productOptions}
-            placeholder="Seleccionar producto..."
+            placeholder={t('movements.selectProduct')}
           />
 
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Tipo de Movimiento</label>
+            <label className="block text-sm text-slate-400 mb-2">{t('movements.type')}</label>
             <MovementTypeSelector
               value={newMovement.tipo}
               onChange={(tipo) => setNewMovement({ ...newMovement, tipo, costoCompra: tipo === 'salida' ? '' : newMovement.costoCompra })}
@@ -646,7 +650,7 @@ export default function HomePage() {
           </div>
 
           <Input
-            label="Cantidad"
+            label={t('movements.quantity')}
             type="number"
             value={newMovement.cantidad}
             onChange={(e) => handleMovementQuantityChange(e.target.value)}
@@ -655,12 +659,12 @@ export default function HomePage() {
 
           {newMovement.tipo === 'entrada' && (
             <Input
-              label="Costo de Compra (por unidad)"
+              label={t('movements.purchaseCost')}
               type="number"
               step="0.01"
               value={newMovement.costoCompra}
               onChange={(e) => setNewMovement({ ...newMovement, costoCompra: e.target.value })}
-              placeholder="¿A cuánto compraste?"
+              placeholder={t('movements.howMuchPaid')}
             />
           )}
 
@@ -669,16 +673,16 @@ export default function HomePage() {
           )}
 
           <Input
-            label="Notas (opcional)"
+            label={t('movements.notes')}
             value={newMovement.notas}
             onChange={(e) => setNewMovement({ ...newMovement, notas: e.target.value })}
-            placeholder="Ej: Compra proveedor X, Factura #123"
+            placeholder={t('movements.notesPlaceholder')}
           />
 
           <div className="p-3 rounded-xl bg-slate-800/30 border border-slate-700/30 text-sm">
             <div className="flex items-center gap-2 text-slate-400">
               <User size={16} />
-              <span>Usuario: <strong className="text-slate-200">{user.email}</strong></span>
+              <span>{t('movements.user')}: <strong className="text-slate-200">{user.email}</strong></span>
               <span className="mx-2">•</span>
               <Clock size={16} />
               <span>{formatDate(new Date())}</span>
@@ -688,14 +692,14 @@ export default function HomePage() {
 
         <div className="flex gap-3 mt-6">
           <Button variant="secondary" onClick={() => setShowNewMovement(false)} className="flex-1">
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button
             variant={newMovement.tipo === 'entrada' ? 'primary' : 'danger'}
             onClick={handleAddMovement}
             className="flex-1"
           >
-            Registrar {newMovement.tipo === 'entrada' ? 'Entrada' : 'Salida'}
+            {newMovement.tipo === 'entrada' ? t('movements.registerEntry') : t('movements.registerExit')}
           </Button>
         </div>
       </Modal>

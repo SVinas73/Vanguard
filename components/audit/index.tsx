@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import {
@@ -40,6 +41,7 @@ interface AuditLog {
 // ============================================
 
 export function AuditLogPanel() {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroTabla, setFiltroTabla] = useState<string>('todas');
@@ -111,6 +113,23 @@ export function AuditLogPanel() {
     }
   };
 
+  const getAccionLabel = (accion: string) => {
+    switch (accion.toUpperCase()) {
+      case 'CREAR':
+        return t('audit.actions.create');
+      case 'ACTUALIZAR':
+        return t('audit.actions.update');
+      case 'ELIMINAR':
+        return t('audit.actions.delete');
+      case 'ENTRADA':
+        return t('movements.entry');
+      case 'SALIDA':
+        return t('movements.exit');
+      default:
+        return accion;
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return {
@@ -134,7 +153,7 @@ export function AuditLogPanel() {
       <div className="mt-3 p-3 rounded-lg bg-slate-900/50 text-xs space-y-2">
         {log.datos_anteriores && (
           <div>
-            <span className="text-slate-500">Datos anteriores:</span>
+            <span className="text-slate-500">{t('audit.previousData')}:</span>
             <pre className="mt-1 text-red-400/70 overflow-x-auto">
               {JSON.stringify(log.datos_anteriores, null, 2)}
             </pre>
@@ -142,7 +161,7 @@ export function AuditLogPanel() {
         )}
         {log.datos_nuevos && (
           <div>
-            <span className="text-slate-500">Datos nuevos:</span>
+            <span className="text-slate-500">{t('audit.newData')}:</span>
             <pre className="mt-1 text-emerald-400/70 overflow-x-auto">
               {JSON.stringify(log.datos_nuevos, null, 2)}
             </pre>
@@ -159,10 +178,10 @@ export function AuditLogPanel() {
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
             <History className="text-purple-400" />
-            Auditoría del Sistema
+            {t('audit.title')}
           </h2>
           <p className="text-sm text-slate-500">
-            Historial de todas las acciones realizadas
+            {t('audit.description')}
           </p>
         </div>
         <Button onClick={fetchLogs} disabled={loading}>
@@ -179,9 +198,9 @@ export function AuditLogPanel() {
             onChange={(e) => setFiltroTabla(e.target.value)}
             className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:outline-none focus:border-purple-500"
           >
-            <option value="todas">Todas las tablas</option>
-            <option value="productos">Productos</option>
-            <option value="movimientos">Movimientos</option>
+            <option value="todas">{t('audit.allTables')}</option>
+            <option value="productos">{t('audit.tables.products')}</option>
+            <option value="movimientos">{t('audit.tables.movements')}</option>
           </select>
         </div>
 
@@ -192,17 +211,17 @@ export function AuditLogPanel() {
             onChange={(e) => setFiltroAccion(e.target.value)}
             className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:outline-none focus:border-purple-500"
           >
-            <option value="todas">Todas las acciones</option>
-            <option value="CREAR">Crear</option>
-            <option value="ACTUALIZAR">Actualizar</option>
-            <option value="ELIMINAR">Eliminar</option>
-            <option value="ENTRADA">Entrada</option>
-            <option value="SALIDA">Salida</option>
+            <option value="todas">{t('audit.allActions')}</option>
+            <option value="CREAR">{t('audit.actions.create')}</option>
+            <option value="ACTUALIZAR">{t('audit.actions.update')}</option>
+            <option value="ELIMINAR">{t('audit.actions.delete')}</option>
+            <option value="ENTRADA">{t('movements.entry')}</option>
+            <option value="SALIDA">{t('movements.exit')}</option>
           </select>
         </div>
 
         <div className="text-sm text-slate-500 flex items-center">
-          {logs.length} registros
+          {logs.length} {t('audit.records')}
         </div>
       </div>
 
@@ -211,12 +230,12 @@ export function AuditLogPanel() {
         {loading ? (
           <div className="text-center py-8">
             <RefreshCw size={24} className="animate-spin mx-auto text-purple-400" />
-            <p className="text-slate-500 mt-2">Cargando auditoría...</p>
+            <p className="text-slate-500 mt-2">{t('audit.loading')}</p>
           </div>
         ) : logs.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
             <History size={32} className="mx-auto mb-2 opacity-50" />
-            <p>No hay registros de auditoría</p>
+            <p>{t('audit.noLogs')}</p>
           </div>
         ) : (
           <div className="max-h-[600px] overflow-y-auto space-y-2 pr-2">
@@ -249,10 +268,10 @@ export function AuditLogPanel() {
                             'px-2 py-0.5 rounded text-xs font-medium border',
                             getAccionColor(log.accion)
                           )}>
-                            {log.accion}
+                            {getAccionLabel(log.accion)}
                           </span>
                           <span className="text-slate-400 text-sm">
-                            en <span className="text-slate-300">{log.tabla}</span>
+                            {t('audit.in')} <span className="text-slate-300">{log.tabla}</span>
                           </span>
                           {log.codigo && (
                             <span className="flex items-center gap-1 text-sm">
@@ -266,7 +285,7 @@ export function AuditLogPanel() {
                         <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                           <span className="flex items-center gap-1">
                             <User size={12} />
-                            {log.usuario_email || 'Sistema'}
+                            {log.usuario_email || t('audit.system')}
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar size={12} />
