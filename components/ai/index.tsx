@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { aiApi } from '@/lib/ai-api';
 import { Card, Button } from '@/components/ui';
 import { 
@@ -17,6 +18,7 @@ import { cn } from '@/lib/utils';
 // ============================================
 
 export function AIStatusBadge() {
+  const { t } = useTranslation();
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export function AIStatusBadge() {
         isOnline === null ? 'bg-slate-500' : isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
       )} />
       <span className="text-slate-400">
-        {isOnline === null ? 'Conectando IA...' : isOnline ? 'IA Online' : 'IA Offline'}
+        {isOnline === null ? t('common.loading') : isOnline ? t('ai.active') : 'IA Offline'}
       </span>
     </div>
   );
@@ -65,6 +67,7 @@ interface PredictionsSummary {
 }
 
 export function AIPredictionsPanel() {
+  const { t } = useTranslation();
   const [data, setData] = useState<PredictionsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +79,7 @@ export function AIPredictionsPanel() {
       const result = await aiApi.getPredictionsSummary();
       setData(result);
     } catch (err) {
-      setError('Error al cargar predicciones');
+      setError(t('common.loading'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -96,11 +99,20 @@ export function AIPredictionsPanel() {
     }
   };
 
+  const getUrgencyLabel = (urgencia: string) => {
+    switch (urgencia) {
+      case 'critica': return t('alerts.critical');
+      case 'media': return t('alerts.medium');
+      case 'baja': return t('alerts.low');
+      default: return urgencia;
+    }
+  };
+
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-purple-400 flex items-center gap-2">
-          <Brain size={18} /> Predicciones IA (Holt-Winters + XGBoost)
+          <Brain size={18} /> {t('ai.predictions')}
         </h3>
         <Button variant="ghost" size="sm" onClick={fetchData} disabled={loading}>
           {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
@@ -134,10 +146,10 @@ export function AIPredictionsPanel() {
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-mono">
-                    {producto.dias_restantes.toFixed(1)} días
+                    {producto.dias_restantes.toFixed(1)} {t('reports.days')}
                   </div>
                   <div className="text-xs text-slate-500">
-                    {producto.consumo_diario.toFixed(2)}/día
+                    {producto.consumo_diario.toFixed(2)}/{t('analytics.dayAvg')}
                   </div>
                 </div>
               </div>
@@ -147,13 +159,13 @@ export function AIPredictionsPanel() {
       ) : (
         <div className="text-center py-6 text-slate-500">
           <TrendingUp size={24} className="mx-auto mb-2 opacity-50" />
-          No hay productos críticos
+          {t('ai.noCriticalProducts')}
         </div>
       )}
 
       {data && (
         <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-500">
-          {data.total_criticos} productos críticos de {data.total_analizado} analizados
+          {data.total_criticos} {t('ai.analyzedProducts').replace('{total}', data.total_analizado.toString())}
         </div>
       )}
     </Card>
@@ -184,6 +196,7 @@ interface AnomaliesData {
 }
 
 export function AIAnomaliesPanel() {
+  const { t } = useTranslation();
   const [data, setData] = useState<AnomaliesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -195,7 +208,7 @@ export function AIAnomaliesPanel() {
       const result = await aiApi.detectAnomalies(30);
       setData(result);
     } catch (err) {
-      setError('Error al detectar anomalías');
+      setError(t('common.loading'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -214,11 +227,20 @@ export function AIAnomaliesPanel() {
     }
   };
 
+  const getSeverityLabel = (severidad: string) => {
+    switch (severidad) {
+      case 'alta': return t('alerts.critical');
+      case 'media': return t('alerts.medium');
+      case 'baja': return t('alerts.low');
+      default: return severidad;
+    }
+  };
+
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-red-400 flex items-center gap-2">
-          <AlertTriangle size={18} /> Anomalías (Isolation Forest)
+          <AlertTriangle size={18} /> {t('ai.anomalies')}
         </h3>
         <Button variant="ghost" size="sm" onClick={fetchData} disabled={loading}>
           {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
@@ -251,11 +273,11 @@ export function AIAnomaliesPanel() {
                   'px-2 py-0.5 rounded text-xs font-medium',
                   getSeverityColor(anomaly.severidad)
                 )}>
-                  {anomaly.severidad}
+                  {getSeverityLabel(anomaly.severidad)}
                 </span>
               </div>
               <div className="text-xs text-slate-400">
-                {anomaly.tipo}: {anomaly.cantidad} unidades
+                {anomaly.tipo}: {anomaly.cantidad} {t('sales.units')}
               </div>
               <div className="text-xs text-slate-500 mt-1">
                 {anomaly.razon}
@@ -266,13 +288,13 @@ export function AIAnomaliesPanel() {
       ) : (
         <div className="text-center py-6 text-slate-500">
           <Activity size={24} className="mx-auto mb-2 opacity-50" />
-          No se detectaron anomalías
+          {t('ai.noAnomalies')}
         </div>
       )}
 
       {data && (
         <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-500">
-          {data.total_anomalias} anomalías en {data.total_analizado} movimientos (últimos 30 días)
+          {data.total_anomalias} {t('ai.analyzedMovements').replace('{total}', data.total_analizado.toString())}
         </div>
       )}
     </Card>
@@ -296,6 +318,7 @@ interface AssociationsData {
 }
 
 export function AIAssociationsPanel() {
+  const { t } = useTranslation();
   const [data, setData] = useState<AssociationsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -307,7 +330,7 @@ export function AIAssociationsPanel() {
       const result = await aiApi.getAssociationRules(0.05, 0.3, 90);
       setData(result);
     } catch (err) {
-      setError('Error al cargar asociaciones');
+      setError(t('common.loading'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -322,7 +345,7 @@ export function AIAssociationsPanel() {
     <Card>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-cyan-400 flex items-center gap-2">
-          <ShoppingCart size={18} /> Productos Relacionados (Apriori)
+          <ShoppingCart size={18} /> {t('ai.associations')}
         </h3>
         <Button variant="ghost" size="sm" onClick={fetchData} disabled={loading}>
           {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
@@ -352,7 +375,7 @@ export function AIAssociationsPanel() {
                 <span className="text-emerald-400">{rule.tambien_compran[0]?.codigo}</span>
               </div>
               <div className="text-xs text-slate-500 mt-1">
-                Confianza: {(rule.confianza * 100).toFixed(1)}%
+                {t('common.confidence')}: {(rule.confianza * 100).toFixed(1)}%
               </div>
             </div>
           ))}
@@ -360,13 +383,13 @@ export function AIAssociationsPanel() {
       ) : (
         <div className="text-center py-6 text-slate-500">
           <ShoppingCart size={24} className="mx-auto mb-2 opacity-50" />
-          No hay suficientes datos para asociaciones
+          {t('ai.noAssociations')}
         </div>
       )}
 
       {data && data.reglas.length > 0 && (
         <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-500">
-          {data.reglas.length} reglas encontradas en {data.total_transacciones} transacciones
+          {data.reglas.length} reglas - {data.total_transacciones} transacciones
         </div>
       )}
     </Card>

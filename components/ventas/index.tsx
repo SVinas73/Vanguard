@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { Cliente, OrdenVenta, OrdenVentaItem, Product, OrdenVentaEstado } from '@/types';
 import { Button, Input, Select, Modal } from '@/components/ui';
@@ -30,6 +31,7 @@ import { cn, formatCurrency, formatDate } from '@/lib/utils';
 // ============================================
 
 export function ClientesPanel() {
+  const { t } = useTranslation();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -145,7 +147,7 @@ export function ClientesPanel() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de desactivar este cliente?')) return;
+    if (!confirm(t('sales.deactivateCustomer'))) return;
     await supabase.from('clientes').update({ activo: false }).eq('id', id);
     fetchClientes();
   };
@@ -161,12 +163,12 @@ export function ClientesPanel() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Users className="text-violet-400" size={24} />
-          <h2 className="text-lg font-semibold">Clientes</h2>
+          <h2 className="text-lg font-semibold">{t('sales.customers')}</h2>
           <span className="text-sm text-slate-500">({clientes.length})</span>
         </div>
         <Button onClick={() => setShowModal(true)}>
           <Plus size={18} className="mr-2" />
-          Nuevo Cliente
+          {t('sales.newCustomer')}
         </Button>
       </div>
 
@@ -174,7 +176,7 @@ export function ClientesPanel() {
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
         <input
           type="text"
-          placeholder="Buscar clientes..."
+          placeholder={t('sales.searchCustomers')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900/50 border border-slate-800/50 focus:border-violet-500/50 focus:outline-none text-sm"
@@ -182,11 +184,11 @@ export function ClientesPanel() {
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-slate-500">Cargando clientes...</div>
+        <div className="text-center py-8 text-slate-500">{t('sales.loadingCustomers')}</div>
       ) : filteredClientes.length === 0 ? (
         <div className="text-center py-8 text-slate-500">
           <Users size={48} className="mx-auto mb-2 opacity-50" />
-          No hay clientes registrados
+          {t('sales.noCustomers')}
         </div>
       ) : (
         <div className="grid gap-3">
@@ -207,12 +209,12 @@ export function ClientesPanel() {
                     <span className="font-semibold">{cliente.nombre}</span>
                     {cliente.saldoPendiente > 0 && (
                       <span className="px-2 py-0.5 rounded text-xs bg-amber-500/20 text-amber-400">
-                        Debe: {formatCurrency(cliente.saldoPendiente)}
+                        {t('sales.owes')}: {formatCurrency(cliente.saldoPendiente)}
                       </span>
                     )}
                   </div>
                   <div className="mt-1 text-sm text-slate-400 space-y-0.5">
-                    {cliente.rut && <div>RUT: {cliente.rut}</div>}
+                    {cliente.rut && <div>{t('sales.document')}: {cliente.rut}</div>}
                     {cliente.email && <div>✉️ {cliente.email}</div>}
                     {cliente.telefono && <div>📞 {cliente.telefono}</div>}
                     {cliente.ciudad && <div>📍 {cliente.ciudad}, {cliente.pais}</div>}
@@ -245,36 +247,36 @@ export function ClientesPanel() {
           setShowModal(false);
           setEditingCliente(null);
         }}
-        title={editingCliente ? 'Editar Cliente' : 'Nuevo Cliente'}
+        title={editingCliente ? t('sales.editCustomer') : t('sales.newCustomer')}
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Código"
+              label={t('stock.code')}
               value={formData.codigo}
               onChange={(e) => setFormData({ ...formData, codigo: e.target.value.toUpperCase() })}
               placeholder="CLI-001"
               disabled={!!editingCliente}
             />
             <Select
-              label="Tipo"
+              label={t('sales.type')}
               value={formData.tipo}
               onChange={(e) => setFormData({ ...formData, tipo: e.target.value as 'persona' | 'empresa' })}
               options={[
-                { value: 'persona', label: 'Persona' },
-                { value: 'empresa', label: 'Empresa' },
+                { value: 'persona', label: t('sales.person') },
+                { value: 'empresa', label: t('sales.company') },
               ]}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Nombre"
+              label={t('stock.description')}
               value={formData.nombre}
               onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-              placeholder="Nombre completo"
+              placeholder={t('stock.description')}
             />
             <Input
-              label="RUT/CI"
+              label={t('sales.document')}
               value={formData.rut}
               onChange={(e) => setFormData({ ...formData, rut: e.target.value })}
               placeholder="12345678-9"
@@ -282,14 +284,14 @@ export function ClientesPanel() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Email"
+              label={t('purchases.email')}
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="email@ejemplo.com"
             />
             <Input
-              label="Teléfono"
+              label={t('purchases.phone')}
               value={formData.telefono}
               onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
               placeholder="+598 99 123 456"
@@ -297,13 +299,13 @@ export function ClientesPanel() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Ciudad"
+              label={t('purchases.city')}
               value={formData.ciudad}
               onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
-              placeholder="Montevideo"
+              placeholder={t('purchases.city')}
             />
             <Input
-              label="Límite de Crédito"
+              label={t('sales.creditLimit')}
               type="number"
               value={formData.limiteCredito}
               onChange={(e) => setFormData({ ...formData, limiteCredito: parseFloat(e.target.value) || 0 })}
@@ -311,24 +313,24 @@ export function ClientesPanel() {
             />
           </div>
           <Input
-            label="Dirección"
+            label={t('purchases.address')}
             value={formData.direccion}
             onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-            placeholder="Dirección completa"
+            placeholder={t('purchases.address')}
           />
           <Input
-            label="Notas"
+            label={t('purchases.notes')}
             value={formData.notas}
             onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
-            placeholder="Notas adicionales..."
+            placeholder={t('purchases.notes')}
           />
         </div>
         <div className="flex gap-3 mt-6">
           <Button variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit} className="flex-1">
-            {editingCliente ? 'Guardar Cambios' : 'Crear Cliente'}
+            {editingCliente ? t('common.save') : t('sales.createCustomer')}
           </Button>
         </div>
       </Modal>
@@ -346,6 +348,7 @@ interface OrdenesVentaPanelProps {
 }
 
 export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProps) {
+  const { t } = useTranslation();
   const [ordenes, setOrdenes] = useState<OrdenVenta[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
@@ -453,7 +456,7 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
 
   const handleCrearOrden = async () => {
     if (!selectedCliente || ordenItems.length === 0) {
-      alert('Selecciona un cliente y agrega al menos un producto');
+      alert(t('warehouses.selectOriginDestination'));
       return;
     }
 
@@ -461,7 +464,7 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
     for (const item of ordenItems) {
       const product = products.find(p => p.codigo === item.productoCodigo);
       if (product && product.stock < item.cantidad) {
-        alert(`Stock insuficiente para ${product.descripcion}. Disponible: ${product.stock}`);
+        alert(`${t('sales.insufficientStock')}: ${product.descripcion}. Stock: ${product.stock}`);
         return;
       }
     }
@@ -585,17 +588,17 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
   const getEstadoConfig = (estado: OrdenVentaEstado) => {
     switch (estado) {
       case 'borrador':
-        return { color: 'text-slate-400', bg: 'bg-slate-500/20', icon: FileText, label: 'Borrador' };
+        return { color: 'text-slate-400', bg: 'bg-slate-500/20', icon: FileText, label: t('sales.states.draft') };
       case 'confirmada':
-        return { color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: CheckCircle, label: 'Confirmada' };
+        return { color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: CheckCircle, label: t('sales.states.confirmed') };
       case 'en_proceso':
-        return { color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Package, label: 'En Proceso' };
+        return { color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Package, label: t('sales.states.inProcess') };
       case 'enviada':
-        return { color: 'text-violet-400', bg: 'bg-violet-500/20', icon: Send, label: 'Enviada' };
+        return { color: 'text-violet-400', bg: 'bg-violet-500/20', icon: Send, label: t('sales.states.shipped') };
       case 'entregada':
-        return { color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle, label: 'Entregada' };
+        return { color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle, label: t('sales.states.delivered') };
       case 'cancelada':
-        return { color: 'text-red-400', bg: 'bg-red-500/20', icon: XCircle, label: 'Cancelada' };
+        return { color: 'text-red-400', bg: 'bg-red-500/20', icon: XCircle, label: t('sales.states.cancelled') };
     }
   };
 
@@ -604,22 +607,22 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ShoppingCart className="text-violet-400" size={24} />
-          <h2 className="text-lg font-semibold">Órdenes de Venta</h2>
+          <h2 className="text-lg font-semibold">{t('sales.salesOrders')}</h2>
           <span className="text-sm text-slate-500">({ordenes.length})</span>
         </div>
         <Button onClick={() => setShowNewOrden(true)}>
           <Plus size={18} className="mr-2" />
-          Nueva Venta
+          {t('sales.newOrder')}
         </Button>
       </div>
 
       {/* Lista de órdenes */}
       {loading ? (
-        <div className="text-center py-8 text-slate-500">Cargando órdenes...</div>
+        <div className="text-center py-8 text-slate-500">{t('sales.loadingOrders')}</div>
       ) : ordenes.length === 0 ? (
         <div className="text-center py-8 text-slate-500">
           <ShoppingCart size={48} className="mx-auto mb-2 opacity-50" />
-          No hay órdenes de venta
+          {t('sales.noOrders')}
         </div>
       ) : (
         <div className="space-y-3">
@@ -650,12 +653,12 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
                           </span>
                           {orden.pagado && (
                             <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-400">
-                              Pagado
+                              {t('sales.paid')}
                             </span>
                           )}
                         </div>
                         <div className="text-sm text-slate-400">
-                          {orden.cliente?.nombre || 'Sin cliente'} • {formatDate(orden.fechaOrden)}
+                          {orden.cliente?.nombre || t('sales.customer')} • {formatDate(orden.fechaOrden)}
                         </div>
                       </div>
                     </div>
@@ -676,7 +679,7 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
                 {isExpanded && (
                   <div className="border-t border-slate-800/50 p-4 bg-slate-950/50">
                     <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-slate-400 mb-2">Productos</h4>
+                      <h4 className="text-sm font-semibold text-slate-400 mb-2">{t('purchases.products')}</h4>
                       <div className="space-y-2">
                         {orden.items?.map((item) => {
                           const product = products.find(p => p.codigo === item.productoCodigo);
@@ -687,7 +690,7 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
                                 <span className="ml-2">{product?.descripcion || item.productoCodigo}</span>
                               </div>
                               <div className="flex items-center gap-4 text-sm">
-                                <span>{item.cantidad} unidades</span>
+                                <span>{item.cantidad} {t('sales.units')}</span>
                                 <span className="text-slate-400">{formatCurrency(item.precioUnitario)}/u</span>
                                 <span className="font-semibold">{formatCurrency(item.subtotal)}</span>
                               </div>
@@ -702,33 +705,33 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
                         <>
                           <Button onClick={() => handleCambiarEstado(orden.id, 'confirmada')}>
                             <CheckCircle size={16} className="mr-2" />
-                            Confirmar
+                            {t('sales.actions.confirm')}
                           </Button>
                           <Button
                             variant="danger"
                             onClick={() => handleCambiarEstado(orden.id, 'cancelada')}
                           >
                             <XCircle size={16} className="mr-2" />
-                            Cancelar
+                            {t('common.cancel')}
                           </Button>
                         </>
                       )}
                       {orden.estado === 'confirmada' && (
                         <Button onClick={() => handleCambiarEstado(orden.id, 'en_proceso')}>
                           <Package size={16} className="mr-2" />
-                          En Proceso
+                          {t('sales.actions.inProcess')}
                         </Button>
                       )}
                       {orden.estado === 'en_proceso' && (
                         <Button onClick={() => handleCambiarEstado(orden.id, 'enviada')}>
                           <Send size={16} className="mr-2" />
-                          Marcar Enviada
+                          {t('sales.actions.markShipped')}
                         </Button>
                       )}
                       {orden.estado === 'enviada' && (
                         <Button onClick={() => handleCambiarEstado(orden.id, 'entregada')}>
                           <CheckCircle size={16} className="mr-2" />
-                          Marcar Entregada
+                          {t('sales.actions.markDelivered')}
                         </Button>
                       )}
                     </div>
@@ -744,11 +747,11 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
       <Modal
         isOpen={showNewOrden}
         onClose={() => setShowNewOrden(false)}
-        title="Nueva Orden de Venta"
+        title={t('sales.newOrder')}
       >
         <div className="space-y-4">
           <Select
-            label="Cliente"
+            label={t('sales.customer')}
             value={selectedCliente}
             onChange={(e) => {
               setSelectedCliente(e.target.value);
@@ -758,46 +761,46 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
               }
             }}
             options={clientes.map(c => ({ value: c.id, label: `${c.codigo} - ${c.nombre}` }))}
-            placeholder="Seleccionar cliente..."
+            placeholder={t('sales.selectCustomer')}
           />
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Fecha de Entrega"
+              label={t('sales.deliveryDate')}
               type="date"
               value={fechaEntrega}
               onChange={(e) => setFechaEntrega(e.target.value)}
             />
             <Select
-              label="Método de Pago"
+              label={t('sales.paymentMethod')}
               value={metodoPago}
               onChange={(e) => setMetodoPago(e.target.value)}
               options={[
-                { value: 'efectivo', label: 'Efectivo' },
-                { value: 'transferencia', label: 'Transferencia' },
-                { value: 'tarjeta', label: 'Tarjeta' },
-                { value: 'credito', label: 'Crédito' },
+                { value: 'efectivo', label: t('sales.paymentMethods.cash') },
+                { value: 'transferencia', label: t('sales.paymentMethods.transfer') },
+                { value: 'tarjeta', label: t('sales.paymentMethods.card') },
+                { value: 'credito', label: t('sales.paymentMethods.credit') },
               ]}
-              placeholder="Seleccionar..."
+              placeholder={t('common.select')}
             />
           </div>
 
           <Input
-            label="Dirección de Envío"
+            label={t('sales.deliveryAddress')}
             value={direccionEnvio}
             onChange={(e) => setDireccionEnvio(e.target.value)}
-            placeholder="Dirección de entrega"
+            placeholder={t('sales.deliveryAddress')}
           />
 
           {/* Items */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-slate-400">Productos</label>
+              <label className="text-sm text-slate-400">{t('purchases.products')}</label>
               <button
                 onClick={addItem}
                 className="text-sm text-violet-400 hover:text-violet-300"
               >
-                + Agregar producto
+                {t('purchases.addProduct')}
               </button>
             </div>
 
@@ -811,7 +814,7 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
                       onChange={(e) => updateItem(index, 'productoCodigo', e.target.value)}
                       className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm"
                     >
-                      <option value="">Seleccionar producto...</option>
+                      <option value="">{t('sales.selectProduct')}</option>
                       {products.map(p => (
                         <option key={p.codigo} value={p.codigo}>
                           {p.codigo} - {p.descripcion} (Stock: {p.stock})
@@ -823,7 +826,7 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
                       value={item.cantidad}
                       onChange={(e) => updateItem(index, 'cantidad', parseInt(e.target.value) || 0)}
                       className="w-20 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm"
-                      placeholder="Cant."
+                      placeholder={t('purchases.quantity')}
                       min="1"
                       max={product?.stock || 999}
                     />
@@ -832,7 +835,7 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
                       value={item.precioUnitario}
                       onChange={(e) => updateItem(index, 'precioUnitario', parseFloat(e.target.value) || 0)}
                       className="w-28 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm"
-                      placeholder="Precio/u"
+                      placeholder={t('stock.price')}
                       step="0.01"
                     />
                     <button
@@ -848,7 +851,7 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
 
             {ordenItems.length > 0 && (
               <div className="mt-2 text-right text-sm">
-                <span className="text-slate-400">Total: </span>
+                <span className="text-slate-400">{t('common.total')}: </span>
                 <span className="font-semibold text-emerald-400">
                   {formatCurrency(ordenItems.reduce((sum, item) => sum + (item.cantidad * item.precioUnitario), 0))}
                 </span>
@@ -857,19 +860,19 @@ export function OrdenesVentaPanel({ products, userEmail }: OrdenesVentaPanelProp
           </div>
 
           <Input
-            label="Notas"
+            label={t('purchases.notes')}
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
-            placeholder="Notas adicionales..."
+            placeholder={t('purchases.notes')}
           />
         </div>
 
         <div className="flex gap-3 mt-6">
           <Button variant="secondary" onClick={() => setShowNewOrden(false)} className="flex-1">
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleCrearOrden} className="flex-1">
-            Crear Venta
+            {t('sales.createSale')}
           </Button>
         </div>
       </Modal>
@@ -887,6 +890,7 @@ interface VentasDashboardProps {
 }
 
 export function VentasDashboard({ products, userEmail }: VentasDashboardProps) {
+  const { t } = useTranslation();
   const [activeView, setActiveView] = useState<'ordenes' | 'clientes'>('ordenes');
 
   return (
@@ -902,7 +906,7 @@ export function VentasDashboard({ products, userEmail }: VentasDashboardProps) {
           )}
         >
           <ShoppingCart size={18} />
-          Órdenes de Venta
+          {t('sales.salesOrders')}
         </button>
         <button
           onClick={() => setActiveView('clientes')}
@@ -914,7 +918,7 @@ export function VentasDashboard({ products, userEmail }: VentasDashboardProps) {
           )}
         >
           <Users size={18} />
-          Clientes
+          {t('sales.customers')}
         </button>
       </div>
 

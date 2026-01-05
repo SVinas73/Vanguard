@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { IntegracionEcommerce, PlataformaEcommerce } from '@/types';
 import { Button, Input, Modal } from '@/components/ui';
@@ -22,36 +23,35 @@ import {
 import { cn, formatDate } from '@/lib/utils';
 
 // Logos/iconos de plataformas
-const PLATAFORMAS: Record<PlataformaEcommerce, { 
-  nombre: string; 
-  color: string; 
-  bg: string;
-  descripcion: string;
-}> = {
-  shopify: { 
-    nombre: 'Shopify', 
-    color: 'text-green-400', 
-    bg: 'bg-green-500/20',
-    descripcion: 'Sincroniza productos y órdenes con tu tienda Shopify'
-  },
-  woocommerce: { 
-    nombre: 'WooCommerce', 
-    color: 'text-purple-400', 
-    bg: 'bg-purple-500/20',
-    descripcion: 'Conecta con tu tienda WordPress + WooCommerce'
-  },
-  mercadolibre: { 
-    nombre: 'MercadoLibre', 
-    color: 'text-yellow-400', 
-    bg: 'bg-yellow-500/20',
-    descripcion: 'Sincroniza publicaciones y ventas de MercadoLibre'
-  },
-  tiendanube: { 
-    nombre: 'TiendaNube', 
-    color: 'text-cyan-400', 
-    bg: 'bg-cyan-500/20',
-    descripcion: 'Integración con TiendaNube / Nuvemshop'
-  },
+const usePlataformas = () => {
+  const { t } = useTranslation();
+  
+  return {
+    shopify: { 
+      nombre: t('integrations.shopify'), 
+      color: 'text-green-400', 
+      bg: 'bg-green-500/20',
+      descripcion: t('integrations.shopifyDesc')
+    },
+    woocommerce: { 
+      nombre: t('integrations.woocommerce'), 
+      color: 'text-purple-400', 
+      bg: 'bg-purple-500/20',
+      descripcion: t('integrations.woocommerceDesc')
+    },
+    mercadolibre: { 
+      nombre: t('integrations.mercadolibre'), 
+      color: 'text-yellow-400', 
+      bg: 'bg-yellow-500/20',
+      descripcion: t('integrations.mercadolibreDesc')
+    },
+    tiendanube: { 
+      nombre: t('integrations.tiendanube'), 
+      color: 'text-cyan-400', 
+      bg: 'bg-cyan-500/20',
+      descripcion: t('integrations.tiendanubeDesc')
+    },
+  } as Record<PlataformaEcommerce, { nombre: string; color: string; bg: string; descripcion: string }>;
 };
 
 // ============================================
@@ -60,12 +60,11 @@ const PLATAFORMAS: Record<PlataformaEcommerce, {
 
 interface PlataformaCardProps {
   plataforma: PlataformaEcommerce;
+  config: { nombre: string; color: string; bg: string; descripcion: string };
   onSelect: () => void;
 }
 
-function PlataformaCard({ plataforma, onSelect }: PlataformaCardProps) {
-  const config = PLATAFORMAS[plataforma];
-  
+function PlataformaCard({ plataforma, config, onSelect }: PlataformaCardProps) {
   return (
     <button
       onClick={onSelect}
@@ -89,14 +88,15 @@ function PlataformaCard({ plataforma, onSelect }: PlataformaCardProps) {
 
 interface IntegracionCardProps {
   integracion: IntegracionEcommerce;
+  config: { nombre: string; color: string; bg: string; descripcion: string };
   onSync: () => void;
   onEdit: () => void;
   onDelete: () => void;
   syncing: boolean;
 }
 
-function IntegracionCard({ integracion, onSync, onEdit, onDelete, syncing }: IntegracionCardProps) {
-  const config = PLATAFORMAS[integracion.plataforma];
+function IntegracionCard({ integracion, config, onSync, onEdit, onDelete, syncing }: IntegracionCardProps) {
+  const { t } = useTranslation();
   
   return (
     <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800/50">
@@ -113,11 +113,11 @@ function IntegracionCard({ integracion, onSync, onEdit, onDelete, syncing }: Int
         <div className="flex items-center gap-1">
           {integracion.activo ? (
             <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs">
-              <CheckCircle size={14} /> Activo
+              <CheckCircle size={14} /> {t('integrations.connected')}
             </span>
           ) : (
             <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/20 text-red-400 text-xs">
-              <XCircle size={14} /> Inactivo
+              <XCircle size={14} /> {t('integrations.disconnected')}
             </span>
           )}
         </div>
@@ -135,7 +135,7 @@ function IntegracionCard({ integracion, onSync, onEdit, onDelete, syncing }: Int
       {integracion.ultimaSincronizacion && (
         <div className="flex items-center gap-2 text-xs text-slate-500 mb-4">
           <Clock size={14} />
-          Última sincronización: {formatDate(integracion.ultimaSincronizacion)}
+          {t('integrations.lastSync')}: {formatDate(integracion.ultimaSincronizacion)}
         </div>
       )}
 
@@ -147,7 +147,7 @@ function IntegracionCard({ integracion, onSync, onEdit, onDelete, syncing }: Int
           className="flex-1"
         >
           <RefreshCw size={16} className={cn('mr-2', syncing && 'animate-spin')} />
-          {syncing ? 'Sincronizando...' : 'Sincronizar'}
+          {syncing ? t('integrations.syncing') : t('integrations.sync')}
         </Button>
         <button
           onClick={onEdit}
@@ -171,6 +171,9 @@ function IntegracionCard({ integracion, onSync, onEdit, onDelete, syncing }: Int
 // ============================================
 
 export function IntegracionesDashboard() {
+  const { t } = useTranslation();
+  const PLATAFORMAS = usePlataformas();
+  
   const [integraciones, setIntegraciones] = useState<IntegracionEcommerce[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewModal, setShowNewModal] = useState(false);
@@ -266,7 +269,7 @@ export function IntegracionesDashboard() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta integración?')) return;
+    if (!confirm(t('integrations.deleteConfirm'))) return;
     await supabase.from('integraciones_ecommerce').delete().eq('id', id);
     fetchIntegraciones();
   };
@@ -342,31 +345,31 @@ export function IntegracionesDashboard() {
             <Link2 size={28} className="text-violet-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">Integraciones eCommerce</h1>
-            <p className="text-sm text-slate-400">Conecta tu inventario con tiendas online</p>
+            <h1 className="text-xl font-bold">{t('integrations.title')}</h1>
+            <p className="text-sm text-slate-400">{t('integrations.subtitle')}</p>
           </div>
         </div>
         <Button onClick={() => setShowNewModal(true)}>
           <Plus size={18} className="mr-2" />
-          Nueva Integración
+          {t('integrations.newIntegration')}
         </Button>
       </div>
 
       {/* Integraciones activas */}
       {loading ? (
-        <div className="text-center py-12 text-slate-500">Cargando integraciones...</div>
+        <div className="text-center py-12 text-slate-500">{t('integrations.loading')}</div>
       ) : integraciones.length === 0 ? (
         <div className="text-center py-12">
           <div className="inline-flex p-4 rounded-full bg-slate-800/50 mb-4">
             <ShoppingBag size={48} className="text-slate-600" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-400 mb-2">Sin integraciones</h3>
+          <h3 className="text-lg font-semibold text-slate-400 mb-2">{t('integrations.noIntegrations')}</h3>
           <p className="text-sm text-slate-500 mb-4">
-            Conecta tu primera tienda online para sincronizar productos y órdenes
+            {t('integrations.noIntegrationsDesc')}
           </p>
           <Button onClick={() => setShowNewModal(true)}>
             <Plus size={18} className="mr-2" />
-            Agregar Integración
+            {t('integrations.addIntegration')}
           </Button>
         </div>
       ) : (
@@ -375,6 +378,7 @@ export function IntegracionesDashboard() {
             <IntegracionCard
               key={integracion.id}
               integracion={integracion}
+              config={PLATAFORMAS[integracion.plataforma]}
               onSync={() => handleSync(integracion)}
               onEdit={() => handleEdit(integracion)}
               onDelete={() => handleDelete(integracion.id)}
@@ -384,22 +388,21 @@ export function IntegracionesDashboard() {
         </div>
       )}
 
-      
-
       {/* Modal: Seleccionar plataforma */}
       <Modal
         isOpen={showNewModal}
         onClose={() => setShowNewModal(false)}
-        title="Nueva Integración"
+        title={t('integrations.newIntegration')}
       >
         <p className="text-sm text-slate-400 mb-4">
-          Selecciona la plataforma que deseas conectar:
+          {t('integrations.selectPlatform')}
         </p>
         <div className="grid grid-cols-2 gap-3">
           {(Object.keys(PLATAFORMAS) as PlataformaEcommerce[]).map((plataforma) => (
             <PlataformaCard
               key={plataforma}
               plataforma={plataforma}
+              config={PLATAFORMAS[plataforma]}
               onSelect={() => handleSelectPlataforma(plataforma)}
             />
           ))}
@@ -414,7 +417,7 @@ export function IntegracionesDashboard() {
           setSelectedPlataforma(null);
           setEditingIntegracion(null);
         }}
-        title={editingIntegracion ? 'Editar Integración' : `Configurar ${selectedPlataforma ? PLATAFORMAS[selectedPlataforma].nombre : ''}`}
+        title={editingIntegracion ? t('integrations.editIntegration') : `${t('integrations.configure')} ${selectedPlataforma ? PLATAFORMAS[selectedPlataforma].nombre : ''}`}
       >
         <div className="space-y-4">
           {selectedPlataforma && (
@@ -430,21 +433,21 @@ export function IntegracionesDashboard() {
           )}
 
           <Input
-            label="Nombre de la tienda"
+            label={t('integrations.storeName')}
             value={formData.nombreTienda}
             onChange={(e) => setFormData({ ...formData, nombreTienda: e.target.value })}
             placeholder="Mi Tienda Online"
           />
 
           <Input
-            label="URL de la tienda"
+            label={t('integrations.storeUrl')}
             value={formData.urlTienda}
             onChange={(e) => setFormData({ ...formData, urlTienda: e.target.value })}
             placeholder={placeholders.url}
           />
 
           <Input
-            label="API Key / Client ID"
+            label={t('integrations.apiKey')}
             value={formData.apiKey}
             onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
             placeholder={placeholders.apiKey}
@@ -452,7 +455,7 @@ export function IntegracionesDashboard() {
           />
 
           <Input
-            label="API Secret / Access Token"
+            label={t('integrations.apiSecret')}
             value={formData.apiSecret}
             onChange={(e) => setFormData({ ...formData, apiSecret: e.target.value })}
             placeholder={placeholders.apiSecret}
@@ -462,17 +465,17 @@ export function IntegracionesDashboard() {
           <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start gap-2">
             <AlertTriangle size={18} className="text-amber-400 mt-0.5" />
             <div className="text-xs text-amber-200">
-              Las credenciales se guardan de forma segura. Necesitarás obtenerlas desde el panel de administración de tu tienda.
+              {t('integrations.credentialsWarning')}
             </div>
           </div>
         </div>
 
         <div className="flex gap-3 mt-6">
           <Button variant="secondary" onClick={() => setShowConfigModal(false)} className="flex-1">
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSaveIntegracion} className="flex-1">
-            {editingIntegracion ? 'Guardar Cambios' : 'Conectar'}
+            {editingIntegracion ? t('common.save') : t('integrations.configure')}
           </Button>
         </div>
       </Modal>

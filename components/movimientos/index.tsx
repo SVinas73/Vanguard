@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/utils';
 import { Movement, Product, AnomalyResult } from '@/types';
@@ -92,6 +94,7 @@ export function MovementList({
   products,
   showAnomalies = true,
 }: MovementListProps) {
+  const { t } = useTranslation();
   // Ordenar por fecha descendente
   const sortedMovements = [...movements].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -123,7 +126,7 @@ export function MovementList({
 
       {movements.length === 0 && (
         <div className="p-8 text-center text-slate-500 rounded-xl border border-slate-800/50">
-          No hay movimientos registrados
+          {t('movements.noMovements')}
         </div>
       )}
     </div>
@@ -140,6 +143,7 @@ interface MovementTypeSelectorProps {
 }
 
 export function MovementTypeSelector({ value, onChange }: MovementTypeSelectorProps) {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-2 gap-3">
       <button
@@ -152,7 +156,7 @@ export function MovementTypeSelector({ value, onChange }: MovementTypeSelectorPr
             : 'border-slate-700 hover:border-slate-600 text-slate-400'
         )}
       >
-        ↓ Entrada
+        ↓ {t('movements.entry')}
       </button>
       <button
         type="button"
@@ -164,7 +168,7 @@ export function MovementTypeSelector({ value, onChange }: MovementTypeSelectorPr
             : 'border-slate-700 hover:border-slate-600 text-slate-400'
         )}
       >
-        ↑ Salida
+        ↑ {t('movements.exit')}
       </button>
     </div>
   );
@@ -179,6 +183,7 @@ interface MovementStatsProps {
 }
 
 export function MovementStats({ movements }: MovementStatsProps) {
+  const { t } = useTranslation(); 
   const today = new Date();
   const todayMovements = movements.filter((m) => {
     const mDate = new Date(m.timestamp);
@@ -195,15 +200,15 @@ export function MovementStats({ movements }: MovementStatsProps) {
     <div className="grid grid-cols-3 gap-4">
       <div className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/30 text-center">
         <div className="text-2xl font-bold text-slate-200">{todayMovements.length}</div>
-        <div className="text-xs text-slate-500">Movimientos hoy</div>
+        <div className="text-xs text-slate-500">{t('dashboard.movementsToday')}</div>  {/* ANTES: Movimientos hoy */}
       </div>
       <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
         <div className="text-2xl font-bold text-emerald-400">+{totalEntradas}</div>
-        <div className="text-xs text-slate-500">{entradas.length} entradas</div>
+        <div className="text-xs text-slate-500">{entradas.length} {t('movements.entry').toLowerCase()}s</div>  {/* ANTES: entradas */}
       </div>
       <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
         <div className="text-2xl font-bold text-red-400">-{totalSalidas}</div>
-        <div className="text-xs text-slate-500">{salidas.length} salidas</div>
+        <div className="text-xs text-slate-500">{salidas.length} {t('movements.exit').toLowerCase()}s</div>  {/* ANTES: salidas */}
       </div>
     </div>
   );

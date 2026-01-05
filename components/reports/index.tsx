@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { exportInventoryReportToExcel } from '@/lib/export-excel';
 import { Card, Button } from '@/components/ui';
 import { 
@@ -79,6 +80,7 @@ interface ExecutiveDashboardProps {
 }
 
 export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardProps) {
+  const { t } = useTranslation();
   const [generatingPDF, setGeneratingPDF] = useState(false);
 
   // Calcular KPIs
@@ -184,30 +186,30 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
       doc.setTextColor(148, 163, 184); // slate-400
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text('Reporte Ejecutivo de Inventario', 20, 33);
+      doc.text(t('reports.executiveDashboard'), 20, 33);
       
       doc.setTextColor(100, 116, 139);
-      doc.text(`Generado: ${new Date().toLocaleDateString('es-UY')} ${new Date().toLocaleTimeString('es-UY')}`, pageWidth - 20, 25, { align: 'right' });
+      doc.text(`${t('common.date')}: ${new Date().toLocaleDateString('es-UY')} ${new Date().toLocaleTimeString('es-UY')}`, pageWidth - 20, 25, { align: 'right' });
 
       // KPIs principales
       doc.setTextColor(30, 41, 59);
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('Resumen Ejecutivo', 20, 55);
+      doc.text(t('reports.kpiSummary'), 20, 55);
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
       
       const kpiData = [
-        ['Valor Total Inventario', `$${kpis.valorTotal.toLocaleString('es-UY', { minimumFractionDigits: 2 })}`],
-        ['Total Items en Stock', kpis.totalItems.toLocaleString()],
-        ['Total Productos', kpis.totalProductos.toString()],
-        ['Productos Stock Bajo', kpis.stockBajo.toString()],
-        ['Productos Sin Stock', kpis.sinStock.toString()],
-        ['Entradas del Mes', kpis.entradasMes.toLocaleString()],
-        ['Salidas del Mes', kpis.salidasMes.toLocaleString()],
-        ['Índice Rotación', `${kpis.rotacion} días`],
+        [t('reports.inventoryValue'), `$${kpis.valorTotal.toLocaleString('es-UY', { minimumFractionDigits: 2 })}`],
+        [t('reports.itemsInStock'), kpis.totalItems.toLocaleString()],
+        [t('reports.products'), kpis.totalProductos.toString()],
+        [t('reports.lowStockProducts'), kpis.stockBajo.toString()],
+        [t('reports.outOfStock'), kpis.sinStock.toString()],
+        [t('reports.entriesMonth'), kpis.entradasMes.toLocaleString()],
+        [t('reports.exitsMonth'), kpis.salidasMes.toLocaleString()],
+        [t('reports.inventoryRotation'), `${kpis.rotacion} ${t('reports.days')}`],
       ];
 
       autoTable(doc, {
@@ -229,12 +231,12 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(30, 41, 59);
-      doc.text('Top 5 Productos Más Vendidos (Este Mes)', 20, currentY);
+      doc.text(t('reports.topSoldProducts'), 20, currentY);
 
       if (kpis.topProductos.length > 0) {
         autoTable(doc, {
           startY: currentY + 5,
-          head: [['Código', 'Descripción', 'Cantidad']],
+          head: [[t('stock.code'), t('stock.description'), t('movements.quantity')]],
           body: kpis.topProductos.map(p => [p.codigo, p.descripcion, p.cantidad.toString()]),
           theme: 'striped',
           headStyles: { fillColor: [6, 182, 212], textColor: [255, 255, 255] },
@@ -248,7 +250,7 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
         currentY += 10;
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text('No hay datos de ventas este mes', 20, currentY);
+        doc.text(t('reports.noSalesThisMonth'), 20, currentY);
         currentY += 15;
       }
 
@@ -256,7 +258,7 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(30, 41, 59);
-      doc.text('Distribución por Categoría', 20, currentY);
+      doc.text(t('reports.categoryDistribution'), 20, currentY);
 
       const categoriaData = Object.entries(kpis.categorias).map(([cat, data]) => [
         cat,
@@ -266,7 +268,7 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
 
       autoTable(doc, {
         startY: currentY + 5,
-        head: [['Categoría', 'Items', 'Valor']],
+        head: [[t('stock.category'), t('reports.items'), t('common.total')]],
         body: categoriaData,
         theme: 'striped',
         headStyles: { fillColor: [139, 92, 246], textColor: [255, 255, 255] },
@@ -288,11 +290,11 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(30, 41, 59);
-        doc.text('Productos con Stock Bajo (Requieren Atención)', 20, currentY);
+        doc.text(`${t('reports.lowStockProducts')} (${t('reports.requiresAttention')})`, 20, currentY);
 
         autoTable(doc, {
           startY: currentY + 5,
-          head: [['Código', 'Descripción', 'Stock', 'Mínimo']],
+          head: [[t('stock.code'), t('stock.description'), 'Stock', t('stock.minStock')]],
           body: stockBajoProducts.map(p => [
             p.codigo, 
             p.descripcion, 
@@ -316,7 +318,7 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
         doc.setFontSize(8);
         doc.setTextColor(148, 163, 184);
         doc.text(
-          `Página ${i} de ${pageCount} | Vanguard - Sistema de Gestión de Inventario`,
+          `Página ${i} de ${pageCount} | Vanguard - ${t('header.subtitle')}`,
           pageWidth / 2,
           doc.internal.pageSize.height - 10,
           { align: 'center' }
@@ -335,51 +337,51 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
 
   return (
     <div className="space-y-4">
-          {/* Header con botones de descarga */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <BarChart3 className="text-emerald-400" />
-                Dashboard Ejecutivo
-              </h2>
-              <p className="text-sm text-slate-500">Resumen de KPIs e indicadores clave</p>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={generatePDF} disabled={generatingPDF}>
-                {generatingPDF ? (
-                  <Loader2 size={18} className="animate-spin mr-2" />
-                ) : (
-                  <Download size={18} className="mr-2" />
-                )}
-                PDF
-              </Button>
-              <Button 
-                variant="secondary"
-                onClick={() => exportInventoryReportToExcel(products, movements)}
-              >
-                <Download size={18} className="mr-2" />
-                Excel
-              </Button>
-            </div>
-          </div>
+      {/* Header con botones de descarga */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <BarChart3 className="text-emerald-400" />
+            {t('reports.executiveDashboard')}
+          </h2>
+          <p className="text-sm text-slate-500">{t('reports.kpiSummary')}</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={generatePDF} disabled={generatingPDF}>
+            {generatingPDF ? (
+              <Loader2 size={18} className="animate-spin mr-2" />
+            ) : (
+              <Download size={18} className="mr-2" />
+            )}
+            {t('reports.exportPDF')}
+          </Button>
+          <Button 
+            variant="secondary"
+            onClick={() => exportInventoryReportToExcel(products, movements)}
+          >
+            <Download size={18} className="mr-2" />
+            {t('reports.exportExcel')}
+          </Button>
+        </div>
+      </div>
 
       {/* KPIs Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KPICard
-          title="Valor del Inventario"
+          title={t('reports.inventoryValue')}
           value={`$${kpis.valorTotal.toLocaleString('es-UY', { minimumFractionDigits: 0 })}`}
           icon={<DollarSign size={24} />}
           color="emerald"
         />
         <KPICard
-          title="Items en Stock"
+          title={t('reports.itemsInStock')}
           value={kpis.totalItems.toLocaleString()}
-          subtitle={`${kpis.totalProductos} productos`}
+          subtitle={`${kpis.totalProductos} ${t('reports.products')}`}
           icon={<Package size={24} />}
           color="cyan"
         />
         <KPICard
-          title="Entradas del Mes"
+          title={t('reports.entriesMonth')}
           value={kpis.entradasMes.toLocaleString()}
           trend={kpis.trendEntradas > 0 ? 'up' : kpis.trendEntradas < 0 ? 'down' : 'neutral'}
           trendValue={`${kpis.trendEntradas > 0 ? '+' : ''}${kpis.trendEntradas}%`}
@@ -387,7 +389,7 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
           color="purple"
         />
         <KPICard
-          title="Salidas del Mes"
+          title={t('reports.exitsMonth')}
           value={kpis.salidasMes.toLocaleString()}
           trend={kpis.trendSalidas > 0 ? 'up' : kpis.trendSalidas < 0 ? 'down' : 'neutral'}
           trendValue={`${kpis.trendSalidas > 0 ? '+' : ''}${kpis.trendSalidas}%`}
@@ -399,23 +401,23 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
       {/* Segunda fila de KPIs */}
       <div className="grid grid-cols-3 gap-4">
         <KPICard
-          title="Productos Stock Bajo"
+          title={t('reports.lowStockProducts')}
           value={kpis.stockBajo}
-          subtitle="Requieren atención"
+          subtitle={t('reports.requiresAttention')}
           icon={<AlertTriangle size={24} />}
           color={kpis.stockBajo > 0 ? 'amber' : 'emerald'}
         />
         <KPICard
-          title="Productos Sin Stock"
+          title={t('reports.outOfStock')}
           value={kpis.sinStock}
-          subtitle="Agotados"
+          subtitle={t('reports.depleted')}
           icon={<Package size={24} />}
           color={kpis.sinStock > 0 ? 'red' : 'emerald'}
         />
         <KPICard
-          title="Rotación Inventario"
-          value={`${kpis.rotacion} días`}
-          subtitle="Promedio de reposición"
+          title={t('reports.inventoryRotation')}
+          value={`${kpis.rotacion} ${t('reports.days')}`}
+          subtitle={t('reports.avgReplacement')}
           icon={<Calendar size={24} />}
           color="cyan"
         />
@@ -427,7 +429,7 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
         <Card>
           <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
             <TrendingUp size={18} className="text-cyan-400" />
-            Top 5 Productos Más Vendidos
+            {t('reports.topSoldProducts')}
           </h3>
           {kpis.topProductos.length > 0 ? (
             <div className="space-y-2">
@@ -454,7 +456,7 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
             </div>
           ) : (
             <div className="text-center py-6 text-slate-500">
-              No hay datos de ventas este mes
+              {t('reports.noSalesThisMonth')}
             </div>
           )}
         </Card>
@@ -463,7 +465,7 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
         <Card>
           <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
             <PieChart size={18} className="text-purple-400" />
-            Distribución por Categoría
+            {t('reports.categoryDistribution')}
           </h3>
           <div className="space-y-2">
             {Object.entries(kpis.categorias).map(([cat, data]) => {
@@ -472,7 +474,7 @@ export function ExecutiveDashboard({ products, movements }: ExecutiveDashboardPr
                 <div key={cat} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span>{cat}</span>
-                    <span className="text-slate-400">{data.items} items</span>
+                    <span className="text-slate-400">{data.items} {t('reports.items')}</span>
                   </div>
                   <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                     <div 

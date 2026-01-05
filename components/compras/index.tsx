@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { Proveedor, OrdenCompra, OrdenCompraItem, Product, OrdenCompraEstado } from '@/types';
 import { Button, Input, Select, Modal, Card } from '@/components/ui';
@@ -31,6 +32,7 @@ interface ProveedoresPanelProps {
 }
 
 export function ProveedoresPanel({ onSelectProveedor }: ProveedoresPanelProps) {
+  const { t } = useTranslation();
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -135,7 +137,7 @@ export function ProveedoresPanel({ onSelectProveedor }: ProveedoresPanelProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de desactivar este proveedor?')) return;
+    if (!confirm(t('purchases.deactivateSupplier'))) return;
     await supabase.from('proveedores').update({ activo: false }).eq('id', id);
     fetchProveedores();
   };
@@ -150,12 +152,12 @@ export function ProveedoresPanel({ onSelectProveedor }: ProveedoresPanelProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Truck className="text-emerald-400" size={24} />
-          <h2 className="text-lg font-semibold">Proveedores</h2>
+          <h2 className="text-lg font-semibold">{t('purchases.suppliers')}</h2>
           <span className="text-sm text-slate-500">({proveedores.length})</span>
         </div>
         <Button onClick={() => setShowModal(true)}>
           <Plus size={18} className="mr-2" />
-          Nuevo Proveedor
+          {t('purchases.newSupplier')}
         </Button>
       </div>
 
@@ -163,7 +165,7 @@ export function ProveedoresPanel({ onSelectProveedor }: ProveedoresPanelProps) {
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
         <input
           type="text"
-          placeholder="Buscar proveedores..."
+          placeholder={t('purchases.searchSuppliers')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900/50 border border-slate-800/50 focus:border-emerald-500/50 focus:outline-none text-sm"
@@ -171,11 +173,11 @@ export function ProveedoresPanel({ onSelectProveedor }: ProveedoresPanelProps) {
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-slate-500">Cargando proveedores...</div>
+        <div className="text-center py-8 text-slate-500">{t('purchases.loadingSuppliers')}</div>
       ) : filteredProveedores.length === 0 ? (
         <div className="text-center py-8 text-slate-500">
           <Truck size={48} className="mx-auto mb-2 opacity-50" />
-          No hay proveedores registrados
+          {t('purchases.noSuppliers')}
         </div>
       ) : (
         <div className="grid gap-3">
@@ -200,7 +202,7 @@ export function ProveedoresPanel({ onSelectProveedor }: ProveedoresPanelProps) {
                 <div className="flex items-center gap-2">
                   {onSelectProveedor && (
                     <Button variant="secondary" onClick={() => onSelectProveedor(proveedor)}>
-                      Seleccionar
+                      {t('common.select')}
                     </Button>
                   )}
                   <button
@@ -229,33 +231,33 @@ export function ProveedoresPanel({ onSelectProveedor }: ProveedoresPanelProps) {
           setShowModal(false);
           setEditingProveedor(null);
         }}
-        title={editingProveedor ? 'Editar Proveedor' : 'Nuevo Proveedor'}
+        title={editingProveedor ? t('purchases.editSupplier') : t('purchases.newSupplier')}
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Código"
+              label={t('stock.code')}
               value={formData.codigo}
               onChange={(e) => setFormData({ ...formData, codigo: e.target.value.toUpperCase() })}
               placeholder="PROV-001"
               disabled={!!editingProveedor}
             />
             <Input
-              label="Nombre"
+              label={t('stock.description')}
               value={formData.nombre}
               onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-              placeholder="Nombre del proveedor"
+              placeholder={t('purchases.supplier')}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Contacto"
+              label={t('purchases.contact')}
               value={formData.nombreContacto}
               onChange={(e) => setFormData({ ...formData, nombreContacto: e.target.value })}
-              placeholder="Nombre del contacto"
+              placeholder={t('purchases.contact')}
             />
             <Input
-              label="Email"
+              label={t('purchases.email')}
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -264,37 +266,37 @@ export function ProveedoresPanel({ onSelectProveedor }: ProveedoresPanelProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Teléfono"
+              label={t('purchases.phone')}
               value={formData.telefono}
               onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
               placeholder="+598 99 123 456"
             />
             <Input
-              label="Ciudad"
+              label={t('purchases.city')}
               value={formData.ciudad}
               onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
-              placeholder="Montevideo"
+              placeholder={t('purchases.city')}
             />
           </div>
           <Input
-            label="Dirección"
+            label={t('purchases.address')}
             value={formData.direccion}
             onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-            placeholder="Dirección completa"
+            placeholder={t('purchases.address')}
           />
           <Input
-            label="Notas"
+            label={t('purchases.notes')}
             value={formData.notas}
             onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
-            placeholder="Notas adicionales..."
+            placeholder={t('purchases.notes')}
           />
         </div>
         <div className="flex gap-3 mt-6">
           <Button variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit} className="flex-1">
-            {editingProveedor ? 'Guardar Cambios' : 'Crear Proveedor'}
+            {editingProveedor ? t('common.save') : t('purchases.createSupplier')}
           </Button>
         </div>
       </Modal>
@@ -312,6 +314,7 @@ interface OrdenesCompraPanelProps {
 }
 
 export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelProps) {
+  const { t } = useTranslation();
   const [ordenes, setOrdenes] = useState<OrdenCompra[]>([]);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -411,13 +414,13 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
 
   const handleCrearOrden = async () => {
     if (!selectedProveedor || ordenItems.length === 0) {
-      alert('Selecciona un proveedor y agrega al menos un producto');
+      alert(t('warehouses.selectOriginDestination'));
       return;
     }
 
     const numero = await generarNumeroOrden();
     const subtotal = ordenItems.reduce((sum, item) => sum + (item.cantidad * item.costoUnitario), 0);
-    const total = subtotal; // Puedes agregar impuestos aquí
+    const total = subtotal;
 
     // Crear orden
     const { data: ordenData, error: ordenError } = await supabase
@@ -539,15 +542,15 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
   const getEstadoConfig = (estado: OrdenCompraEstado) => {
     switch (estado) {
       case 'borrador':
-        return { color: 'text-slate-400', bg: 'bg-slate-500/20', icon: FileText, label: 'Borrador' };
+        return { color: 'text-slate-400', bg: 'bg-slate-500/20', icon: FileText, label: t('purchases.states.draft') };
       case 'enviada':
-        return { color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: Send, label: 'Enviada' };
+        return { color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: Send, label: t('purchases.states.sent') };
       case 'parcial':
-        return { color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Clock, label: 'Parcial' };
+        return { color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Clock, label: t('purchases.states.partial') };
       case 'recibida':
-        return { color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle, label: 'Recibida' };
+        return { color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle, label: t('purchases.states.received') };
       case 'cancelada':
-        return { color: 'text-red-400', bg: 'bg-red-500/20', icon: XCircle, label: 'Cancelada' };
+        return { color: 'text-red-400', bg: 'bg-red-500/20', icon: XCircle, label: t('purchases.states.cancelled') };
     }
   };
 
@@ -556,22 +559,22 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="text-cyan-400" size={24} />
-          <h2 className="text-lg font-semibold">Órdenes de Compra</h2>
+          <h2 className="text-lg font-semibold">{t('purchases.purchaseOrders')}</h2>
           <span className="text-sm text-slate-500">({ordenes.length})</span>
         </div>
         <Button onClick={() => setShowNewOrden(true)}>
           <Plus size={18} className="mr-2" />
-          Nueva Orden
+          {t('purchases.newOrder')}
         </Button>
       </div>
 
       {/* Lista de órdenes */}
       {loading ? (
-        <div className="text-center py-8 text-slate-500">Cargando órdenes...</div>
+        <div className="text-center py-8 text-slate-500">{t('purchases.loadingOrders')}</div>
       ) : ordenes.length === 0 ? (
         <div className="text-center py-8 text-slate-500">
           <FileText size={48} className="mx-auto mb-2 opacity-50" />
-          No hay órdenes de compra
+          {t('purchases.noOrders')}
         </div>
       ) : (
         <div className="space-y-3">
@@ -603,7 +606,7 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
                           </span>
                         </div>
                         <div className="text-sm text-slate-400">
-                          {orden.proveedor?.nombre || 'Sin proveedor'} • {formatDate(orden.fechaOrden)}
+                          {orden.proveedor?.nombre || t('purchases.supplier')} • {formatDate(orden.fechaOrden)}
                         </div>
                       </div>
                     </div>
@@ -626,7 +629,7 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
                   <div className="border-t border-slate-800/50 p-4 bg-slate-950/50">
                     {/* Items */}
                     <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-slate-400 mb-2">Productos</h4>
+                      <h4 className="text-sm font-semibold text-slate-400 mb-2">{t('purchases.products')}</h4>
                       <div className="space-y-2">
                         {orden.items?.map((item) => {
                           const product = products.find(p => p.codigo === item.productoCodigo);
@@ -637,7 +640,7 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
                                 <span className="ml-2">{product?.descripcion || item.productoCodigo}</span>
                               </div>
                               <div className="flex items-center gap-4 text-sm">
-                                <span>{item.cantidadRecibida}/{item.cantidadOrdenada} recibidos</span>
+                                <span>{item.cantidadRecibida}/{item.cantidadOrdenada} {t('purchases.received')}</span>
                                 <span className="text-slate-400">{formatCurrency(item.costoUnitario)}/u</span>
                                 <span className="font-semibold">{formatCurrency(item.subtotal)}</span>
                               </div>
@@ -656,21 +659,21 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
                             onClick={() => handleCambiarEstado(orden.id, 'enviada')}
                           >
                             <Send size={16} className="mr-2" />
-                            Marcar como Enviada
+                            {t('purchases.markAsSent')}
                           </Button>
                           <Button
                             variant="danger"
                             onClick={() => handleCambiarEstado(orden.id, 'cancelada')}
                           >
                             <XCircle size={16} className="mr-2" />
-                            Cancelar
+                            {t('common.cancel')}
                           </Button>
                         </>
                       )}
                       {orden.estado === 'enviada' && (
                         <Button onClick={() => handleCambiarEstado(orden.id, 'recibida')}>
                           <CheckCircle size={16} className="mr-2" />
-                          Marcar como Recibida
+                          {t('purchases.markAsReceived')}
                         </Button>
                       )}
                     </div>
@@ -686,19 +689,19 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
       <Modal
         isOpen={showNewOrden}
         onClose={() => setShowNewOrden(false)}
-        title="Nueva Orden de Compra"
+        title={t('purchases.newOrder')}
       >
         <div className="space-y-4">
           <Select
-            label="Proveedor"
+            label={t('purchases.supplier')}
             value={selectedProveedor}
             onChange={(e) => setSelectedProveedor(e.target.value)}
             options={proveedores.map(p => ({ value: p.id, label: `${p.codigo} - ${p.nombre}` }))}
-            placeholder="Seleccionar proveedor..."
+            placeholder={t('purchases.selectSupplier')}
           />
 
           <Input
-            label="Fecha Esperada de Entrega"
+            label={t('purchases.expectedDate')}
             type="date"
             value={fechaEsperada}
             onChange={(e) => setFechaEsperada(e.target.value)}
@@ -707,12 +710,12 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
           {/* Items */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-slate-400">Productos</label>
+              <label className="text-sm text-slate-400">{t('purchases.products')}</label>
               <button
                 onClick={addItem}
                 className="text-sm text-emerald-400 hover:text-emerald-300"
               >
-                + Agregar producto
+                {t('purchases.addProduct')}
               </button>
             </div>
 
@@ -724,7 +727,7 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
                     onChange={(e) => updateItem(index, 'productoCodigo', e.target.value)}
                     className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm"
                   >
-                    <option value="">Seleccionar producto...</option>
+                    <option value="">{t('purchases.selectProduct')}</option>
                     {products.map(p => (
                       <option key={p.codigo} value={p.codigo}>
                         {p.codigo} - {p.descripcion}
@@ -736,7 +739,7 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
                     value={item.cantidad}
                     onChange={(e) => updateItem(index, 'cantidad', parseInt(e.target.value) || 0)}
                     className="w-20 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm"
-                    placeholder="Cant."
+                    placeholder={t('purchases.quantity')}
                     min="1"
                   />
                   <input
@@ -744,7 +747,7 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
                     value={item.costoUnitario}
                     onChange={(e) => updateItem(index, 'costoUnitario', parseFloat(e.target.value) || 0)}
                     className="w-28 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm"
-                    placeholder="Costo/u"
+                    placeholder={t('purchases.unitCost')}
                     step="0.01"
                   />
                   <button
@@ -759,7 +762,7 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
 
             {ordenItems.length > 0 && (
               <div className="mt-2 text-right text-sm">
-                <span className="text-slate-400">Total: </span>
+                <span className="text-slate-400">{t('common.total')}: </span>
                 <span className="font-semibold text-emerald-400">
                   {formatCurrency(ordenItems.reduce((sum, item) => sum + (item.cantidad * item.costoUnitario), 0))}
                 </span>
@@ -768,19 +771,19 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
           </div>
 
           <Input
-            label="Notas"
+            label={t('purchases.notes')}
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
-            placeholder="Notas adicionales..."
+            placeholder={t('purchases.notes')}
           />
         </div>
 
         <div className="flex gap-3 mt-6">
           <Button variant="secondary" onClick={() => setShowNewOrden(false)} className="flex-1">
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleCrearOrden} className="flex-1">
-            Crear Orden
+            {t('purchases.createOrder')}
           </Button>
         </div>
       </Modal>
@@ -798,6 +801,7 @@ interface ComprasDashboardProps {
 }
 
 export function ComprasDashboard({ products, userEmail }: ComprasDashboardProps) {
+  const { t } = useTranslation();
   const [activeView, setActiveView] = useState<'ordenes' | 'proveedores'>('ordenes');
 
   return (
@@ -814,7 +818,7 @@ export function ComprasDashboard({ products, userEmail }: ComprasDashboardProps)
           )}
         >
           <FileText size={18} />
-          Órdenes de Compra
+          {t('purchases.purchaseOrders')}
         </button>
         <button
           onClick={() => setActiveView('proveedores')}
@@ -826,7 +830,7 @@ export function ComprasDashboard({ products, userEmail }: ComprasDashboardProps)
           )}
         >
           <Truck size={18} />
-          Proveedores
+          {t('purchases.suppliers')}
         </button>
       </div>
 

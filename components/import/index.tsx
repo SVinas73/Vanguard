@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useTranslation } from 'react-i18next';
 import { Button, Modal } from '@/components/ui';
 import { Upload, FileSpreadsheet, CheckCircle, XCircle, AlertTriangle, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,7 @@ interface ImportCSVProps {
 }
 
 export function ImportCSV({ onImportComplete, userEmail }: ImportCSVProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<any[]>([]);
@@ -226,13 +228,13 @@ export function ImportCSV({ onImportComplete, userEmail }: ImportCSVProps) {
     <>
       <Button variant="secondary" onClick={() => { resetState(); setIsOpen(true); }}>
         <Upload size={18} className="mr-2" />
-        Importar CSV
+        {t('stock.import')}
       </Button>
 
       <Modal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title="Importar Productos desde CSV"
+        title={t('stock.import')}
       >
         {step === 'upload' && (
           <div className="space-y-4">
@@ -317,7 +319,7 @@ export function ImportCSV({ onImportComplete, userEmail }: ImportCSVProps) {
 
             <div className="flex gap-3">
               <Button variant="secondary" onClick={resetState} className="flex-1">
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button 
                 onClick={handleImport} 
@@ -362,7 +364,7 @@ export function ImportCSV({ onImportComplete, userEmail }: ImportCSVProps) {
             )}
 
             <Button onClick={() => setIsOpen(false)} className="w-full">
-              Cerrar
+              {t('common.close')}
             </Button>
           </div>
         )}
