@@ -191,6 +191,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         stock: 0,
         stock_minimo: product.stockMinimo,
         costo_promedio: 0,
+        almacen_id: product.almacenId || null,
         creado_por: userEmail,
         creado_at: new Date().toISOString(),
         actualizado_por: userEmail,
@@ -267,6 +268,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       if (updates.categoria !== undefined) updateData.categoria = updates.categoria;
       if (updates.stock !== undefined) updateData.stock = updates.stock;
       if (updates.stockMinimo !== undefined) updateData.stock_minimo = updates.stockMinimo;
+      if (updates.almacenId !== undefined) updateData.almacen_id = updates.almacenId;
 
       const { error } = await supabase
         .from('productos')
