@@ -9,15 +9,17 @@ import { ComprasDashboard } from '@/components/compras';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { AuditLogPanel } from '@/components/audit';
 import { CostAnalysisDashboard } from '@/components/costs';
+import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
 import { ExecutiveDashboard } from '@/components/reports';
 import { QuickScanner } from '@/components/scanner';
 import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadge } from '@/components/ai';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '@/lib/supabase';
 import { Bot, Search, ArrowLeftRight, Plus, Package, User, Clock, DollarSign, Box, AlertTriangle } from 'lucide-react';
 import React, { useState, useMemo, useEffect } from 'react';
-import { TabType, CategorySuggestion, AnomalyResult, Product } from '@/types';
+import { TabType, CategorySuggestion, AnomalyResult, Product, Almacen } from '@/types';
 import { useInventoryStore } from '@/store';
 import { CATEGORIA_NOMBRES } from '@/lib/constants';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
@@ -72,6 +74,9 @@ export default function HomePage() {
   const [showNewMovement, setShowNewMovement] = useState(false);
   const [showEditProduct, setShowEditProduct] = useState(false);
 
+  // Almacenes State
+  const [almacenes, setAlmacenes] = useState<Array<{ id: string; nombre: string }>>([]);
+
   // Form State - New Product
   const [newProduct, setNewProduct] = useState({
     codigo: '',
@@ -79,6 +84,7 @@ export default function HomePage() {
     precio: '',
     categoria: '',
     stockMinimo: '10',
+    almacenId: '',
   });
   const [aiSuggestion, setAiSuggestion] = useState<CategorySuggestion | null>(null);
 
@@ -99,6 +105,17 @@ export default function HomePage() {
   useEffect(() => {
     fetchProducts();
     fetchMovements();
+    
+    // Cargar almacenes
+    const fetchAlmacenes = async () => {
+      const { data } = await supabase
+        .from('almacenes')
+        .select('id, nombre')
+        .eq('activo', true)
+        .order('es_principal', { ascending: false });
+      if (data) setAlmacenes(data);
+    };
+    fetchAlmacenes();
   }, [fetchProducts, fetchMovements]);
 
   // Filtered products with semantic search
@@ -153,6 +170,10 @@ export default function HomePage() {
   const productOptions = useMemo(() => {
     return products.map((p) => ({ value: p.codigo, label: `${p.codigo} - ${p.descripcion}` }));
   }, [products]);
+
+  const almacenOptions = useMemo(() => {
+    return almacenes.map((a) => ({ value: a.id, label: a.nombre }));
+  }, [almacenes]);
 
   // ============================================
   // RETURNS CONDICIONALES (después de todos los hooks)
@@ -224,9 +245,10 @@ export default function HomePage() {
       precio: parseFloat(newProduct.precio),
       categoria: newProduct.categoria,
       stockMinimo: parseInt(newProduct.stockMinimo) || 10,
+      almacenId: newProduct.almacenId || null,
     }, user?.email || 'Sistema');
 
-    setNewProduct({ codigo: '', descripcion: '', precio: '', categoria: '', stockMinimo: '10' });
+    setNewProduct({ codigo: '', descripcion: '', precio: '', categoria: '', stockMinimo: '10', almacenId: '' });
     setShowNewProduct(false);
     setAiSuggestion(null);
   };
@@ -240,6 +262,7 @@ export default function HomePage() {
       categoria: editProduct.categoria,
       stockMinimo: editProduct.stockMinimo,
       stock: editProduct.stock,
+      almacenId: editProduct.almacenId,
     }, user?.email || 'Sistema');
 
     setEditProduct(null);
@@ -524,6 +547,14 @@ export default function HomePage() {
             options={categoryOptions}
             placeholder={t('stock.selectCategory')}
           />
+
+          <Select
+            label={t('stock.warehouse')}
+            value={newProduct.almacenId}
+            onChange={(e) => setNewProduct({ ...newProduct, almacenId: e.target.value })}
+            options={almacenOptions}
+            placeholder={t('common.select')}
+          />
         </div>
 
         <div className="flex gap-3 mt-6">
@@ -607,6 +638,14 @@ export default function HomePage() {
                 onChange={(e) => setEditProduct({ ...editProduct, categoria: e.target.value })}
                 options={categoryOptions}
                 placeholder={t('stock.selectCategory')}
+              />
+
+              <Select
+                label={t('stock.warehouse')}
+                value={editProduct.almacenId || ''}
+                onChange={(e) => setEditProduct({ ...editProduct, almacenId: e.target.value || null })}
+                options={almacenOptions}
+                placeholder={t('common.select')}
               />
 
               <Input
@@ -719,6 +758,12 @@ export default function HomePage() {
 
       {/* Indicador offline */}
       <OfflineIndicator />
+
+      {/* Buscador Global - Ctrl+K */}
+      <GlobalSearch 
+        onNavigate={(tab) => setActiveTab(tab as TabType)}
+        onSelectProduct={(product) => handleOpenEdit(product)}
+      />
       
     </div>
   );

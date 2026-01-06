@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { Almacen, Transferencia, TransferenciaEstado, Product } from '@/types';
 import { Button, Input, Select, Modal } from '@/components/ui';
@@ -16,6 +17,7 @@ import { cn, formatDate } from '@/lib/utils';
 // ============================================
 
 export function AlmacenesPanel() {
+  const { t } = useTranslation();
   const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -95,7 +97,7 @@ export function AlmacenesPanel() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Desactivar este almacén?')) return;
+    if (!confirm(t('warehouses.deactivate'))) return;
     await supabase.from('almacenes').update({ activo: false }).eq('id', id);
     fetchAlmacenes();
   };
@@ -105,17 +107,17 @@ export function AlmacenesPanel() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Warehouse className="text-amber-400" size={24} />
-          <h2 className="text-lg font-semibold">Almacenes</h2>
+          <h2 className="text-lg font-semibold">{t('warehouses.title')}</h2>
           <span className="text-sm text-slate-500">({almacenes.length})</span>
         </div>
         <Button onClick={() => { setEditing(null); setFormData({ codigo: '', nombre: '', direccion: '', ciudad: '', telefono: '', responsable: '' }); setShowModal(true); }}>
           <Plus size={18} className="mr-2" />
-          Nuevo Almacén
+          {t('warehouses.newWarehouse')}
         </Button>
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-slate-500">Cargando...</div>
+        <div className="text-center py-8 text-slate-500">{t('common.loading')}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {almacenes.map((almacen) => (
@@ -138,7 +140,7 @@ export function AlmacenesPanel() {
                 </div>
                 {almacen.esPrincipal && (
                   <span className="px-2 py-0.5 rounded text-xs bg-amber-500/20 text-amber-400">
-                    Principal
+                    {t('warehouses.main')}
                   </span>
                 )}
               </div>
@@ -176,7 +178,7 @@ export function AlmacenesPanel() {
                     onClick={() => handleEdit(almacen)}
                     className="flex-1 p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors text-sm"
                   >
-                    <Edit size={14} className="inline mr-1" /> Editar
+                    <Edit size={14} className="inline mr-1" /> {t('warehouses.edit')}
                   </button>
                   <button
                     onClick={() => handleDelete(almacen.id)}
@@ -191,45 +193,45 @@ export function AlmacenesPanel() {
         </div>
       )}
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Editar Almacén' : 'Nuevo Almacén'}>
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? t('warehouses.editWarehouse') : t('warehouses.newWarehouse')}>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Código"
+              label={t('warehouses.code')}
               value={formData.codigo}
               onChange={(e) => setFormData({ ...formData, codigo: e.target.value.toUpperCase() })}
               placeholder="ALM-01"
               disabled={!!editing}
             />
             <Input
-              label="Nombre"
+              label={t('warehouses.name')}
               value={formData.nombre}
               onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
               placeholder="Almacén Norte"
             />
           </div>
           <Input
-            label="Dirección"
+            label={t('warehouses.address')}
             value={formData.direccion}
             onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
             placeholder="Calle 123"
           />
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Ciudad"
+              label={t('warehouses.city')}
               value={formData.ciudad}
               onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
               placeholder="Montevideo"
             />
             <Input
-              label="Teléfono"
+              label={t('warehouses.phone')}
               value={formData.telefono}
               onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
               placeholder="+598 99 123 456"
             />
           </div>
           <Input
-            label="Responsable"
+            label={t('warehouses.manager')}
             value={formData.responsable}
             onChange={(e) => setFormData({ ...formData, responsable: e.target.value })}
             placeholder="Nombre del encargado"
@@ -237,10 +239,10 @@ export function AlmacenesPanel() {
         </div>
         <div className="flex gap-3 mt-6">
           <Button variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit} className="flex-1">
-            {editing ? 'Guardar' : 'Crear'}
+            {editing ? t('common.save') : t('common.create')}
           </Button>
         </div>
       </Modal>
@@ -258,6 +260,7 @@ interface TransferenciasPanelProps {
 }
 
 export function TransferenciasPanel({ products, userEmail }: TransferenciasPanelProps) {
+  const { t } = useTranslation();
   const [transferencias, setTransferencias] = useState<Transferencia[]>([]);
   const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
   const [loading, setLoading] = useState(true);
@@ -324,7 +327,7 @@ export function TransferenciasPanel({ products, userEmail }: TransferenciasPanel
 
   const handleCreate = async () => {
     if (!origen || !destino || items.length === 0) {
-      alert('Selecciona origen, destino y al menos un producto');
+      alert(t('warehouses.selectOriginDestination'));
       return;
     }
 
@@ -395,10 +398,10 @@ export function TransferenciasPanel({ products, userEmail }: TransferenciasPanel
 
   const getEstadoConfig = (estado: TransferenciaEstado) => {
     const configs = {
-      pendiente: { color: 'text-slate-400', bg: 'bg-slate-500/20', icon: Clock, label: 'Pendiente' },
-      en_transito: { color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: Truck, label: 'En Tránsito' },
-      completada: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle, label: 'Completada' },
-      cancelada: { color: 'text-red-400', bg: 'bg-red-500/20', icon: XCircle, label: 'Cancelada' },
+      pendiente: { color: 'text-slate-400', bg: 'bg-slate-500/20', icon: Clock, label: t('warehouses.states.pending') },
+      en_transito: { color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: Truck, label: t('warehouses.states.inTransit') },
+      completada: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle, label: t('warehouses.states.completed') },
+      cancelada: { color: 'text-red-400', bg: 'bg-red-500/20', icon: XCircle, label: t('warehouses.states.cancelled') },
     };
     return configs[estado];
   };
@@ -416,20 +419,20 @@ export function TransferenciasPanel({ products, userEmail }: TransferenciasPanel
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ArrowRightLeft className="text-cyan-400" size={24} />
-          <h2 className="text-lg font-semibold">Transferencias</h2>
+          <h2 className="text-lg font-semibold">{t('warehouses.transfers')}</h2>
         </div>
         <Button onClick={() => setShowNew(true)}>
           <Plus size={18} className="mr-2" />
-          Nueva Transferencia
+          {t('warehouses.newTransfer')}
         </Button>
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-slate-500">Cargando...</div>
+        <div className="text-center py-8 text-slate-500">{t('common.loading')}</div>
       ) : transferencias.length === 0 ? (
         <div className="text-center py-8 text-slate-500">
           <ArrowRightLeft size={48} className="mx-auto mb-2 opacity-50" />
-          No hay transferencias
+          {t('warehouses.noTransfers')}
         </div>
       ) : (
         <div className="space-y-3">
@@ -471,7 +474,7 @@ export function TransferenciasPanel({ products, userEmail }: TransferenciasPanel
                 {isExpanded && (
                   <div className="border-t border-slate-800/50 p-4 bg-slate-950/50">
                     <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-slate-400 mb-2">Productos</h4>
+                      <h4 className="text-sm font-semibold text-slate-400 mb-2">{t('warehouses.products')}</h4>
                       <div className="space-y-2">
                         {trans.items?.map((item) => {
                           const product = products.find(p => p.codigo === item.productoCodigo);
@@ -481,7 +484,7 @@ export function TransferenciasPanel({ products, userEmail }: TransferenciasPanel
                                 <span className="font-mono text-xs text-slate-500">{item.productoCodigo}</span>
                                 <span className="ml-2">{product?.descripcion}</span>
                               </div>
-                              <span className="text-sm">{item.cantidadSolicitada} unidades</span>
+                              <span className="text-sm">{item.cantidadSolicitada} {t('warehouses.units')}</span>
                             </div>
                           );
                         })}
@@ -492,16 +495,16 @@ export function TransferenciasPanel({ products, userEmail }: TransferenciasPanel
                       {trans.estado === 'pendiente' && (
                         <>
                           <Button onClick={() => handleChangeEstado(trans.id, 'en_transito')}>
-                            <Truck size={16} className="mr-2" /> Enviar
+                            <Truck size={16} className="mr-2" /> {t('warehouses.send')}
                           </Button>
                           <Button variant="danger" onClick={() => handleChangeEstado(trans.id, 'cancelada')}>
-                            <XCircle size={16} className="mr-2" /> Cancelar
+                            <XCircle size={16} className="mr-2" /> {t('common.cancel')}
                           </Button>
                         </>
                       )}
                       {trans.estado === 'en_transito' && (
                         <Button onClick={() => handleChangeEstado(trans.id, 'completada')}>
-                          <CheckCircle size={16} className="mr-2" /> Confirmar Recepción
+                          <CheckCircle size={16} className="mr-2" /> {t('warehouses.confirmReception')}
                         </Button>
                       )}
                     </div>
@@ -513,30 +516,30 @@ export function TransferenciasPanel({ products, userEmail }: TransferenciasPanel
         </div>
       )}
 
-      <Modal isOpen={showNew} onClose={() => setShowNew(false)} title="Nueva Transferencia">
+      <Modal isOpen={showNew} onClose={() => setShowNew(false)} title={t('warehouses.newTransfer')}>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Select
-              label="Almacén Origen"
+              label={t('warehouses.origin')}
               value={origen}
               onChange={(e) => setOrigen(e.target.value)}
               options={almacenes.map(a => ({ value: a.id, label: a.nombre }))}
-              placeholder="Seleccionar..."
+              placeholder={t('warehouses.selectOrigin')}
             />
             <Select
-              label="Almacén Destino"
+              label={t('warehouses.destination')}
               value={destino}
               onChange={(e) => setDestino(e.target.value)}
               options={almacenes.filter(a => a.id !== origen).map(a => ({ value: a.id, label: a.nombre }))}
-              placeholder="Seleccionar..."
+              placeholder={t('warehouses.selectOrigin')}
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-slate-400">Productos</label>
+              <label className="text-sm text-slate-400">{t('warehouses.products')}</label>
               <button onClick={addItem} className="text-sm text-cyan-400 hover:text-cyan-300">
-                + Agregar producto
+                {t('warehouses.addProduct')}
               </button>
             </div>
             <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -547,7 +550,7 @@ export function TransferenciasPanel({ products, userEmail }: TransferenciasPanel
                     onChange={(e) => updateItem(i, 'codigo', e.target.value)}
                     className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm"
                   >
-                    <option value="">Seleccionar...</option>
+                    <option value="">{t('warehouses.selectProduct')}</option>
                     {products.map(p => (
                       <option key={p.codigo} value={p.codigo}>{p.codigo} - {p.descripcion}</option>
                     ))}
@@ -568,18 +571,18 @@ export function TransferenciasPanel({ products, userEmail }: TransferenciasPanel
           </div>
 
           <Input
-            label="Notas"
+            label={t('purchases.notes')}
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
-            placeholder="Notas opcionales..."
+            placeholder={t('warehouses.notesOptional')}
           />
         </div>
         <div className="flex gap-3 mt-6">
           <Button variant="secondary" onClick={() => setShowNew(false)} className="flex-1">
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleCreate} className="flex-1">
-            Crear Transferencia
+            {t('warehouses.createTransfer')}
           </Button>
         </div>
       </Modal>
@@ -597,6 +600,7 @@ interface AlmacenesDashboardProps {
 }
 
 export function AlmacenesDashboard({ products, userEmail }: AlmacenesDashboardProps) {
+  const { t } = useTranslation();
   const [view, setView] = useState<'almacenes' | 'transferencias'>('almacenes');
 
   return (
@@ -609,7 +613,7 @@ export function AlmacenesDashboard({ products, userEmail }: AlmacenesDashboardPr
             view === 'almacenes' ? 'bg-slate-800 text-amber-400' : 'text-slate-400 hover:text-slate-200'
           )}
         >
-          <Warehouse size={18} /> Almacenes
+          <Warehouse size={18} /> {t('warehouses.title')}
         </button>
         <button
           onClick={() => setView('transferencias')}
@@ -618,7 +622,7 @@ export function AlmacenesDashboard({ products, userEmail }: AlmacenesDashboardPr
             view === 'transferencias' ? 'bg-slate-800 text-cyan-400' : 'text-slate-400 hover:text-slate-200'
           )}
         >
-          <ArrowRightLeft size={18} /> Transferencias
+          <ArrowRightLeft size={18} /> {t('warehouses.transfers')}
         </button>
       </div>
 
