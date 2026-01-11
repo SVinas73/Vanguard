@@ -31,7 +31,7 @@ import {
 } from '@/lib/ai';
 
 // Components
-import { Header, NavTabs } from '@/components/layout';
+import { Sidebar } from '@/components/layout';
 import { Button, Input, Select, Modal, Card, AIAlert } from '@/components/ui';
 import { ProductTable } from '@/components/productos';
 import { MovementList, MovementTypeSelector } from '@/components/movimientos';
@@ -304,18 +304,18 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <Header />
+      <Sidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        permissions={{
+          canViewCosts: hasPermission('canViewCosts'),
+          canViewAudit: hasPermission('canViewAudit'),
+          canViewReports: hasPermission('canViewReports'),
+        }}
+      />
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <NavTabs 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
-          permissions={{
-            canViewCosts: hasPermission('canViewCosts'),
-            canViewAudit: hasPermission('canViewAudit'),
-            canViewReports: hasPermission('canViewReports'),
-          }}
-        />
+      <main className="ml-[260px] transition-all duration-300 min-h-screen">
+        <div className="max-w-7xl mx-auto px-6 py-6">
 
         {/* ==================== DASHBOARD ==================== */}
         {activeTab === 'dashboard' && (
@@ -489,7 +489,8 @@ export default function HomePage() {
             <AlmacenesDashboard products={products} userEmail={user?.email || ''} />
           </div>
         )}
-      </div>
+        </div>
+      </main>
 
       {/* ==================== MODAL: NUEVO PRODUCTO ==================== */}
       <Modal isOpen={showNewProduct} onClose={() => setShowNewProduct(false)} title={t('stock.newProduct')}>
