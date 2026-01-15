@@ -1,5 +1,12 @@
 'use client';
 
+console.log('=== CHECKING IMPORTS ===');
+console.log('WelcomeHeader:', WelcomeHeader);
+console.log('InventoryHealth:', InventoryHealth);
+console.log('QuickActionCard:', QuickActionCard);
+console.log('StatsGrid:', StatsGrid);
+
+import { WelcomeHeader, InventoryHealth, QuickActionCard, StatsGrid } from '@/components/dashboard';
 import { AlmacenesDashboard } from '@/components/almacenes';
 import { ImportCSV } from '@/components/import';
 import { IntegracionesDashboard } from '@/components/integraciones';
@@ -35,7 +42,7 @@ import { Sidebar } from '@/components/layout';
 import { Button, Input, Select, Modal, Card, AIAlert } from '@/components/ui';
 import { ProductTable } from '@/components/productos';
 import { MovementList, MovementTypeSelector } from '@/components/movimientos';
-import { StatsGrid, AlertList, PredictionCard, ConsumptionChart } from '@/components/analytics';
+import { AlertList, PredictionCard, ConsumptionChart } from '@/components/analytics';
 
 export default function HomePage() {
   // ============================================
@@ -197,6 +204,8 @@ export default function HomePage() {
     console.error('Error de Supabase:', storeError);
   }
 
+  
+
   // ============================================
   // HANDLERS (funciones normales, no hooks)
   // ============================================
@@ -320,8 +329,43 @@ export default function HomePage() {
         {/* ==================== DASHBOARD ==================== */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
+            {/* Welcome Header */}
+            <WelcomeHeader 
+              userName={user?.nombre || user?.email?.split('@')[0]} 
+              subtitle={t('dashboard.welcomeSubtitle')}
+            />
+
+            {/* Stats */}
             <StatsGrid stats={stats} />
 
+            {/* Health + Quick Actions Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2">
+                <InventoryHealth 
+                  healthy={products.filter(p => p.stock > p.stockMinimo).length}
+                  warning={products.filter(p => p.stock <= p.stockMinimo && p.stock > 0).length}
+                  critical={products.filter(p => p.stock === 0).length}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <QuickActionCard
+                  title={t('dashboard.registerMovement')}
+                  description={t('dashboard.entryOrExit')}
+                  icon={<ArrowLeftRight size={28} />}
+                  onClick={() => setShowNewMovement(true)}
+                  color="emerald"
+                />
+                <QuickActionCard
+                  title={t('dashboard.newProduct')}
+                  description={t('dashboard.addToCatalog')}
+                  icon={<Plus size={28} />}
+                  onClick={() => setShowNewProduct(true)}
+                  color="purple"
+                />
+              </div>
+            </div>
+
+            {/* Alerts */}
             {stockAlerts.length > 0 && (
               <Card variant="gradient">
                 <h3 className="text-sm font-semibold text-amber-400 mb-4 flex items-center gap-2">
@@ -331,35 +375,16 @@ export default function HomePage() {
               </Card>
             )}
 
-            {/* Gráfica de consumo */}
+            {/* Consumption Chart */}
             <Card>
               <ConsumptionChart movements={movements} products={products} />
             </Card>
 
-            {/* Paneles de IA */}
+            {/* AI Panels */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <AIPredictionsPanel />
               <AIAnomaliesPanel />
               <AIAssociationsPanel />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => setShowNewMovement(true)}
-                className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 hover:border-emerald-500/40 transition-all text-left group"
-              >
-                <div className="mb-2 group-hover:scale-110 transition-transform inline-block"><ArrowLeftRight size={28} /></div>
-                <div className="font-semibold text-emerald-400">{t('dashboard.registerMovement')}</div>
-                <div className="text-sm text-slate-500">{t('dashboard.entryOrExit')}</div>
-              </button>
-              <button
-                onClick={() => setShowNewProduct(true)}
-                className="p-5 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 hover:border-purple-500/40 transition-all text-left group"
-              >
-                <div className="mb-2 group-hover:scale-110 transition-transform inline-block"><Plus size={28} /></div>
-                <div className="font-semibold text-purple-400">{t('dashboard.newProduct')}</div>
-                <div className="text-sm text-slate-500">{t('dashboard.addToCatalog')}</div>
-              </button>
             </div>
           </div>
         )}
