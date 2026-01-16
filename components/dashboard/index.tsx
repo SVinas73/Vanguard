@@ -187,27 +187,16 @@ export function StatsGrid({ stats }: StatsGridProps) {
 
 interface WelcomeHeaderProps {
   userName?: string;
-  subtitle?: string;
 }
 
-export function WelcomeHeader({ userName, subtitle }: WelcomeHeaderProps) {
+export function WelcomeHeader({ userName }: WelcomeHeaderProps) {
   const { t } = useTranslation();
-  
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t('greetings.morning');
-    if (hour < 18) return t('greetings.afternoon');
-    return t('greetings.evening');
-  };
 
   return (
     <div className="mb-6">
       <h1 className="text-2xl font-bold text-white">
-        {getGreeting()}{userName ? `, ${userName}` : ''} 👋
+        {t('greetings.welcome', 'Bienvenido')}{userName ? `, ${userName}` : ''}
       </h1>
-      <p className="text-slate-400 mt-1">
-        {subtitle || t('dashboard.welcomeSubtitle')}
-      </p>
     </div>
   );
 }

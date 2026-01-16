@@ -1,12 +1,9 @@
 'use client';
 
-console.log('=== CHECKING IMPORTS ===');
-console.log('WelcomeHeader:', WelcomeHeader);
-console.log('InventoryHealth:', InventoryHealth);
-console.log('QuickActionCard:', QuickActionCard);
-console.log('StatsGrid:', StatsGrid);
 
-import { WelcomeHeader, InventoryHealth, QuickActionCard, StatsGrid } from '@/components/dashboard';
+
+import { WelcomeHeader, StatsGrid } from '@/components/dashboard';
+import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
 import { AlmacenesDashboard } from '@/components/almacenes';
 import { ImportCSV } from '@/components/import';
 import { IntegracionesDashboard } from '@/components/integraciones';
@@ -24,7 +21,7 @@ import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadg
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
-import { Bot, Search, ArrowLeftRight, Plus, Package, User, Clock, DollarSign, Box, AlertTriangle } from 'lucide-react';
+import { Bot, Search, ArrowLeftRight, Plus, Package, User, Clock, DollarSign, TrendingUp, Box, AlertTriangle } from 'lucide-react';
 import React, { useState, useMemo, useEffect } from 'react';
 import { TabType, CategorySuggestion, AnomalyResult, Product, Almacen } from '@/types';
 import { useInventoryStore } from '@/store';
@@ -142,21 +139,55 @@ export default function HomePage() {
     return getStockAlerts(products, predictions);
   }, [products, predictions]);
 
-  // Dashboard stats
+  // Dashboard stats - ACTUALIZADO
   const stats = useMemo(() => {
-    const totalValue = products.reduce((sum, p) => sum + p.precio * p.stock, 0);
-    const totalItems = products.reduce((sum, p) => sum + p.stock, 0);
+    const activeProducts = products.length;
     const lowStockCount = products.filter((p) => p.stock <= p.stockMinimo).length;
     const today = new Date();
     const todayMovements = movements.filter(
       (m) => new Date(m.timestamp).toDateString() === today.toDateString()
     ).length;
 
+    // Calcular rotación promedio (días de inventario)
+    // Fórmula: Stock actual / Consumo diario promedio
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const salesLast30Days = movements
+      .filter(m => m.tipo === 'salida' && new Date(m.timestamp) >= thirtyDaysAgo)
+      .reduce((sum, m) => sum + m.cantidad, 0);
+    
+    const dailyAvgSales = salesLast30Days / 30;
+    const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
+    const avgRotation = dailyAvgSales > 0 ? Math.round(totalStock / dailyAvgSales) : 0;
+
     return [
-      { label: t('dashboard.totalValue'), value: formatCurrency(totalValue), icon: <DollarSign size={24} />, color: 'emerald' },
-      { label: t('dashboard.itemsInStock'), value: formatNumber(totalItems), icon: <Box size={24} />, color: 'cyan' },
-      { label: t('dashboard.lowStock'), value: lowStockCount.toString(), icon: <AlertTriangle size={24} />, color: lowStockCount > 0 ? 'amber' : 'slate' },
-      { label: t('dashboard.movementsToday'), value: todayMovements.toString(), icon: <ArrowLeftRight size={24} />, color: 'purple' },
+      { 
+        label: t('dashboard.activeProducts', 'Productos Activos'), 
+        value: formatNumber(activeProducts), 
+        icon: <Package size={24} />, 
+        color: 'emerald',
+        subtitle: 'SKUs en catálogo'
+      },
+      { 
+        label: t('dashboard.avgRotation', 'Rotación Promedio'), 
+        value: avgRotation > 0 ? `${avgRotation}d` : '—', 
+        icon: <TrendingUp size={24} />, 
+        color: 'cyan',
+        subtitle: t('dashboard.daysOfInventory', 'días de inventario')
+      },
+      { 
+        label: t('dashboard.lowStock', 'Stock Bajo'), 
+        value: lowStockCount.toString(), 
+        icon: <AlertTriangle size={24} />, 
+        color: lowStockCount > 0 ? 'amber' : 'slate' 
+      },
+      { 
+        label: t('dashboard.movementsToday', 'Movimientos Hoy'), 
+        value: todayMovements.toString(), 
+        icon: <ArrowLeftRight size={24} />, 
+        color: 'purple' 
+      },
     ];
   }, [products, movements, t]);
 
@@ -330,55 +361,44 @@ export default function HomePage() {
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             {/* Welcome Header */}
-            <WelcomeHeader 
-              userName={user?.nombre || user?.email?.split('@')[0]} 
-              subtitle={t('dashboard.welcomeSubtitle')}
-            />
+            <WelcomeHeader userName={user?.nombre || user?.email?.split('@')[0]} />
 
             {/* Stats */}
             <StatsGrid stats={stats} />
 
-            {/* Health + Quick Actions Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2">
-                <InventoryHealth 
-                  healthy={products.filter(p => p.stock > p.stockMinimo).length}
-                  warning={products.filter(p => p.stock <= p.stockMinimo && p.stock > 0).length}
-                  critical={products.filter(p => p.stock === 0).length}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <QuickActionCard
-                  title={t('dashboard.registerMovement')}
-                  description={t('dashboard.entryOrExit')}
-                  icon={<ArrowLeftRight size={28} />}
-                  onClick={() => setShowNewMovement(true)}
-                  color="emerald"
-                />
-                <QuickActionCard
-                  title={t('dashboard.newProduct')}
-                  description={t('dashboard.addToCatalog')}
-                  icon={<Plus size={28} />}
-                  onClick={() => setShowNewProduct(true)}
-                  color="purple"
-                />
-              </div>
+            {/* Enterprise Panels Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <InventoryValueCard 
+                products={products}
+                movements={movements}
+                onCategoryClick={(category) => {
+                  setSelectedCategory(category);
+                  setActiveTab('stock');
+                }}
+              />
+              <StockAlertsPanel 
+                products={products}
+                predictions={predictions}
+                onProductClick={(product) => handleOpenEdit(product)}
+                onCreatePurchaseOrder={(productsAtRisk) => {
+                  setActiveTab('compras');
+                }}
+              />
             </div>
 
-            {/* Alerts */}
-            {stockAlerts.length > 0 && (
-              <Card variant="gradient">
-                <h3 className="text-sm font-semibold text-amber-400 mb-4 flex items-center gap-2">
-                  <Bot size={18} /> {t('dashboard.smartAlerts')}
-                </h3>
-                <AlertList products={stockAlerts} predictions={predictions} maxItems={100} />
-              </Card>
-            )}
-
-            {/* Consumption Chart */}
-            <Card>
-              <ConsumptionChart movements={movements} products={products} />
-            </Card>
+            {/* Activity + Chart Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2">
+                <Card>
+                  <ConsumptionChart movements={movements} products={products} />
+                </Card>
+              </div>
+              <RecentActivityPanel 
+                movements={movements}
+                products={products}
+                maxItems={8}
+              />
+            </div>
 
             {/* AI Panels */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
