@@ -88,9 +88,9 @@ export async function safeQuery<T>(
   options: QueryOptions = {}
 ): Promise<SafeQueryResult<T>> {
   const {
-    timeout = 10000,
-    retries = 1,
-    retryDelay = 1000,
+    timeout = 30000,
+    retries = 2,
+    retryDelay = 2000,
   } = options;
 
   let lastError: SafeQueryError | null = null;
