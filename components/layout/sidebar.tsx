@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { TabType } from '@/types';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ArrowLeftRight, 
+import {
+  LayoutDashboard,
+  Package,
+  ArrowLeftRight,
   Brain,
   ShoppingCart,
   TrendingUp,
@@ -24,7 +24,12 @@ import {
   User,
   Settings,
   Sparkles,
-  LucideIcon
+  LucideIcon,
+  QrCode,
+  GitBranch,
+  RotateCcw,
+  Boxes,
+  Wrench
 } from 'lucide-react';
 import { LanguageSelector } from '@/components/ui/language-selector';
 
@@ -98,6 +103,16 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'analytics', label: t('nav.analytics'), icon: Brain, badge: 'IA' },
         { id: 'reportes', label: t('nav.reports'), icon: FileText, permission: 'canViewReports' },
         { id: 'costos', label: t('nav.costs'), icon: DollarSign, permission: 'canViewCosts' },
+      ]
+    },
+    {
+      title: 'Trazabilidad Enterprise',
+      items: [
+        { id: 'seriales', label: 'Seriales', icon: QrCode, badge: 'NEW' },
+        { id: 'trazabilidad', label: 'Trazabilidad', icon: GitBranch, badge: 'NEW' },
+        { id: 'rma', label: 'Devoluciones (RMA)', icon: RotateCcw, badge: 'NEW' },
+        { id: 'bom', label: 'BOM', icon: Boxes },
+        { id: 'ensamblajes', label: 'Ensamblajes', icon: Wrench },
       ]
     },
     {
