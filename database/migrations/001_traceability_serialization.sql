@@ -476,11 +476,7 @@ ALTER TABLE lotes ADD COLUMN IF NOT EXISTS certificados JSONB; -- {tipo: "COA", 
 ALTER TABLE lotes ADD COLUMN IF NOT EXISTS fecha_fabricacion DATE;
 ALTER TABLE lotes ADD COLUMN IF NOT EXISTS fecha_caducidad DATE;
 ALTER TABLE lotes ADD COLUMN IF NOT EXISTS dias_hasta_caducidad INTEGER GENERATED ALWAYS AS (
-    CASE
-        WHEN fecha_caducidad IS NOT NULL
-        THEN EXTRACT(DAY FROM (fecha_caducidad - CURRENT_DATE))
-        ELSE NULL
-    END
+    fecha_caducidad - CURRENT_DATE
 ) STORED;
 ALTER TABLE lotes ADD COLUMN IF NOT EXISTS estado_calidad VARCHAR(20) DEFAULT 'aprobado';
 -- Estados: cuarentena, aprobado, rechazado, vencido
