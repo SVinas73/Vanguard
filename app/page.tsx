@@ -21,6 +21,8 @@ import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadg
 import SerialManagement from '@/components/serialization/SerialManagement';
 import TraceabilityViewer from '@/components/traceability/TraceabilityViewer';
 import RMADashboard from '@/components/rma/RMADashboard';
+import BOMManager from '@/components/bom/BOMManager';
+import AssemblyDashboard from '@/components/assembly/AssemblyDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -562,22 +564,14 @@ export default function HomePage() {
         {/* ==================== BOM (BILL OF MATERIALS) ==================== */}
         {activeTab === 'bom' && (
           <div className="max-w-7xl mx-auto">
-            <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg p-6 mb-4">
-              <h3 className="text-xl font-bold text-white mb-2">Bill of Materials (BOM)</h3>
-              <p className="text-gray-300">Gestión de listas de materiales y componentes para productos ensamblados.</p>
-              <p className="text-sm text-gray-400 mt-2">Componente en desarrollo - Próximamente disponible</p>
-            </div>
+            <BOMManager />
           </div>
         )}
 
         {/* ==================== ENSAMBLAJES ==================== */}
         {activeTab === 'ensamblajes' && (
           <div className="max-w-7xl mx-auto">
-            <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-lg p-6 mb-4">
-              <h3 className="text-xl font-bold text-white mb-2">Ensamblajes y Producción</h3>
-              <p className="text-gray-300">Control de procesos de ensamblaje, desensamblaje y producción.</p>
-              <p className="text-sm text-gray-400 mt-2">Componente en desarrollo - Próximamente disponible</p>
-            </div>
+            <AssemblyDashboard />
           </div>
         )}
         </div>
