@@ -475,9 +475,8 @@ ALTER TABLE lotes ADD COLUMN IF NOT EXISTS pais_origen VARCHAR(100);
 ALTER TABLE lotes ADD COLUMN IF NOT EXISTS certificados JSONB; -- {tipo: "COA", url: "...", fecha_emision: "..."}
 ALTER TABLE lotes ADD COLUMN IF NOT EXISTS fecha_fabricacion DATE;
 ALTER TABLE lotes ADD COLUMN IF NOT EXISTS fecha_caducidad DATE;
-ALTER TABLE lotes ADD COLUMN IF NOT EXISTS dias_hasta_caducidad INTEGER GENERATED ALWAYS AS (
-    fecha_caducidad - CURRENT_DATE
-) STORED;
+-- La columna dias_hasta_caducidad se calcula dinámicamente mediante vista
+-- No se puede usar como columna generada porque CURRENT_DATE no es inmutable
 ALTER TABLE lotes ADD COLUMN IF NOT EXISTS estado_calidad VARCHAR(20) DEFAULT 'aprobado';
 -- Estados: cuarentena, aprobado, rechazado, vencido
 ALTER TABLE lotes ADD COLUMN IF NOT EXISTS inspeccionado_por VARCHAR(255);
