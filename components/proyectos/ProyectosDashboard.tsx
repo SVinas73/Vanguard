@@ -73,7 +73,7 @@ export function ProyectosDashboard() {
   // ============================================
   
   const [vistaActual, setVistaActual] = useState<VistaProyecto>('kanban');
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'actividad' | 'calendario'>('actividad');
 
   // ============================================
@@ -1098,8 +1098,13 @@ export function ProyectosDashboard() {
             {/* Toggle sidebar */}
             <button
               onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
-              title={showSidebar ? 'Ocultar panel' : 'Mostrar panel'}
+              className={cn(
+                'p-2 rounded-lg transition-colors',
+                showSidebar 
+                  ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              )}
+              title={showSidebar ? 'Ocultar panel (clic para cerrar)' : 'Mostrar panel de actividad'}
             >
               {showSidebar ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
             </button>
