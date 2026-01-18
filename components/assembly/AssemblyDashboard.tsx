@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Wrench, Plus, RefreshCw, Play, CheckCircle, Clock, Package } from 'lucide-react';
-import { useSupabaseStore } from '@/store/supabase-store';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import { validarDisponibilidadComponentes, ejecutarEnsamblaje } from '@/lib/assembly-utils';
 
 export default function AssemblyDashboard() {
-  const supabase = useSupabaseStore((state) => state.supabase);
-  const usuario = useSupabaseStore((state) => state.user);
+  const { user: usuario } = useAuth();
 
   const [ensamblajes, setEnsamblajes] = useState<any[]>([]);
   const [boms, setBoms] = useState<any[]>([]);

@@ -6,7 +6,7 @@ import {
   CheckCircle, AlertCircle, Clock, FileText, Download,
   Thermometer, Droplets, Eye, RefreshCw, Search
 } from 'lucide-react';
-import { useSupabaseStore } from '@/store/supabase-store';
+import { supabase } from '@/lib/supabase';
 import { EventoTrazabilidad, CadenaTrazabilidad } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -24,7 +24,6 @@ export default function TraceabilityViewer({
   loteId,
   onClose
 }: TraceabilityViewerProps) {
-  const supabase = useSupabaseStore((state) => state.supabase);
 
   const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState<EventoTrazabilidad[]>([]);

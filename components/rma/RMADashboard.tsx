@@ -112,12 +112,14 @@ export default function RMADashboard() {
   };
 
   const getEstadoColor = (estado: EstadoRMA) => {
-    const colors = {
+    const colors: Record<EstadoRMA, string> = {
       solicitada: 'bg-yellow-100 text-yellow-800',
       aprobada: 'bg-blue-100 text-blue-800',
       rechazada: 'bg-red-100 text-red-800',
       en_transito: 'bg-purple-100 text-purple-800',
       recibida: 'bg-green-100 text-green-800',
+      inspeccionada: 'bg-cyan-100 text-cyan-800',      // ← AGREGADO
+      procesada: 'bg-indigo-100 text-indigo-800',      // ← AGREGADO
       completada: 'bg-gray-100 text-gray-800',
       cancelada: 'bg-gray-100 text-gray-800',
     };
