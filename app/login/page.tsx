@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,21 +24,36 @@ export default function LoginPage() {
 
     try {
       if (isLogin) {
-        // Login
-        const { error } = await supabase.auth.signInWithPassword({
+        // Login con NextAuth
+        const result = await signIn('credentials', {
           email,
           password,
+          redirect: false,
         });
-        if (error) throw error;
+
+        if (result?.error) {
+          throw new Error(result.error);
+        }
+
         router.push('/');
+        router.refresh();
       } else {
         // Registro
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, name }),
         });
-        if (error) throw error;
-        setMessage('¡Registro exitoso! Revisá tu email para confirmar la cuenta.');
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Error en el registro');
+        }
+
+        setMessage('¡Registro exitoso! Ahora podés iniciar sesión.');
+        setIsLogin(true);
+        setPassword('');
       }
     } catch (err: any) {
       setError(err.message || 'Ocurrió un error');
@@ -52,7 +68,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold">
-            Stock<span className="text-emerald-400">Control</span>
+            <span className="text-emerald-400">Vanguard</span>
           </h1>
           <p className="text-slate-500 text-sm mt-1">Sistema de Gestión de Inventarios</p>
         </div>
@@ -65,6 +81,20 @@ export default function LoginPage() {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Name (solo en registro) */}
+            {!isLogin && (
+              <div className="space-y-1">
+                <label className="block text-sm text-slate-400">Nombre</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+                  placeholder="Tu nombre"
+                />
+              </div>
+            )}
+
             {/* Email */}
             <div className="space-y-1">
               <label className="block text-sm text-slate-400">Email</label>

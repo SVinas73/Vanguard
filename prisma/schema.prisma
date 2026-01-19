@@ -1,0 +1,458 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// AUTENTICACIÓN (NextAuth)
+// ============================================
+
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified")
+  password      String?
+  image         String?
+  role          String    @default("operador")
+  
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  accounts Account[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime @db.Timestamptz(6)
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime @db.Timestamptz(6)
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// ALMACENES
+// ============================================
+
+model Almacen {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  codigo      String   @unique
+  nombre      String
+  direccion   String?  @db.Text
+  ciudad      String?
+  telefono    String?
+  responsable String?
+  esPrincipal Boolean  @default(false) @map("es_principal")
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  productos            Producto[]
+  transferenciasOrigen Transferencia[] @relation("AlmacenOrigen")
+  transferenciasDestino Transferencia[] @relation("AlmacenDestino")
+  ensamblajes          Ensamblaje[]
+  rmas                 Rma[]
+  seriales             ProductoSerial[]
+
+  @@map("almacenes")
+}
+
+// ============================================
+// PRODUCTOS
+// ============================================
+
+model Producto {
+  id             Int      @id @default(autoincrement())
+  codigo         String   @unique
+  descripcion    String
+  precio         Decimal  @db.Decimal(10, 2)
+  categoria      String
+  stock          Int      @default(0)
+  stockMinimo    Int      @default(5) @map("stock_minimo")
+  costoPromedio  Decimal? @db.Decimal(10, 2) @map("costo_promedio")
+  almacenId      String?  @map("almacen_id") @db.Uuid
+  imagenUrl      String?  @map("imagen_url")
+  
+  requiereSerial Boolean  @default(false) @map("requiere_serial")
+  patronSerial   String?  @map("patron_serial")
+  
+  creadoPor      String   @map("creado_por")
+  createdAt      DateTime @default(now()) @map("creado_at") @db.Timestamptz(6)
+  actualizadoPor String?  @map("actualizado_por")
+  updatedAt      DateTime @default(now()) @updatedAt @map("actualizado_at") @db.Timestamptz(6)
+
+  almacen     Almacen?         @relation(fields: [almacenId], references: [id])
+  movimientos Movimiento[]
+  lotes       Lote[]
+  imagenes    ImagenProducto[]
+  seriales    ProductoSerial[]
+  boms        Bom[]
+  ensamblajes Ensamblaje[]
+
+  @@map("productos")
+}
+
+// ============================================
+// MOVIMIENTOS
+// ============================================
+
+model Movimiento {
+  id           Int      @id @default(autoincrement())
+  productoId   Int      @map("producto_id")
+  codigo       String
+  tipo         String   // 'entrada' | 'salida'
+  cantidad     Int
+  costoCompra  Decimal? @db.Decimal(10, 2) @map("costo_compra")
+  notas        String?  @db.Text
+  usuarioEmail String   @map("usuario_email")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@map("movimientos")
+}
+
+// ============================================
+// LOTES
+// ============================================
+
+model Lote {
+  id                  Int      @id @default(autoincrement())
+  productoId          Int      @map("producto_id")
+  codigo              String
+  cantidadInicial     Int      @map("cantidad_inicial")
+  cantidadDisponible  Int      @map("cantidad_disponible")
+  costoUnitario       Decimal  @db.Decimal(10, 2) @map("costo_unitario")
+  fechaCompra         DateTime @default(now()) @map("fecha_compra") @db.Timestamptz(6)
+  usuario             String?
+  notas               String?  @db.Text
+
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@map("lotes")
+}
+
+// ============================================
+// AUDITORÍA
+// ============================================
+
+model Auditoria {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tabla            String
+  accion           String
+  codigo           String?
+  datosAnteriores  Json?    @map("datos_anteriores") @db.JsonB
+  datosNuevos      Json?    @map("datos_nuevos") @db.JsonB
+  usuarioEmail     String?  @map("usuario_email")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("auditoria")
+}
+
+// ============================================
+// CLIENTES
+// ============================================
+
+model Cliente {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  codigo          String   @unique
+  tipo            String   @default("persona")
+  nombre          String
+  rut             String?
+  email           String?
+  telefono        String?
+  direccion       String?  @db.Text
+  ciudad          String?
+  pais            String   @default("Uruguay")
+  notas           String?  @db.Text
+  limiteCredito   Decimal  @default(0) @map("limite_credito") @db.Decimal(10, 2)
+  saldoPendiente  Decimal  @default(0) @map("saldo_pendiente") @db.Decimal(10, 2)
+  activo          Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  rmas Rma[]
+
+  @@map("clientes")
+}
+
+// ============================================
+// IMÁGENES DE PRODUCTOS
+// ============================================
+
+model ImagenProducto {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productoCodigo String   @map("producto_codigo")
+  url            String
+  esPrincipal    Boolean  @default(false) @map("es_principal")
+  orden          Int      @default(0)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  producto Producto @relation(fields: [productoCodigo], references: [codigo], onDelete: Cascade)
+
+  @@map("imagenes_productos")
+}
+
+// ============================================
+// TRANSFERENCIAS
+// ============================================
+
+model Transferencia {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  numero           String    @unique
+  almacenOrigenId  String    @map("almacen_origen_id") @db.Uuid
+  almacenDestinoId String    @map("almacen_destino_id") @db.Uuid
+  estado           String    @default("pendiente")
+  fechaSolicitud   DateTime  @default(now()) @map("fecha_solicitud")
+  fechaEnvio       DateTime? @map("fecha_envio")
+  fechaRecepcion   DateTime? @map("fecha_recepcion")
+  notas            String?   @db.Text
+  creadoPor        String    @map("creado_por")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  almacenOrigen  Almacen @relation("AlmacenOrigen", fields: [almacenOrigenId], references: [id])
+  almacenDestino Almacen @relation("AlmacenDestino", fields: [almacenDestinoId], references: [id])
+
+  @@map("transferencias")
+}
+
+// ============================================
+// SERIALES
+// ============================================
+
+model ProductoSerial {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productoCodigo    String    @map("producto_codigo")
+  numeroSerie       String    @unique @map("numero_serie")
+  estado            String    @default("disponible")
+  almacenId         String?   @map("almacen_id") @db.Uuid
+  ubicacion         String?
+  fechaRecepcion    DateTime? @map("fecha_recepcion")
+  costoAdquisicion  Decimal?  @db.Decimal(10, 2) @map("costo_adquisicion")
+  clienteId         String?   @map("cliente_id") @db.Uuid
+  fechaVenta        DateTime? @map("fecha_venta")
+  precioVenta       Decimal?  @db.Decimal(10, 2) @map("precio_venta")
+  notas             String?   @db.Text
+  creadoPor         String?   @map("creado_por")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  producto Producto @relation(fields: [productoCodigo], references: [codigo], onDelete: Cascade)
+  almacen  Almacen?  @relation(fields: [almacenId], references: [id])
+
+  @@map("productos_seriales")
+}
+
+// ============================================
+// TRAZABILIDAD
+// ============================================
+
+model EventoTrazabilidad {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productoCodigo       String    @map("producto_codigo")
+  serialId             String?   @map("serial_id") @db.Uuid
+  loteId               Int?      @map("lote_id")
+  tipoEvento           String    @map("tipo_evento")
+  descripcion          String?   @db.Text
+  resultado            String    @default("EXITOSO")
+  almacenOrigenId      String?   @map("almacen_origen_id") @db.Uuid
+  almacenDestinoId     String?   @map("almacen_destino_id") @db.Uuid
+  cantidad             Int?
+  documentoTipo        String?   @map("documento_tipo")
+  documentoNumero      String?   @map("documento_numero")
+  usuarioResponsable   String?   @map("usuario_responsable")
+  metadata             Json?     @db.JsonB
+  fechaHora            DateTime  @default(now()) @map("fecha_hora") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("eventos_trazabilidad")
+}
+
+// ============================================
+// RMA
+// ============================================
+
+model Rma {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  numero                 String    @unique
+  clienteId              String    @map("cliente_id") @db.Uuid
+  estado                 String    @default("solicitada")
+  tipo                   String
+  motivo                 String    @db.Text
+  resolucionEsperada     String?   @map("resolucion_esperada")
+  resolucionFinal        String?   @map("resolucion_final")
+  almacenId              String?   @map("almacen_id") @db.Uuid
+  valorProductos         Decimal?  @db.Decimal(10, 2) @map("valor_productos")
+  montoReembolso         Decimal?  @db.Decimal(10, 2) @map("monto_reembolso")
+  fechaSolicitud         DateTime  @default(now()) @map("fecha_solicitud")
+  fechaAprobacion        DateTime? @map("fecha_aprobacion")
+  fechaCompletado        DateTime? @map("fecha_completado")
+  inspeccionadoPor       String?   @map("inspeccionado_por")
+  resultadoInspeccion    String?   @map("resultado_inspeccion")
+  notasInspeccion        String?   @db.Text @map("notas_inspeccion")
+  notas                  String?   @db.Text
+  creadoPor              String    @map("creado_por")
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  cliente Cliente  @relation(fields: [clienteId], references: [id])
+  almacen Almacen? @relation(fields: [almacenId], references: [id])
+
+  @@map("rmas")
+}
+
+// ============================================
+// BOM (Bill of Materials)
+// ============================================
+
+model Bom {
+  id                        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productoCodigo            String    @map("producto_codigo")
+  version                   String    @default("1.0")
+  nombre                    String?
+  descripcion               String?   @db.Text
+  estado                    String    @default("borrador")
+  tipo                      String    @default("produccion")
+  cantidadBase              Decimal   @default(1) @map("cantidad_base") @db.Decimal(10, 2)
+  unidadBase                String?   @map("unidad_base")
+  costoMateriales           Decimal?  @db.Decimal(10, 2) @map("costo_materiales")
+  costoManoObra             Decimal?  @db.Decimal(10, 2) @map("costo_mano_obra")
+  costoOverhead             Decimal?  @db.Decimal(10, 2) @map("costo_overhead")
+  costoTotal                Decimal?  @db.Decimal(10, 2) @map("costo_total")
+  tiempoSetupMinutos        Int?      @map("tiempo_setup_minutos")
+  tiempoEnsamblajeMinutos   Int?      @map("tiempo_ensamblaje_minutos")
+  requiereAprobacion        Boolean   @default(false) @map("requiere_aprobacion")
+  aprobadoPor               String?   @map("aprobado_por")
+  fechaAprobacion           DateTime? @map("fecha_aprobacion")
+  fechaInicioVigencia       DateTime? @map("fecha_inicio_vigencia")
+  fechaFinVigencia          DateTime? @map("fecha_fin_vigencia")
+  notas                     String?   @db.Text
+  instruccionesEnsamblaje   String?   @db.Text @map("instrucciones_ensamblaje")
+  diagramas                 Json?     @db.JsonB
+  esPrincipal               Boolean   @default(true) @map("es_principal")
+  creadoPor                 String?   @map("creado_por")
+  actualizadoPor            String?   @map("actualizado_por")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  producto    Producto     @relation(fields: [productoCodigo], references: [codigo], onDelete: Cascade)
+  items       BomItem[]
+  ensamblajes Ensamblaje[]
+
+  @@map("bom")
+}
+
+model BomItem {
+  id                         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bomId                      String   @map("bom_id") @db.Uuid
+  componenteCodigo           String   @map("componente_codigo")
+  componenteDescripcion      String?  @map("componente_descripcion")
+  cantidad                   Decimal  @db.Decimal(10, 3)
+  unidadMedida               String?  @map("unidad_medida")
+  cantidadDesperdicio        Decimal  @default(0) @map("cantidad_desperdicio") @db.Decimal(10, 3)
+  secuencia                  Int?
+  nivel                      Int      @default(1)
+  esCritico                  Boolean  @default(false) @map("es_critico")
+  componenteAlternativoCodigo String? @map("componente_alternativo_codigo")
+  puedeSustituir             Boolean  @default(false) @map("puede_sustituir")
+  costoUnitario              Decimal? @db.Decimal(10, 2) @map("costo_unitario")
+  costoTotal                 Decimal? @db.Decimal(10, 2) @map("costo_total")
+  referencia                 String?
+  posicion                   String?
+  notas                      String?  @db.Text
+  instrucciones              String?  @db.Text
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  bom Bom @relation(fields: [bomId], references: [id], onDelete: Cascade)
+
+  @@map("bom_items")
+}
+
+// ============================================
+// ENSAMBLAJES
+// ============================================
+
+model Ensamblaje {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  numero                  String    @unique
+  bomId                   String    @map("bom_id") @db.Uuid
+  productoCodigo          String    @map("producto_codigo")
+  productoDescripcion     String?   @map("producto_descripcion")
+  tipo                    String    @default("ensamblaje")
+  cantidadPlanificada     Decimal   @map("cantidad_planificada") @db.Decimal(10, 2)
+  cantidadProducida       Decimal?  @map("cantidad_producida") @db.Decimal(10, 2)
+  cantidadAprobada        Decimal?  @map("cantidad_aprobada") @db.Decimal(10, 2)
+  cantidadRechazada       Decimal?  @map("cantidad_rechazada") @db.Decimal(10, 2)
+  unidadMedida            String?   @map("unidad_medida")
+  estado                  String    @default("planificado")
+  almacenId               String    @map("almacen_id") @db.Uuid
+  ubicacionTrabajo        String?   @map("ubicacion_trabajo")
+  ubicacionDestino        String?   @map("ubicacion_destino")
+  fechaPlanificada        DateTime? @map("fecha_planificada")
+  fechaInicio             DateTime? @map("fecha_inicio")
+  fechaFin                DateTime? @map("fecha_fin")
+  duracionRealMinutos     Int?      @map("duracion_real_minutos")
+  supervisor              String?
+  requiereInspeccion      Boolean   @default(false) @map("requiere_inspeccion")
+  inspeccionadoPor        String?   @map("inspeccionado_por")
+  fechaInspeccion         DateTime? @map("fecha_inspeccion")
+  resultadoQc             String?   @map("resultado_qc")
+  notasQc                 String?   @db.Text @map("notas_qc")
+  costoMaterialesReal     Decimal?  @db.Decimal(10, 2) @map("costo_materiales_real")
+  costoManoObraReal       Decimal?  @db.Decimal(10, 2) @map("costo_mano_obra_real")
+  costoOverheadReal       Decimal?  @db.Decimal(10, 2) @map("costo_overhead_real")
+  costoTotalReal          Decimal?  @db.Decimal(10, 2) @map("costo_total_real")
+  serialesGenerados       String[]  @map("seriales_generados")
+  componentesConsumidos   Json?     @db.JsonB @map("componentes_consumidos")
+  notas                   String?   @db.Text
+  problemasEncontrados    String?   @db.Text @map("problemas_encontrados")
+  creadoPor               String?   @map("creado_por")
+  actualizadoPor          String?   @map("actualizado_por")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  bom      Bom      @relation(fields: [bomId], references: [id])
+  producto Producto @relation(fields: [productoCodigo], references: [codigo])
+  almacen  Almacen  @relation(fields: [almacenId], references: [id])
+
+  @@map("ensamblajes")
+}
