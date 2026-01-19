@@ -61,8 +61,8 @@ interface InventoryState {
 // CONFIGURACIÓN
 // ============================================
 
-const QUERY_TIMEOUT = 15000; // 15 segundos
-const QUERY_RETRIES = 1;    // 1 reintento
+const QUERY_TIMEOUT = 60000; // 15 segundos
+const QUERY_RETRIES = 3;    // 1 reintento
 
 // ============================================
 // HELPERS
@@ -87,7 +87,7 @@ async function registrarAuditoria(
         datos_nuevos: datosNuevos,
         usuario_email: usuarioEmail,
       }),
-      { timeout: 5000, retries: 0 } // Auditoría no es crítica, no reintentar
+      { timeout: 10000, retries: 0 } // Auditoría no es crítica, no reintentar
     );
   } catch (error) {
     console.error('Error registrando auditoría:', error);
@@ -337,7 +337,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     // Obtener datos actuales para auditoría
     const { data: currentProduct } = await safeQuery<any>(
       () => supabase.from('productos').select('*').eq('codigo', codigo).single(),
-      { timeout: 5000, retries: 0 }
+      { timeout: 15000, retries: 1 }  // ← Aumentar a 15 seg con 1 reintento
     );
 
     // Si se está cambiando el precio, guardar en historial
