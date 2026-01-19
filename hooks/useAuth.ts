@@ -50,8 +50,8 @@ export function useAuth(redirectIfNotAuth: boolean = true) {
           
           // Obtener el perfil con el rol desde Supabase
           const { data: profile } = await supabase
-            .from('perfiles')
-            .select('rol, nombre')
+            .from('users')
+            .select('rol, name')
             .eq('id', userId)
             .single();
 
@@ -59,7 +59,7 @@ export function useAuth(redirectIfNotAuth: boolean = true) {
             id: userId,
             email: session.user.email || '',
             rol: (profile?.rol as UserRole) || 'vendedor',
-            nombre: profile?.nombre || session.user.name || session.user.email || '',
+            nombre: profile?.name || session.user.name || session.user.email || '',
           };
 
           setUser(authUser);
