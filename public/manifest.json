@@ -1,17 +1,10 @@
 {
-  "name": "Vanguard - Gestión de Inventario",
+  "name": "Vanguard",
   "short_name": "Vanguard",
-  "description": "Sistema de gestión de inventario con IA",
+  "description": "Sistema de Gestión de Inventarios",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a1a",
+  "background_color": "#020617",
   "theme_color": "#10b981",
-  "orientation": "portrait-primary",
-  "icons": [
-    {
-      "src": "/favicon.ico",
-      "sizes": "any",
-      "type": "image/x-icon"
-    }
-  ]
+  "icons": []
 }

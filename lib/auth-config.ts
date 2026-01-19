@@ -77,7 +77,29 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // Siempre redirigir a la página principal después del login
+      console.log('🔀 Redirect callback:', { url, baseUrl });
+      
+      // Si viene de /login, ir a home
+      if (url.startsWith(baseUrl + '/login')) {
+        return baseUrl;
+      }
+      
+      // Si es una URL del mismo sitio, usarla
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      
+      // Si es relativa, usarla
+      if (url.startsWith('/')) {
+        return baseUrl + url;
+      }
+      
+      // Por defecto, ir a home
+      return baseUrl;
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: true, // 👈 Agrega esto para ver más logs en desarrollo
+  debug: true,
 };
