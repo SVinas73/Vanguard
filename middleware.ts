@@ -3,13 +3,11 @@ export { default } from "next-auth/middleware";
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - login (login page)
-     * - api/auth (auth endpoints)
+     * Proteger todas las rutas EXCEPTO:
+     * - Archivos estáticos (_next)
+     * - Archivos públicos (manifest, favicon, imágenes)
+     * - Rutas de autenticación (login, register, api/auth)
      */
-    '/((?!_next/static|_next/image|favicon.ico|login|api/auth).*)',
+    '/((?!_next|favicon.ico|manifest.json|.*\\..+|login|register|api/auth).*)',
   ],
 };
