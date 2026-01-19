@@ -24,32 +24,37 @@ export default function LoginPage() {
 
     try {
       if (isLogin) {
-        // Login con NextAuth
         console.log('🚀 Attempting login with:', { email });
         
         const result = await signIn('credentials', {
           email,
           password,
-          redirect: false, // IMPORTANTE: mantener en false
-          callbackUrl: '/', // URL de destino
+          redirect: false,
         });
 
         console.log('📥 SignIn result:', result);
 
         if (result?.error) {
           console.error('❌ Login error:', result.error);
-          throw new Error('Credenciales inválidas');
+          setError('Credenciales inválidas');
+          setLoading(false);
+          return;
         }
 
         if (!result?.ok) {
           console.error('⚠️ Login not OK:', result);
-          throw new Error('Error al iniciar sesión');
+          setError('Error al iniciar sesión');
+          setLoading(false);
+          return;
         }
 
         console.log('✅ Login successful, redirecting...');
         
-        // Redirección forzada
-        window.location.href = '/'; // Usamos window.location en vez de router.push
+        // Pequeño delay para asegurar que la sesión se guarde
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Redirección completa con recarga
+        window.location.href = '/';
         
       } else {
         // Registro
@@ -71,13 +76,13 @@ export default function LoginPage() {
         setMessage('¡Registro exitoso! Ahora podés iniciar sesión.');
         setIsLogin(true);
         setPassword('');
+        setLoading(false);
       }
     } catch (err: any) {
       console.error('💥 Caught error:', err);
       setError(err.message || 'Ocurrió un error');
-      setLoading(false); // Solo setear loading false si hay error
+      setLoading(false);
     }
-    // NO ponemos finally aquí porque la redirección lo maneja
   };
 
   return (
@@ -110,6 +115,7 @@ export default function LoginPage() {
                   className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
                   placeholder="Tu nombre"
                   required={!isLogin}
+                  disabled={loading}
                 />
               </div>
             )}
@@ -126,6 +132,7 @@ export default function LoginPage() {
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
                   placeholder="tu@email.com"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -143,11 +150,13 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   required
                   minLength={6}
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  disabled={loading}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -189,7 +198,8 @@ export default function LoginPage() {
                 setError('');
                 setMessage('');
               }}
-              className="ml-2 text-emerald-400 hover:underline"
+              disabled={loading}
+              className="ml-2 text-emerald-400 hover:underline disabled:opacity-50"
             >
               {isLogin ? 'Registrate' : 'Iniciá sesión'}
             </button>
