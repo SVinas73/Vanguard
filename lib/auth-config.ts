@@ -42,6 +42,8 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
+          console.log('👤 User role:', user.role); // Log adicional para ver el rol
+
           return {
             id: user.id,
             email: user.email,
@@ -63,17 +65,38 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      // En el primer login, guardar el rol del usuario
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        console.log('💾 JWT created with role:', token.role); // Log del rol en JWT
       }
+      
+      // Opcional: Revalidar rol en cada request (descomentar si querés actualizaciones automáticas)
+      // ADVERTENCIA: Esto hace una query a Supabase en cada request, puede impactar performance
+      /*
+      if (token.email && trigger === 'update') {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('email', token.email)
+          .single();
+        
+        if (userData) {
+          token.role = userData.role;
+          console.log('🔄 Role updated in JWT:', token.role);
+        }
+      }
+      */
+      
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        console.log('📋 Session created with role:', token.role); // Log del rol en sesión
       }
       return session;
     },
