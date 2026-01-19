@@ -30,6 +30,7 @@ interface InventoryState {
   loadingStatus: LoadingStatus;
   error: string | null;
   isOffline: boolean;
+  isInitialized: boolean;
   
   // Actions - Products
   fetchProducts: () => Promise<void>;
@@ -61,8 +62,8 @@ interface InventoryState {
 // CONFIGURACIÓN
 // ============================================
 
-const QUERY_TIMEOUT = 60000; // 15 segundos
-const QUERY_RETRIES = 3;    // 1 reintento
+const QUERY_TIMEOUT = 60000; // 60 segundos
+const QUERY_RETRIES = 3;    // 3 reintentos
 
 // ============================================
 // HELPERS
@@ -113,6 +114,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
   loadingStatus: 'idle',
   error: null,
   isOffline: false,
+  isInitialized: false,
 
   // ============================================
   // FETCH PRODUCTS
@@ -128,7 +130,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           products: cachedProducts, 
           isLoading: false, 
           loadingStatus: 'offline',
-          isOffline: true 
+          isOffline: true,
+          isInitialized: true
         });
         get().refreshPredictions();
         return;
@@ -137,7 +140,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         isLoading: false, 
         loadingStatus: 'offline', 
         error: 'Sin conexión a internet',
-        isOffline: true 
+        isOffline: true,
+        isInitialized: true
       });
       return;
     }
@@ -163,14 +167,16 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           isLoading: false, 
           loadingStatus: 'timeout',
           error: 'La conexión está lenta. Mostrando datos guardados.',
-          isOffline: true 
+          isOffline: true,
+          isInitialized: true
         });
         get().refreshPredictions();
       } else {
         set({ 
           isLoading: false, 
           loadingStatus: 'timeout', 
-          error: 'Tiempo de espera agotado. Verificá tu conexión.' 
+          error: 'Tiempo de espera agotado. Verificá tu conexión.',
+          isInitialized: true
         });
       }
       return;
@@ -185,14 +191,16 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           isLoading: false, 
           loadingStatus: 'error',
           error: error.message,
-          isOffline: true 
+          isOffline: true,
+          isInitialized: true
         });
         get().refreshPredictions();
       } else {
         set({ 
           isLoading: false, 
           loadingStatus: 'error', 
-          error: error.message 
+          error: error.message,
+          isInitialized: true
         });
       }
       return;
@@ -234,7 +242,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       isLoading: false, 
       loadingStatus: 'success',
       isOffline: false,
-      error: null 
+      error: null,
+      isInitialized: true
     });
     cacheProducts(products);
     get().refreshPredictions();
@@ -337,7 +346,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     // Obtener datos actuales para auditoría
     const { data: currentProduct } = await safeQuery<any>(
       () => supabase.from('productos').select('*').eq('codigo', codigo).single(),
-      { timeout: 15000, retries: 1 }  // ← Aumentar a 15 seg con 1 reintento
+      { timeout: 15000, retries: 1 }
     );
 
     // Si se está cambiando el precio, guardar en historial
@@ -462,7 +471,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           movements: cachedMovements, 
           isLoading: false, 
           loadingStatus: 'offline',
-          isOffline: true 
+          isOffline: true,
+          isInitialized: true
         });
         get().refreshPredictions();
         return;
@@ -471,7 +481,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         isLoading: false, 
         loadingStatus: 'offline', 
         error: 'Sin conexión a internet',
-        isOffline: true 
+        isOffline: true,
+        isInitialized: true
       });
       return;
     }
@@ -493,14 +504,16 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           isLoading: false, 
           loadingStatus: 'timeout',
           error: 'La conexión está lenta. Mostrando datos guardados.',
-          isOffline: true 
+          isOffline: true,
+          isInitialized: true
         });
         get().refreshPredictions();
       } else {
         set({ 
           isLoading: false, 
           loadingStatus: 'timeout', 
-          error: 'Tiempo de espera agotado. Verificá tu conexión.' 
+          error: 'Tiempo de espera agotado. Verificá tu conexión.',
+          isInitialized: true
         });
       }
       return;
@@ -515,14 +528,16 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           isLoading: false, 
           loadingStatus: 'error',
           error: error.message,
-          isOffline: true 
+          isOffline: true,
+          isInitialized: true
         });
         get().refreshPredictions();
       } else {
         set({ 
           isLoading: false, 
           loadingStatus: 'error', 
-          error: error.message 
+          error: error.message,
+          isInitialized: true
         });
       }
       return;
@@ -544,7 +559,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       isLoading: false, 
       loadingStatus: 'success',
       isOffline: false,
-      error: null 
+      error: null,
+      isInitialized: true
     });
     cacheMovements(movements);
     get().refreshPredictions();
@@ -864,3 +880,17 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     ]);
   },
 }));
+
+// ============================================
+// AUTO-CARGAR DATOS AL INICIALIZAR
+// ============================================
+if (typeof window !== 'undefined') {
+  // Auto-cargar datos cuando se inicializa el store
+  const store = useInventoryStore.getState();
+  Promise.all([
+    store.fetchProducts(),
+    store.fetchMovements(),
+  ]).catch(err => {
+    console.error('Error loading initial data:', err);
+  });
+}

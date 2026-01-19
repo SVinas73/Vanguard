@@ -18,11 +18,6 @@ import { ChatbotWidget } from '@/components/chatbot';
 import { ExecutiveDashboard } from '@/components/reports';
 import { QuickScanner } from '@/components/scanner';
 import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadge } from '@/components/ai';
-import SerialManagement from '@/components/serialization/SerialManagement';
-import TraceabilityViewer from '@/components/traceability/TraceabilityViewer';
-import RMADashboard from '@/components/rma/RMADashboard';
-import BOMManager from '@/components/bom/BOMManager';
-import AssemblyDashboard from '@/components/assembly/AssemblyDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -64,6 +59,7 @@ export default function HomePage() {
     predictions,
     isLoading: storeLoading,
     error: storeError,
+    isInitialized,
     addProduct,
     updateProduct,
     deleteProduct,
@@ -240,6 +236,33 @@ export default function HomePage() {
     console.error('Error de Supabase:', storeError);
   }
 
+  // POR ESTE:
+  // Mostrar loading mientras carga los datos del store
+  if (!isInitialized || storeLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="inline-flex h-12 w-12 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent"></div>
+          <div className="text-emerald-400">{t('common.loadingData', 'Cargando inventario...')}</div>
+          {storeError && (
+            <div className="text-red-400 text-sm max-w-md mx-auto mt-4">
+              {storeError}
+              <button 
+                onClick={() => {
+                  fetchProducts();
+                  fetchMovements();
+                }}
+                className="block mx-auto mt-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 rounded-lg text-slate-950 font-medium"
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   
 
   // ============================================
@@ -300,6 +323,7 @@ export default function HomePage() {
 
   // Edit product handler
   const handleEditProduct = () => {
+    console.log('handleEditProduct called', editProduct);
     if (!editProduct) return;
     updateProduct(editProduct.codigo, {
       descripcion: editProduct.descripcion,
@@ -537,41 +561,6 @@ export default function HomePage() {
         {activeTab === 'almacenes' && (
           <div className="max-w-5xl mx-auto">
             <AlmacenesDashboard products={products} userEmail={user?.email || ''} />
-          </div>
-        )}
-
-        {/* ==================== SERIALES ==================== */}
-        {activeTab === 'seriales' && (
-          <div className="max-w-7xl mx-auto">
-            <SerialManagement />
-          </div>
-        )}
-
-        {/* ==================== TRAZABILIDAD ==================== */}
-        {activeTab === 'trazabilidad' && (
-          <div className="max-w-7xl mx-auto">
-            <TraceabilityViewer />
-          </div>
-        )}
-
-        {/* ==================== RMA (DEVOLUCIONES) ==================== */}
-        {activeTab === 'rma' && (
-          <div className="max-w-7xl mx-auto">
-            <RMADashboard />
-          </div>
-        )}
-
-        {/* ==================== BOM (BILL OF MATERIALS) ==================== */}
-        {activeTab === 'bom' && (
-          <div className="max-w-7xl mx-auto">
-            <BOMManager />
-          </div>
-        )}
-
-        {/* ==================== ENSAMBLAJES ==================== */}
-        {activeTab === 'ensamblajes' && (
-          <div className="max-w-7xl mx-auto">
-            <AssemblyDashboard />
           </div>
         )}
         </div>
