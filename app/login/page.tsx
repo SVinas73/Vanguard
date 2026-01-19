@@ -25,20 +25,33 @@ export default function LoginPage() {
     try {
       if (isLogin) {
         // Login con NextAuth
+        console.log('🚀 Attempting login with:', { email }); // LOG 1
+        
         const result = await signIn('credentials', {
           email,
           password,
           redirect: false,
         });
 
+        console.log('📥 SignIn result:', result); // LOG 2
+
         if (result?.error) {
+          console.error('❌ Login error:', result.error); // LOG 3
           throw new Error(result.error);
         }
 
+        if (!result?.ok) {
+          console.error('⚠️ Login not OK:', result); // LOG 4
+          throw new Error('Credenciales inválidas');
+        }
+
+        console.log('✅ Login successful, redirecting...'); // LOG 5
         router.push('/');
         router.refresh();
       } else {
         // Registro
+        console.log('📝 Attempting registration with:', { email, name }); // LOG 6
+        
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -46,6 +59,7 @@ export default function LoginPage() {
         });
 
         const data = await res.json();
+        console.log('📥 Registration response:', data); // LOG 7
 
         if (!res.ok) {
           throw new Error(data.error || 'Error en el registro');
@@ -56,6 +70,7 @@ export default function LoginPage() {
         setPassword('');
       }
     } catch (err: any) {
+      console.error('💥 Caught error:', err); // LOG 8
       setError(err.message || 'Ocurrió un error');
     } finally {
       setLoading(false);
@@ -91,6 +106,7 @@ export default function LoginPage() {
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
                   placeholder="Tu nombre"
+                  required={!isLogin}
                 />
               </div>
             )}

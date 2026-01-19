@@ -12,22 +12,31 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        console.log('🔐 Login attempt:', credentials?.email);
+        
         if (!credentials?.email || !credentials?.password) {
+          console.log('❌ Missing credentials');
           return null;
         }
 
         try {
+          console.log('🔍 Searching user in Supabase...');
           const { data: user, error } = await supabase
             .from('users')
             .select('*')
             .eq('email', credentials.email)
             .single();
 
+          console.log('📊 Result:', { found: !!user, error: error?.message });
+
           if (error || !user || !user.password) {
+            console.log('❌ User not found');
             return null;
           }
 
+          console.log('🔑 Verifying password...');
           const isValid = await bcrypt.compare(credentials.password, user.password);
+          console.log('✅ Password valid:', isValid);
 
           if (!isValid) {
             return null;
@@ -40,7 +49,7 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
           };
         } catch (error) {
-          console.error('Auth error:', error);
+          console.error('💥 Auth error:', error);
           return null;
         }
       }
@@ -70,4 +79,5 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: true, // 👈 Agrega esto para ver más logs en desarrollo
 };
