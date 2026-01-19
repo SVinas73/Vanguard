@@ -51,14 +51,14 @@ export function useAuth(redirectIfNotAuth: boolean = true) {
           // Obtener el perfil con el rol desde Supabase
           const { data: profile } = await supabase
             .from('users')
-            .select('rol, name')
+            .select('role, name')
             .eq('id', userId)
             .single();
 
           const authUser: AuthUser = {
             id: userId,
             email: session.user.email || '',
-            rol: (profile?.rol as UserRole) || 'vendedor',
+            rol: (profile?.role as UserRole) || 'vendedor',
             nombre: profile?.name || session.user.name || session.user.email || '',
           };
 
