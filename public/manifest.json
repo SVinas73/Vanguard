@@ -1,7 +1,7 @@
 {
   "name": "Vanguard",
   "short_name": "Vanguard",
-  "description": "Sistema de Gestión de Inventarios",
+  "description": "Sistema de Gestion de Inventarios",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#020617",

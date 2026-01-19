@@ -25,32 +25,35 @@ export default function LoginPage() {
     try {
       if (isLogin) {
         // Login con NextAuth
-        console.log('🚀 Attempting login with:', { email }); // LOG 1
+        console.log('🚀 Attempting login with:', { email });
         
         const result = await signIn('credentials', {
           email,
           password,
-          redirect: false,
+          redirect: false, // IMPORTANTE: mantener en false
+          callbackUrl: '/', // URL de destino
         });
 
-        console.log('📥 SignIn result:', result); // LOG 2
+        console.log('📥 SignIn result:', result);
 
         if (result?.error) {
-          console.error('❌ Login error:', result.error); // LOG 3
-          throw new Error(result.error);
-        }
-
-        if (!result?.ok) {
-          console.error('⚠️ Login not OK:', result); // LOG 4
+          console.error('❌ Login error:', result.error);
           throw new Error('Credenciales inválidas');
         }
 
-        console.log('✅ Login successful, redirecting...'); // LOG 5
-        router.push('/');
-        router.refresh();
+        if (!result?.ok) {
+          console.error('⚠️ Login not OK:', result);
+          throw new Error('Error al iniciar sesión');
+        }
+
+        console.log('✅ Login successful, redirecting...');
+        
+        // Redirección forzada
+        window.location.href = '/'; // Usamos window.location en vez de router.push
+        
       } else {
         // Registro
-        console.log('📝 Attempting registration with:', { email, name }); // LOG 6
+        console.log('📝 Attempting registration with:', { email, name });
         
         const res = await fetch('/api/auth/register', {
           method: 'POST',
@@ -59,7 +62,7 @@ export default function LoginPage() {
         });
 
         const data = await res.json();
-        console.log('📥 Registration response:', data); // LOG 7
+        console.log('📥 Registration response:', data);
 
         if (!res.ok) {
           throw new Error(data.error || 'Error en el registro');
@@ -70,11 +73,11 @@ export default function LoginPage() {
         setPassword('');
       }
     } catch (err: any) {
-      console.error('💥 Caught error:', err); // LOG 8
+      console.error('💥 Caught error:', err);
       setError(err.message || 'Ocurrió un error');
-    } finally {
-      setLoading(false);
+      setLoading(false); // Solo setear loading false si hay error
     }
+    // NO ponemos finally aquí porque la redirección lo maneja
   };
 
   return (
