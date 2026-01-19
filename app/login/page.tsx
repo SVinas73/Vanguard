@@ -30,7 +30,6 @@ export default function LoginPage() {
           email,
           password,
           redirect: false,
-          callbackUrl: '/',
         });
 
         console.log('📥 SignIn result:', result);
@@ -43,10 +42,9 @@ export default function LoginPage() {
         }
 
         if (result?.ok) {
-          console.log('✅ Login successful, redirecting to:', result.url || '/');
-          // Usar router.push en lugar de window.location
-          router.push(result.url || '/');
-          router.refresh(); // Forzar recarga del servidor
+          console.log('✅ Login successful, redirecting...');
+          // Usar window.location para asegurar recarga completa
+          window.location.href = '/';
         } else {
           console.error('⚠️ Login not OK');
           setError('Error al iniciar sesión');

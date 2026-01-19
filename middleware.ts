@@ -1,13 +1,20 @@
-export { default } from "next-auth/middleware";
+import { withAuth } from "next-auth/middleware";
+
+export default withAuth({
+  pages: {
+    signIn: "/login",
+  },
+});
 
 export const config = {
   matcher: [
     /*
      * Proteger todas las rutas EXCEPTO:
-     * - Archivos estáticos (_next)
-     * - Archivos públicos (manifest, favicon, imágenes)
-     * - Rutas de autenticación (login, register, api/auth)
+     * - /login, /register
+     * - /api/auth/* (callbacks de NextAuth)
+     * - /_next/* (archivos estáticos)
+     * - Archivos públicos
      */
-    '/((?!_next|favicon.ico|manifest.json|.*\\..+|login|register|api/auth).*)',
+    "/((?!login|register|api/auth|_next/static|_next/image|favicon.ico|manifest.json).*)",
   ],
 };
