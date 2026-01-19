@@ -77,38 +77,7 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async redirect({ url, baseUrl }) {
-      console.log('🔀 Redirect callback:', { url, baseUrl });
-      
-      // Ignorar archivos estáticos y API routes
-      if (
-        url.includes('/manifest.json') ||
-        url.includes('/_next/') ||
-        url.includes('/api/') ||
-        url.includes('/favicon') ||
-        url.includes('.') // Cualquier archivo con extensión
-      ) {
-        return url;
-      }
-      
-      // Si está en la página de login, ir a home
-      if (url === baseUrl + '/login' || url === '/login') {
-        return baseUrl;
-      }
-      
-      // Si es una URL del mismo sitio, usarla
-      if (url.startsWith(baseUrl)) {
-        return url;
-      }
-      
-      // Si es una ruta relativa, construir URL completa
-      if (url.startsWith('/')) {
-        return baseUrl + url;
-      }
-      
-      // Por defecto, ir a home
-      return baseUrl;
-    },
+    // ELIMINAMOS EL CALLBACK REDIRECT - dejamos que NextAuth lo maneje por defecto
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: true,
