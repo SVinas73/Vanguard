@@ -119,11 +119,15 @@ export async function ejecutarEnsamblaje(
       if (movError) throw movError;
 
       // Actualizar stock del componente
-      const { data: producto } = await supabase
+      const { data: producto, error: prodError } = await supabase
         .from('productos')
         .select('stock')
         .eq('codigo', item.componenteCodigo)
         .single();
+
+      if (prodError || !producto) {
+        throw new Error(`Producto ${item.componenteCodigo} no encontrado en inventario`);
+      }
 
       await supabase
         .from('productos')
@@ -164,11 +168,15 @@ export async function ejecutarEnsamblaje(
     if (entradaError) throw entradaError;
 
     // 4. Actualizar stock del producto final
-    const { data: productoFinal } = await supabase
+    const { data: productoFinal, error: finalError } = await supabase
       .from('productos')
       .select('stock')
       .eq('codigo', params.productoCodigo)
       .single();
+
+    if (finalError || !productoFinal) {
+      throw new Error(`Producto final ${params.productoCodigo} no encontrado en inventario`);
+    }
 
     await supabase
       .from('productos')
