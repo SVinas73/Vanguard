@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono } from 'next/font/google';
 import { I18nProvider } from '@/components/providers/i18n-provider';
+import { SessionProvider } from '@/components/providers/session-provider';
 import './globals.css';
 
 const jetbrainsMono = JetBrains_Mono({
@@ -26,9 +27,11 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${jetbrainsMono.variable} font-mono antialiased`}>
-        <I18nProvider>
-          {children}
-        </I18nProvider>
+        <SessionProvider>
+          <I18nProvider>
+            {children}
+          </I18nProvider>
+        </SessionProvider>
       </body>
     </html>
   );
