@@ -881,16 +881,3 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
   },
 }));
 
-// ============================================
-// AUTO-CARGAR DATOS AL INICIALIZAR
-// ============================================
-if (typeof window !== 'undefined') {
-  // Auto-cargar datos cuando se inicializa el store
-  const store = useInventoryStore.getState();
-  Promise.all([
-    store.fetchProducts(),
-    store.fetchMovements(),
-  ]).catch(err => {
-    console.error('Error loading initial data:', err);
-  });
-}

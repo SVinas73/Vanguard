@@ -106,10 +106,14 @@ export default function HomePage() {
   });
   const [anomalyWarning, setAnomalyWarning] = useState<AnomalyResult | null>(null);
 
-  // Cargar datos de Supabase al inicio
+  // POR ESTE:
   useEffect(() => {
-    fetchProducts();
-    fetchMovements();
+    // Solo cargar si el usuario está autenticado y no se han inicializado los datos
+    if (user && !isInitialized) {
+      console.log('🔄 Iniciando carga de datos...');
+      fetchProducts();
+      fetchMovements();
+    }
     
     // Cargar almacenes
     const fetchAlmacenes = async () => {
@@ -120,8 +124,11 @@ export default function HomePage() {
         .order('es_principal', { ascending: false });
       if (data) setAlmacenes(data);
     };
-    fetchAlmacenes();
-  }, [fetchProducts, fetchMovements]);
+    
+    if (user) {
+      fetchAlmacenes();
+    }
+  }, [user, isInitialized, fetchProducts, fetchMovements]);
 
   // Filtered products with semantic search
   const filteredProducts = useMemo(() => {
