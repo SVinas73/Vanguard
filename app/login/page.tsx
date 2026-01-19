@@ -30,6 +30,7 @@ export default function LoginPage() {
           email,
           password,
           redirect: false,
+          callbackUrl: '/',
         });
 
         console.log('📥 SignIn result:', result);
@@ -41,20 +42,16 @@ export default function LoginPage() {
           return;
         }
 
-        if (!result?.ok) {
-          console.error('⚠️ Login not OK:', result);
+        if (result?.ok) {
+          console.log('✅ Login successful, redirecting to:', result.url || '/');
+          // Usar router.push en lugar de window.location
+          router.push(result.url || '/');
+          router.refresh(); // Forzar recarga del servidor
+        } else {
+          console.error('⚠️ Login not OK');
           setError('Error al iniciar sesión');
           setLoading(false);
-          return;
         }
-
-        console.log('✅ Login successful, redirecting...');
-        
-        // Pequeño delay para asegurar que la sesión se guarde
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Redirección completa con recarga
-        window.location.href = '/';
         
       } else {
         // Registro

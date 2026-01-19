@@ -77,7 +77,14 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    // ELIMINAMOS EL CALLBACK REDIRECT - dejamos que NextAuth lo maneje por defecto
+    async redirect({ url, baseUrl }) {
+      // Si la URL es relativa, la combinamos con baseUrl
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Si la URL ya contiene baseUrl, la devolvemos
+      if (url.startsWith(baseUrl)) return url;
+      // Por defecto, volvemos a la home
+      return baseUrl;
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: true,
