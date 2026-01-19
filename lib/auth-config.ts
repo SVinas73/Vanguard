@@ -78,11 +78,21 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Siempre redirigir a la página principal después del login
       console.log('🔀 Redirect callback:', { url, baseUrl });
       
-      // Si viene de /login, ir a home
-      if (url.startsWith(baseUrl + '/login')) {
+      // Ignorar archivos estáticos y API routes
+      if (
+        url.includes('/manifest.json') ||
+        url.includes('/_next/') ||
+        url.includes('/api/') ||
+        url.includes('/favicon') ||
+        url.includes('.') // Cualquier archivo con extensión
+      ) {
+        return url;
+      }
+      
+      // Si está en la página de login, ir a home
+      if (url === baseUrl + '/login' || url === '/login') {
         return baseUrl;
       }
       
@@ -91,7 +101,7 @@ export const authOptions: NextAuthOptions = {
         return url;
       }
       
-      // Si es relativa, usarla
+      // Si es una ruta relativa, construir URL completa
       if (url.startsWith('/')) {
         return baseUrl + url;
       }
