@@ -37,6 +37,7 @@ interface InventoryState {
   addProduct: (product: Omit<Product, 'stock'>, userEmail: string) => Promise<void>;
   updateProduct: (codigo: string, updates: Partial<Product>, userEmail: string) => Promise<void>;
   deleteProduct: (codigo: string, userEmail: string) => Promise<void>;
+  restoreProduct: (codigo: string, userEmail: string) => Promise<void>;  // 👈 AGREGAR
   
   // Actions - Movements
   fetchMovements: () => Promise<void>;
@@ -154,6 +155,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           *,
           almacen:almacenes(id, codigo, nombre)
         `)
+        .is('deleted_at', null)  // 👈 AGREGAR ESTA LÍNEA
         .order('codigo'),
       { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
     );
@@ -429,8 +431,16 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       { timeout: 5000, retries: 0 }
     );
 
+    // SOFT DELETE: marcar como eliminado en vez de borrar
     const { error, timedOut } = await safeQuery(
-      () => supabase.from('productos').delete().eq('codigo', codigo),
+      () => supabase
+        .from('productos')
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          actualizado_por: userEmail,
+          actualizado_at: new Date().toISOString(),
+        })
+        .eq('codigo', codigo),
       { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
     );
 
@@ -450,7 +460,42 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       'ELIMINAR',
       codigo,
       currentProduct,
-      null,
+      { deleted_at: new Date().toISOString(), soft_delete: true },
+      userEmail
+    );
+
+    await get().fetchProducts();
+  },
+
+  // ============================================
+  // RESTORE PRODUCT
+  // ============================================
+  restoreProduct: async (codigo: string, userEmail: string) => {
+    set({ isLoading: true, error: null });
+    
+    const { error } = await safeQuery(
+      () => supabase
+        .from('productos')
+        .update({ 
+          deleted_at: null,
+          actualizado_por: userEmail,
+          actualizado_at: new Date().toISOString(),
+        })
+        .eq('codigo', codigo),
+      { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
+    );
+
+    if (error) {
+      set({ error: error.message, isLoading: false });
+      return;
+    }
+
+    await registrarAuditoria(
+      'productos',
+      'RESTAURAR',
+      codigo,
+      { deleted_at: 'was deleted' },
+      { deleted_at: null },
       userEmail
     );
 
