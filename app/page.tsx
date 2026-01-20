@@ -1,7 +1,5 @@
 'use client';
 
-
-
 import { WelcomeHeader, StatsGrid } from '@/components/dashboard';
 import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
 import { AlmacenesDashboard } from '@/components/almacenes';
@@ -18,6 +16,11 @@ import { ChatbotWidget } from '@/components/chatbot';
 import { ExecutiveDashboard } from '@/components/reports';
 import { QuickScanner } from '@/components/scanner';
 import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadge } from '@/components/ai';
+import SerialManagement from '@/components/serialization/SerialManagement';
+import TraceabilityViewer from '@/components/traceability/TraceabilityViewer';
+import RMADashboard from '@/components/rma/RMADashboard';
+import BOMManager from '@/components/bom/BOMManager';
+import AssemblyDashboard from '@/components/assembly/AssemblyDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -106,7 +109,7 @@ export default function HomePage() {
   });
   const [anomalyWarning, setAnomalyWarning] = useState<AnomalyResult | null>(null);
 
-  // POR ESTE:
+  // Effect para cargar datos
   useEffect(() => {
     // Solo cargar si el usuario está autenticado y no se han inicializado los datos
     if (user && !isInitialized) {
@@ -147,7 +150,7 @@ export default function HomePage() {
     return getStockAlerts(products, predictions);
   }, [products, predictions]);
 
-  // Dashboard stats - ACTUALIZADO
+  // Dashboard stats
   const stats = useMemo(() => {
     const activeProducts = products.length;
     const lowStockCount = products.filter((p) => p.stock <= p.stockMinimo).length;
@@ -157,7 +160,6 @@ export default function HomePage() {
     ).length;
 
     // Calcular rotación promedio (días de inventario)
-    // Fórmula: Stock actual / Consumo diario promedio
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
@@ -243,7 +245,6 @@ export default function HomePage() {
     console.error('Error de Supabase:', storeError);
   }
 
-  // POR ESTE:
   // Mostrar loading mientras carga los datos del store
   if (!isInitialized || storeLoading) {
     return (
@@ -269,8 +270,6 @@ export default function HomePage() {
       </div>
     );
   }
-
-  
 
   // ============================================
   // HANDLERS (funciones normales, no hooks)
@@ -570,6 +569,42 @@ export default function HomePage() {
             <AlmacenesDashboard products={products} userEmail={user?.email || ''} />
           </div>
         )}
+
+        {/* ==================== SERIALES ==================== */}
+        {activeTab === 'seriales' && (
+          <div className="max-w-7xl mx-auto">
+            <SerialManagement />
+          </div>
+        )}
+
+        {/* ==================== TRAZABILIDAD ==================== */}
+        {activeTab === 'trazabilidad' && (
+          <div className="max-w-7xl mx-auto">
+            <TraceabilityViewer />
+          </div>
+        )}
+
+        {/* ==================== DEVOLUCIONES (RMA) ==================== */}
+        {activeTab === 'rma' && (
+          <div className="max-w-7xl mx-auto">
+            <RMADashboard />
+          </div>
+        )}
+
+        {/* ==================== BOM ==================== */}
+        {activeTab === 'bom' && (
+          <div className="max-w-7xl mx-auto">
+            <BOMManager />
+          </div>
+        )}
+
+        {/* ==================== ENSAMBLAJES ==================== */}
+        {activeTab === 'ensamblajes' && (
+          <div className="max-w-7xl mx-auto">
+            <AssemblyDashboard />
+          </div>
+        )}
+
         </div>
       </main>
 

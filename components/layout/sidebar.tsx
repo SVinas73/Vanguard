@@ -110,7 +110,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       items: [
         { id: 'seriales', label: 'Seriales', icon: QrCode, badge: 'NEW' },
         { id: 'trazabilidad', label: 'Trazabilidad', icon: GitBranch, badge: 'NEW' },
-        { id: 'rma', label: 'Devoluciones (RMA)', icon: RotateCcw, badge: 'NEW' },
+        { id: 'devoluciones', label: 'Devoluciones (RMA)', icon: RotateCcw, badge: 'NEW' },
         { id: 'bom', label: 'BOM', icon: Boxes },
         { id: 'ensamblajes', label: 'Ensamblajes', icon: Wrench },
       ]
