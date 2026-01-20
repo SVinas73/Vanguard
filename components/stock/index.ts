@@ -1,1 +1,1 @@
-export { StockDashboard } from './StockDashboard';
+export { default as StockDashboard } from './StockDashboard';
