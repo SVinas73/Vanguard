@@ -2,7 +2,7 @@
 
 import { WelcomeHeader, StatsGrid } from '@/components/dashboard';
 import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
-import { StockDashboard } from '@/components/stock/StockDashboard';
+import { StockDashboard } from '@/components/stock';
 import { ImportCSV } from '@/components/import';
 import { IntegracionesDashboard } from '@/components/integraciones';
 import { ProductImage } from '@/components/productos';
