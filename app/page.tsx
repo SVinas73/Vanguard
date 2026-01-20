@@ -481,7 +481,7 @@ export default function HomePage() {
             products={products}
             predictions={predictions}
             onDeleteProduct={hasPermission('canDeleteProducts') 
-              ? (codigo) => deleteProduct(codigo, user?.email || 'Sistema') 
+              ? (codigo: string) => deleteProduct(codigo, user?.email || 'Sistema')
               : undefined
             }
             onEditProduct={handleOpenEdit}
