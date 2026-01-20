@@ -2,7 +2,7 @@
 
 import { WelcomeHeader, StatsGrid } from '@/components/dashboard';
 import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
-import { AlmacenesDashboard } from '@/components/almacenes';
+import { StockDashboard } from '@/components/stock/StockDashboard';
 import { ImportCSV } from '@/components/import';
 import { IntegracionesDashboard } from '@/components/integraciones';
 import { ProductImage } from '@/components/productos';
@@ -85,7 +85,7 @@ export default function HomePage() {
   // Almacenes State
   const [almacenes, setAlmacenes] = useState<Array<{ id: string; nombre: string }>>([]);
 
-  // Form State - New Product
+  // Form State - New Product (UPDATED: added stockInicial and costoInicial)
   const [newProduct, setNewProduct] = useState({
     codigo: '',
     descripcion: '',
@@ -93,6 +93,8 @@ export default function HomePage() {
     categoria: '',
     stockMinimo: '10',
     almacenId: '',
+    stockInicial: '',      // NUEVO: stock inicial
+    costoInicial: '',      // NUEVO: costo de compra inicial
   });
   const [aiSuggestion, setAiSuggestion] = useState<CategorySuggestion | null>(null);
 
@@ -308,12 +310,17 @@ export default function HomePage() {
     }
   };
 
-  // Add product handler
-  const handleAddProduct = () => {
+  // Add product handler - UPDATED: now creates initial movement if stock > 0
+  const handleAddProduct = async () => {
     if (!newProduct.codigo || !newProduct.descripcion || !newProduct.precio || !newProduct.categoria) {
       return;
     }
-    addProduct({
+    
+    const stockInicial = parseInt(newProduct.stockInicial) || 0;
+    const costoInicial = parseFloat(newProduct.costoInicial) || 0;
+    
+    // Primero crear el producto (con stock 0)
+    await addProduct({
       codigo: newProduct.codigo.toUpperCase(),
       descripcion: newProduct.descripcion,
       precio: parseFloat(newProduct.precio),
@@ -322,7 +329,31 @@ export default function HomePage() {
       almacenId: newProduct.almacenId || null,
     }, user?.email || 'Sistema');
 
-    setNewProduct({ codigo: '', descripcion: '', precio: '', categoria: '', stockMinimo: '10', almacenId: '' });
+    // Si hay stock inicial, crear un movimiento de entrada
+    if (stockInicial > 0) {
+      // Pequeño delay para asegurar que el producto se creó
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await addMovement({
+        codigo: newProduct.codigo.toUpperCase(),
+        tipo: 'entrada',
+        cantidad: stockInicial,
+        notas: 'Stock inicial al crear producto',
+        costoCompra: costoInicial > 0 ? costoInicial : undefined,
+      }, user?.email || 'Sistema');
+    }
+
+    // Reset form
+    setNewProduct({ 
+      codigo: '', 
+      descripcion: '', 
+      precio: '', 
+      categoria: '', 
+      stockMinimo: '10', 
+      almacenId: '',
+      stockInicial: '',
+      costoInicial: '',
+    });
     setShowNewProduct(false);
     setAiSuggestion(null);
   };
@@ -444,44 +475,22 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ==================== PRODUCTOS ==================== */}
+        {/* ==================== STOCK (con Almacenes embebido) ==================== */}
         {activeTab === 'stock' && (
-          <div className="space-y-4">
-            <div className="flex gap-4 items-center">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder={t('stock.search')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-3 pl-10 rounded-xl bg-slate-900/50 border border-slate-800/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
-                />
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                {searchQuery && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400">{t('stock.aiActive')}</span>
-                )}
-              </div>
-              <Select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                options={[{ value: 'all', label: t('stock.allCategories') }, ...categoryOptions]}
-                className="min-w-[180px]"
-              />
-              {hasPermission('canCreateProducts') && (
-                <div className="flex gap-2">
-                  <ImportCSV onImportComplete={fetchProducts} userEmail={user?.email || ''} />
-                  <Button onClick={() => setShowNewProduct(true)}>+ {t('stock.new')}</Button>
-                </div>
-              )}
-            </div>
-
-            <ProductTable 
-              products={filteredProducts} 
-              predictions={predictions} 
-              onDelete={hasPermission('canDeleteProducts') ? (codigo) => deleteProduct(codigo, user?.email || 'Sistema') : undefined}
-              onEdit={handleOpenEdit}
-            />
-          </div>
+          <StockDashboard
+            products={products}
+            predictions={predictions}
+            onDeleteProduct={hasPermission('canDeleteProducts') 
+              ? (codigo) => deleteProduct(codigo, user?.email || 'Sistema') 
+              : undefined
+            }
+            onEditProduct={handleOpenEdit}
+            onAddProduct={() => setShowNewProduct(true)}
+            onRefreshProducts={fetchProducts}
+            userEmail={user?.email || ''}
+            hasCreatePermission={hasPermission('canCreateProducts')}
+            hasDeletePermission={hasPermission('canDeleteProducts')}
+          />
         )}
 
         {/* ==================== MOVIMIENTOS ==================== */}
@@ -563,13 +572,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ==================== ALMACENES ==================== */}
-        {activeTab === 'almacenes' && (
-          <div className="max-w-5xl mx-auto">
-            <AlmacenesDashboard products={products} userEmail={user?.email || ''} />
-          </div>
-        )}
-
         {/* ==================== SERIALES ==================== */}
         {activeTab === 'seriales' && (
           <div className="max-w-7xl mx-auto">
@@ -608,7 +610,7 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* ==================== MODAL: NUEVO PRODUCTO ==================== */}
+      {/* ==================== MODAL: NUEVO PRODUCTO (UPDATED) ==================== */}
       <Modal isOpen={showNewProduct} onClose={() => setShowNewProduct(false)} title={t('stock.newProduct')}>
         <div className="space-y-4">
           <Input
@@ -655,6 +657,34 @@ export default function HomePage() {
               onChange={(e) => setNewProduct({ ...newProduct, stockMinimo: e.target.value })}
               placeholder="10"
             />
+          </div>
+
+          {/* NUEVO: Stock Inicial y Costo */}
+          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+            <h4 className="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+              <Package size={16} />
+              {t('stock.initialStock', 'Stock Inicial')} ({t('common.optional', 'opcional')})
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label={t('stock.initialQuantity', 'Cantidad Inicial')}
+                type="number"
+                value={newProduct.stockInicial}
+                onChange={(e) => setNewProduct({ ...newProduct, stockInicial: e.target.value })}
+                placeholder="0"
+              />
+              <Input
+                label={t('stock.unitCost', 'Costo Unitario')}
+                type="number"
+                step="0.01"
+                value={newProduct.costoInicial}
+                onChange={(e) => setNewProduct({ ...newProduct, costoInicial: e.target.value })}
+                placeholder="0.00"
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-2">
+              {t('stock.initialStockHint', 'Si agregas stock inicial, se creará automáticamente un movimiento de entrada.')}
+            </p>
           </div>
 
           <Select

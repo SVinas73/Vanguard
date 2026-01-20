@@ -16,7 +16,6 @@ import {
   DollarSign,
   Shield,
   Plug,
-  Warehouse,
   ChevronLeft,
   ChevronRight,
   Lock,
@@ -80,6 +79,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
   const currentRol = rolConfig[rol] || rolConfig.vendedor;
 
   // Navegación organizada por secciones
+  // NOTA: "almacenes" fue removido porque ahora está embebido en "stock"
   const navigation: NavSection[] = [
     {
       title: t('nav.main') || 'Principal',
@@ -94,7 +94,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       items: [
         { id: 'compras', label: t('nav.purchases'), icon: ShoppingCart },
         { id: 'ventas', label: t('nav.sales'), icon: TrendingUp },
-        { id: 'almacenes', label: t('nav.warehouses'), icon: Warehouse },
+        // Almacenes removido de aquí - ahora está dentro de Stock
       ]
     },
     {
