@@ -258,6 +258,8 @@ export function ProyectosDashboard() {
     );
   }
 
+  
+
   if (proyectos.length === 0) {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
