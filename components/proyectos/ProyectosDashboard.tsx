@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/hooks/useAuth';  // 👈 AGREGAR ESTE IMPORT
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
-import { Button, Card, Select } from '@/components/ui';  // 👈 QUITAR Modal
+import { Button, Card, Select } from '@/components/ui';
 import { KanbanBoard } from './KanbanBoard';
 import { ProyectoStats } from './ProyectoStats';
 import type { Proyecto, ProyectoTarea, ProyectoColumna, ProyectoEtiqueta } from '@/types';
@@ -35,16 +35,7 @@ export function ProyectosDashboard() {
   const [showProyectoModal, setShowProyectoModal] = useState(false);
   const [showTareaModal, setShowTareaModal] = useState(false);
   const [tareaEdit, setTareaEdit] = useState<ProyectoTarea | null>(null);
-
-  // 👇 AGREGAR TODO ESTO PARA DEBUG
-  useEffect(() => {
-    console.log('🔵 showProyectoModal cambió a:', showProyectoModal);
-  }, [showProyectoModal]);
-
-  console.log('🔵 RENDER - showProyectoModal:', showProyectoModal);
-  console.log('🔵 RENDER - proyectos.length:', proyectos.length);
   
-
   // Filtros
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activo' | 'completado' | 'archivado'>('activo');
   const [filtroAsignado, setFiltroAsignado] = useState<string>('');
@@ -198,6 +189,8 @@ export function ProyectosDashboard() {
   // ============================================
   
   const handleNuevoProyecto = async (proyecto: Omit<Proyecto, 'id' | 'createdAt' | 'updatedAt'>) => {
+    console.log('🟢 handleNuevoProyecto llamado', proyecto);
+
     const { data, error } = await supabase
       .from('proyectos')
       .insert({
@@ -214,8 +207,11 @@ export function ProyectosDashboard() {
 
     if (error) {
       console.error('Error creando proyecto:', error);
+      alert('Error creando proyecto: ' + error.message);
       return;
     }
+
+    console.log('✅ Proyecto creado:', data);
 
     // Crear columnas por defecto
     const columnasDefault = [
@@ -256,6 +252,241 @@ export function ProyectosDashboard() {
   });
 
   // ============================================
+  // COMPONENTE MODAL (reutilizable)
+  // ============================================
+  
+  const ModalProyecto = () => (
+    <div 
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 999999,
+      }}
+      onClick={() => setShowProyectoModal(false)}
+    >
+      <div 
+        style={{
+          backgroundColor: '#0f172a',
+          borderRadius: '16px',
+          border: '1px solid #334155',
+          padding: '24px',
+          width: '100%',
+          maxWidth: '500px',
+          margin: '0 16px',
+          position: 'relative',
+          zIndex: 999999,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '24px', color: 'white' }}>
+          Nuevo Proyecto
+        </h3>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Nombre */}
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
+              Nombre del Proyecto *
+            </label>
+            <input
+              id="proyecto-nombre"
+              type="text"
+              placeholder="Ej: Implementación Q1 2026"
+              style={{
+                width: '100%',
+                padding: '10px 16px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(30, 41, 59, 0.5)',
+                border: '1px solid rgba(51, 65, 85, 0.5)',
+                fontSize: '14px',
+                color: 'white',
+              }}
+            />
+          </div>
+
+          {/* Descripción */}
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
+              Descripción
+            </label>
+            <textarea
+              id="proyecto-descripcion"
+              placeholder="Detalles del proyecto..."
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '10px 16px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(30, 41, 59, 0.5)',
+                border: '1px solid rgba(51, 65, 85, 0.5)',
+                fontSize: '14px',
+                color: 'white',
+                resize: 'none',
+              }}
+            />
+          </div>
+
+          {/* Color */}
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
+              Color del Proyecto
+            </label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'].map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  id={`color-${color}`}
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    backgroundColor: color,
+                    border: '2px solid transparent',
+                    cursor: 'pointer',
+                  }}
+                  onClick={(e) => {
+                    const buttons = e.currentTarget.parentElement?.querySelectorAll('button');
+                    buttons?.forEach(btn => (btn as HTMLElement).style.borderColor = 'transparent');
+                    e.currentTarget.style.borderColor = 'white';
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Estado */}
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
+              Estado
+            </label>
+            <select 
+              id="proyecto-estado"
+              style={{
+                width: '100%',
+                padding: '10px 16px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(30, 41, 59, 0.5)',
+                border: '1px solid rgba(51, 65, 85, 0.5)',
+                fontSize: '14px',
+                color: 'white',
+              }}
+            >
+              <option value="activo">Activo</option>
+              <option value="completado">Completado</option>
+              <option value="archivado">Archivado</option>
+            </select>
+          </div>
+
+          {/* Fechas */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
+                Fecha Inicio
+              </label>
+              <input
+                id="proyecto-fecha-inicio"
+                type="date"
+                style={{
+                  width: '100%',
+                  padding: '10px 16px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(30, 41, 59, 0.5)',
+                  border: '1px solid rgba(51, 65, 85, 0.5)',
+                  fontSize: '14px',
+                  color: 'white',
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
+                Fecha Fin
+              </label>
+              <input
+                id="proyecto-fecha-fin"
+                type="date"
+                style={{
+                  width: '100%',
+                  padding: '10px 16px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(30, 41, 59, 0.5)',
+                  border: '1px solid rgba(51, 65, 85, 0.5)',
+                  fontSize: '14px',
+                  color: 'white',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Botones */}
+          <div style={{ display: 'flex', gap: '12px', paddingTop: '16px', borderTop: '1px solid #334155' }}>
+            <button
+              onClick={() => setShowProyectoModal(false)}
+              style={{
+                flex: 1,
+                padding: '10px 16px',
+                borderRadius: '12px',
+                backgroundColor: '#1e293b',
+                color: '#e2e8f0',
+                border: '1px solid #334155',
+                fontWeight: '500',
+                cursor: 'pointer',
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={async () => {
+                const nombre = (document.getElementById('proyecto-nombre') as HTMLInputElement)?.value;
+                const descripcion = (document.getElementById('proyecto-descripcion') as HTMLTextAreaElement)?.value;
+                const estado = (document.getElementById('proyecto-estado') as HTMLSelectElement)?.value;
+                const fechaInicio = (document.getElementById('proyecto-fecha-inicio') as HTMLInputElement)?.value;
+                const fechaFin = (document.getElementById('proyecto-fecha-fin') as HTMLInputElement)?.value;
+                
+                // Obtener color seleccionado (el que tiene borde blanco)
+                const colorSeleccionado = Array.from(document.querySelectorAll('[id^="color-"]'))
+                  .find(btn => (btn as HTMLElement).style.borderColor === 'white')
+                  ?.id.replace('color-', '') || '#10b981';
+                
+                if (!nombre?.trim()) {
+                  alert('El nombre es obligatorio');
+                  return;
+                }
+
+                await handleNuevoProyecto({
+                  nombre: nombre,
+                  descripcion: descripcion || undefined,
+                  color: colorSeleccionado,
+                  estado: estado as 'activo' | 'completado' | 'archivado',
+                  fechaInicio: fechaInicio ? new Date(fechaInicio) : undefined,
+                  fechaFin: fechaFin ? new Date(fechaFin) : undefined,
+                  creadoPor: user?.email || 'usuario@ejemplo.com',
+                });
+              }}
+              style={{
+                flex: 1,
+                padding: '10px 16px',
+                borderRadius: '12px',
+                backgroundColor: '#10b981',
+                color: '#020617',
+                border: 'none',
+                fontWeight: '600',
+                cursor: 'pointer',
+              }}
+            >
+              Crear Proyecto
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ============================================
   // RENDER
   // ============================================
   
@@ -267,29 +498,31 @@ export function ProyectosDashboard() {
     );
   }
 
-
-
+  // Estado vacío: sin proyectos
   if (proyectos.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-12">
-        <div className="w-20 h-20 bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-          <TrendingUp size={40} className="text-slate-600" />
+      <>
+        <div className="max-w-2xl mx-auto text-center py-12">
+          <div className="w-20 h-20 bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <TrendingUp size={40} className="text-slate-600" />
+          </div>
+          <h2 className="text-2xl font-bold mb-3">No hay proyectos</h2>
+          <p className="text-slate-400 mb-6">
+            Creá tu primer proyecto para organizar tareas y gestionar el trabajo del equipo
+          </p>
+          <Button onClick={() => setShowProyectoModal(true)}>
+            <Plus size={18} className="mr-2" />
+            Crear Primer Proyecto
+          </Button>
         </div>
-        <h2 className="text-2xl font-bold mb-3">No hay proyectos</h2>
-        <p className="text-slate-400 mb-6">
-          Creá tu primer proyecto para organizar tareas y gestionar el trabajo del equipo
-        </p>
-        <Button onClick={() => {
-          console.log('Click en crear proyecto'); // 👈 AGREGAR ESTO
-          setShowProyectoModal(true);
-        }}>
-          <Plus size={18} className="mr-2" />
-          Crear Primer Proyecto
-        </Button>
-      </div>
+
+        {/* Modal para crear proyecto */}
+        {showProyectoModal && <ModalProyecto />}
+      </>
     );
   }
 
+  // Estado normal: con proyectos
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -401,170 +634,24 @@ export function ProyectosDashboard() {
         />
       )}
 
-      {/* Modal Proyecto - Con z-index forzado */}
-      {showProyectoModal && (
-        <div 
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 999999,
+      {/* Modal para crear/editar proyecto */}
+      {showProyectoModal && <ModalProyecto />}
+
+      {/* TODO: Agregar TareaModal cuando esté listo */}
+      {/* {showTareaModal && proyectoActual && (
+        <TareaModal
+          isOpen={showTareaModal}
+          onClose={() => setShowTareaModal(false)}
+          proyectoId={proyectoActual.id}
+          tarea={tareaEdit || undefined}
+          columnas={columnas}
+          etiquetas={etiquetas}
+          onSave={() => {
+            fetchProyectoData(proyectoActual.id);
+            setShowTareaModal(false);
           }}
-          onClick={() => setShowProyectoModal(false)}
-        >
-          <div 
-            style={{
-              backgroundColor: '#0f172a',
-              borderRadius: '16px',
-              border: '1px solid #334155',
-              padding: '24px',
-              width: '100%',
-              maxWidth: '500px',
-              margin: '0 16px',
-              position: 'relative',
-              zIndex: 999999,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '24px', color: 'white' }}>
-              Nuevo Proyecto
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Nombre */}
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
-                  Nombre del Proyecto *
-                </label>
-                <input
-                  id="proyecto-nombre"
-                  type="text"
-                  placeholder="Ej: Implementación Q1 2026"
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    borderRadius: '12px',
-                    backgroundColor: 'rgba(30, 41, 59, 0.5)',
-                    border: '1px solid rgba(51, 65, 85, 0.5)',
-                    fontSize: '14px',
-                    color: 'white',
-                  }}
-                />
-              </div>
-
-              {/* Descripción */}
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
-                  Descripción
-                </label>
-                <textarea
-                  id="proyecto-descripcion"
-                  placeholder="Detalles del proyecto..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    borderRadius: '12px',
-                    backgroundColor: 'rgba(30, 41, 59, 0.5)',
-                    border: '1px solid rgba(51, 65, 85, 0.5)',
-                    fontSize: '14px',
-                    color: 'white',
-                    resize: 'none',
-                  }}
-                />
-              </div>
-
-              {/* Color */}
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
-                  Color del Proyecto
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'].map(color => (
-                    <button
-                      key={color}
-                      type="button"
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '8px',
-                        backgroundColor: color,
-                        border: '2px solid transparent',
-                        cursor: 'pointer',
-                      }}
-                      onClick={(e) => {
-                        // Resaltar el seleccionado
-                        const buttons = e.currentTarget.parentElement?.querySelectorAll('button');
-                        buttons?.forEach(btn => (btn as HTMLElement).style.borderColor = 'transparent');
-                        e.currentTarget.style.borderColor = 'white';
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Botones */}
-              <div style={{ display: 'flex', gap: '12px', paddingTop: '16px', borderTop: '1px solid #334155' }}>
-                <button
-                  onClick={() => setShowProyectoModal(false)}
-                  style={{
-                    flex: 1,
-                    padding: '10px 16px',
-                    borderRadius: '12px',
-                    backgroundColor: '#1e293b',
-                    color: '#e2e8f0',
-                    border: '1px solid #334155',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={async () => {
-                    const nombre = (document.getElementById('proyecto-nombre') as HTMLInputElement)?.value;
-                    const descripcion = (document.getElementById('proyecto-descripcion') as HTMLTextAreaElement)?.value;
-                    
-                    if (!nombre?.trim()) {
-                      alert('El nombre es obligatorio');
-                      return;
-                    }
-
-                    console.log('Creando proyecto:', { nombre, descripcion });
-                    
-                    await handleNuevoProyecto({
-                      nombre: nombre,
-                      descripcion: descripcion || undefined,
-                      color: '#10b981',
-                      estado: 'activo',
-                      creadoPor: user?.email || 'usuario@ejemplo.com',
-                    });
-                    
-                    setShowProyectoModal(false);
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: '10px 16px',
-                    borderRadius: '12px',
-                    backgroundColor: '#10b981',
-                    color: '#020617',
-                    border: 'none',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Crear Proyecto
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      
+        />
+      )} */}
     </div>
   );
 }
