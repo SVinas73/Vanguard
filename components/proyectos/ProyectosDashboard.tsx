@@ -2,11 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/useAuth';  // 👈 AGREGAR ESTE IMPORT
 import { supabase } from '@/lib/supabase';
-import { Button, Card, Select, Modal } from '@/components/ui';
+import { Button, Card, Select } from '@/components/ui';  // 👈 QUITAR Modal
 import { KanbanBoard } from './KanbanBoard';
-import { ProyectoModal } from './ProyectoModal';
-import { TareaModal } from './TareaModal';
 import { ProyectoStats } from './ProyectoStats';
 import type { Proyecto, ProyectoTarea, ProyectoColumna, ProyectoEtiqueta } from '@/types';
 import {
@@ -23,6 +22,7 @@ import {
 
 export function ProyectosDashboard() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   
   // State
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
@@ -392,29 +392,127 @@ export function ProyectosDashboard() {
         />
       )}
 
-      {/* Modals */}
+      {/* Modal Proyecto - Inline */}
       {showProyectoModal && (
-        <ProyectoModal
-          isOpen={showProyectoModal}
-          onClose={() => setShowProyectoModal(false)}
-          onSave={handleNuevoProyecto}
-        />
+        <div 
+          className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-[9999]"
+          onClick={() => setShowProyectoModal(false)}
+        >
+          <div 
+            className="bg-slate-900 rounded-2xl border border-slate-800 p-6 w-full max-w-lg mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-semibold mb-6">Nuevo Proyecto</h3>
+            
+            <div className="space-y-4">
+              {/* Nombre */}
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">Nombre del Proyecto *</label>
+                <input
+                  id="proyecto-nombre"
+                  type="text"
+                  placeholder="Ej: Implementación Q1 2026"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm text-white placeholder:text-slate-500"
+                />
+              </div>
+
+              {/* Descripción */}
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">Descripción</label>
+                <textarea
+                  id="proyecto-descripcion"
+                  placeholder="Detalles del proyecto..."
+                  rows={3}
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm resize-none text-white placeholder:text-slate-500"
+                />
+              </div>
+
+              {/* Color */}
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">Color del Proyecto</label>
+                <div className="flex gap-2">
+                  {['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'].map(color => (
+                    <button
+                      key={color}
+                      type="button"
+                      className="w-10 h-10 rounded-lg border-2 border-transparent hover:border-white hover:scale-110 transition-all"
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Estado */}
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">Estado</label>
+                <select className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm text-white">
+                  <option value="activo">Activo</option>
+                  <option value="completado">Completado</option>
+                  <option value="archivado">Archivado</option>
+                </select>
+              </div>
+
+              {/* Fechas */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Fecha Inicio</label>
+                  <input
+                    type="date"
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Fecha Fin</label>
+                  <input
+                    type="date"
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm text-white"
+                  />
+                </div>
+              </div>
+
+              {/* Botones */}
+              <div className="flex gap-3 pt-4 border-t border-slate-700/50">
+                <button
+                  onClick={() => setShowProyectoModal(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={async () => {
+                    const nombre = (document.getElementById('proyecto-nombre') as HTMLInputElement)?.value;
+                    const descripcion = (document.getElementById('proyecto-descripcion') as HTMLTextAreaElement)?.value;
+                    
+                    if (!nombre?.trim()) {
+                      alert('El nombre es obligatorio');
+                      return;
+                    }
+
+                    console.log('Creando proyecto:', { nombre, descripcion });
+                    
+                    // Llamar a handleNuevoProyecto
+                    await handleNuevoProyecto({
+                      nombre: nombre,
+                      descripcion: descripcion || undefined,
+                      color: '#10b981',
+                      estado: 'activo',
+                      creadoPor: user?.email || 'usuario@ejemplo.com',
+                    });
+                    
+                    setShowProyectoModal(false);
+                  }}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold transition-all"
+                >
+                  Crear Proyecto
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
-      {showTareaModal && proyectoActual && (
-        <TareaModal
-          isOpen={showTareaModal}
-          onClose={() => setShowTareaModal(false)}
-          proyectoId={proyectoActual.id}
-          tarea={tareaEdit || undefined}
-          columnas={columnas}
-          etiquetas={etiquetas}
-          onSave={() => {
-            fetchProyectoData(proyectoActual.id);
-            setShowTareaModal(false);
-          }}
-        />
-      )}
+      
     </div>
   );
 }
