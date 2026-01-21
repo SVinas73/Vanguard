@@ -1,12 +1,13 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 
 // ============================================
 // CONFIGURACIÓN BASE
 // ============================================
 
-// El helper lee automáticamente NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY
-// Y envía el token JWT en cada request (necesario para RLS)
-export const supabase = createClientComponentClient();
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 // Manejar expiración de sesión automáticamente
 if (typeof window !== 'undefined') {
@@ -20,7 +21,6 @@ if (typeof window !== 'undefined') {
     }
   });
 }
-
 // ============================================
 // TIPOS
 // ============================================
