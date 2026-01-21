@@ -27,6 +27,7 @@ import {
   QrCode,
   GitBranch,
   RotateCcw,
+  Kanban,
   Boxes,
   Wrench
 } from 'lucide-react';
@@ -94,6 +95,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       items: [
         { id: 'compras', label: t('nav.purchases'), icon: ShoppingCart },
         { id: 'ventas', label: t('nav.sales'), icon: TrendingUp },
+        { id: 'proyectos', label: 'Gestión de Proyectos', icon: Kanban },
         // Almacenes removido de aquí - ahora está dentro de Stock
       ]
     },
