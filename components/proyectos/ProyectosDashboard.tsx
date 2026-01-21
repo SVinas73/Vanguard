@@ -35,7 +35,16 @@ export function ProyectosDashboard() {
   const [showProyectoModal, setShowProyectoModal] = useState(false);
   const [showTareaModal, setShowTareaModal] = useState(false);
   const [tareaEdit, setTareaEdit] = useState<ProyectoTarea | null>(null);
+
+  // 👇 AGREGAR TODO ESTO PARA DEBUG
+  useEffect(() => {
+    console.log('🔵 showProyectoModal cambió a:', showProyectoModal);
+  }, [showProyectoModal]);
+
+  console.log('🔵 RENDER - showProyectoModal:', showProyectoModal);
+  console.log('🔵 RENDER - proyectos.length:', proyectos.length);
   
+
   // Filtros
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activo' | 'completado' | 'archivado'>('activo');
   const [filtroAsignado, setFiltroAsignado] = useState<string>('');
