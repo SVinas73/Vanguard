@@ -52,8 +52,10 @@ export function ProyectosDashboard() {
   // ============================================
   
   useEffect(() => {
-    fetchProyectos();
-  }, []);
+    if (user?.email) {
+      fetchProyectos();
+    }
+  }, [user?.email]);
 
   useEffect(() => {
     if (proyectoActual) {
@@ -62,19 +64,30 @@ export function ProyectosDashboard() {
   }, [proyectoActual]);
 
   const fetchProyectos = async () => {
+    if (!user?.email) return; // 👈 Esperá a que haya usuario
+    
     setLoading(true);
+    
+    // Buscar proyectos donde soy creador O soy miembro
     const { data, error } = await supabase
       .from('proyectos')
-      .select('*')
+      .select(`
+        *,
+        proyecto_miembros!left(user_email)
+      `)
+      .or(`creado_por.eq.${user.email},proyecto_miembros.user_email.eq.${user.email}`)
       .order('creado_at', { ascending: false });
 
     if (error) {
       console.error('Error cargando proyectos:', error);
     } else {
-      const mapped = (data || []).map(mapProyecto);
+      // Eliminar duplicados (por si soy creador Y miembro)
+      const uniqueProyectos = Array.from(
+        new Map((data || []).map(p => [p.id, p])).values()
+      );
+      const mapped = uniqueProyectos.map(mapProyecto);
       setProyectos(mapped);
       
-      // Seleccionar primer proyecto activo
       const primerActivo = mapped.find(p => p.estado === 'activo');
       if (primerActivo) {
         setProyectoActual(primerActivo);
