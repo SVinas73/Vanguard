@@ -6,7 +6,7 @@ const resources = {
     translation: {
       header: { subtitle: 'Sistema de Gestión de Inventarios', logout: 'Cerrar sesión' },
       roles: { admin: 'Admin', seller: 'Vendedor', warehouse: 'Bodeguero', operator: 'Operador' },
-      nav: { main: 'Principal', dashboard: 'Dashboard', stock: 'Stock', movements: 'Movimientos', operations: 'Operaciones', purchases: 'Compras', sales: 'Ventas', warehouses: 'Almacenes', analysis: 'Análisis', analytics: 'Analytics IA', reports: 'Reportes', costs: 'Costos', config: 'Config', integrations: 'Integraciones', audit: 'Auditoría' },
+      nav: { main: 'Principal', dashboard: 'Dashboard', stock: 'Stock', movements: 'Movimientos', operations: 'Operaciones', purchases: 'Compras', sales: 'Ventas', warehouses: 'Almacenes', analysis: 'Análisis', analytics: 'Analytics IA', reports: 'Reportes', costs: 'Costos', config: 'Config', integrations: 'Integraciones', audit: 'Auditoría', controlTracking: 'Control & Seguimiento' },
       greetings: {
         morning: 'Buenos días',
         afternoon: 'Buenas tardes',
@@ -54,7 +54,7 @@ const resources = {
     translation: {
       header: { subtitle: 'Inventory Management System', logout: 'Log out' },
       roles: { admin: 'Admin', seller: 'Seller', warehouse: 'Warehouse', operator: 'Operator' },
-      nav: { main: 'Main', dashboard: 'Dashboard', stock: 'Stock', movements: 'Movements', operations: 'Operations', purchases: 'Purchases', sales: 'Sales', warehouses: 'Warehouses', analysis: 'Analysis', analytics: 'AI Analytics', reports: 'Reports', costs: 'Costs', config: 'Config', integrations: 'Integrations', audit: 'Audit' },
+      nav: { main: 'Main', dashboard: 'Dashboard', stock: 'Stock', movements: 'Movements', operations: 'Operations', purchases: 'Purchases', sales: 'Sales', warehouses: 'Warehouses', analysis: 'Analysis', analytics: 'AI Analytics', reports: 'Reports', costs: 'Costs', config: 'Config', integrations: 'Integrations', audit: 'Audit', controlTracking: 'Control & Tracking' },
       greetings: {
         morning: 'Good morning',
         afternoon: 'Good afternoon',
@@ -102,7 +102,7 @@ const resources = {
     translation: {
       header: { subtitle: 'Sistema de Gestão de Inventário', logout: 'Sair' },
       roles: { admin: 'Admin', seller: 'Vendedor', warehouse: 'Armazém', operator: 'Operador' },
-      nav: { main: 'Principal', dashboard: 'Painel', stock: 'Estoque', movements: 'Movimentos', operations: 'Operações', purchases: 'Compras', sales: 'Vendas', warehouses: 'Armazéns', analysis: 'Análise', analytics: 'Analytics IA', reports: 'Relatórios', costs: 'Custos', config: 'Config', integrations: 'Integrações', audit: 'Auditoria' },
+      nav: { main: 'Principal', dashboard: 'Painel', stock: 'Estoque', movements: 'Movimentos', operations: 'Operações', purchases: 'Compras', sales: 'Vendas', warehouses: 'Armazéns', analysis: 'Análise', analytics: 'Analytics IA', reports: 'Relatórios', costs: 'Custos', config: 'Config', integrations: 'Integrações', audit: 'Auditoria', controlTracking: 'Controle & Rastreamento' },
       greetings: {
         morning: 'Bom dia',
         afternoon: 'Boa tarde',
