@@ -23,6 +23,10 @@ import {
 export function ProyectosDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
+
+  // 👇 Agregá esto temporalmente
+  console.log('🔍 USER EN DASHBOARD:', user);
+  console.log('🔍 EMAIL:', user?.email);
   
   // State
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
