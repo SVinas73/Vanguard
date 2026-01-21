@@ -106,11 +106,11 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       ]
     },
     {
-      title: 'Control y seguimiento',
+      title: t('nav.controlTracking', 'Control & Seguimiento'),
       items: [
-        { id: 'seriales', label: 'Seriales', icon: QrCode, badge: 'NEW' },
-        { id: 'trazabilidad', label: 'Trazabilidad', icon: GitBranch, badge: 'NEW' },
-        { id: 'rma', label: 'Devoluciones (RMA)', icon: RotateCcw, badge: 'NEW' },
+        { id: 'seriales', label: 'Seriales', icon: QrCode },
+        { id: 'trazabilidad', label: 'Trazabilidad', icon: GitBranch },
+        { id: 'rma', label: 'Devoluciones (RMA)', icon: RotateCcw },
         { id: 'bom', label: 'BOM', icon: Boxes },
         { id: 'ensamblajes', label: 'Ensamblajes', icon: Wrench },
       ]
