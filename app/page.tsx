@@ -1,5 +1,6 @@
 'use client';
 
+import { ProyectosDashboard } from '@/components/proyectos';
 import { WelcomeHeader, StatsGrid } from '@/components/dashboard';
 import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
 import { StockDashboard } from '@/components/stock';
@@ -604,6 +605,13 @@ export default function HomePage() {
         {activeTab === 'ensamblajes' && (
           <div className="max-w-7xl mx-auto">
             <AssemblyDashboard />
+          </div>
+        )}
+
+        
+        {activeTab === 'proyectos' && (
+          <div className="max-w-7xl mx-auto">
+            <ProyectosDashboard />
           </div>
         )}
 
