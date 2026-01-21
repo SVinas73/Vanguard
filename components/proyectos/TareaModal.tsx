@@ -316,9 +316,9 @@ export function TareaModal({
       onClose={onClose}
       title={tarea ? 'Editar Tarea' : 'Nueva Tarea'}
     >
-      <div className="space-y-6">
-        {/* Tabs */}
-        <div className="flex gap-2 border-b border-slate-700/50 pb-2">
+      <div className="flex flex-col max-h-[80vh]">
+        {/* Tabs - Fijos arriba */}
+        <div className="flex gap-2 border-b border-slate-700/50 pb-2 mb-4">
           <button
             onClick={() => setActiveTab('detalles')}
             className={cn(
@@ -695,8 +695,8 @@ export function TareaModal({
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-4 border-t border-slate-700/50">
+        {/* Botones - Fijos abajo */}
+        <div className="flex gap-3 pt-4 mt-4 border-t border-slate-700/50">
           <Button variant="secondary" onClick={onClose} className="flex-1">
             Cancelar
           </Button>
