@@ -1,5 +1,6 @@
 'use client';
 
+import { TareaModal } from './TareaModal';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -649,7 +650,7 @@ export function ProyectosDashboard() {
       {showProyectoModal && <ModalProyecto />}
 
       {/* TODO: Agregar TareaModal cuando esté listo */}
-      {/* {showTareaModal && proyectoActual && (
+      {showTareaModal && proyectoActual && (
         <TareaModal
           isOpen={showTareaModal}
           onClose={() => setShowTareaModal(false)}
@@ -662,7 +663,7 @@ export function ProyectosDashboard() {
             setShowTareaModal(false);
           }}
         />
-      )} */}
+      )}
     </div>
   );
 }
