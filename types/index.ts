@@ -163,7 +163,7 @@ export interface StatsData {
   todayMovements: number;
 }
 
-export type TabType = 'dashboard' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes';
+export type TabType = 'dashboard' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes' | 'proyectos' ;
 
 export interface ModalState {
   showNewProduct: boolean;
@@ -1015,4 +1015,128 @@ export interface ProductExtended extends Product {
   diasGarantia?: number;
   esPerecedero?: boolean;
   diasVidaUtil?: number;
+}
+
+// ============================================
+// GESTIÓN DE PROYECTOS
+// ============================================
+
+export type EstadoProyecto = 'activo' | 'completado' | 'archivado';
+export type PrioridadTarea = 'baja' | 'media' | 'alta' | 'urgente';
+
+export interface Proyecto {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  color: string;
+  estado: EstadoProyecto;
+  fechaInicio?: Date;
+  fechaFin?: Date;
+  creadoPor?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ProyectoColumna {
+  id: string;
+  proyectoId: string;
+  nombre: string;
+  orden: number;
+  color?: string;
+  limiteWip?: number;
+  createdAt: Date;
+}
+
+export interface ProyectoTarea {
+  id: string;
+  proyectoId: string;
+  columnaId?: string;
+  titulo: string;
+  descripcion?: string;
+  prioridad: PrioridadTarea;
+  orden: number;
+  
+  // Fechas
+  fechaLimite?: Date;
+  fechaInicio?: Date;
+  fechaCompletado?: Date;
+  
+  // Asignación
+  asignadoA?: string;
+  
+  // Vínculos
+  productoCodigo?: string;
+  ordenCompraId?: string;
+  ordenVentaId?: string;
+  rmaId?: string;
+  ensamblajeId?: string;
+  
+  // Estado
+  completado: boolean;
+  bloqueado: boolean;
+  razonBloqueo?: string;
+  
+  // Seguimiento
+  tiempoEstimadoHoras?: number;
+  tiempoRealHoras?: number;
+  progreso: number;
+  
+  // Relaciones
+  subtareas?: ProyectoSubtarea[];
+  etiquetas?: ProyectoEtiqueta[];
+  comentarios?: ProyectoComentario[];
+  adjuntos?: ProyectoAdjunto[];
+  
+  // Auditoría
+  creadoPor?: string;
+  createdAt: Date;
+  actualizadoPor?: string;
+  updatedAt: Date;
+}
+
+export interface ProyectoSubtarea {
+  id: string;
+  tareaId: string;
+  titulo: string;
+  completado: boolean;
+  orden: number;
+  createdAt: Date;
+}
+
+export interface ProyectoEtiqueta {
+  id: string;
+  proyectoId: string;
+  nombre: string;
+  color: string;
+  createdAt: Date;
+}
+
+export interface ProyectoComentario {
+  id: string;
+  tareaId: string;
+  usuarioEmail: string;
+  contenido: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ProyectoAdjunto {
+  id: string;
+  tareaId: string;
+  nombreArchivo: string;
+  url: string;
+  tipoMime?: string;
+  tamanoBytes?: number;
+  subidoPor?: string;
+  createdAt: Date;
+}
+
+export interface ProyectoStats {
+  totalTareas: number;
+  tareasCompletadas: number;
+  tareasPendientes: number;
+  tareasBloqueadas: number;
+  porcentajeCompletado: number;
+  tareasPorPrioridad: Record<PrioridadTarea, number>;
+  tareasPorColumna: Record<string, number>;
 }
