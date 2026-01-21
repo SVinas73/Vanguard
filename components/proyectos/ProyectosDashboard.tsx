@@ -258,7 +258,7 @@ export function ProyectosDashboard() {
     );
   }
 
-  
+
 
   if (proyectos.length === 0) {
     return (
@@ -270,7 +270,10 @@ export function ProyectosDashboard() {
         <p className="text-slate-400 mb-6">
           Creá tu primer proyecto para organizar tareas y gestionar el trabajo del equipo
         </p>
-        <Button onClick={() => setShowProyectoModal(true)}>
+        <Button onClick={() => {
+          console.log('Click en crear proyecto'); // 👈 AGREGAR ESTO
+          setShowProyectoModal(true);
+        }}>
           <Plus size={18} className="mr-2" />
           Crear Primer Proyecto
         </Button>
