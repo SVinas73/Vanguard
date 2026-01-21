@@ -106,7 +106,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       ]
     },
     {
-      title: 'Trazabilidad Enterprise',
+      title: 'Control y seguimiento',
       items: [
         { id: 'seriales', label: 'Seriales', icon: QrCode, badge: 'NEW' },
         { id: 'trazabilidad', label: 'Trazabilidad', icon: GitBranch, badge: 'NEW' },
