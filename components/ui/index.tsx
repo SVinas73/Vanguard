@@ -259,22 +259,35 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
   if (!isOpen) return null;
+
+  const sizes = {
+    sm: 'max-w-sm',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+  };
 
   return (
     <div
-      className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-slate-900 rounded-2xl border border-slate-800 p-6 w-full max-w-lg shadow-2xl"
+        className={cn(
+          'bg-slate-900 rounded-2xl border border-slate-800 p-6 w-full shadow-2xl flex flex-col max-h-[85vh]',
+          sizes[size]
+        )}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold mb-4">{title}</h3>
-        {children}
+        <h3 className="text-lg font-semibold mb-4 flex-shrink-0">{title}</h3>
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {children}
+        </div>
       </div>
     </div>
   );
