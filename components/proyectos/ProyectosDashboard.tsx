@@ -64,28 +64,22 @@ export function ProyectosDashboard() {
   }, [proyectoActual]);
 
   const fetchProyectos = async () => {
-    if (!user?.email) return; // 👈 Esperá a que haya usuario
+    if (!user?.email) return;
     
     setLoading(true);
     
-    // Buscar proyectos donde soy creador O soy miembro
+    // Query simple: solo proyectos donde soy creador
+    // (después podemos agregar la lógica de miembros)
     const { data, error } = await supabase
       .from('proyectos')
-      .select(`
-        *,
-        proyecto_miembros!left(user_email)
-      `)
-      .or(`creado_por.eq.${user.email},proyecto_miembros.user_email.eq.${user.email}`)
+      .select('*')
+      .eq('creado_por', user.email)
       .order('creado_at', { ascending: false });
 
     if (error) {
       console.error('Error cargando proyectos:', error);
     } else {
-      // Eliminar duplicados (por si soy creador Y miembro)
-      const uniqueProyectos = Array.from(
-        new Map((data || []).map(p => [p.id, p])).values()
-      );
-      const mapped = uniqueProyectos.map(mapProyecto);
+      const mapped = (data || []).map(mapProyecto);
       setProyectos(mapped);
       
       const primerActivo = mapped.find(p => p.estado === 'activo');
