@@ -1,7 +1,7 @@
 'use client';
 
 import { TareaModal } from './TareaModal';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -9,26 +9,21 @@ import { Button, Card, Select } from '@/components/ui';
 import { KanbanBoard } from './KanbanBoard';
 import { ProyectoStats } from './ProyectoStats';
 import type { Proyecto, ProyectoTarea, ProyectoColumna, ProyectoEtiqueta } from '@/types';
+import { cn } from '@/lib/utils';
 import {
   Plus,
-  Settings,
-  Archive,
-  CheckCircle,
   TrendingUp,
-  Clock,
-  AlertTriangle,
   Filter,
   Search,
+  X,
+  ChevronDown,
+  RotateCcw,
 } from 'lucide-react';
 
 export function ProyectosDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
 
-  // 👇 Agregá esto temporalmente
-  console.log('🔍 USER EN DASHBOARD:', user);
-  console.log('🔍 EMAIL:', user?.email);
-  
   // State
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [proyectoActual, setProyectoActual] = useState<Proyecto | null>(null);
@@ -40,16 +35,25 @@ export function ProyectosDashboard() {
   const [showProyectoModal, setShowProyectoModal] = useState(false);
   const [showTareaModal, setShowTareaModal] = useState(false);
   const [tareaEdit, setTareaEdit] = useState<ProyectoTarea | null>(null);
+  const [columnaPreseleccionada, setColumnaPreseleccionada] = useState<string | null>(null);
   
+  // Modal nueva columna
+  const [showColumnaModal, setShowColumnaModal] = useState(false);
+  const [nuevaColumnaNombre, setNuevaColumnaNombre] = useState('');
+
   // Filtros
-  const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activo' | 'completado' | 'archivado'>('activo');
-  const [filtroAsignado, setFiltroAsignado] = useState<string>('');
-  const [filtroPrioridad, setFiltroPrioridad] = useState<string>('');
-  const [filtroEtiqueta, setFiltroEtiqueta] = useState<string>('');
+  const [showFiltrosAvanzados, setShowFiltrosAvanzados] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filtroPrioridad, setFiltroPrioridad] = useState<string>('');
+  const [filtroAsignado, setFiltroAsignado] = useState<string>('');
+  const [filtroEtiqueta, setFiltroEtiqueta] = useState<string>('');
+  const [filtroEstado, setFiltroEstado] = useState<string>('');
+  const [filtroFechaDesde, setFiltroFechaDesde] = useState<string>('');
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState<string>('');
+  const [filtroColumna, setFiltroColumna] = useState<string>('');
 
   // ============================================
-  // CARGAR PROYECTOS
+  // CARGAR DATOS
   // ============================================
   
   useEffect(() => {
@@ -69,8 +73,6 @@ export function ProyectosDashboard() {
     
     setLoading(true);
     
-    // Query simple: solo proyectos donde soy creador
-    // (después podemos agregar la lógica de miembros)
     const { data, error } = await supabase
       .from('proyectos')
       .select('*')
@@ -92,7 +94,6 @@ export function ProyectosDashboard() {
   };
 
   const fetchProyectoData = async (proyectoId: string) => {
-    // Cargar columnas
     const { data: colsData } = await supabase
       .from('proyecto_columnas')
       .select('*')
@@ -101,7 +102,6 @@ export function ProyectosDashboard() {
 
     setColumnas((colsData || []).map(mapColumna));
 
-    // Cargar tareas con relaciones
     const { data: tareasData } = await supabase
       .from('proyecto_tareas')
       .select(`
@@ -114,7 +114,6 @@ export function ProyectosDashboard() {
 
     setTareas((tareasData || []).map(mapTarea));
 
-    // Cargar etiquetas
     const { data: etiqData } = await supabase
       .from('proyecto_etiquetas')
       .select('*')
@@ -197,12 +196,96 @@ export function ProyectosDashboard() {
   });
 
   // ============================================
-  // HANDLERS
+  // FILTROS
+  // ============================================
+
+  const usuariosUnicos = useMemo(() => {
+    const usuarios = new Set<string>();
+    tareas.forEach(t => {
+      if (t.asignadoA) usuarios.add(t.asignadoA);
+      if (t.creadoPor) usuarios.add(t.creadoPor);
+    });
+    return Array.from(usuarios);
+  }, [tareas]);
+
+  const filtrosActivos = useMemo(() => {
+    let count = 0;
+    if (searchQuery) count++;
+    if (filtroPrioridad) count++;
+    if (filtroAsignado) count++;
+    if (filtroEtiqueta) count++;
+    if (filtroEstado) count++;
+    if (filtroFechaDesde) count++;
+    if (filtroFechaHasta) count++;
+    if (filtroColumna) count++;
+    return count;
+  }, [searchQuery, filtroPrioridad, filtroAsignado, filtroEtiqueta, filtroEstado, filtroFechaDesde, filtroFechaHasta, filtroColumna]);
+
+  const limpiarFiltros = () => {
+    setSearchQuery('');
+    setFiltroPrioridad('');
+    setFiltroAsignado('');
+    setFiltroEtiqueta('');
+    setFiltroEstado('');
+    setFiltroFechaDesde('');
+    setFiltroFechaHasta('');
+    setFiltroColumna('');
+  };
+
+  const tareasFiltradas = useMemo(() => {
+    return tareas.filter(t => {
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchTitulo = t.titulo.toLowerCase().includes(query);
+        const matchDescripcion = t.descripcion?.toLowerCase().includes(query);
+        if (!matchTitulo && !matchDescripcion) return false;
+      }
+      if (filtroPrioridad && t.prioridad !== filtroPrioridad) return false;
+      if (filtroAsignado && t.asignadoA !== filtroAsignado) return false;
+      if (filtroEtiqueta && !t.etiquetas?.some(e => e.id === filtroEtiqueta)) return false;
+      if (filtroColumna && t.columnaId !== filtroColumna) return false;
+
+      if (filtroEstado) {
+        const now = new Date();
+        switch (filtroEstado) {
+          case 'completado':
+            if (!t.completado) return false;
+            break;
+          case 'pendiente':
+            if (t.completado) return false;
+            break;
+          case 'bloqueado':
+            if (!t.bloqueado) return false;
+            break;
+          case 'vencido':
+            if (!t.fechaLimite || new Date(t.fechaLimite) >= now || t.completado) return false;
+            break;
+          case 'proximo':
+            if (!t.fechaLimite) return false;
+            const diasRestantes = (new Date(t.fechaLimite).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+            if (diasRestantes < 0 || diasRestantes > 7 || t.completado) return false;
+            break;
+        }
+      }
+
+      if (filtroFechaDesde) {
+        const desde = new Date(filtroFechaDesde);
+        if (!t.fechaLimite || new Date(t.fechaLimite) < desde) return false;
+      }
+      if (filtroFechaHasta) {
+        const hasta = new Date(filtroFechaHasta);
+        if (!t.fechaLimite || new Date(t.fechaLimite) > hasta) return false;
+      }
+
+      return true;
+    });
+  }, [tareas, searchQuery, filtroPrioridad, filtroAsignado, filtroEtiqueta, filtroEstado, filtroFechaDesde, filtroFechaHasta, filtroColumna]);
+
+  // ============================================
+  // HANDLERS - PROYECTO
   // ============================================
   
   const handleNuevoProyecto = async (proyecto: Omit<Proyecto, 'id' | 'createdAt' | 'updatedAt'>) => {
-    console.log('🟢 handleNuevoProyecto llamado', proyecto);
-
     const { data, error } = await supabase
       .from('proyectos')
       .insert({
@@ -223,9 +306,6 @@ export function ProyectosDashboard() {
       return;
     }
 
-    console.log('✅ Proyecto creado:', data);
-
-    // Crear columnas por defecto
     const columnasDefault = [
       { nombre: 'Por hacer', orden: 0 },
       { nombre: 'En proceso', orden: 1 },
@@ -244,123 +324,222 @@ export function ProyectosDashboard() {
     setShowProyectoModal(false);
   };
 
-  const handleNuevaTarea = () => {
+  // ============================================
+  // HANDLERS - TAREA
+  // ============================================
+
+  const handleNuevaTarea = (columnaId?: string) => {
     setTareaEdit(null);
+    setColumnaPreseleccionada(columnaId || null);
     setShowTareaModal(true);
   };
 
   const handleEditarTarea = (tarea: ProyectoTarea) => {
     setTareaEdit(tarea);
+    setColumnaPreseleccionada(null);
     setShowTareaModal(true);
   };
 
-  // Aplicar filtros
-  const tareasFiltradas = tareas.filter(t => {
-    if (searchQuery && !t.titulo.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    if (filtroAsignado && t.asignadoA !== filtroAsignado) return false;
-    if (filtroPrioridad && t.prioridad !== filtroPrioridad) return false;
-    if (filtroEtiqueta && !t.etiquetas?.some(e => e.id === filtroEtiqueta)) return false;
-    return true;
-  });
+  const handleDuplicateTarea = async (tarea: ProyectoTarea) => {
+    if (!proyectoActual) return;
+
+    const { error } = await supabase
+      .from('proyecto_tareas')
+      .insert({
+        proyecto_id: proyectoActual.id,
+        columna_id: tarea.columnaId,
+        titulo: `${tarea.titulo} (copia)`,
+        descripcion: tarea.descripcion,
+        prioridad: tarea.prioridad,
+        orden: tarea.orden + 1,
+        fecha_limite: tarea.fechaLimite?.toISOString(),
+        fecha_inicio: tarea.fechaInicio?.toISOString(),
+        asignado_a: tarea.asignadoA,
+        tiempo_estimado_horas: tarea.tiempoEstimadoHoras,
+        creado_por: user?.email,
+      });
+
+    if (error) {
+      console.error('Error duplicando tarea:', error);
+      alert('Error al duplicar tarea');
+    } else {
+      fetchProyectoData(proyectoActual.id);
+    }
+  };
+
+  const handleDeleteTarea = async (tareaId: string) => {
+    if (!proyectoActual) return;
+
+    const confirmDelete = window.confirm('¿Estás seguro de eliminar esta tarea?');
+    if (!confirmDelete) return;
+
+    const { error } = await supabase
+      .from('proyecto_tareas')
+      .delete()
+      .eq('id', tareaId);
+
+    if (error) {
+      console.error('Error eliminando tarea:', error);
+      alert('Error al eliminar tarea');
+    } else {
+      fetchProyectoData(proyectoActual.id);
+    }
+  };
+
+  const handleMoverTarea = async (tareaId: string, nuevaColumnaId: string, nuevoOrden: number) => {
+    if (!proyectoActual) return;
+
+    const { error } = await supabase
+      .from('proyecto_tareas')
+      .update({ columna_id: nuevaColumnaId, orden: nuevoOrden })
+      .eq('id', tareaId);
+
+    if (error) {
+      console.error('Error moviendo tarea:', error);
+    } else {
+      fetchProyectoData(proyectoActual.id);
+    }
+  };
 
   // ============================================
-  // COMPONENTE MODAL (reutilizable)
+  // HANDLERS - COLUMNA
+  // ============================================
+
+  const handleUpdateColumna = async (columnaId: string, data: Partial<ProyectoColumna>) => {
+    const updateData: any = {};
+    if (data.nombre !== undefined) updateData.nombre = data.nombre;
+    if (data.color !== undefined) updateData.color = data.color;
+    if (data.limiteWip !== undefined) updateData.limite_wip = data.limiteWip || null;
+
+    const { error } = await supabase
+      .from('proyecto_columnas')
+      .update(updateData)
+      .eq('id', columnaId);
+
+    if (error) {
+      console.error('Error actualizando columna:', error);
+      alert('Error al actualizar columna');
+    } else if (proyectoActual) {
+      fetchProyectoData(proyectoActual.id);
+    }
+  };
+
+  const handleDeleteColumna = async (columnaId: string) => {
+    if (!proyectoActual) return;
+
+    // Primero eliminar tareas de la columna
+    await supabase
+      .from('proyecto_tareas')
+      .delete()
+      .eq('columna_id', columnaId);
+
+    // Luego eliminar la columna
+    const { error } = await supabase
+      .from('proyecto_columnas')
+      .delete()
+      .eq('id', columnaId);
+
+    if (error) {
+      console.error('Error eliminando columna:', error);
+      alert('Error al eliminar columna');
+    } else {
+      fetchProyectoData(proyectoActual.id);
+    }
+  };
+
+  const handleMoveColumna = async (columnaId: string, direction: 'left' | 'right') => {
+    if (!proyectoActual) return;
+
+    const columnaIndex = columnas.findIndex(c => c.id === columnaId);
+    if (columnaIndex === -1) return;
+
+    const newIndex = direction === 'left' ? columnaIndex - 1 : columnaIndex + 1;
+    if (newIndex < 0 || newIndex >= columnas.length) return;
+
+    const columnaActual = columnas[columnaIndex];
+    const columnaIntercambio = columnas[newIndex];
+
+    // Intercambiar órdenes
+    await supabase
+      .from('proyecto_columnas')
+      .update({ orden: newIndex })
+      .eq('id', columnaActual.id);
+
+    await supabase
+      .from('proyecto_columnas')
+      .update({ orden: columnaIndex })
+      .eq('id', columnaIntercambio.id);
+
+    fetchProyectoData(proyectoActual.id);
+  };
+
+  const handleAddColumna = async () => {
+    if (!proyectoActual || !nuevaColumnaNombre.trim()) return;
+
+    const { error } = await supabase
+      .from('proyecto_columnas')
+      .insert({
+        proyecto_id: proyectoActual.id,
+        nombre: nuevaColumnaNombre.trim(),
+        orden: columnas.length,
+      });
+
+    if (error) {
+      console.error('Error creando columna:', error);
+      alert('Error al crear columna');
+    } else {
+      setNuevaColumnaNombre('');
+      setShowColumnaModal(false);
+      fetchProyectoData(proyectoActual.id);
+    }
+  };
+
+  // ============================================
+  // MODAL PROYECTO
   // ============================================
   
   const ModalProyecto = () => (
     <div 
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 999999,
-      }}
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999]"
       onClick={() => setShowProyectoModal(false)}
     >
       <div 
-        style={{
-          backgroundColor: '#0f172a',
-          borderRadius: '16px',
-          border: '1px solid #334155',
-          padding: '24px',
-          width: '100%',
-          maxWidth: '500px',
-          margin: '0 16px',
-          position: 'relative',
-          zIndex: 999999,
-        }}
+        className="bg-slate-900 rounded-2xl border border-slate-700 p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '24px', color: 'white' }}>
-          Nuevo Proyecto
-        </h3>
+        <h3 className="text-xl font-semibold mb-6">Nuevo Proyecto</h3>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Nombre */}
+        <div className="space-y-4">
           <div>
-            <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
-              Nombre del Proyecto *
-            </label>
+            <label className="block text-sm text-slate-400 mb-2">Nombre del Proyecto *</label>
             <input
               id="proyecto-nombre"
               type="text"
               placeholder="Ej: Implementación Q1 2026"
-              style={{
-                width: '100%',
-                padding: '10px 16px',
-                borderRadius: '12px',
-                backgroundColor: 'rgba(30, 41, 59, 0.5)',
-                border: '1px solid rgba(51, 65, 85, 0.5)',
-                fontSize: '14px',
-                color: 'white',
-              }}
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none text-sm"
             />
           </div>
 
-          {/* Descripción */}
           <div>
-            <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
-              Descripción
-            </label>
+            <label className="block text-sm text-slate-400 mb-2">Descripción</label>
             <textarea
               id="proyecto-descripcion"
               placeholder="Detalles del proyecto..."
               rows={3}
-              style={{
-                width: '100%',
-                padding: '10px 16px',
-                borderRadius: '12px',
-                backgroundColor: 'rgba(30, 41, 59, 0.5)',
-                border: '1px solid rgba(51, 65, 85, 0.5)',
-                fontSize: '14px',
-                color: 'white',
-                resize: 'none',
-              }}
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none text-sm resize-none"
             />
           </div>
 
-          {/* Color */}
           <div>
-            <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
-              Color del Proyecto
-            </label>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <label className="block text-sm text-slate-400 mb-2">Color</label>
+            <div className="flex gap-2 flex-wrap">
               {['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'].map(color => (
                 <button
                   key={color}
                   type="button"
                   id={`color-${color}`}
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '8px',
-                    backgroundColor: color,
-                    border: '2px solid transparent',
-                    cursor: 'pointer',
-                  }}
+                  className="w-10 h-10 rounded-lg border-2 border-transparent hover:scale-110 transition-transform"
+                  style={{ backgroundColor: color }}
                   onClick={(e) => {
                     const buttons = e.currentTarget.parentElement?.querySelectorAll('button');
                     buttons?.forEach(btn => (btn as HTMLElement).style.borderColor = 'transparent');
@@ -371,95 +550,36 @@ export function ProyectosDashboard() {
             </div>
           </div>
 
-          {/* Estado */}
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
-              Estado
-            </label>
-            <select 
-              id="proyecto-estado"
-              style={{
-                width: '100%',
-                padding: '10px 16px',
-                borderRadius: '12px',
-                backgroundColor: 'rgba(30, 41, 59, 0.5)',
-                border: '1px solid rgba(51, 65, 85, 0.5)',
-                fontSize: '14px',
-                color: 'white',
-              }}
-            >
-              <option value="activo">Activo</option>
-              <option value="completado">Completado</option>
-              <option value="archivado">Archivado</option>
-            </select>
-          </div>
-
-          {/* Fechas */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
-                Fecha Inicio
-              </label>
+              <label className="block text-sm text-slate-400 mb-2">Fecha Inicio</label>
               <input
                 id="proyecto-fecha-inicio"
                 type="date"
-                style={{
-                  width: '100%',
-                  padding: '10px 16px',
-                  borderRadius: '12px',
-                  backgroundColor: 'rgba(30, 41, 59, 0.5)',
-                  border: '1px solid rgba(51, 65, 85, 0.5)',
-                  fontSize: '14px',
-                  color: 'white',
-                }}
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none text-sm"
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>
-                Fecha Fin
-              </label>
+              <label className="block text-sm text-slate-400 mb-2">Fecha Fin</label>
               <input
                 id="proyecto-fecha-fin"
                 type="date"
-                style={{
-                  width: '100%',
-                  padding: '10px 16px',
-                  borderRadius: '12px',
-                  backgroundColor: 'rgba(30, 41, 59, 0.5)',
-                  border: '1px solid rgba(51, 65, 85, 0.5)',
-                  fontSize: '14px',
-                  color: 'white',
-                }}
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none text-sm"
               />
             </div>
           </div>
 
-          {/* Botones */}
-          <div style={{ display: 'flex', gap: '12px', paddingTop: '16px', borderTop: '1px solid #334155' }}>
-            <button
-              onClick={() => setShowProyectoModal(false)}
-              style={{
-                flex: 1,
-                padding: '10px 16px',
-                borderRadius: '12px',
-                backgroundColor: '#1e293b',
-                color: '#e2e8f0',
-                border: '1px solid #334155',
-                fontWeight: '500',
-                cursor: 'pointer',
-              }}
-            >
+          <div className="flex gap-3 pt-4 border-t border-slate-700/50">
+            <Button variant="secondary" onClick={() => setShowProyectoModal(false)} className="flex-1">
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button 
               onClick={async () => {
                 const nombre = (document.getElementById('proyecto-nombre') as HTMLInputElement)?.value;
                 const descripcion = (document.getElementById('proyecto-descripcion') as HTMLTextAreaElement)?.value;
-                const estado = (document.getElementById('proyecto-estado') as HTMLSelectElement)?.value;
                 const fechaInicio = (document.getElementById('proyecto-fecha-inicio') as HTMLInputElement)?.value;
                 const fechaFin = (document.getElementById('proyecto-fecha-fin') as HTMLInputElement)?.value;
                 
-                // Obtener color seleccionado (el que tiene borde blanco)
                 const colorSeleccionado = Array.from(document.querySelectorAll('[id^="color-"]'))
                   .find(btn => (btn as HTMLElement).style.borderColor === 'white')
                   ?.id.replace('color-', '') || '#10b981';
@@ -470,28 +590,19 @@ export function ProyectosDashboard() {
                 }
 
                 await handleNuevoProyecto({
-                  nombre: nombre,
+                  nombre,
                   descripcion: descripcion || undefined,
                   color: colorSeleccionado,
-                  estado: estado as 'activo' | 'completado' | 'archivado',
+                  estado: 'activo',
                   fechaInicio: fechaInicio ? new Date(fechaInicio) : undefined,
                   fechaFin: fechaFin ? new Date(fechaFin) : undefined,
-                  creadoPor: user?.email || 'usuario@ejemplo.com',
+                  creadoPor: user?.email || '',
                 });
               }}
-              style={{
-                flex: 1,
-                padding: '10px 16px',
-                borderRadius: '12px',
-                backgroundColor: '#10b981',
-                color: '#020617',
-                border: 'none',
-                fontWeight: '600',
-                cursor: 'pointer',
-              }}
+              className="flex-1"
             >
               Crear Proyecto
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -510,7 +621,6 @@ export function ProyectosDashboard() {
     );
   }
 
-  // Estado vacío: sin proyectos
   if (proyectos.length === 0) {
     return (
       <>
@@ -527,14 +637,11 @@ export function ProyectosDashboard() {
             Crear Primer Proyecto
           </Button>
         </div>
-
-        {/* Modal para crear proyecto */}
         {showProyectoModal && <ModalProyecto />}
       </>
     );
   }
 
-  // Estado normal: con proyectos
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -559,14 +666,24 @@ export function ProyectosDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setShowFiltrosAvanzados(!showFiltrosAvanzados)}
+            className={cn(filtrosActivos > 0 && 'text-emerald-400')}
+          >
             <Filter size={18} />
+            {filtrosActivos > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs bg-emerald-500/20 rounded-full">
+                {filtrosActivos}
+              </span>
+            )}
           </Button>
           <Button variant="secondary" onClick={() => setShowProyectoModal(true)}>
             <Plus size={18} className="mr-2" />
             Nuevo Proyecto
           </Button>
-          <Button onClick={handleNuevaTarea}>
+          <Button onClick={() => handleNuevaTarea()}>
             <Plus size={18} className="mr-2" />
             Nueva Tarea
           </Button>
@@ -575,94 +692,218 @@ export function ProyectosDashboard() {
 
       {/* Stats */}
       {proyectoActual && (
-        <ProyectoStats 
-          tareas={tareas}
-          columnas={columnas}
-        />
+        <ProyectoStats tareas={tareas} columnas={columnas} />
       )}
 
       {/* Filtros */}
       <Card className="p-4">
-        <div className="grid grid-cols-4 gap-4">
-          <div className="relative">
+        <div className="flex gap-4 items-center">
+          <div className="relative flex-1 max-w-md">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
-              placeholder="Buscar tareas..."
+              placeholder="Buscar por título o descripción..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
             />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                <X size={16} />
+              </button>
+            )}
           </div>
 
           <Select
             placeholder="Prioridad"
             options={[
               { value: '', label: 'Todas las prioridades' },
-              { value: 'urgente', label: 'Urgente' },
-              { value: 'alta', label: 'Alta' },
-              { value: 'media', label: 'Media' },
-              { value: 'baja', label: 'Baja' },
+              { value: 'urgente', label: '🔴 Urgente' },
+              { value: 'alta', label: '🟠 Alta' },
+              { value: 'media', label: '🔵 Media' },
+              { value: 'baja', label: '⚪ Baja' },
             ]}
             value={filtroPrioridad}
             onChange={(e) => setFiltroPrioridad(e.target.value)}
+            className="w-48"
           />
 
           <Select
-            placeholder="Asignado"
+            placeholder="Estado"
             options={[
-              { value: '', label: 'Todos los usuarios' },
-              // Aquí deberías cargar los usuarios reales
+              { value: '', label: 'Todos los estados' },
+              { value: 'pendiente', label: '⏳ Pendientes' },
+              { value: 'completado', label: '✅ Completadas' },
+              { value: 'bloqueado', label: '🔒 Bloqueadas' },
+              { value: 'vencido', label: '⚠️ Vencidas' },
+              { value: 'proximo', label: '📅 Próximas 7 días' },
             ]}
-            value={filtroAsignado}
-            onChange={(e) => setFiltroAsignado(e.target.value)}
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+            className="w-48"
           />
 
-          <Select
-            placeholder="Etiqueta"
-            options={[
-              { value: '', label: 'Todas las etiquetas' },
-              ...etiquetas.map(e => ({ value: e.id, label: e.nombre }))
-            ]}
-            value={filtroEtiqueta}
-            onChange={(e) => setFiltroEtiqueta(e.target.value)}
-          />
+          <button
+            onClick={() => setShowFiltrosAvanzados(!showFiltrosAvanzados)}
+            className={cn(
+              'flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors',
+              showFiltrosAvanzados 
+                ? 'bg-emerald-500/20 text-emerald-400' 
+                : 'bg-slate-800/50 text-slate-400 hover:text-slate-200'
+            )}
+          >
+            Más filtros
+            <ChevronDown size={16} className={cn('transition-transform', showFiltrosAvanzados && 'rotate-180')} />
+          </button>
+
+          {filtrosActivos > 0 && (
+            <button
+              onClick={limpiarFiltros}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+            >
+              <RotateCcw size={16} />
+              Limpiar ({filtrosActivos})
+            </button>
+          )}
         </div>
+
+        {showFiltrosAvanzados && (
+          <div className="mt-4 pt-4 border-t border-slate-700/50 grid grid-cols-4 gap-4">
+            <Select
+              label="Columna"
+              placeholder="Todas las columnas"
+              options={[
+                { value: '', label: 'Todas las columnas' },
+                ...columnas.map(c => ({ value: c.id, label: c.nombre }))
+              ]}
+              value={filtroColumna}
+              onChange={(e) => setFiltroColumna(e.target.value)}
+            />
+
+            <Select
+              label="Asignado a"
+              placeholder="Todos los usuarios"
+              options={[
+                { value: '', label: 'Todos los usuarios' },
+                ...usuariosUnicos.map(u => ({ value: u, label: u }))
+              ]}
+              value={filtroAsignado}
+              onChange={(e) => setFiltroAsignado(e.target.value)}
+            />
+
+            <Select
+              label="Etiqueta"
+              placeholder="Todas las etiquetas"
+              options={[
+                { value: '', label: 'Todas las etiquetas' },
+                ...etiquetas.map(e => ({ value: e.id, label: e.nombre }))
+              ]}
+              value={filtroEtiqueta}
+              onChange={(e) => setFiltroEtiqueta(e.target.value)}
+            />
+
+            <div className="space-y-1">
+              <label className="block text-sm text-slate-400">Rango de fechas</label>
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  value={filtroFechaDesde}
+                  onChange={(e) => setFiltroFechaDesde(e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none text-sm"
+                />
+                <input
+                  type="date"
+                  value={filtroFechaHasta}
+                  onChange={(e) => setFiltroFechaHasta(e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none text-sm"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {filtrosActivos > 0 && (
+          <div className="mt-4 pt-4 border-t border-slate-700/50 flex items-center justify-between">
+            <span className="text-sm text-slate-400">
+              Mostrando <span className="text-emerald-400 font-medium">{tareasFiltradas.length}</span> de{' '}
+              <span className="font-medium">{tareas.length}</span> tareas
+            </span>
+          </div>
+        )}
       </Card>
 
-      {/* Kanban Board */}
+      {/* ============================================
+          KANBAN BOARD - AQUÍ ESTÁ LA CONEXIÓN COMPLETA
+          ============================================ */}
       {proyectoActual && (
         <KanbanBoard
           columnas={columnas}
           tareas={tareasFiltradas}
           onTareaClick={handleEditarTarea}
-          onTareaMover={async (tareaId, nuevaColumnaId, nuevoOrden) => {
-            await supabase
-              .from('proyecto_tareas')
-              .update({ columna_id: nuevaColumnaId, orden: nuevoOrden })
-              .eq('id', tareaId);
-            fetchProyectoData(proyectoActual.id);
-          }}
+          onTareaMover={handleMoverTarea}
+          onAddTarea={handleNuevaTarea}
+          onUpdateColumna={handleUpdateColumna}
+          onDeleteColumna={handleDeleteColumna}
+          onMoveColumna={handleMoveColumna}
+          onDuplicateTarea={handleDuplicateTarea}
+          onDeleteTarea={handleDeleteTarea}
+          onAddColumna={() => setShowColumnaModal(true)}
         />
       )}
 
-      {/* Modal para crear/editar proyecto */}
+      {/* Modales */}
       {showProyectoModal && <ModalProyecto />}
 
-      {/* TODO: Agregar TareaModal cuando esté listo */}
       {showTareaModal && proyectoActual && (
         <TareaModal
           isOpen={showTareaModal}
-          onClose={() => setShowTareaModal(false)}
+          onClose={() => {
+            setShowTareaModal(false);
+            setColumnaPreseleccionada(null);
+          }}
           proyectoId={proyectoActual.id}
           tarea={tareaEdit || undefined}
           columnas={columnas}
           etiquetas={etiquetas}
+          columnaPreseleccionada={columnaPreseleccionada}
           onSave={() => {
             fetchProyectoData(proyectoActual.id);
             setShowTareaModal(false);
+            setColumnaPreseleccionada(null);
           }}
         />
+      )}
+
+      {/* Modal nueva columna */}
+      {showColumnaModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]" onClick={() => setShowColumnaModal(false)}>
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 w-80" onClick={e => e.stopPropagation()}>
+            <h4 className="font-semibold mb-3">Nueva columna</h4>
+            <input
+              type="text"
+              value={nuevaColumnaNombre}
+              onChange={e => setNuevaColumnaNombre(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAddColumna()}
+              placeholder="Nombre de la columna"
+              className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:border-emerald-500 focus:outline-none text-sm mb-3"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowColumnaModal(false)}
+                className="flex-1 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleAddColumna}
+                className="flex-1 px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-medium text-sm transition-colors"
+              >
+                Crear
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

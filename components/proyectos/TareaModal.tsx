@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Modal, Button, Input, Select, Card } from '@/components/ui';
 import type { ProyectoTarea, ProyectoColumna, ProyectoEtiqueta, ProyectoSubtarea, ProyectoComentario } from '@/types';
@@ -34,6 +35,7 @@ interface TareaModalProps {
   tarea?: ProyectoTarea;
   columnas: ProyectoColumna[];
   etiquetas: ProyectoEtiqueta[];
+  columnaPreseleccionada?: string | null; // NUEVA PROP
   onSave: () => void;
 }
 
@@ -44,9 +46,11 @@ export function TareaModal({
   tarea,
   columnas,
   etiquetas,
+  columnaPreseleccionada, // NUEVA PROP
   onSave,
 }: TareaModalProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
   // Tabs
@@ -82,6 +86,7 @@ export function TareaModal({
   // Load data
   useEffect(() => {
     if (tarea) {
+      // Editando tarea existente
       setFormData({
         titulo: tarea.titulo,
         descripcion: tarea.descripcion || '',
@@ -108,12 +113,34 @@ export function TareaModal({
       // Cargar comentarios
       fetchComentarios(tarea.id);
     } else {
-      // Default: primera columna
-      if (columnas.length > 0) {
-        setFormData(prev => ({ ...prev, columnaId: columnas[0].id }));
-      }
+      // Nueva tarea - usar columnaPreseleccionada si existe, sino primera columna
+      const columnaInicial = columnaPreseleccionada || (columnas.length > 0 ? columnas[0].id : '');
+      setFormData(prev => ({ 
+        ...prev, 
+        columnaId: columnaInicial,
+        // Reset otros campos para nueva tarea
+        titulo: '',
+        descripcion: '',
+        prioridad: 'media',
+        asignadoA: '',
+        fechaLimite: '',
+        fechaInicio: '',
+        tiempoEstimadoHoras: '',
+        progreso: 0,
+        completado: false,
+        bloqueado: false,
+        razonBloqueo: '',
+        productoCodigo: '',
+        ordenCompraId: '',
+        ordenVentaId: '',
+        rmaId: '',
+        ensamblajeId: '',
+      }));
+      setEtiquetasSeleccionadas([]);
+      setSubtareas([]);
+      setComentarios([]);
     }
-  }, [tarea, columnas]);
+  }, [tarea, columnas, columnaPreseleccionada]);
 
   const fetchComentarios = async (tareaId: string) => {
     const { data } = await supabase
@@ -164,6 +191,7 @@ export function TareaModal({
         rma_id: formData.rmaId || null,
         ensamblaje_id: formData.ensamblajeId || null,
         orden: tarea?.orden || 0,
+        creado_por: user?.email || 'usuario@ejemplo.com',
       };
 
       let tareaId = tarea?.id;
@@ -206,10 +234,9 @@ export function TareaModal({
             );
         }
 
-        // Guardar subtareas
-        if (!tarea) {
-          // Solo insertar subtareas si es una tarea nueva
-          for (const sub of subtareas) {
+        // Guardar subtareas nuevas (las que tienen id temporal)
+        for (const sub of subtareas) {
+          if (sub.id.startsWith('temp-')) {
             await supabase.from('proyecto_subtareas').insert({
               tarea_id: tareaId,
               titulo: sub.titulo,
@@ -281,7 +308,7 @@ export function TareaModal({
       .from('proyecto_comentarios')
       .insert({
         tarea_id: tarea.id,
-        usuario_email: 'usuario@ejemplo.com', // Reemplazar con usuario actual
+        usuario_email: user?.email || 'usuario@ejemplo.com',
         contenido: nuevoComentario,
       })
       .select()
@@ -509,6 +536,9 @@ export function TareaModal({
                     </button>
                   );
                 })}
+                {etiquetas.length === 0 && (
+                  <span className="text-sm text-slate-500">No hay etiquetas en este proyecto</span>
+                )}
               </div>
             </div>
 
@@ -692,7 +722,8 @@ export function TareaModal({
         {/* Tab: Adjuntos */}
         {activeTab === 'adjuntos' && tarea && (
           <div className="text-center py-12 text-slate-500">
-            Funcionalidad de adjuntos próximamente
+            <Paperclip size={48} className="mx-auto mb-4 opacity-50" />
+            <p>Funcionalidad de adjuntos próximamente</p>
           </div>
         )}
 
