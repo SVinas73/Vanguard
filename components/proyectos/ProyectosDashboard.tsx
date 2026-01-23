@@ -993,10 +993,9 @@ export function ProyectosDashboard() {
   return (
     <div className="space-y-6">
       {/* ============================================
-          CONTENIDO CON SIDEBAR
+          CONTENIDO PRINCIPAL
           ============================================ */}
-      <div className="flex gap-6">
-        <div className="flex-1 min-w-0 space-y-6"></div>
+      <div className={cn('flex-1 space-y-6 transition-all', showSidebar ? 'mr-80' : '')}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -1125,6 +1124,11 @@ export function ProyectosDashboard() {
             </Button>
           </div>
         </div>
+         {/* CONTENIDO + SIDEBAR */}
+        <div className="flex gap-6">
+      
+          {/* Área principal */}
+          <div className="flex-1 min-w-0 space-y-6"></div>
 
         {/* Stats */}
         {proyectoActual && vistaActual !== 'metricas' && (
@@ -1272,10 +1276,12 @@ export function ProyectosDashboard() {
         {/* Vista actual */}
         {renderVistaActual()}
       </div>
+      </div>
 
       {/* ============================================
-            SIDEBAR DERECHO
-            ============================================ */}
+          SIDEBAR DERECHO
+          ============================================ */}
+      {/* SIDEBAR */}
         {showSidebar && proyectoActual && (
           <div className="w-80 flex-shrink-0 space-y-4">
             {/* Tabs del sidebar */}
@@ -1366,6 +1372,7 @@ export function ProyectosDashboard() {
             )}
           </div>
         )}
+      
 
       {/* ============================================
           MODALES
