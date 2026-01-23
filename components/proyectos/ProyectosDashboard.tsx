@@ -73,7 +73,7 @@ export function ProyectosDashboard() {
   // ============================================
   
   const [vistaActual, setVistaActual] = useState<VistaProyecto>('kanban');
-  const [showSidebar, setShowSidebar] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
   const [sidebarTab, setSidebarTab] = useState<'actividad' | 'calendario'>('actividad');
 
   // ============================================
@@ -991,7 +991,7 @@ export function ProyectosDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full">
       {/* ============================================
           CONTENIDO PRINCIPAL
           ============================================ */}
@@ -1124,11 +1124,6 @@ export function ProyectosDashboard() {
             </Button>
           </div>
         </div>
-         {/* CONTENIDO + SIDEBAR */}
-        <div className="flex gap-6">
-      
-          {/* Área principal */}
-          <div className="flex-1 min-w-0 space-y-6"></div>
 
         {/* Stats */}
         {proyectoActual && vistaActual !== 'metricas' && (
@@ -1276,14 +1271,13 @@ export function ProyectosDashboard() {
         {/* Vista actual */}
         {renderVistaActual()}
       </div>
-      </div>
 
       {/* ============================================
           SIDEBAR DERECHO
           ============================================ */}
-      {/* SIDEBAR */}
-        {showSidebar && proyectoActual && (
-          <div className="w-80 flex-shrink-0 space-y-4">
+      {showSidebar && proyectoActual && (
+        <div className="fixed right-0 top-0 h-full w-80 bg-slate-900/95 border-l border-slate-700/50 p-4 overflow-y-auto backdrop-blur-sm z-40">
+          <div className="pt-16 space-y-4">
             {/* Tabs del sidebar */}
             <div className="flex gap-2 p-1 bg-slate-800/50 rounded-xl">
               <button
@@ -1371,8 +1365,8 @@ export function ProyectosDashboard() {
               </div>
             )}
           </div>
-        )}
-      
+        </div>
+      )}
 
       {/* ============================================
           MODALES
