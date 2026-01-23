@@ -995,7 +995,7 @@ export function ProyectosDashboard() {
       {/* ============================================
           CONTENIDO PRINCIPAL
           ============================================ */}
-      <div className={cn('flex-1 space-y-6 transition-all', showSidebar ? 'mr-80' : '')}>
+      <div className={cn('flex-1 space-y-6 transition-all duration-300', showSidebar ? 'pr-80' : '')}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -1098,7 +1098,12 @@ export function ProyectosDashboard() {
             {/* Toggle sidebar */}
             <button
               onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+              className={cn(
+                'p-2 rounded-lg transition-colors',
+                showSidebar 
+                  ? 'bg-emerald-500/20 text-emerald-400' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              )}
               title={showSidebar ? 'Ocultar panel' : 'Mostrar panel'}
             >
               {showSidebar ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
@@ -1276,7 +1281,7 @@ export function ProyectosDashboard() {
           SIDEBAR DERECHO
           ============================================ */}
       {showSidebar && proyectoActual && (
-        <div className="fixed right-0 top-0 h-full w-80 bg-slate-900/95 border-l border-slate-700/50 p-4 overflow-y-auto backdrop-blur-sm z-40">
+        <div className="fixed right-0 top-20 bottom-0 w-80 bg-slate-900/95 border-l border-slate-700/50 p-4 overflow-y-auto backdrop-blur-sm z-40">
           <div className="pt-16 space-y-4">
             {/* Tabs del sidebar */}
             <div className="flex gap-2 p-1 bg-slate-800/50 rounded-xl">
