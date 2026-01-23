@@ -1275,8 +1275,11 @@ export function ProyectosDashboard() {
       {/* ============================================
           SIDEBAR DERECHO
           ============================================ */}
-      {showSidebar && proyectoActual && (
-        <div className="fixed right-0 top-0 h-full w-80 bg-slate-900/95 border-l border-slate-700/50 p-4 overflow-y-auto backdrop-blur-sm z-40">
+      {proyectoActual && (
+        <div className={cn(
+          "fixed right-0 top-0 h-full w-80 bg-slate-900/95 border-l border-slate-700/50 p-4 overflow-y-auto backdrop-blur-sm z-40 transition-transform duration-300",
+          showSidebar ? "translate-x-0" : "translate-x-full"
+        )}>
           <div className="pt-16 space-y-4">
             {/* Tabs del sidebar */}
             <div className="flex gap-2 p-1 bg-slate-800/50 rounded-xl">
