@@ -166,6 +166,17 @@ export function ProyectosDashboard() {
     }
   }, [proyectoActual]);
 
+  // Cerrar todos los modales al cambiar de vista
+  useEffect(() => {
+    // Forzar cierre de todos los modales cuando cambias de vista
+    setShowPlantillasModal(false);
+    setShowProyectoModal(false);
+    setShowCrearDesdeTemplate(false);
+    setShowTareaModal(false);
+    setShowColumnaModal(false);
+    setShowShortcutsHelp(false);
+  }, [vistaActual]);
+
   const fetchProyectos = async () => {
     if (!user?.email) return;
     
