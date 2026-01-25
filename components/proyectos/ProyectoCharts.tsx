@@ -347,39 +347,47 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
       </div>
 
       {/* Burndown Chart (si hay fechas) */}
-      {burndownData.length > 0 && (
+      {burndownData.length > 0 && metricas.total > 0 && (
         <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <TrendingDown size={18} className="text-purple-400" />
             Burndown Chart
           </h3>
           
-          <div className="h-64 flex items-end gap-1">
-            {burndownData.map((point, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                {/* Barra ideal */}
-                <div 
-                  className="w-full bg-slate-600/50 rounded-t"
-                  style={{ 
-                    height: `${(point.ideal / metricas.total) * 100}%`,
-                    minHeight: '2px'
-                  }}
-                />
-                {/* Barra real */}
-                {point.real !== null && (
+          <div className="h-64 flex items-end gap-1 relative">
+            {burndownData.map((point, i) => {
+              const idealHeight = Math.min(100, Math.max(0, (point.ideal / metricas.total) * 100));
+              const realHeight = point.real !== null 
+                ? Math.min(100, Math.max(0, (point.real / metricas.total) * 100))
+                : null;
+              
+              return (
+                <div key={i} className="flex-1 h-full flex flex-col justify-end relative">
+                  {/* Barra ideal */}
                   <div 
-                    className={cn(
-                      'w-full rounded-t absolute bottom-0',
-                      point.real > point.ideal ? 'bg-red-500/70' : 'bg-emerald-500/70'
-                    )}
+                    className="w-full bg-slate-600/50 rounded-t"
                     style={{ 
-                      height: `${(point.real / metricas.total) * 100}%`,
+                      height: `${idealHeight}%`,
                       minHeight: '2px'
                     }}
                   />
-                )}
-              </div>
-            ))}
+                  {/* Barra real */}
+                  {realHeight !== null && point.real !== null && (
+                    <div 
+                      className={cn(
+                        'w-full rounded-t absolute bottom-0',
+                        point.real > point.ideal ? 'bg-red-500/70' : 'bg-emerald-500/70'
+                      )}
+                      style={{ 
+                        height: `${realHeight}%`,
+                        minHeight: '2px',
+                        maxHeight: '100%'
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
           
           <div className="flex justify-between mt-2 text-xs text-slate-500">
