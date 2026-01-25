@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -25,8 +25,31 @@ import {
   Wrench,
   Lock,
   Unlock,
+  Upload,
+  File,
+  Image,
+  FileText,
+  Film,
+  Music,
+  Archive,
+  Trash2,
+  Download,
+  Eye,
+  Loader2,
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
+
+// Tipo para adjuntos
+interface ProyectoAdjunto {
+  id: string;
+  tareaId: string;
+  nombreArchivo: string;
+  url: string;
+  tipoMime: string | null;
+  tamanoBytes: number | null;
+  subidoPor: string | null;
+  creadoAt: Date;
+}
 
 interface TareaModalProps {
   isOpen: boolean;
@@ -35,9 +58,37 @@ interface TareaModalProps {
   tarea?: ProyectoTarea;
   columnas: ProyectoColumna[];
   etiquetas: ProyectoEtiqueta[];
-  columnaPreseleccionada?: string | null; // NUEVA PROP
+  columnaPreseleccionada?: string | null;
   onSave: () => void;
 }
+
+// Helper para obtener icono según tipo de archivo
+const getFileIcon = (tipoMime: string | null) => {
+  if (!tipoMime) return <File size={20} />;
+  
+  if (tipoMime.startsWith('image/')) return <Image size={20} className="text-blue-400" />;
+  if (tipoMime.startsWith('video/')) return <Film size={20} className="text-purple-400" />;
+  if (tipoMime.startsWith('audio/')) return <Music size={20} className="text-pink-400" />;
+  if (tipoMime.includes('pdf')) return <FileText size={20} className="text-red-400" />;
+  if (tipoMime.includes('zip') || tipoMime.includes('rar') || tipoMime.includes('7z')) 
+    return <Archive size={20} className="text-amber-400" />;
+  if (tipoMime.includes('word') || tipoMime.includes('document')) 
+    return <FileText size={20} className="text-blue-500" />;
+  if (tipoMime.includes('sheet') || tipoMime.includes('excel')) 
+    return <FileText size={20} className="text-emerald-500" />;
+  
+  return <File size={20} className="text-slate-400" />;
+};
+
+// Helper para formatear tamaño de archivo
+const formatFileSize = (bytes: number | null) => {
+  if (!bytes) return 'Desconocido';
+  
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+};
 
 export function TareaModal({
   isOpen,
@@ -46,12 +97,13 @@ export function TareaModal({
   tarea,
   columnas,
   etiquetas,
-  columnaPreseleccionada, // NUEVA PROP
+  columnaPreseleccionada,
   onSave,
 }: TareaModalProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Tabs
   const [activeTab, setActiveTab] = useState<'detalles' | 'subtareas' | 'comentarios' | 'adjuntos'>('detalles');
@@ -82,11 +134,16 @@ export function TareaModal({
   const [nuevaSubtarea, setNuevaSubtarea] = useState('');
   const [comentarios, setComentarios] = useState<ProyectoComentario[]>([]);
   const [nuevoComentario, setNuevoComentario] = useState('');
+  
+  // Adjuntos
+  const [adjuntos, setAdjuntos] = useState<ProyectoAdjunto[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+  const [dragOver, setDragOver] = useState(false);
 
   // Load data
   useEffect(() => {
     if (tarea) {
-      // Editando tarea existente
       setFormData({
         titulo: tarea.titulo,
         descripcion: tarea.descripcion || '',
@@ -110,15 +167,13 @@ export function TareaModal({
       setEtiquetasSeleccionadas(tarea.etiquetas?.map(e => e.id) || []);
       setSubtareas(tarea.subtareas || []);
       
-      // Cargar comentarios
       fetchComentarios(tarea.id);
+      fetchAdjuntos(tarea.id);
     } else {
-      // Nueva tarea - usar columnaPreseleccionada si existe, sino primera columna
       const columnaInicial = columnaPreseleccionada || (columnas.length > 0 ? columnas[0].id : '');
       setFormData(prev => ({ 
         ...prev, 
         columnaId: columnaInicial,
-        // Reset otros campos para nueva tarea
         titulo: '',
         descripcion: '',
         prioridad: 'media',
@@ -139,6 +194,7 @@ export function TareaModal({
       setEtiquetasSeleccionadas([]);
       setSubtareas([]);
       setComentarios([]);
+      setAdjuntos([]);
     }
   }, [tarea, columnas, columnaPreseleccionada]);
 
@@ -161,7 +217,217 @@ export function TareaModal({
     }
   };
 
-  // Handlers
+  const fetchAdjuntos = async (tareaId: string) => {
+    const { data, error } = await supabase
+      .from('proyecto_adjuntos')
+      .select('*')
+      .eq('tarea_id', tareaId)
+      .order('creado_at', { ascending: false });
+
+    if (data) {
+      setAdjuntos(data.map(a => ({
+        id: a.id,
+        tareaId: a.tarea_id,
+        nombreArchivo: a.nombre_archivo,
+        url: a.url,
+        tipoMime: a.tipo_mime,
+        tamanoBytes: a.tamano_bytes,
+        subidoPor: a.subido_por,
+        creadoAt: new Date(a.creado_at),
+      })));
+    }
+  };
+
+  // ============================================
+  // ADJUNTOS - Handlers
+  // ============================================
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleUploadFiles(Array.from(files));
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleUploadFiles(Array.from(files));
+    }
+  };
+
+  const handleUploadFiles = async (files: File[]) => {
+    if (!tarea) {
+      alert('Primero guardá la tarea antes de subir adjuntos');
+      return;
+    }
+
+    setUploadingFiles(true);
+    const newProgress: { [key: string]: number } = {};
+
+    for (const file of files) {
+      try {
+        newProgress[file.name] = 0;
+        setUploadProgress({ ...newProgress });
+
+        // Generar nombre único para el archivo
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${tarea.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        // Subir a Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('proyecto-adjuntos')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error('Error subiendo archivo:', uploadError);
+          alert(`Error subiendo ${file.name}: ${uploadError.message}`);
+          continue;
+        }
+
+        newProgress[file.name] = 50;
+        setUploadProgress({ ...newProgress });
+
+        // Obtener URL pública
+        const { data: urlData } = supabase.storage
+          .from('proyecto-adjuntos')
+          .getPublicUrl(fileName);
+
+        // Guardar en la base de datos
+        const { data: adjuntoData, error: dbError } = await supabase
+          .from('proyecto_adjuntos')
+          .insert({
+            tarea_id: tarea.id,
+            nombre_archivo: file.name,
+            url: urlData.publicUrl,
+            tipo_mime: file.type,
+            tamano_bytes: file.size,
+            subido_por: user?.email || 'usuario@ejemplo.com',
+          })
+          .select()
+          .single();
+
+        if (dbError) {
+          console.error('Error guardando adjunto en DB:', dbError);
+          alert(`Error guardando ${file.name} en la base de datos`);
+          continue;
+        }
+
+        newProgress[file.name] = 100;
+        setUploadProgress({ ...newProgress });
+
+        // Agregar a la lista local
+        setAdjuntos(prev => [{
+          id: adjuntoData.id,
+          tareaId: adjuntoData.tarea_id,
+          nombreArchivo: adjuntoData.nombre_archivo,
+          url: adjuntoData.url,
+          tipoMime: adjuntoData.tipo_mime,
+          tamanoBytes: adjuntoData.tamano_bytes,
+          subidoPor: adjuntoData.subido_por,
+          creadoAt: new Date(adjuntoData.creado_at),
+        }, ...prev]);
+
+        // Registrar actividad
+        await supabase.from('proyecto_actividades').insert({
+          proyecto_id: proyectoId,
+          tarea_id: tarea.id,
+          usuario_email: user?.email || 'usuario@ejemplo.com',
+          tipo: 'adjunto_agregado',
+          descripcion: `Adjuntó archivo: ${file.name}`,
+        });
+
+      } catch (error) {
+        console.error('Error en upload:', error);
+        alert(`Error subiendo ${file.name}`);
+      }
+    }
+
+    setUploadingFiles(false);
+    setUploadProgress({});
+    
+    // Limpiar input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteAdjunto = async (adjunto: ProyectoAdjunto) => {
+    const confirmar = window.confirm(`¿Eliminar "${adjunto.nombreArchivo}"?`);
+    if (!confirmar) return;
+
+    try {
+      // Extraer el path del archivo desde la URL
+      const urlParts = adjunto.url.split('/proyecto-adjuntos/');
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1];
+        
+        // Eliminar de Storage
+        await supabase.storage
+          .from('proyecto-adjuntos')
+          .remove([filePath]);
+      }
+
+      // Eliminar de la base de datos
+      await supabase
+        .from('proyecto_adjuntos')
+        .delete()
+        .eq('id', adjunto.id);
+
+      // Actualizar lista local
+      setAdjuntos(prev => prev.filter(a => a.id !== adjunto.id));
+
+      // Registrar actividad
+      if (tarea) {
+        await supabase.from('proyecto_actividades').insert({
+          proyecto_id: proyectoId,
+          tarea_id: tarea.id,
+          usuario_email: user?.email || 'usuario@ejemplo.com',
+          tipo: 'adjunto_eliminado',
+          descripcion: `Eliminó archivo: ${adjunto.nombreArchivo}`,
+        });
+      }
+
+    } catch (error) {
+      console.error('Error eliminando adjunto:', error);
+      alert('Error eliminando el archivo');
+    }
+  };
+
+  const handleDownloadAdjunto = (adjunto: ProyectoAdjunto) => {
+    window.open(adjunto.url, '_blank');
+  };
+
+  const handlePreviewAdjunto = (adjunto: ProyectoAdjunto) => {
+    // Para imágenes y PDFs, abrir en nueva pestaña
+    if (adjunto.tipoMime?.startsWith('image/') || adjunto.tipoMime?.includes('pdf')) {
+      window.open(adjunto.url, '_blank');
+    } else {
+      // Para otros archivos, descargar
+      handleDownloadAdjunto(adjunto);
+    }
+  };
+
+  // ============================================
+  // SAVE Handler
+  // ============================================
+
   const handleSave = async () => {
     if (!formData.titulo.trim()) {
       alert('El título es obligatorio');
@@ -197,13 +463,11 @@ export function TareaModal({
       let tareaId = tarea?.id;
 
       if (tarea) {
-        // Update
         await supabase
           .from('proyecto_tareas')
           .update(tareaData)
           .eq('id', tarea.id);
       } else {
-        // Create
         const { data, error } = await supabase
           .from('proyecto_tareas')
           .insert(tareaData)
@@ -216,13 +480,11 @@ export function TareaModal({
 
       // Guardar etiquetas
       if (tareaId) {
-        // Eliminar etiquetas anteriores
         await supabase
           .from('proyecto_tareas_etiquetas')
           .delete()
           .eq('tarea_id', tareaId);
 
-        // Insertar nuevas etiquetas
         if (etiquetasSeleccionadas.length > 0) {
           await supabase
             .from('proyecto_tareas_etiquetas')
@@ -234,7 +496,7 @@ export function TareaModal({
             );
         }
 
-        // Guardar subtareas nuevas (las que tienen id temporal)
+        // Guardar subtareas nuevas
         for (const sub of subtareas) {
           if (sub.id.startsWith('temp-')) {
             await supabase.from('proyecto_subtareas').insert({
@@ -255,6 +517,10 @@ export function TareaModal({
       setLoading(false);
     }
   };
+
+  // ============================================
+  // SUBTAREAS Handlers
+  // ============================================
 
   const handleAgregarSubtarea = () => {
     if (!nuevaSubtarea.trim()) return;
@@ -278,7 +544,6 @@ export function TareaModal({
     if (!subtarea) return;
 
     if (tarea && !subtareaId.startsWith('temp-')) {
-      // Update en DB
       await supabase
         .from('proyecto_subtareas')
         .update({ completado: !subtarea.completado })
@@ -300,6 +565,10 @@ export function TareaModal({
 
     setSubtareas(subtareas.filter(s => s.id !== subtareaId));
   };
+
+  // ============================================
+  // COMENTARIOS Handlers
+  // ============================================
 
   const handleEnviarComentario = async () => {
     if (!nuevoComentario.trim() || !tarea) return;
@@ -327,6 +596,15 @@ export function TareaModal({
         },
       ]);
       setNuevoComentario('');
+
+      // Registrar actividad
+      await supabase.from('proyecto_actividades').insert({
+        proyecto_id: proyectoId,
+        tarea_id: tarea.id,
+        usuario_email: user?.email || 'usuario@ejemplo.com',
+        tipo: 'comentario',
+        descripcion: `Comentó: "${nuevoComentario.substring(0, 50)}${nuevoComentario.length > 50 ? '...' : ''}"`,
+      });
     }
   };
 
@@ -345,12 +623,12 @@ export function TareaModal({
       size="lg"
     >
       <div className="space-y-6">
-        {/* Tabs - Fijos arriba */}
-        <div className="flex gap-2 border-b border-slate-700/50 pb-2">
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-slate-700/50 pb-2 overflow-x-auto">
           <button
             onClick={() => setActiveTab('detalles')}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+              'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
               activeTab === 'detalles'
                 ? 'bg-emerald-500/20 text-emerald-400'
                 : 'text-slate-400 hover:text-slate-200'
@@ -361,13 +639,14 @@ export function TareaModal({
           <button
             onClick={() => setActiveTab('subtareas')}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+              'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
               activeTab === 'subtareas'
                 ? 'bg-emerald-500/20 text-emerald-400'
                 : 'text-slate-400 hover:text-slate-200'
             )}
           >
             <div className="flex items-center gap-2">
+              <CheckSquare size={14} />
               Subtareas
               {subtareas.length > 0 && (
                 <span className="px-1.5 py-0.5 text-xs bg-slate-700 rounded-full">
@@ -381,13 +660,14 @@ export function TareaModal({
               <button
                 onClick={() => setActiveTab('comentarios')}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
                   activeTab === 'comentarios'
                     ? 'bg-emerald-500/20 text-emerald-400'
                     : 'text-slate-400 hover:text-slate-200'
                 )}
               >
                 <div className="flex items-center gap-2">
+                  <MessageSquare size={14} />
                   Comentarios
                   {comentarios.length > 0 && (
                     <span className="px-1.5 py-0.5 text-xs bg-slate-700 rounded-full">
@@ -399,13 +679,21 @@ export function TareaModal({
               <button
                 onClick={() => setActiveTab('adjuntos')}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
                   activeTab === 'adjuntos'
                     ? 'bg-emerald-500/20 text-emerald-400'
                     : 'text-slate-400 hover:text-slate-200'
                 )}
               >
-                Adjuntos
+                <div className="flex items-center gap-2">
+                  <Paperclip size={14} />
+                  Adjuntos
+                  {adjuntos.length > 0 && (
+                    <span className="px-1.5 py-0.5 text-xs bg-slate-700 rounded-full">
+                      {adjuntos.length}
+                    </span>
+                  )}
+                </div>
               </button>
             </>
           )}
@@ -414,7 +702,6 @@ export function TareaModal({
         {/* Tab: Detalles */}
         {activeTab === 'detalles' && (
           <div className="space-y-4">
-            {/* Título */}
             <Input
               label="Título *"
               value={formData.titulo}
@@ -422,7 +709,6 @@ export function TareaModal({
               placeholder="¿Qué hay que hacer?"
             />
 
-            {/* Descripción */}
             <div>
               <label className="block text-sm text-slate-400 mb-2">Descripción</label>
               <textarea
@@ -434,7 +720,6 @@ export function TareaModal({
               />
             </div>
 
-            {/* Columna y Prioridad */}
             <div className="grid grid-cols-2 gap-4">
               <Select
                 label="Columna"
@@ -451,7 +736,6 @@ export function TareaModal({
               />
             </div>
 
-            {/* Fechas */}
             <div className="grid grid-cols-2 gap-4">
               <Input
                 label="Fecha inicio"
@@ -468,7 +752,6 @@ export function TareaModal({
               />
             </div>
 
-            {/* Asignado y Tiempo estimado */}
             <div className="grid grid-cols-2 gap-4">
               <Input
                 label="Asignado a"
@@ -487,7 +770,6 @@ export function TareaModal({
               />
             </div>
 
-            {/* Progreso */}
             <div>
               <label className="block text-sm text-slate-400 mb-2">
                 Progreso: {formData.progreso}%
@@ -503,7 +785,6 @@ export function TareaModal({
               />
             </div>
 
-            {/* Etiquetas */}
             <div>
               <label className="block text-sm text-slate-400 mb-2">Etiquetas</label>
               <div className="flex flex-wrap gap-2">
@@ -542,13 +823,12 @@ export function TareaModal({
               </div>
             </div>
 
-            {/* Vínculos */}
             <Card className="p-4">
               <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <Package size={16} />
                 Vínculos a otras entidades
               </h4>
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
                 <Input
                   label="Código de Producto"
                   value={formData.productoCodigo}
@@ -573,16 +853,9 @@ export function TareaModal({
                   onChange={(e) => setFormData({ ...formData, rmaId: e.target.value })}
                   placeholder="UUID"
                 />
-                <Input
-                  label="ID Ensamblaje"
-                  value={formData.ensamblajeId}
-                  onChange={(e) => setFormData({ ...formData, ensamblajeId: e.target.value })}
-                  placeholder="UUID"
-                />
               </div>
             </Card>
 
-            {/* Estado */}
             <div className="space-y-3">
               <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30 cursor-pointer hover:bg-slate-800/50 transition-colors">
                 <input
@@ -633,9 +906,10 @@ export function TareaModal({
               </Button>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {subtareas.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 text-sm">
+                  <CheckSquare size={32} className="mx-auto mb-2 opacity-50" />
                   No hay subtareas. Agregá una arriba.
                 </div>
               ) : (
@@ -677,6 +951,7 @@ export function TareaModal({
             <div className="space-y-3 max-h-[400px] overflow-y-auto">
               {comentarios.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 text-sm">
+                  <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
                   No hay comentarios aún
                 </div>
               ) : (
@@ -721,13 +996,137 @@ export function TareaModal({
 
         {/* Tab: Adjuntos */}
         {activeTab === 'adjuntos' && tarea && (
-          <div className="text-center py-12 text-slate-500">
-            <Paperclip size={48} className="mx-auto mb-4 opacity-50" />
-            <p>Funcionalidad de adjuntos próximamente</p>
+          <div className="space-y-4">
+            {/* Zona de drop */}
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all',
+                dragOver
+                  ? 'border-emerald-500 bg-emerald-500/10'
+                  : 'border-slate-700 hover:border-slate-600 hover:bg-slate-800/30'
+              )}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              
+              {uploadingFiles ? (
+                <div className="flex flex-col items-center">
+                  <Loader2 size={32} className="text-emerald-400 animate-spin mb-2" />
+                  <p className="text-sm text-slate-400">Subiendo archivos...</p>
+                </div>
+              ) : (
+                <>
+                  <Upload size={32} className={cn(
+                    'mx-auto mb-2',
+                    dragOver ? 'text-emerald-400' : 'text-slate-500'
+                  )} />
+                  <p className="text-sm text-slate-400 mb-1">
+                    Arrastrá archivos aquí o hacé click para seleccionar
+                  </p>
+                  <p className="text-xs text-slate-600">
+                    Máximo 50MB por archivo
+                  </p>
+                </>
+              )}
+            </div>
+
+            {/* Progress bars */}
+            {Object.keys(uploadProgress).length > 0 && (
+              <div className="space-y-2">
+                {Object.entries(uploadProgress).map(([fileName, progress]) => (
+                  <div key={fileName} className="space-y-1">
+                    <div className="flex justify-between text-xs text-slate-400">
+                      <span className="truncate">{fileName}</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 transition-all duration-300"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Lista de adjuntos */}
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {adjuntos.length === 0 ? (
+                <div className="text-center py-8 text-slate-500 text-sm">
+                  <Paperclip size={32} className="mx-auto mb-2 opacity-50" />
+                  No hay archivos adjuntos
+                </div>
+              ) : (
+                adjuntos.map(adjunto => (
+                  <div
+                    key={adjunto.id}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30 group hover:bg-slate-800/50 transition-colors"
+                  >
+                    {/* Icono según tipo */}
+                    <div className="flex-shrink-0">
+                      {getFileIcon(adjunto.tipoMime)}
+                    </div>
+
+                    {/* Info del archivo */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{adjunto.nombreArchivo}</p>
+                      <p className="text-xs text-slate-500">
+                        {formatFileSize(adjunto.tamanoBytes)} • {formatDate(adjunto.creadoAt)}
+                      </p>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {adjunto.tipoMime?.startsWith('image/') && (
+                        <button
+                          onClick={() => handlePreviewAdjunto(adjunto)}
+                          className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
+                          title="Vista previa"
+                        >
+                          <Eye size={16} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDownloadAdjunto(adjunto)}
+                        className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
+                        title="Descargar"
+                      >
+                        <Download size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAdjunto(adjunto)}
+                        className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                        title="Eliminar"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
 
-        {/* Botones - Fijos abajo */}
+        {/* Mensaje para nueva tarea */}
+        {activeTab === 'adjuntos' && !tarea && (
+          <div className="text-center py-12 text-slate-500">
+            <Paperclip size={48} className="mx-auto mb-4 opacity-50" />
+            <p>Guardá la tarea primero para poder agregar adjuntos</p>
+          </div>
+        )}
+
+        {/* Botones */}
         <div className="flex gap-3 pt-4 mt-4 border-t border-slate-700/50">
           <Button variant="secondary" onClick={onClose} className="flex-1">
             Cancelar
