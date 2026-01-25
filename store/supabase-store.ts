@@ -30,6 +30,8 @@ interface InventoryState {
   loadingStatus: LoadingStatus;
   error: string | null;
   isOffline: boolean;
+  isInitialized: boolean;
+  
   
   // Actions - Products
   fetchProducts: () => Promise<void>;
@@ -113,6 +115,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
   loadingStatus: 'idle',
   error: null,
   isOffline: false,
+  isInitialized: false,
 
   // ============================================
   // FETCH PRODUCTS
@@ -234,7 +237,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       isLoading: false, 
       loadingStatus: 'success',
       isOffline: false,
-      error: null 
+      error: null,
+      isInitialized: true, 
     });
     cacheProducts(products);
     get().refreshPredictions();
