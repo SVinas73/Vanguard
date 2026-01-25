@@ -36,6 +36,7 @@ import {
   Download,
   Eye,
   Loader2,
+  AtSign,
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 
@@ -49,6 +50,13 @@ interface ProyectoAdjunto {
   tamanoBytes: number | null;
   subidoPor: string | null;
   creadoAt: Date;
+}
+
+// Tipo para miembros del proyecto
+interface ProyectoMiembro {
+  id: string;
+  userEmail: string;
+  rol: string;
 }
 
 interface TareaModalProps {
@@ -104,6 +112,7 @@ export function TareaModal({
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const comentarioInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Tabs
   const [activeTab, setActiveTab] = useState<'detalles' | 'subtareas' | 'comentarios' | 'adjuntos'>('detalles');
@@ -141,8 +150,18 @@ export function TareaModal({
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [dragOver, setDragOver] = useState(false);
 
+  // Menciones
+  const [miembrosProyecto, setMiembrosProyecto] = useState<ProyectoMiembro[]>([]);
+  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [mentionCaretPos, setMentionCaretPos] = useState(0);
+
   // Load data
   useEffect(() => {
+    if (isOpen) {
+      fetchMiembrosProyecto();
+    }
+
     if (tarea) {
       setFormData({
         titulo: tarea.titulo,
@@ -196,7 +215,22 @@ export function TareaModal({
       setComentarios([]);
       setAdjuntos([]);
     }
-  }, [tarea, columnas, columnaPreseleccionada]);
+  }, [tarea, columnas, columnaPreseleccionada, isOpen]);
+
+  const fetchMiembrosProyecto = async () => {
+    const { data } = await supabase
+      .from('proyecto_miembros')
+      .select('id, user_email, rol')
+      .eq('proyecto_id', proyectoId);
+
+    if (data) {
+      setMiembrosProyecto(data.map(m => ({
+        id: m.id,
+        userEmail: m.user_email,
+        rol: m.rol,
+      })));
+    }
+  };
 
   const fetchComentarios = async (tareaId: string) => {
     const { data } = await supabase
@@ -283,11 +317,9 @@ export function TareaModal({
         newProgress[file.name] = 0;
         setUploadProgress({ ...newProgress });
 
-        // Generar nombre único para el archivo
         const fileExt = file.name.split('.').pop();
         const fileName = `${tarea.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-        // Subir a Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('proyecto-adjuntos')
           .upload(fileName, file, {
@@ -304,12 +336,10 @@ export function TareaModal({
         newProgress[file.name] = 50;
         setUploadProgress({ ...newProgress });
 
-        // Obtener URL pública
         const { data: urlData } = supabase.storage
           .from('proyecto-adjuntos')
           .getPublicUrl(fileName);
 
-        // Guardar en la base de datos
         const { data: adjuntoData, error: dbError } = await supabase
           .from('proyecto_adjuntos')
           .insert({
@@ -332,7 +362,6 @@ export function TareaModal({
         newProgress[file.name] = 100;
         setUploadProgress({ ...newProgress });
 
-        // Agregar a la lista local
         setAdjuntos(prev => [{
           id: adjuntoData.id,
           tareaId: adjuntoData.tarea_id,
@@ -344,7 +373,6 @@ export function TareaModal({
           creadoAt: new Date(adjuntoData.creado_at),
         }, ...prev]);
 
-        // Registrar actividad
         await supabase.from('proyecto_actividades').insert({
           proyecto_id: proyectoId,
           tarea_id: tarea.id,
@@ -362,7 +390,6 @@ export function TareaModal({
     setUploadingFiles(false);
     setUploadProgress({});
     
-    // Limpiar input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -373,27 +400,15 @@ export function TareaModal({
     if (!confirmar) return;
 
     try {
-      // Extraer el path del archivo desde la URL
       const urlParts = adjunto.url.split('/proyecto-adjuntos/');
       if (urlParts.length > 1) {
         const filePath = urlParts[1];
-        
-        // Eliminar de Storage
-        await supabase.storage
-          .from('proyecto-adjuntos')
-          .remove([filePath]);
+        await supabase.storage.from('proyecto-adjuntos').remove([filePath]);
       }
 
-      // Eliminar de la base de datos
-      await supabase
-        .from('proyecto_adjuntos')
-        .delete()
-        .eq('id', adjunto.id);
-
-      // Actualizar lista local
+      await supabase.from('proyecto_adjuntos').delete().eq('id', adjunto.id);
       setAdjuntos(prev => prev.filter(a => a.id !== adjunto.id));
 
-      // Registrar actividad
       if (tarea) {
         await supabase.from('proyecto_actividades').insert({
           proyecto_id: proyectoId,
@@ -403,7 +418,6 @@ export function TareaModal({
           descripcion: `Eliminó archivo: ${adjunto.nombreArchivo}`,
         });
       }
-
     } catch (error) {
       console.error('Error eliminando adjunto:', error);
       alert('Error eliminando el archivo');
@@ -415,11 +429,9 @@ export function TareaModal({
   };
 
   const handlePreviewAdjunto = (adjunto: ProyectoAdjunto) => {
-    // Para imágenes y PDFs, abrir en nueva pestaña
     if (adjunto.tipoMime?.startsWith('image/') || adjunto.tipoMime?.includes('pdf')) {
       window.open(adjunto.url, '_blank');
     } else {
-      // Para otros archivos, descargar
       handleDownloadAdjunto(adjunto);
     }
   };
@@ -463,40 +475,22 @@ export function TareaModal({
       let tareaId = tarea?.id;
 
       if (tarea) {
-        await supabase
-          .from('proyecto_tareas')
-          .update(tareaData)
-          .eq('id', tarea.id);
+        await supabase.from('proyecto_tareas').update(tareaData).eq('id', tarea.id);
       } else {
-        const { data, error } = await supabase
-          .from('proyecto_tareas')
-          .insert(tareaData)
-          .select()
-          .single();
-
+        const { data, error } = await supabase.from('proyecto_tareas').insert(tareaData).select().single();
         if (error) throw error;
         tareaId = data.id;
       }
 
-      // Guardar etiquetas
       if (tareaId) {
-        await supabase
-          .from('proyecto_tareas_etiquetas')
-          .delete()
-          .eq('tarea_id', tareaId);
+        await supabase.from('proyecto_tareas_etiquetas').delete().eq('tarea_id', tareaId);
 
         if (etiquetasSeleccionadas.length > 0) {
-          await supabase
-            .from('proyecto_tareas_etiquetas')
-            .insert(
-              etiquetasSeleccionadas.map(etId => ({
-                tarea_id: tareaId,
-                etiqueta_id: etId,
-              }))
-            );
+          await supabase.from('proyecto_tareas_etiquetas').insert(
+            etiquetasSeleccionadas.map(etId => ({ tarea_id: tareaId, etiqueta_id: etId }))
+          );
         }
 
-        // Guardar subtareas nuevas
         for (const sub of subtareas) {
           if (sub.id.startsWith('temp-')) {
             await supabase.from('proyecto_subtareas').insert({
@@ -544,25 +538,16 @@ export function TareaModal({
     if (!subtarea) return;
 
     if (tarea && !subtareaId.startsWith('temp-')) {
-      await supabase
-        .from('proyecto_subtareas')
-        .update({ completado: !subtarea.completado })
-        .eq('id', subtareaId);
+      await supabase.from('proyecto_subtareas').update({ completado: !subtarea.completado }).eq('id', subtareaId);
     }
 
-    setSubtareas(subtareas.map(s =>
-      s.id === subtareaId ? { ...s, completado: !s.completado } : s
-    ));
+    setSubtareas(subtareas.map(s => s.id === subtareaId ? { ...s, completado: !s.completado } : s));
   };
 
   const handleEliminarSubtarea = async (subtareaId: string) => {
     if (tarea && !subtareaId.startsWith('temp-')) {
-      await supabase
-        .from('proyecto_subtareas')
-        .delete()
-        .eq('id', subtareaId);
+      await supabase.from('proyecto_subtareas').delete().eq('id', subtareaId);
     }
-
     setSubtareas(subtareas.filter(s => s.id !== subtareaId));
   };
 
@@ -570,8 +555,60 @@ export function TareaModal({
   // COMENTARIOS Handlers
   // ============================================
 
+  const handleComentarioChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    
+    setNuevoComentario(value);
+
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+
+    if (mentionMatch) {
+      setMentionSearch(mentionMatch[1]);
+      setMentionCaretPos(cursorPos);
+      setShowMentionSuggestions(true);
+    } else {
+      setShowMentionSuggestions(false);
+    }
+  };
+
+  const insertMention = (userEmail: string) => {
+    const textBeforeMention = nuevoComentario.substring(0, mentionCaretPos - mentionSearch.length - 1);
+    const textAfterCursor = nuevoComentario.substring(mentionCaretPos);
+    
+    const newText = `${textBeforeMention}@${userEmail} ${textAfterCursor}`;
+    setNuevoComentario(newText);
+    setShowMentionSuggestions(false);
+    
+    setTimeout(() => {
+      if (comentarioInputRef.current) {
+        const newPos = textBeforeMention.length + userEmail.length + 2;
+        comentarioInputRef.current.focus();
+        comentarioInputRef.current.setSelectionRange(newPos, newPos);
+      }
+    }, 0);
+  };
+
+  const extractMentions = (text: string): string[] => {
+    const mentionRegex = /@(\S+)/g;
+    const mentions: string[] = [];
+    let match;
+    
+    while ((match = mentionRegex.exec(text)) !== null) {
+      const email = match[1];
+      if (miembrosProyecto.some(m => m.userEmail === email)) {
+        mentions.push(email);
+      }
+    }
+    
+    return [...new Set(mentions)];
+  };
+
   const handleEnviarComentario = async () => {
     if (!nuevoComentario.trim() || !tarea) return;
+
+    const menciones = extractMentions(nuevoComentario);
 
     const { data, error } = await supabase
       .from('proyecto_comentarios')
@@ -584,6 +621,15 @@ export function TareaModal({
       .single();
 
     if (!error && data) {
+      if (menciones.length > 0) {
+        await supabase.from('proyecto_menciones').insert(
+          menciones.map(email => ({
+            comentario_id: data.id,
+            usuario_mencionado: email,
+          }))
+        );
+      }
+
       setComentarios([
         ...comentarios,
         {
@@ -597,7 +643,6 @@ export function TareaModal({
       ]);
       setNuevoComentario('');
 
-      // Registrar actividad
       await supabase.from('proyecto_actividades').insert({
         proyecto_id: proyectoId,
         tarea_id: tarea.id,
@@ -615,13 +660,36 @@ export function TareaModal({
     { value: 'urgente', label: 'Urgente' },
   ];
 
+  const filteredMentions = miembrosProyecto.filter(m =>
+    m.userEmail.toLowerCase().includes(mentionSearch.toLowerCase())
+  );
+
+  const renderComentarioConMenciones = (contenido: string) => {
+    const parts = contenido.split(/(@\S+)/g);
+    
+    return parts.map((part, index) => {
+      if (part.startsWith('@')) {
+        const email = part.substring(1);
+        const isMember = miembrosProyecto.some(m => m.userEmail === email);
+        
+        return (
+          <span
+            key={index}
+            className={cn(
+              'font-medium',
+              isMember ? 'text-emerald-400 hover:underline cursor-pointer' : 'text-slate-400'
+            )}
+          >
+            {part}
+          </span>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={tarea ? 'Editar Tarea' : 'Nueva Tarea'}
-      size="lg"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title={tarea ? 'Editar Tarea' : 'Nueva Tarea'} size="lg">
       <div className="space-y-6">
         {/* Tabs */}
         <div className="flex gap-2 border-b border-slate-700/50 pb-2 overflow-x-auto">
@@ -629,9 +697,7 @@ export function TareaModal({
             onClick={() => setActiveTab('detalles')}
             className={cn(
               'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
-              activeTab === 'detalles'
-                ? 'bg-emerald-500/20 text-emerald-400'
-                : 'text-slate-400 hover:text-slate-200'
+              activeTab === 'detalles' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-slate-200'
             )}
           >
             Detalles
@@ -640,9 +706,7 @@ export function TareaModal({
             onClick={() => setActiveTab('subtareas')}
             className={cn(
               'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
-              activeTab === 'subtareas'
-                ? 'bg-emerald-500/20 text-emerald-400'
-                : 'text-slate-400 hover:text-slate-200'
+              activeTab === 'subtareas' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-slate-200'
             )}
           >
             <div className="flex items-center gap-2">
@@ -661,9 +725,7 @@ export function TareaModal({
                 onClick={() => setActiveTab('comentarios')}
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
-                  activeTab === 'comentarios'
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'text-slate-400 hover:text-slate-200'
+                  activeTab === 'comentarios' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-slate-200'
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -680,9 +742,7 @@ export function TareaModal({
                 onClick={() => setActiveTab('adjuntos')}
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
-                  activeTab === 'adjuntos'
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'text-slate-400 hover:text-slate-200'
+                  activeTab === 'adjuntos' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-slate-200'
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -803,9 +863,7 @@ export function TareaModal({
                       }}
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-sm border transition-all',
-                        isSelected
-                          ? 'border-opacity-100'
-                          : 'border-opacity-30 opacity-60 hover:opacity-100'
+                        isSelected ? 'border-opacity-100' : 'border-opacity-30 opacity-60 hover:opacity-100'
                       )}
                       style={{
                         backgroundColor: isSelected ? `${etiqueta.color}20` : 'transparent',
@@ -924,12 +982,7 @@ export function TareaModal({
                       onChange={() => handleToggleSubtarea(subtarea.id)}
                       className="w-4 h-4 rounded border-slate-600 text-emerald-500 focus:ring-emerald-500/20"
                     />
-                    <span
-                      className={cn(
-                        'flex-1 text-sm',
-                        subtarea.completado && 'line-through text-slate-500'
-                      )}
-                    >
+                    <span className={cn('flex-1 text-sm', subtarea.completado && 'line-through text-slate-500')}>
                       {subtarea.titulo}
                     </span>
                     <button
@@ -956,40 +1009,75 @@ export function TareaModal({
                 </div>
               ) : (
                 comentarios.map(comentario => (
-                  <div
-                    key={comentario.id}
-                    className="p-3 rounded-xl bg-slate-800/30 border border-slate-700/30"
-                  >
+                  <div key={comentario.id} className="p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">
                         {comentario.usuarioEmail.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-xs text-slate-400">
-                        {comentario.usuarioEmail}
-                      </span>
+                      <span className="text-xs text-slate-400">{comentario.usuarioEmail}</span>
                       <span className="text-xs text-slate-600">•</span>
-                      <span className="text-xs text-slate-600">
-                        {formatDate(comentario.createdAt)}
-                      </span>
+                      <span className="text-xs text-slate-600">{formatDate(comentario.createdAt)}</span>
                     </div>
-                    <p className="text-sm text-slate-300">{comentario.contenido}</p>
+                    <p className="text-sm text-slate-300">{renderComentarioConMenciones(comentario.contenido)}</p>
                   </div>
                 ))
               )}
             </div>
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={nuevoComentario}
-                onChange={(e) => setNuevoComentario(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleEnviarComentario()}
-                placeholder="Escribí un comentario..."
-                className="flex-1 px-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
-              />
-              <Button onClick={handleEnviarComentario} size="sm">
-                <Send size={18} />
-              </Button>
+            <div className="relative">
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <textarea
+                    ref={comentarioInputRef}
+                    value={nuevoComentario}
+                    onChange={handleComentarioChange}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey && !showMentionSuggestions) {
+                        e.preventDefault();
+                        handleEnviarComentario();
+                      }
+                    }}
+                    placeholder="Escribí un comentario... (usá @ para mencionar)"
+                    rows={3}
+                    className="w-full px-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm resize-none"
+                  />
+                  
+                  {/* Sugerencias de menciones */}
+                  {showMentionSuggestions && filteredMentions.length > 0 && (
+                    <div className="absolute bottom-full left-0 mb-2 w-full max-w-sm bg-slate-800 border border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50">
+                      <div className="p-2 space-y-1">
+                        <div className="px-3 py-1 text-xs text-slate-500 flex items-center gap-1">
+                          <AtSign size={12} />
+                          Mencionar usuario
+                        </div>
+                        {filteredMentions.map(miembro => (
+                          <button
+                            key={miembro.id}
+                            onClick={() => insertMention(miembro.userEmail)}
+                            className="w-full px-3 py-2 text-left rounded-lg hover:bg-slate-700/50 transition-colors group"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">
+                                {miembro.userEmail.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{miembro.userEmail}</p>
+                                <p className="text-xs text-slate-500 capitalize">{miembro.rol}</p>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <Button onClick={handleEnviarComentario} size="sm" className="self-end">
+                  <Send size={18} />
+                </Button>
+              </div>
+              <p className="text-xs text-slate-600 mt-2">
+                Presioná @ para mencionar a un miembro del proyecto
+              </p>
             </div>
           </div>
         )}
@@ -997,7 +1085,6 @@ export function TareaModal({
         {/* Tab: Adjuntos */}
         {activeTab === 'adjuntos' && tarea && (
           <div className="space-y-4">
-            {/* Zona de drop */}
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -1005,18 +1092,10 @@ export function TareaModal({
               onClick={() => fileInputRef.current?.click()}
               className={cn(
                 'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all',
-                dragOver
-                  ? 'border-emerald-500 bg-emerald-500/10'
-                  : 'border-slate-700 hover:border-slate-600 hover:bg-slate-800/30'
+                dragOver ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-700 hover:border-slate-600 hover:bg-slate-800/30'
               )}
             >
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                onChange={handleFileSelect}
-                className="hidden"
-              />
+              <input ref={fileInputRef} type="file" multiple onChange={handleFileSelect} className="hidden" />
               
               {uploadingFiles ? (
                 <div className="flex flex-col items-center">
@@ -1025,21 +1104,15 @@ export function TareaModal({
                 </div>
               ) : (
                 <>
-                  <Upload size={32} className={cn(
-                    'mx-auto mb-2',
-                    dragOver ? 'text-emerald-400' : 'text-slate-500'
-                  )} />
+                  <Upload size={32} className={cn('mx-auto mb-2', dragOver ? 'text-emerald-400' : 'text-slate-500')} />
                   <p className="text-sm text-slate-400 mb-1">
                     Arrastrá archivos aquí o hacé click para seleccionar
                   </p>
-                  <p className="text-xs text-slate-600">
-                    Máximo 50MB por archivo
-                  </p>
+                  <p className="text-xs text-slate-600">Máximo 50MB por archivo</p>
                 </>
               )}
             </div>
 
-            {/* Progress bars */}
             {Object.keys(uploadProgress).length > 0 && (
               <div className="space-y-2">
                 {Object.entries(uploadProgress).map(([fileName, progress]) => (
@@ -1049,17 +1122,13 @@ export function TareaModal({
                       <span>{progress}%</span>
                     </div>
                     <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-500 transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                      />
+                      <div className="h-full bg-emerald-500 transition-all duration-300" style={{ width: `${progress}%` }} />
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Lista de adjuntos */}
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
               {adjuntos.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 text-sm">
@@ -1072,20 +1141,13 @@ export function TareaModal({
                     key={adjunto.id}
                     className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30 group hover:bg-slate-800/50 transition-colors"
                   >
-                    {/* Icono según tipo */}
-                    <div className="flex-shrink-0">
-                      {getFileIcon(adjunto.tipoMime)}
-                    </div>
-
-                    {/* Info del archivo */}
+                    <div className="flex-shrink-0">{getFileIcon(adjunto.tipoMime)}</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{adjunto.nombreArchivo}</p>
                       <p className="text-xs text-slate-500">
                         {formatFileSize(adjunto.tamanoBytes)} • {formatDate(adjunto.creadoAt)}
                       </p>
                     </div>
-
-                    {/* Acciones */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       {adjunto.tipoMime?.startsWith('image/') && (
                         <button
@@ -1118,7 +1180,6 @@ export function TareaModal({
           </div>
         )}
 
-        {/* Mensaje para nueva tarea */}
         {activeTab === 'adjuntos' && !tarea && (
           <div className="text-center py-12 text-slate-500">
             <Paperclip size={48} className="mx-auto mb-4 opacity-50" />
