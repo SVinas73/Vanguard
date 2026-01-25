@@ -30,14 +30,12 @@ interface InventoryState {
   loadingStatus: LoadingStatus;
   error: string | null;
   isOffline: boolean;
-  isInitialized: boolean;
   
   // Actions - Products
   fetchProducts: () => Promise<void>;
   addProduct: (product: Omit<Product, 'stock'>, userEmail: string) => Promise<void>;
   updateProduct: (codigo: string, updates: Partial<Product>, userEmail: string) => Promise<void>;
   deleteProduct: (codigo: string, userEmail: string) => Promise<void>;
-  restoreProduct: (codigo: string, userEmail: string) => Promise<void>;  // 👈 AGREGAR
   
   // Actions - Movements
   fetchMovements: () => Promise<void>;
@@ -63,8 +61,8 @@ interface InventoryState {
 // CONFIGURACIÓN
 // ============================================
 
-const QUERY_TIMEOUT = 60000; // 60 segundos
-const QUERY_RETRIES = 3;    // 3 reintentos
+const QUERY_TIMEOUT = 15000; // 15 segundos
+const QUERY_RETRIES = 1;    // 1 reintento
 
 // ============================================
 // HELPERS
@@ -89,7 +87,7 @@ async function registrarAuditoria(
         datos_nuevos: datosNuevos,
         usuario_email: usuarioEmail,
       }),
-      { timeout: 10000, retries: 0 } // Auditoría no es crítica, no reintentar
+      { timeout: 5000, retries: 0 } // Auditoría no es crítica, no reintentar
     );
   } catch (error) {
     console.error('Error registrando auditoría:', error);
@@ -115,7 +113,6 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
   loadingStatus: 'idle',
   error: null,
   isOffline: false,
-  isInitialized: false,
 
   // ============================================
   // FETCH PRODUCTS
@@ -131,8 +128,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           products: cachedProducts, 
           isLoading: false, 
           loadingStatus: 'offline',
-          isOffline: true,
-          isInitialized: true
+          isOffline: true 
         });
         get().refreshPredictions();
         return;
@@ -141,8 +137,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         isLoading: false, 
         loadingStatus: 'offline', 
         error: 'Sin conexión a internet',
-        isOffline: true,
-        isInitialized: true
+        isOffline: true 
       });
       return;
     }
@@ -155,7 +150,6 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           *,
           almacen:almacenes(id, codigo, nombre)
         `)
-        .is('deleted_at', null)  // 👈 AGREGAR ESTA LÍNEA
         .order('codigo'),
       { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
     );
@@ -169,16 +163,14 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           isLoading: false, 
           loadingStatus: 'timeout',
           error: 'La conexión está lenta. Mostrando datos guardados.',
-          isOffline: true,
-          isInitialized: true
+          isOffline: true 
         });
         get().refreshPredictions();
       } else {
         set({ 
           isLoading: false, 
           loadingStatus: 'timeout', 
-          error: 'Tiempo de espera agotado. Verificá tu conexión.',
-          isInitialized: true
+          error: 'Tiempo de espera agotado. Verificá tu conexión.' 
         });
       }
       return;
@@ -193,16 +185,14 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           isLoading: false, 
           loadingStatus: 'error',
           error: error.message,
-          isOffline: true,
-          isInitialized: true
+          isOffline: true 
         });
         get().refreshPredictions();
       } else {
         set({ 
           isLoading: false, 
           loadingStatus: 'error', 
-          error: error.message,
-          isInitialized: true
+          error: error.message 
         });
       }
       return;
@@ -244,8 +234,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       isLoading: false, 
       loadingStatus: 'success',
       isOffline: false,
-      error: null,
-      isInitialized: true
+      error: null 
     });
     cacheProducts(products);
     get().refreshPredictions();
@@ -348,7 +337,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     // Obtener datos actuales para auditoría
     const { data: currentProduct } = await safeQuery<any>(
       () => supabase.from('productos').select('*').eq('codigo', codigo).single(),
-      { timeout: 15000, retries: 1 }
+      { timeout: 5000, retries: 0 }
     );
 
     // Si se está cambiando el precio, guardar en historial
@@ -431,16 +420,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       { timeout: 5000, retries: 0 }
     );
 
-    // SOFT DELETE: marcar como eliminado en vez de borrar
     const { error, timedOut } = await safeQuery(
-      () => supabase
-        .from('productos')
-        .update({ 
-          deleted_at: new Date().toISOString(),
-          actualizado_por: userEmail,
-          actualizado_at: new Date().toISOString(),
-        })
-        .eq('codigo', codigo),
+      () => supabase.from('productos').delete().eq('codigo', codigo),
       { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
     );
 
@@ -460,42 +441,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       'ELIMINAR',
       codigo,
       currentProduct,
-      { deleted_at: new Date().toISOString(), soft_delete: true },
-      userEmail
-    );
-
-    await get().fetchProducts();
-  },
-
-  // ============================================
-  // RESTORE PRODUCT
-  // ============================================
-  restoreProduct: async (codigo: string, userEmail: string) => {
-    set({ isLoading: true, error: null });
-    
-    const { error } = await safeQuery(
-      () => supabase
-        .from('productos')
-        .update({ 
-          deleted_at: null,
-          actualizado_por: userEmail,
-          actualizado_at: new Date().toISOString(),
-        })
-        .eq('codigo', codigo),
-      { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
-    );
-
-    if (error) {
-      set({ error: error.message, isLoading: false });
-      return;
-    }
-
-    await registrarAuditoria(
-      'productos',
-      'RESTAURAR',
-      codigo,
-      { deleted_at: 'was deleted' },
-      { deleted_at: null },
+      null,
       userEmail
     );
 
@@ -516,8 +462,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           movements: cachedMovements, 
           isLoading: false, 
           loadingStatus: 'offline',
-          isOffline: true,
-          isInitialized: true
+          isOffline: true 
         });
         get().refreshPredictions();
         return;
@@ -526,8 +471,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         isLoading: false, 
         loadingStatus: 'offline', 
         error: 'Sin conexión a internet',
-        isOffline: true,
-        isInitialized: true
+        isOffline: true 
       });
       return;
     }
@@ -549,16 +493,14 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           isLoading: false, 
           loadingStatus: 'timeout',
           error: 'La conexión está lenta. Mostrando datos guardados.',
-          isOffline: true,
-          isInitialized: true
+          isOffline: true 
         });
         get().refreshPredictions();
       } else {
         set({ 
           isLoading: false, 
           loadingStatus: 'timeout', 
-          error: 'Tiempo de espera agotado. Verificá tu conexión.',
-          isInitialized: true
+          error: 'Tiempo de espera agotado. Verificá tu conexión.' 
         });
       }
       return;
@@ -573,16 +515,14 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           isLoading: false, 
           loadingStatus: 'error',
           error: error.message,
-          isOffline: true,
-          isInitialized: true
+          isOffline: true 
         });
         get().refreshPredictions();
       } else {
         set({ 
           isLoading: false, 
           loadingStatus: 'error', 
-          error: error.message,
-          isInitialized: true
+          error: error.message 
         });
       }
       return;
@@ -604,8 +544,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       isLoading: false, 
       loadingStatus: 'success',
       isOffline: false,
-      error: null,
-      isInitialized: true
+      error: null 
     });
     cacheMovements(movements);
     get().refreshPredictions();
@@ -924,5 +863,24 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       get().fetchMovements()
     ]);
   },
+}));
+
+// ============================================
+// SUPABASE STORE (para componentes que lo necesitan)
+// ============================================
+
+interface SupabaseStoreState {
+  supabase: typeof supabase;
+  user: {
+    email: string;
+    id: string;
+  } | null;
+  setUser: (user: any) => void;
+}
+
+export const useSupabaseStore = create<SupabaseStoreState>((set) => ({
+  supabase: supabase,
+  user: null,
+  setUser: (user) => set({ user }),
 }));
 

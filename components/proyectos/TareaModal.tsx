@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TiempoTrabajadoTab } from './TiempoTrabajadoTab';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Modal, Button, Input, Select, Card } from '@/components/ui';
@@ -115,7 +116,7 @@ export function TareaModal({
   const comentarioInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Tabs
-  const [activeTab, setActiveTab] = useState<'detalles' | 'subtareas' | 'comentarios' | 'adjuntos'>('detalles');
+  const [activeTab, setActiveTab] = useState<'detalles' | 'subtareas' | 'comentarios' | 'adjuntos' | 'tiempo'>('detalles');
 
   // Form data
   const [formData, setFormData] = useState({
@@ -755,6 +756,18 @@ export function TareaModal({
                   )}
                 </div>
               </button>
+              <button
+                onClick={() => setActiveTab('tiempo')}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
+                  activeTab === 'tiempo' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-slate-200'
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Clock size={14} />
+                  Tiempo
+                </div>
+              </button>
             </>
           )}
         </div>
@@ -1184,6 +1197,22 @@ export function TareaModal({
           <div className="text-center py-12 text-slate-500">
             <Paperclip size={48} className="mx-auto mb-4 opacity-50" />
             <p>Guardá la tarea primero para poder agregar adjuntos</p>
+          </div>
+        )}
+
+        {/* Tab: Tiempo */}
+        {activeTab === 'tiempo' && tarea && (
+          <TiempoTrabajadoTab
+            tareaId={tarea.id}
+            proyectoId={proyectoId}
+            tiempoEstimado={tarea.tiempoEstimadoHoras}
+          />
+        )}
+
+        {activeTab === 'tiempo' && !tarea && (
+          <div className="text-center py-12 text-slate-500">
+            <Clock size={48} className="mx-auto mb-4 opacity-50" />
+            <p>Guardá la tarea primero para poder registrar tiempo</p>
           </div>
         )}
 

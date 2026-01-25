@@ -1,5 +1,6 @@
 'use client';
 
+import { ProyectoMiembrosModal } from './ProyectoMiembrosModal';
 import { TareaModal } from './TareaModal';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +35,7 @@ import {
   PanelRightOpen,
   PanelRightClose,
   RefreshCw,
+  Users,
 } from 'lucide-react';
 
 // Tipos de vista disponibles
@@ -86,6 +88,7 @@ export function ProyectosDashboard() {
   const [showColumnaModal, setShowColumnaModal] = useState(false);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [showCrearDesdeTemplate, setShowCrearDesdeTemplate] = useState(false);
+  const [showMiembrosModal, setShowMiembrosModal] = useState(false);
   
   const [tareaEdit, setTareaEdit] = useState<ProyectoTarea | null>(null);
   const [tareaSeleccionada, setTareaSeleccionada] = useState<ProyectoTarea | null>(null);
@@ -1129,6 +1132,12 @@ export function ProyectosDashboard() {
               <Keyboard size={18} />
             </button>
 
+            {/* Botón Equipo */}
+            <Button variant="ghost" onClick={() => setShowMiembrosModal(true)}>
+              <Users size={18} className="mr-2" />
+              Equipo
+            </Button>
+
             {/* Acciones principales */}
             <Button variant="secondary" onClick={() => setShowPlantillasModal(true)}>
               <Plus size={18} className="mr-2" />
@@ -1488,6 +1497,16 @@ export function ProyectosDashboard() {
           setShowHelp(false);
         }}
       />
+
+      {/* Modal de miembros del equipo */}
+      {showMiembrosModal && proyectoActual && (
+        <ProyectoMiembrosModal
+          isOpen={showMiembrosModal}
+          onClose={() => setShowMiembrosModal(false)}
+          proyectoId={proyectoActual.id}
+          proyectoNombre={proyectoActual.nombre}
+        />
+      )}
     </div>
   );
 }
