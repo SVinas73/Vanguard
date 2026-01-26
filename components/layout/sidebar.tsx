@@ -32,6 +32,8 @@ import {
   Wrench
 } from 'lucide-react';
 import { LanguageSelector } from '@/components/ui/language-selector';
+import { NotificacionesBell } from '@/components/proyectos/NotificacionesBell';
+
 
 // ============================================
 // TIPOS
@@ -246,6 +248,9 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         'border-t border-slate-800/50 p-3 space-y-3',
         collapsed && 'px-2'
       )}>
+        {/* Notificaciones */}
+        <NotificacionesBell collapsed={collapsed} />
+        
         {/* Language Selector */}
         <LanguageSelector collapsed={collapsed} />
         

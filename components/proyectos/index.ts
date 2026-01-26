@@ -4,6 +4,7 @@ export { KanbanBoard } from './KanbanBoard';
 export { TareaModal } from './TareaModal';
 export { ProyectoModal } from './ProyectoModal';
 export { ProyectoMiembrosModal } from './ProyectoMiembrosModal';
+export { NotificacionesBell } from './NotificacionesBell';
 
 // Vistas alternativas
 export { TareasListView } from './TareasListView';

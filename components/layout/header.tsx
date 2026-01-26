@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { AIStatusIndicator } from '@/components/analytics';
 import { LanguageSelector } from '@/components/ui/language-selector';
+import { NotificacionesBell } from '@/components/proyectos/NotificacionesBell';
+
 import { cn } from '@/lib/utils';
 
 export function Header() {
@@ -43,6 +45,8 @@ export function Header() {
 
           <div className="flex items-center gap-4">
             <AIStatusIndicator />
+
+            <NotificacionesBell />
             
             <LanguageSelector />
             
