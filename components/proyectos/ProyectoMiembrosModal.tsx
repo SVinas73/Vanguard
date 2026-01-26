@@ -221,6 +221,15 @@ export function ProyectoMiembrosModal({
       descripcion: `Cambió el rol de ${miembro.userEmail} a ${nuevoRol}`,
     });
 
+    // Crear notificación para el invitado
+    await supabase.from('proyecto_notificaciones').insert({
+      usuario_email: inviteEmail.toLowerCase().trim(),
+      tipo: 'invitacion',
+      titulo: `Te invitaron al proyecto "${proyectoNombre}"`,
+      mensaje: `${user?.email} te invitó como ${inviteRol}`,
+      proyecto_id: proyectoId,
+    });
+
     await fetchMiembros();
     setEditingRol(null);
   };

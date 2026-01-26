@@ -476,11 +476,38 @@ export function TareaModal({
       let tareaId = tarea?.id;
 
       if (tarea) {
+        // Verificar si cambió el asignado
+        const asignadoCambio = formData.asignadoA && formData.asignadoA !== tarea.asignadoA;
+        
         await supabase.from('proyecto_tareas').update(tareaData).eq('id', tarea.id);
+        
+        // Notificar si se asignó a alguien nuevo
+        if (asignadoCambio) {
+          await supabase.from('proyecto_notificaciones').insert({
+            usuario_email: formData.asignadoA,
+            tipo: 'asignacion',
+            titulo: `Te asignaron la tarea "${formData.titulo}"`,
+            mensaje: `${user?.email} te asignó esta tarea`,
+            proyecto_id: proyectoId,
+            tarea_id: tarea.id,
+          });
+        }
       } else {
         const { data, error } = await supabase.from('proyecto_tareas').insert(tareaData).select().single();
         if (error) throw error;
         tareaId = data.id;
+        
+        // Notificar si se asignó a alguien
+        if (formData.asignadoA && formData.asignadoA !== user?.email) {
+          await supabase.from('proyecto_notificaciones').insert({
+            usuario_email: formData.asignadoA,
+            tipo: 'asignacion',
+            titulo: `Te asignaron la tarea "${formData.titulo}"`,
+            mensaje: `${user?.email} te asignó esta tarea`,
+            proyecto_id: proyectoId,
+            tarea_id: tareaId,
+          });
+        }
       }
 
       if (tareaId) {
@@ -627,6 +654,19 @@ export function TareaModal({
           menciones.map(email => ({
             comentario_id: data.id,
             usuario_mencionado: email,
+          }))
+        );
+
+        // Crear notificaciones para los mencionados
+        await supabase.from('proyecto_notificaciones').insert(
+          menciones.map(email => ({
+            usuario_email: email,
+            tipo: 'mencion',
+            titulo: `${user?.email} te mencionó en un comentario`,
+            mensaje: nuevoComentario.substring(0, 100),
+            proyecto_id: proyectoId,
+            tarea_id: tarea.id,
+            comentario_id: data.id,
           }))
         );
       }
