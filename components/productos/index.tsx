@@ -103,7 +103,7 @@ export function StockIndicator({ stock, stockMinimo, prediction }: StockIndicato
 // ============================================
 
 interface TrendIndicatorProps {
-  trend: 'acelerando' | 'desacelerando' | 'estable' | 'sin_datos';
+  trend: 'acelerando' | 'desacelerando' | 'estable' | 'sin_datos' | 'creciendo';
 }
 
 export function TrendIndicator({ trend }: TrendIndicatorProps) {
@@ -114,6 +114,7 @@ export function TrendIndicator({ trend }: TrendIndicatorProps) {
     desacelerando: { icon: <TrendingDown size={18} />, color: 'text-emerald-400', label: t('trends.decreasing') },
     estable: { icon: <Minus size={18} />, color: 'text-slate-500', label: t('trends.stable') },
     sin_datos: { icon: <Minus size={18} />, color: 'text-slate-600', label: t('trends.noData') },
+    creciendo: { icon: <TrendingUp size={18} />, color: 'text-blue-400', label: t('trends.growing', 'Creciendo') },
   };
 
   const { icon, color, label } = config[trend];
