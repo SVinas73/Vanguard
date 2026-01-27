@@ -127,13 +127,14 @@ export const ROLE_PERMISSIONS = {
 // TIPOS DE IA
 // ============================================
 
-export type TrendType = 'acelerando' | 'desacelerando' | 'estable' | 'sin_datos';
+export type TrendType = 'acelerando' | 'desacelerando' | 'estable' | 'sin_datos' | 'creciendo';
 
 export interface StockPrediction {
   days: number | null;
   confidence: number;
   trend: TrendType;
   dailyRate?: string;
+  dailyIncome?: string;
 }
 
 export interface AnomalyResult {

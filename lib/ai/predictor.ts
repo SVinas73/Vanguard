@@ -3,19 +3,19 @@ import { AI_CONFIG } from '@/lib/constants';
 
 /**
  * Predice los días hasta que un producto se quede sin stock
- * basándose en el historial de movimientos de salida.
+ * basándose en el historial de movimientos (entradas y salidas).
  */
 export function predictDaysUntilStockout(
   product: Product,
   movements: Movement[]
 ): StockPrediction {
-  // Filtrar solo las salidas de este producto
+  // Filtrar movimientos de este producto
   const productMovements = movements
-    .filter((m) => m.codigo === product.codigo && m.tipo === 'salida')
+    .filter((m) => m.codigo === product.codigo)
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  // Si no hay suficientes datos, retornar sin predicción
-  if (productMovements.length < AI_CONFIG.MIN_MOVEMENTS_FOR_PREDICTION) {
+  // Si no hay movimientos, retornar sin predicción
+  if (productMovements.length < 1) {
     return {
       days: null,
       confidence: 0,
@@ -31,23 +31,35 @@ export function predictDaysUntilStockout(
     (now.getTime() - new Date(oldestMovement.timestamp).getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  // Calcular total de salidas y tasa diaria
-  const totalSalidas = productMovements.reduce((sum, m) => sum + m.cantidad, 0);
-  const dailyRate = totalSalidas / daysPeriod;
+  // Calcular totales
+  const totalSalidas = productMovements
+    .filter(m => m.tipo === 'salida')
+    .reduce((sum, m) => sum + m.cantidad, 0);
+  
+  const totalEntradas = productMovements
+    .filter(m => m.tipo === 'entrada')
+    .reduce((sum, m) => sum + m.cantidad, 0);
 
-  // Si no hay consumo, el stock dura "infinito"
-  if (dailyRate === 0) {
+  // Tasa diaria de consumo neto (salidas - entradas por día)
+  const dailyConsumption = totalSalidas / daysPeriod;
+  const dailyIncome = totalEntradas / daysPeriod;
+  const netDailyRate = dailyConsumption - dailyIncome;
+
+  // Si el consumo neto es <= 0 (más entradas que salidas), stock "infinito"
+  if (netDailyRate <= 0) {
     return {
       days: Infinity,
-      confidence: 0.3,
-      trend: 'estable',
+      confidence: 0.5,
+      trend: totalEntradas > totalSalidas ? 'creciendo' : 'estable',
+      dailyRate: dailyConsumption.toFixed(2),
+      dailyIncome: dailyIncome.toFixed(2),
     };
   }
 
-  // Calcular días restantes
-  const daysRemaining = Math.round(product.stock / dailyRate);
+  // Calcular días restantes basado en consumo neto
+  const daysRemaining = Math.round(product.stock / netDailyRate);
 
-  // Determinar tendencia comparando movimientos recientes vs antiguos
+  // Determinar tendencia
   const trend = calculateTrend(productMovements);
 
   // Calcular confianza basada en cantidad de datos
@@ -60,7 +72,8 @@ export function predictDaysUntilStockout(
     days: daysRemaining,
     confidence,
     trend,
-    dailyRate: dailyRate.toFixed(2),
+    dailyRate: dailyConsumption.toFixed(2),
+    dailyIncome: dailyIncome.toFixed(2),
   };
 }
 
@@ -72,6 +85,9 @@ function calculateTrend(movements: Movement[]): TrendType {
     return 'estable';
   }
 
+  // Calcular consumo neto (salidas - entradas) por movimiento
+  const getNetValue = (m: Movement) => m.tipo === 'salida' ? m.cantidad : -m.cantidad;
+
   // Dividir en recientes (primeros 3) y antiguos (resto)
   const recentMovements = movements.slice(0, 3);
   const olderMovements = movements.slice(3);
@@ -80,15 +96,15 @@ function calculateTrend(movements: Movement[]): TrendType {
     return 'estable';
   }
 
-  // Calcular promedios
-  const recentAvg = recentMovements.reduce((s, m) => s + m.cantidad, 0) / recentMovements.length;
-  const olderAvg = olderMovements.reduce((s, m) => s + m.cantidad, 0) / olderMovements.length;
+  // Calcular consumo neto promedio
+  const recentNetAvg = recentMovements.reduce((s, m) => s + getNetValue(m), 0) / recentMovements.length;
+  const olderNetAvg = olderMovements.reduce((s, m) => s + getNetValue(m), 0) / olderMovements.length;
 
   // Comparar con un margen del 20%
-  if (recentAvg > olderAvg * 1.2) {
-    return 'acelerando';
-  } else if (recentAvg < olderAvg * 0.8) {
-    return 'desacelerando';
+  if (recentNetAvg > olderNetAvg * 1.2) {
+    return 'acelerando'; // Consumiendo más rápido
+  } else if (recentNetAvg < olderNetAvg * 0.8) {
+    return 'desacelerando'; // Consumiendo más lento
   }
 
   return 'estable';
