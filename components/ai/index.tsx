@@ -387,9 +387,12 @@ export function AIAssociationsPanel() {
         </div>
       )}
 
-      {data && data.reglas.length > 0 && (
+      {data && (
         <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-500">
-          {data.reglas.length} reglas - {data.total_transacciones} transacciones
+          {data.reglas.length > 0 
+            ? `${data.reglas.length} reglas - ${data.total_transacciones} transacciones`
+            : `0 reglas en ${data.total_transacciones} transacciones analizadas`
+          }
         </div>
       )}
     </Card>
