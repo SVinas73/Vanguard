@@ -592,9 +592,7 @@ export default function HomePage() {
 
         
         {activeTab === 'proyectos' && (
-          <div className="max-w-7xl mx-auto">
-            <ProyectosDashboard />
-          </div>
+          <ProyectosDashboard />
         )}
 
         </div>
