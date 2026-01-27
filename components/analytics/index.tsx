@@ -763,3 +763,5 @@ export function AIStatusIndicator() {
     </div>
   );
 }
+
+export { AnalyticsDashboard } from './AnalyticsDashboard';

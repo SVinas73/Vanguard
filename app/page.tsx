@@ -43,7 +43,7 @@ import { Sidebar } from '@/components/layout';
 import { Button, Input, Select, Modal, Card, AIAlert } from '@/components/ui';
 import { ProductTable } from '@/components/productos';
 import { MovementList, MovementTypeSelector } from '@/components/movimientos';
-import { AlertList, PredictionCard, ConsumptionChart } from '@/components/analytics';
+import { AlertList, PredictionCard, ConsumptionChart, AnalyticsDashboard } from '@/components/analytics';
 
 export default function HomePage() {
   // ============================================
@@ -521,30 +521,12 @@ export default function HomePage() {
 
         {/* ==================== ANALYTICS ==================== */}
         {activeTab === 'analytics' && (
-          <div className="space-y-6">
-            <Card variant="gradient">
-              <div className="flex items-center gap-3 mb-4">
-                <Bot size={28} />
-                <h2 className="text-lg font-semibold">{t('analytics.title')}</h2>
-              </div>
-              <p className="text-sm text-slate-400 mb-6">
-                {t('analytics.description')}
-              </p>
-
-              <div className="grid gap-4">
-                {productsWithPredictions.map(({ product, prediction }) => (
-                  <PredictionCard key={product.codigo} product={product} prediction={prediction} />
-                ))}
-                {productsWithPredictions.length === 0 && (
-                  <div className="p-8 text-center text-slate-500">
-                    {t('analytics.noData')}
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
+          <AnalyticsDashboard 
+            products={products}
+            movements={movements}
+            predictions={predictions}
+          />
         )}
-
         {/* ==================== REPORTES ==================== */}
         {activeTab === 'reportes' && (
           <div className="max-w-5xl mx-auto">
