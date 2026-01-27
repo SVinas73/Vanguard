@@ -592,7 +592,11 @@ export default function HomePage() {
 
         
         {activeTab === 'proyectos' && (
-          <ProyectosDashboard />
+          <div className="-mx-6 -my-6">
+            <div className="px-6 py-6">
+              <ProyectosDashboard />
+            </div>
+          </div>
         )}
 
         </div>
