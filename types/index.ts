@@ -1141,3 +1141,256 @@ export interface ProyectoStats {
   tareasPorPrioridad: Record<PrioridadTarea, number>;
   tareasPorColumna: Record<string, number>;
 }
+
+
+// ============================================
+// ENSAMBLAJES - TIPOS EXTENDIDOS (Nuevas tablas)
+// ============================================
+
+// Tipos de operación para el timeline
+export type TipoOperacionEnsamblaje =
+  | 'inicio'
+  | 'pausa'
+  | 'reanudacion'
+  | 'consumo_material'
+  | 'produccion'
+  | 'qc_aprobado'
+  | 'qc_rechazado'
+  | 'completado'
+  | 'cancelado'
+  | 'nota';
+
+// Operaciones/Timeline
+export interface EnsamblajeOperacion {
+  id: string;
+  ensamblajeId: string;
+  
+  tipo: TipoOperacionEnsamblaje;
+  descripcion?: string;
+  datos?: Record<string, any>;
+  
+  cantidad?: number;
+  unidad?: string;
+  
+  resultadoQc?: 'aprobado' | 'rechazado' | 'condicional';
+  defectosEncontrados?: DefectoQC[];
+  
+  costoAsociado?: number;
+  
+  ejecutadoPor: string;
+  estacionTrabajo?: string;
+  ipAddress?: string;
+  
+  createdAt: Date;
+}
+
+export interface DefectoQC {
+  codigo: string;
+  descripcion: string;
+  cantidad: number;
+  severidad: 'menor' | 'mayor' | 'critico';
+}
+
+// Consumos de materiales
+export interface EnsamblajeConsumo {
+  id: string;
+  ensamblajeId: string;
+  operacionId?: string;
+  
+  componenteCodigo: string;
+  componenteDescripcion?: string;
+  
+  cantidadPlanificada: number;
+  cantidadConsumida: number;
+  cantidadDesperdicio: number;
+  unidad?: string;
+  
+  loteId?: string;
+  loteNumero?: string;
+  serialNumber?: string;
+  
+  almacenId?: string;
+  ubicacion?: string;
+  
+  costoUnitario?: number;
+  costoTotal?: number;
+  
+  esSustituto: boolean;
+  componenteOriginalCodigo?: string;
+  motivoSustitucion?: string;
+  
+  consumidoPor?: string;
+  createdAt: Date;
+}
+
+// Control de Calidad detallado
+export type TipoInspeccionQC = 'en_proceso' | 'final' | 'muestreo' | 'retrabajos';
+export type ResultadoInspeccionQC = 'aprobado' | 'rechazado' | 'aprobado_condicional' | 'pendiente_retrabajo';
+export type DisposicionRechazo = 'scrap' | 'retrabajo' | 'devolucion' | 'uso_condicional';
+
+export interface EnsamblajeQC {
+  id: string;
+  ensamblajeId: string;
+  operacionId?: string;
+  
+  tipoInspeccion: TipoInspeccionQC;
+  numeroInspeccion: number;
+  
+  cantidadInspeccionada: number;
+  cantidadAprobada: number;
+  cantidadRechazada: number;
+  cantidadRetrabajo: number;
+  
+  resultado: ResultadoInspeccionQC;
+  
+  defectos?: DefectoQC[];
+  checklistId?: string;
+  checklistResultados?: Record<string, any>;
+  mediciones?: MedicionQC[];
+  
+  disposicionRechazo?: DisposicionRechazo;
+  evidencias?: EvidenciaQC[];
+  
+  notas?: string;
+  
+  inspector: string;
+  supervisorAprobacion?: string;
+  fechaInspeccion: Date;
+  
+  createdAt: Date;
+}
+
+export interface MedicionQC {
+  parametro: string;
+  valor: number;
+  unidad: string;
+  min?: number;
+  max?: number;
+  cumple: boolean;
+}
+
+export interface EvidenciaQC {
+  tipo: 'foto' | 'documento' | 'video';
+  url: string;
+  descripcion?: string;
+}
+
+// Pausas
+export type MotivoPausa = 
+  | 'falta_material' 
+  | 'falla_equipo' 
+  | 'cambio_turno' 
+  | 'descanso' 
+  | 'qc_pendiente' 
+  | 'otro';
+
+export interface EnsamblajePausa {
+  id: string;
+  ensamblajeId: string;
+  
+  fechaPausa: Date;
+  fechaReanudacion?: Date;
+  duracionMinutos?: number;
+  
+  motivo: MotivoPausa;
+  descripcion?: string;
+  
+  impactoProduccion: boolean;
+  costoTiempoMuerto?: number;
+  
+  pausadoPor: string;
+  reanudadoPor?: string;
+  
+  createdAt: Date;
+}
+
+// Seriales generados
+export type EstadoSerialEnsamblaje = 
+  | 'producido' 
+  | 'qc_aprobado' 
+  | 'qc_rechazado' 
+  | 'despachado' 
+  | 'devuelto';
+
+export interface EnsamblajeSerial {
+  id: string;
+  ensamblajeId: string;
+  
+  serialNumber: string;
+  secuencia: number;
+  
+  estado: EstadoSerialEnsamblaje;
+  
+  qcId?: string;
+  resultadoQc?: string;
+  
+  loteId?: string;
+  
+  componentesTrazados?: ComponenteTrazado[];
+  
+  almacenId?: string;
+  ubicacion?: string;
+  
+  createdAt: Date;
+}
+
+export interface ComponenteTrazado {
+  componenteCodigo: string;
+  loteNumero?: string;
+  serial?: string;
+}
+
+// Vista del Dashboard
+export interface EnsamblajeDashboardView {
+  id: string;
+  numero: string;
+  productoCodigo: string;
+  productoDescripcion: string;
+  tipo: TipoEnsamblaje;
+  cantidadPlanificada: number;
+  cantidadProducida?: number;
+  cantidadAprobada?: number;
+  cantidadRechazada?: number;
+  estado: EstadoEnsamblaje;
+  fechaPlanificada?: Date;
+  fechaInicio?: Date;
+  fechaFin?: Date;
+  duracionRealMinutos?: number;
+  
+  // BOM
+  bomVersion: string;
+  costoBomPlanificado: number;
+  
+  // Costos
+  costoMaterialesReal?: number;
+  costoManoObraReal?: number;
+  costoOverheadReal?: number;
+  costoTotalReal?: number;
+  costoTotalPlanificado: number;
+  variacionCostoPct?: number;
+  
+  // Eficiencia
+  rendimientoPct: number;
+  
+  // QC
+  totalInspecciones: number;
+  ultimoQc?: string;
+  
+  // Pausas
+  totalPausas: number;
+  minutosPausados?: number;
+  
+  // Timeline
+  ultimaOperacion?: string;
+  fechaUltimaOperacion?: Date;
+  
+  // Seriales
+  serialesGenerados: number;
+  
+  // Almacén
+  almacenNombre: string;
+  
+  supervisor?: string;
+  creadoPor?: string;
+  createdAt: Date;
+}
