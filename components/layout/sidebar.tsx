@@ -29,6 +29,7 @@ import {
   RotateCcw,
   Kanban,
   Boxes,
+  BarChart3,
   Wrench
 } from 'lucide-react';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -95,6 +96,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
     {
       title: t('nav.operations') || 'Operaciones',
       items: [
+        { id: 'comercial', label: 'Comercial', icon: DollarSign },
         { id: 'compras', label: t('nav.purchases'), icon: ShoppingCart },
         { id: 'ventas', label: t('nav.sales'), icon: TrendingUp },
         { id: 'proyectos', label: 'Gestión de Proyectos', icon: Kanban },

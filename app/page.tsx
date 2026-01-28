@@ -1,5 +1,7 @@
 'use client';
 
+import { ComercialDashboard, ComprasEnterprisePanel, VentasEnterprisePanel } from '@/components/comercial';
+
 import { ProyectosDashboard } from '@/components/proyectos';
 import { WelcomeHeader, StatsGrid } from '@/components/dashboard';
 import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
@@ -505,18 +507,24 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* ==================== COMERCIAL ==================== */}
+        {activeTab === 'comercial' && (
+          <ComercialDashboard 
+            onNavigate={(view) => {
+              if (view === 'compras') setActiveTab('compras');
+              if (view === 'ventas') setActiveTab('ventas');
+            }}
+          />
+        )}
+
         {/* ==================== COMPRAS ==================== */}
         {activeTab === 'compras' && (
-          <div className="space-y-4">
-            <ComprasDashboard products={products} userEmail={user?.email || ''} />
-          </div>
+          <ComprasEnterprisePanel products={products} userEmail={user?.email || ''} />
         )}
 
         {/* ==================== VENTAS ==================== */}
         {activeTab === 'ventas' && (
-          <div className="space-y-4">
-            <VentasDashboard products={products} userEmail={user?.email || ''} />
-          </div>
+          <VentasEnterprisePanel products={products} userEmail={user?.email || ''} />
         )}
 
         {/* ==================== ANALYTICS ==================== */}
