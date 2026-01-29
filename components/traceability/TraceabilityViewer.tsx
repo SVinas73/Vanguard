@@ -302,7 +302,8 @@ export default function TraceabilityEnterprise({
         .from('eventos_trazabilidad')
         .select(`
           *,
-          producto:productos(codigo, descripcion),
+          producto:productos!eventos_trazabilidad_producto_codigo_fkey(codigo, descripcion),
+
           almacen_origen:almacenes!eventos_trazabilidad_almacen_origen_id_fkey(id, nombre),
           almacen_destino:almacenes!eventos_trazabilidad_almacen_destino_id_fkey(id, nombre)
         `)
@@ -536,7 +537,8 @@ export default function TraceabilityEnterprise({
         .from('eventos_trazabilidad')
         .select(`
           *,
-          producto:productos(codigo, descripcion),
+          producto:productos!eventos_trazabilidad_producto_codigo_fkey(codigo, descripcion),
+
           almacen_origen:almacenes!eventos_trazabilidad_almacen_origen_id_fkey(id, nombre),
           almacen_destino:almacenes!eventos_trazabilidad_almacen_destino_id_fkey(id, nombre)
         `)
