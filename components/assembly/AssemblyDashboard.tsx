@@ -175,7 +175,7 @@ export default function AssemblyDashboard() {
           .from('ensamblajes')
           .select(`
             *,
-            bom:bom(*, producto:productos(codigo, descripcion, precio)),
+            bom:bom(*, producto:productos!bom_producto_codigo_fkey(codigo, descripcion, precio)),
             producto:productos(codigo, descripcion),
             almacen:almacenes(id, codigo, nombre)
           `)
@@ -183,7 +183,7 @@ export default function AssemblyDashboard() {
           .limit(100),
         supabase
           .from('bom')
-          .select('*, producto:productos(codigo, descripcion, precio)')
+          .select('*, producto:productos!bom_producto_codigo_fkey(codigo, descripcion, precio)')
           .eq('estado', 'activo'),
         supabase
           .from('almacenes')
