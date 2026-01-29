@@ -265,7 +265,10 @@ export default function TraceabilityEnterprise({
 
   // Búsqueda
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState<'serial' | 'lote' | 'producto' | 'ensamblaje'>('serial');
+  const [searchType, setSearchType] = useState<'serial' | 'lote' | 'producto' | 'ensamblaje'>('producto');
+  const [searchOptions, setSearchOptions] = useState<Array<{ value: string; label: string; extra?: string }>>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [loadingOptions, setLoadingOptions] = useState(false);
 
   // Vista
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('flujo');
@@ -447,6 +450,72 @@ export default function TraceabilityEnterprise({
       console.error('Error loading genealogia:', error);
     }
   };
+
+  // ============================================
+  // CARGAR OPCIONES DEL DROPDOWN
+  // ============================================
+
+  const cargarOpciones = async (tipo: string) => {
+    try {
+      setLoadingOptions(true);
+      let opciones: Array<{ value: string; label: string; extra?: string }> = [];
+
+      if (tipo === 'producto') {
+        const { data } = await supabase
+          .from('productos')
+          .select('codigo, descripcion')
+          .order('descripcion')
+          .limit(100);
+        opciones = (data || []).map(p => ({
+          value: p.codigo,
+          label: `${p.codigo} - ${p.descripcion}`,
+          extra: p.descripcion,
+        }));
+      } else if (tipo === 'lote') {
+        const { data } = await supabase
+          .from('lotes')
+          .select('id, codigo, cantidad_disponible')
+          .order('created_at', { ascending: false })
+          .limit(100);
+        opciones = (data || []).map(l => ({
+          value: l.codigo,
+          label: `${l.codigo} (${l.cantidad_disponible} disp.)`,
+        }));
+      } else if (tipo === 'serial') {
+        const { data } = await supabase
+          .from('productos_seriales')
+          .select('id, numero_serie, producto_codigo')
+          .order('created_at', { ascending: false })
+          .limit(100);
+        opciones = (data || []).map(s => ({
+          value: s.numero_serie,
+          label: `${s.numero_serie} (${s.producto_codigo})`,
+        }));
+      } else if (tipo === 'ensamblaje') {
+        const { data } = await supabase
+          .from('ensamblajes')
+          .select('id, numero, producto_descripcion, estado')
+          .order('created_at', { ascending: false })
+          .limit(100);
+        opciones = (data || []).map(a => ({
+          value: a.numero,
+          label: `${a.numero} - ${a.producto_descripcion || 'Sin descripción'}`,
+          extra: a.estado,
+        }));
+      }
+
+      setSearchOptions(opciones);
+    } catch (error) {
+      console.error('Error cargando opciones:', error);
+    } finally {
+      setLoadingOptions(false);
+    }
+  };
+
+  // Cargar opciones al cambiar tipo de búsqueda
+  useEffect(() => {
+    cargarOpciones(searchType);
+  }, [searchType]);
 
   // ============================================
   // BÚSQUEDA
@@ -1200,33 +1269,112 @@ export default function TraceabilityEnterprise({
         <div className="flex flex-col md:flex-row gap-4">
           <select
             value={searchType}
-            onChange={(e) => setSearchType(e.target.value as any)}
+            onChange={(e) => {
+              setSearchType(e.target.value as any);
+              setSearchTerm('');
+              setShowDropdown(false);
+            }}
             className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 focus:border-emerald-500/50 focus:outline-none"
           >
-            <option value="serial">Por Serial</option>
-            <option value="lote">Por Lote</option>
             <option value="producto">Por Producto</option>
+            <option value="lote">Por Lote</option>
+            <option value="serial">Por Serial</option>
             <option value="ensamblaje">Por Ensamblaje</option>
           </select>
+          
+          {/* Input con Dropdown */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 z-10" />
             <input
               type="text"
-              placeholder={`Buscar por ${searchType}...`}
+              placeholder={`Seleccionar ${searchType}...`}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && buscarTrazabilidad()}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setShowDropdown(false);
+                  buscarTrazabilidad();
+                }
+                if (e.key === 'Escape') setShowDropdown(false);
+              }}
               className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none"
             />
+            
+            {/* Dropdown de opciones */}
+            {showDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
+                {loadingOptions ? (
+                  <div className="p-4 text-center text-slate-400">
+                    <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+                    Cargando...
+                  </div>
+                ) : searchOptions.length === 0 ? (
+                  <div className="p-4 text-center text-slate-500">
+                    No hay {searchType === 'producto' ? 'productos' : searchType === 'lote' ? 'lotes' : searchType === 'serial' ? 'seriales' : 'ensamblajes'}
+                  </div>
+                ) : (
+                  <>
+                    {searchOptions
+                      .filter(opt => 
+                        !searchTerm || 
+                        opt.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        opt.value.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .slice(0, 20)
+                      .map((opt, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            setSearchTerm(opt.value);
+                            setShowDropdown(false);
+                            // Auto-buscar al seleccionar
+                            setTimeout(() => buscarTrazabilidad(), 100);
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-700/50 flex items-center justify-between transition-colors"
+                        >
+                          <span className="text-slate-200 text-sm truncate">{opt.label}</span>
+                          {opt.extra && (
+                            <span className="text-xs text-slate-500 ml-2">{opt.extra}</span>
+                          )}
+                        </button>
+                      ))}
+                    {searchOptions.filter(opt => 
+                      !searchTerm || 
+                      opt.label.toLowerCase().includes(searchTerm.toLowerCase())
+                    ).length === 0 && (
+                      <div className="p-3 text-center text-slate-500 text-sm">
+                        No se encontraron coincidencias
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
+          
           <button
-            onClick={buscarTrazabilidad}
+            onClick={() => {
+              setShowDropdown(false);
+              buscarTrazabilidad();
+            }}
             className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors flex items-center gap-2"
           >
             <Search className="h-4 w-4" />
             Buscar
           </button>
         </div>
+        
+        {/* Click outside to close dropdown */}
+        {showDropdown && (
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setShowDropdown(false)}
+          />
+        )}
       </div>
 
       {/* Info del item buscado */}
