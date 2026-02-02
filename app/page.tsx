@@ -16,7 +16,8 @@ import { AuditLogPanel } from '@/components/audit';
 import { CostAnalysisDashboard } from '@/components/costs';
 import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
-import { ExecutiveDashboard } from '@/components/reports';
+import { ReportsEnterprise } from '@/components/reports';
+
 import { QuickScanner } from '@/components/scanner';
 import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadge } from '@/components/ai';
 import SerialManagement from '@/components/serialization/SerialManagement';
@@ -535,10 +536,10 @@ export default function HomePage() {
             predictions={predictions}
           />
         )}
-        {/* ==================== REPORTES ==================== */}
+        
         {activeTab === 'reportes' && (
-          <div className="max-w-5xl mx-auto">
-            <ExecutiveDashboard products={products} movements={movements} />
+          <div className="w-full">
+            <ReportsEnterprise />
           </div>
         )}
 
