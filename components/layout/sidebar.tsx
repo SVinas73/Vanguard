@@ -27,6 +27,7 @@ import {
   QrCode,
   GitBranch,
   RotateCcw,
+  Landmark,
   Kanban,
   Boxes,
   BarChart3,
@@ -99,6 +100,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'comercial', label: 'Comercial', icon: DollarSign },
         { id: 'compras', label: t('nav.purchases'), icon: ShoppingCart },
         { id: 'ventas', label: t('nav.sales'), icon: TrendingUp },
+        { id: 'finanzas', label: 'Finanzas', icon: Landmark },
         { id: 'proyectos', label: 'Gestión de Proyectos', icon: Kanban },
         // Almacenes removido de aquí - ahora está dentro de Stock
       ]
