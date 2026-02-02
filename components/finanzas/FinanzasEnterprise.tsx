@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   DollarSign, CreditCard, Wallet, TrendingUp, TrendingDown, Building2,
   Receipt, FileText, Calendar, Clock, AlertTriangle, CheckCircle, XCircle,
@@ -9,7 +9,10 @@ import {
   PiggyBank, Calculator, BarChart3, PieChart, Target, Users, Building,
   Send, FileCheck, AlertCircle, Check, Minus, ArrowRight, Landmark,
   CircleDollarSign, BadgeDollarSign, HandCoins, Coins, BanknoteIcon,
-  ClipboardList, History, Settings, MoreHorizontal, ExternalLink
+  ClipboardList, History, Settings, MoreHorizontal, ExternalLink,
+  Upload, FileSpreadsheet, Link2, Unlink, Phone, Mail, MessageSquare,
+  CalendarDays, CalendarClock, Bell, Scale, FileDown, Printer,
+  CheckSquare, Square, ArrowLeftRight, Percent, BadgePercent, Wallet2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,22 +23,199 @@ import {
 } from 'recharts';
 
 // ============================================
-// TIPOS
+// TIPOS BASE
 // ============================================
 
 type Moneda = 'USD' | 'UYU' | 'EUR' | 'BRL' | 'ARS';
-
 type TipoCuenta = 'banco' | 'caja' | 'digital' | 'inversion';
-
 type TipoTransaccion = 'ingreso' | 'egreso' | 'transferencia' | 'ajuste';
-
 type EstadoDocumento = 'pendiente' | 'parcial' | 'pagado' | 'vencido' | 'anulado';
-
 type EstadoCheque = 'cartera' | 'depositado' | 'cobrado' | 'rechazado' | 'entregado';
-
 type MetodoPago = 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta' | 'digital' | 'compensacion';
+type TabActiva = 'dashboard' | 'cxc' | 'cxp' | 'flujo' | 'transacciones' | 'cheques' | 'conciliacion' | 'presupuesto' | 'cobranza';
 
-type TabActiva = 'dashboard' | 'cxc' | 'cxp' | 'flujo' | 'transacciones' | 'cheques' | 'presupuesto';
+// ============================================
+// TIPOS EXTENDIDOS - CONCILIACIÓN
+// ============================================
+
+type EstadoConciliacion = 'pendiente' | 'conciliado' | 'diferencia' | 'ignorado';
+
+interface MovimientoBancario {
+  id: string;
+  cuentaId: string;
+  fecha: string;
+  descripcion: string;
+  referencia?: string;
+  monto: number;
+  tipo: 'credito' | 'debito';
+  saldoPosterior?: number;
+  estadoConciliacion: EstadoConciliacion;
+  transaccionId?: string;
+  notasConciliacion?: string;
+  importadoDesde?: string;
+  createdAt: string;
+}
+
+interface SesionConciliacion {
+  id: string;
+  cuentaId: string;
+  fechaInicio: string;
+  fechaFin: string;
+  saldoInicial: number;
+  saldoFinal: number;
+  saldoSistema: number;
+  diferencia: number;
+  estado: 'en_proceso' | 'completada' | 'con_diferencias';
+  movimientosConciliados: number;
+  movimientosPendientes: number;
+  realizadoPor?: string;
+  completadoEn?: string;
+  createdAt: string;
+}
+
+// ============================================
+// TIPOS EXTENDIDOS - NOTAS CRÉDITO/DÉBITO
+// ============================================
+
+type TipoNota = 'credito' | 'debito';
+type OrigenNota = 'cliente' | 'proveedor';
+type EstadoNota = 'pendiente' | 'aplicada' | 'parcial' | 'anulada';
+
+interface NotaCreditoDebito {
+  id: string;
+  numero: string;
+  tipo: TipoNota;
+  origen: OrigenNota;
+  entidadId: string;
+  entidadNombre?: string;
+  documentoOrigenId?: string;
+  documentoOrigenNumero?: string;
+  fecha: string;
+  moneda: Moneda;
+  monto: number;
+  montoAplicado: number;
+  saldo: number;
+  motivo: string;
+  estado: EstadoNota;
+  aplicaciones?: AplicacionNota[];
+  creadoPor?: string;
+  createdAt: string;
+}
+
+interface AplicacionNota {
+  id: string;
+  notaId: string;
+  documentoId: string;
+  documentoNumero: string;
+  monto: number;
+  fecha: string;
+  creadoPor?: string;
+}
+
+// ============================================
+// TIPOS EXTENDIDOS - COBRANZA
+// ============================================
+
+type EstadoCobranza = 'pendiente' | 'contactado' | 'promesa_pago' | 'en_gestion' | 'legal' | 'incobrable' | 'cobrado';
+type TipoContactoCobranza = 'llamada' | 'email' | 'whatsapp' | 'visita' | 'carta' | 'otro';
+type ResultadoContacto = 'exitoso' | 'no_contesta' | 'promesa' | 'rechazo' | 'incorrecto';
+
+interface GestionCobranza {
+  id: string;
+  documentoId: string;
+  documento?: DocumentoCxC;
+  clienteId: string;
+  clienteNombre?: string;
+  estado: EstadoCobranza;
+  prioridad: 'baja' | 'media' | 'alta' | 'urgente';
+  montoOriginal: number;
+  montoPendiente: number;
+  diasVencido: number;
+  fechaUltimoContacto?: string;
+  fechaProximoContacto?: string;
+  promesaPagoFecha?: string;
+  promesaPagoMonto?: number;
+  asignadoA?: string;
+  contactos?: ContactoCobranza[];
+  notas?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ContactoCobranza {
+  id: string;
+  gestionId: string;
+  tipo: TipoContactoCobranza;
+  fecha: string;
+  resultado: ResultadoContacto;
+  descripcion: string;
+  promesaPago?: boolean;
+  promesaFecha?: string;
+  promesaMonto?: number;
+  proximoContacto?: string;
+  realizadoPor?: string;
+  createdAt: string;
+}
+
+// ============================================
+// TIPOS EXTENDIDOS - PRESUPUESTO
+// ============================================
+
+interface Presupuesto {
+  id: string;
+  año: number;
+  mes: number;
+  categoria: string;
+  tipo: 'ingreso' | 'egreso';
+  montoPresupuestado: number;
+  montoReal: number;
+  variacion: number;
+  variacionPct: number;
+  notas?: string;
+}
+
+interface ResumenPresupuesto {
+  año: number;
+  mes: number;
+  totalPresupuestadoIngresos: number;
+  totalRealIngresos: number;
+  totalPresupuestadoEgresos: number;
+  totalRealEgresos: number;
+  balancePresupuestado: number;
+  balanceReal: number;
+  variacionBalance: number;
+}
+
+// ============================================
+// TIPOS EXTENDIDOS - PROGRAMACIÓN PAGOS
+// ============================================
+
+type EstadoProgramacion = 'programado' | 'aprobado' | 'ejecutado' | 'cancelado';
+
+interface ProgramacionPago {
+  id: string;
+  documentoId: string;
+  documento?: DocumentoCxP;
+  proveedorId: string;
+  proveedorNombre?: string;
+  fechaProgramada: string;
+  monto: number;
+  moneda: Moneda;
+  cuentaId?: string;
+  cuentaNombre?: string;
+  metodoPago: MetodoPago;
+  estado: EstadoProgramacion;
+  prioridad: number;
+  aprobadoPor?: string;
+  ejecutadoPor?: string;
+  transaccionId?: string;
+  notas?: string;
+  createdAt: string;
+}
+
+// ============================================
+// INTERFACES EXISTENTES (del archivo anterior)
+// ============================================
 
 interface CuentaBancaria {
   id: string;
@@ -72,7 +252,7 @@ interface DocumentoCxC {
   id: string;
   numero: string;
   clienteId: string;
-  cliente?: { id: string; nombre: string; codigo: string };
+  cliente?: { id: string; nombre: string; codigo: string; email?: string; telefono?: string };
   ordenVentaId?: string;
   tipo: 'factura' | 'nota_debito' | 'otro';
   fechaEmision: string;
@@ -168,18 +348,6 @@ interface TipoCambio {
   fecha: string;
 }
 
-interface Presupuesto {
-  id: string;
-  año: number;
-  mes: number;
-  categoria: string;
-  tipo: 'ingreso' | 'egreso';
-  montoPresupuestado: number;
-  montoReal: number;
-  variacion: number;
-  notas?: string;
-}
-
 interface ProyeccionFlujo {
   fecha: string;
   ingresos: number;
@@ -240,18 +408,43 @@ const ESTADO_CHEQUE_CONFIG: Record<EstadoCheque, { color: string; bg: string; la
   entregado: { color: 'text-purple-400', bg: 'bg-purple-500/20 border-purple-500/30', label: 'Entregado' },
 };
 
-const AGING_BUCKETS = ['0-30', '31-60', '61-90', '90+'];
+const ESTADO_COBRANZA_CONFIG: Record<EstadoCobranza, { color: string; bg: string; label: string }> = {
+  pendiente: { color: 'text-slate-400', bg: 'bg-slate-500/20 border-slate-500/30', label: 'Pendiente' },
+  contactado: { color: 'text-blue-400', bg: 'bg-blue-500/20 border-blue-500/30', label: 'Contactado' },
+  promesa_pago: { color: 'text-cyan-400', bg: 'bg-cyan-500/20 border-cyan-500/30', label: 'Promesa de Pago' },
+  en_gestion: { color: 'text-amber-400', bg: 'bg-amber-500/20 border-amber-500/30', label: 'En Gestión' },
+  legal: { color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/30', label: 'Gestión Legal' },
+  incobrable: { color: 'text-red-600', bg: 'bg-red-600/20 border-red-600/30', label: 'Incobrable' },
+  cobrado: { color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30', label: 'Cobrado' },
+};
 
-const COLORS_CHART = ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#6366f1'];
+const TIPO_CONTACTO_CONFIG: Record<TipoContactoCobranza, { icono: React.ReactNode; label: string }> = {
+  llamada: { icono: <Phone className="h-4 w-4" />, label: 'Llamada' },
+  email: { icono: <Mail className="h-4 w-4" />, label: 'Email' },
+  whatsapp: { icono: <MessageSquare className="h-4 w-4" />, label: 'WhatsApp' },
+  visita: { icono: <Users className="h-4 w-4" />, label: 'Visita' },
+  carta: { icono: <FileText className="h-4 w-4" />, label: 'Carta' },
+  otro: { icono: <MoreHorizontal className="h-4 w-4" />, label: 'Otro' },
+};
+
+const PRIORIDAD_CONFIG = {
+  baja: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Baja' },
+  media: { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Media' },
+  alta: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'Alta' },
+  urgente: { color: 'text-red-400', bg: 'bg-red-500/20', label: 'Urgente' },
+};
 
 const CATEGORIAS_GASTO = [
   'Mercadería', 'Servicios', 'Salarios', 'Alquiler', 'Impuestos', 
-  'Servicios Públicos', 'Marketing', 'Transporte', 'Mantenimiento', 'Otros'
+  'Servicios Públicos', 'Marketing', 'Transporte', 'Mantenimiento', 
+  'Bancarios', 'Seguros', 'Honorarios', 'Otros'
 ];
 
 const CATEGORIAS_INGRESO = [
-  'Ventas', 'Servicios', 'Intereses', 'Comisiones', 'Otros'
+  'Ventas', 'Servicios', 'Intereses', 'Comisiones', 'Alquileres', 'Otros'
 ];
+
+const COLORS_CHART = ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#6366f1'];
 
 // ============================================
 // HELPERS
@@ -282,6 +475,13 @@ const formatDate = (date: string): string => {
 const formatDateShort = (date: string): string => {
   return new Date(date).toLocaleDateString('es-UY', { 
     day: '2-digit', month: 'short'
+  });
+};
+
+const formatDateTime = (date: string): string => {
+  return new Date(date).toLocaleString('es-UY', { 
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
   });
 };
 
@@ -327,6 +527,12 @@ const calcularAging = (documentos: Array<{ fechaVencimiento: string; saldo: numb
     cantidad: data.cantidad,
     porcentaje: total > 0 ? (data.monto / total) * 100 : 0,
   }));
+};
+
+const getMesNombre = (mes: number): string => {
+  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  return meses[mes - 1] || '';
 };
 
 // ============================================
@@ -385,17 +591,23 @@ export default function FinanzasEnterprise() {
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState<string | null>(null);
 
-  // Datos
+  // Datos base
   const [cuentas, setCuentas] = useState<CuentaBancaria[]>([]);
   const [documentosCxC, setDocumentosCxC] = useState<DocumentoCxC[]>([]);
   const [documentosCxP, setDocumentosCxP] = useState<DocumentoCxP[]>([]);
   const [transacciones, setTransacciones] = useState<Transaccion[]>([]);
   const [cheques, setCheques] = useState<Cheque[]>([]);
   const [tiposCambio, setTiposCambio] = useState<TipoCambio[]>([]);
+
+  // Datos extendidos
+  const [movimientosBancarios, setMovimientosBancarios] = useState<MovimientoBancario[]>([]);
+  const [notasCD, setNotasCD] = useState<NotaCreditoDebito[]>([]);
+  const [gestionesCobranza, setGestionesCobranza] = useState<GestionCobranza[]>([]);
   const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([]);
+  const [programacionesPago, setProgramacionesPago] = useState<ProgramacionPago[]>([]);
 
   // Catálogos
-  const [clientes, setClientes] = useState<Array<{ id: string; nombre: string; codigo: string }>>([]);
+  const [clientes, setClientes] = useState<Array<{ id: string; nombre: string; codigo: string; email?: string; telefono?: string }>>([]);
   const [proveedores, setProveedores] = useState<Array<{ id: string; nombre: string; codigo: string }>>([]);
 
   // UI
@@ -404,10 +616,21 @@ export default function FinanzasEnterprise() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState<EstadoDocumento | 'todos'>('todos');
   const [filterEstadoCheque, setFilterEstadoCheque] = useState<EstadoCheque | 'todos'>('todos');
+  const [filterEstadoCobranza, setFilterEstadoCobranza] = useState<EstadoCobranza | 'todos'>('todos');
 
   // Modales
   const [modalType, setModalType] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  // Conciliación
+  const [cuentaConciliacion, setCuentaConciliacion] = useState<string>('');
+  const [movimientosParaConciliar, setMovimientosParaConciliar] = useState<MovimientoBancario[]>([]);
+  const [transaccionesParaConciliar, setTransaccionesParaConciliar] = useState<Transaccion[]>([]);
+  const [matchesConciliacion, setMatchesConciliacion] = useState<Map<string, string>>(new Map());
+
+  // Presupuesto
+  const [añoPresupuesto, setAñoPresupuesto] = useState(new Date().getFullYear());
+  const [mesPresupuesto, setMesPresupuesto] = useState(new Date().getMonth() + 1);
 
   // Forms
   const [cuentaForm, setCuentaForm] = useState({
@@ -462,6 +685,31 @@ export default function FinanzasEnterprise() {
     fecha: new Date().toISOString().split('T')[0],
   });
 
+  const [notaForm, setNotaForm] = useState({
+    tipo: 'credito' as TipoNota,
+    origen: 'cliente' as OrigenNota,
+    entidadId: '',
+    documentoOrigenId: '',
+    monto: 0,
+    motivo: '',
+  });
+
+  const [contactoForm, setContactoForm] = useState({
+    tipo: 'llamada' as TipoContactoCobranza,
+    resultado: 'exitoso' as ResultadoContacto,
+    descripcion: '',
+    promesaPago: false,
+    promesaFecha: '',
+    promesaMonto: 0,
+    proximoContacto: '',
+  });
+
+  const [presupuestoForm, setPresupuestoForm] = useState({
+    categoria: '',
+    tipo: 'egreso' as 'ingreso' | 'egreso',
+    monto: 0,
+  });
+
   // ============================================
   // CARGA DE DATOS
   // ============================================
@@ -481,6 +729,10 @@ export default function FinanzasEnterprise() {
         loadCheques(),
         loadTiposCambio(),
         loadCatalogos(),
+        loadNotasCD(),
+        loadGestionesCobranza(),
+        loadPresupuestos(),
+        loadProgramacionesPago(),
       ]);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -514,7 +766,7 @@ export default function FinanzasEnterprise() {
   const loadDocumentosCxC = async () => {
     const { data } = await supabase
       .from('cuentas_por_cobrar')
-      .select('*, cliente:clientes(id, nombre, codigo), pagos:pagos_recibidos(*)')
+      .select('*, cliente:clientes(id, nombre, codigo, email, telefono), pagos:pagos_recibidos(*)')
       .order('fecha_vencimiento');
 
     if (data) {
@@ -591,7 +843,7 @@ export default function FinanzasEnterprise() {
         referencia: t.referencia,
         documentoTipo: t.documento_tipo,
         documentoId: t.documento_id,
-        conciliado: t.conciliado,
+        conciliado: t.conciliado || false,
         notas: t.notas,
         creadoPor: t.creado_por,
         createdAt: t.created_at,
@@ -645,7 +897,7 @@ export default function FinanzasEnterprise() {
 
   const loadCatalogos = async () => {
     const [cliRes, provRes] = await Promise.all([
-      supabase.from('clientes').select('id, nombre, codigo').eq('activo', true).order('nombre'),
+      supabase.from('clientes').select('id, nombre, codigo, email, telefono').eq('activo', true).order('nombre'),
       supabase.from('proveedores').select('id, nombre, codigo').eq('activo', true).order('nombre'),
     ]);
 
@@ -653,6 +905,144 @@ export default function FinanzasEnterprise() {
     if (provRes.data) setProveedores(provRes.data);
   };
 
+  const loadNotasCD = async () => {
+    const { data } = await supabase
+      .from('notas_credito_debito')
+      .select('*')
+      .order('fecha', { ascending: false });
+
+    if (data) {
+      setNotasCD(data.map((n: any) => ({
+        id: n.id,
+        numero: n.numero,
+        tipo: n.tipo,
+        origen: n.origen,
+        entidadId: n.entidad_id,
+        entidadNombre: n.entidad_nombre,
+        documentoOrigenId: n.documento_origen_id,
+        documentoOrigenNumero: n.documento_origen_numero,
+        fecha: n.fecha,
+        moneda: n.moneda || 'USD',
+        monto: parseFloat(n.monto) || 0,
+        montoAplicado: parseFloat(n.monto_aplicado) || 0,
+        saldo: parseFloat(n.saldo) || parseFloat(n.monto) || 0,
+        motivo: n.motivo,
+        estado: n.estado,
+        creadoPor: n.creado_por,
+        createdAt: n.created_at,
+      })));
+    }
+  };
+
+  const loadGestionesCobranza = async () => {
+    const { data } = await supabase
+      .from('gestiones_cobranza')
+      .select('*, contactos:contactos_cobranza(*)')
+      .order('dias_vencido', { ascending: false });
+
+    if (data) {
+      setGestionesCobranza(data.map((g: any) => ({
+        id: g.id,
+        documentoId: g.documento_id,
+        clienteId: g.cliente_id,
+        clienteNombre: g.cliente_nombre,
+        estado: g.estado,
+        prioridad: g.prioridad || 'media',
+        montoOriginal: parseFloat(g.monto_original) || 0,
+        montoPendiente: parseFloat(g.monto_pendiente) || 0,
+        diasVencido: g.dias_vencido || 0,
+        fechaUltimoContacto: g.fecha_ultimo_contacto,
+        fechaProximoContacto: g.fecha_proximo_contacto,
+        promesaPagoFecha: g.promesa_pago_fecha,
+        promesaPagoMonto: parseFloat(g.promesa_pago_monto) || 0,
+        asignadoA: g.asignado_a,
+        contactos: (g.contactos || []).map((c: any) => ({
+          id: c.id,
+          gestionId: c.gestion_id,
+          tipo: c.tipo,
+          fecha: c.fecha,
+          resultado: c.resultado,
+          descripcion: c.descripcion,
+          promesaPago: c.promesa_pago,
+          promesaFecha: c.promesa_fecha,
+          promesaMonto: parseFloat(c.promesa_monto) || 0,
+          proximoContacto: c.proximo_contacto,
+          realizadoPor: c.realizado_por,
+          createdAt: c.created_at,
+        })),
+        notas: g.notas,
+        createdAt: g.created_at,
+        updatedAt: g.updated_at,
+      })));
+    }
+  };
+
+  const loadPresupuestos = async () => {
+    const { data } = await supabase
+      .from('presupuestos_financieros')
+      .select('*')
+      .eq('año', añoPresupuesto)
+      .order('mes')
+      .order('categoria');
+
+    if (data) {
+      setPresupuestos(data.map((p: any) => ({
+        id: p.id,
+        año: p.año,
+        mes: p.mes,
+        categoria: p.categoria,
+        tipo: p.tipo,
+        montoPresupuestado: parseFloat(p.monto_presupuestado) || 0,
+        montoReal: parseFloat(p.monto_real) || 0,
+        variacion: (parseFloat(p.monto_real) || 0) - (parseFloat(p.monto_presupuestado) || 0),
+        variacionPct: parseFloat(p.monto_presupuestado) > 0 
+          ? (((parseFloat(p.monto_real) || 0) - (parseFloat(p.monto_presupuestado) || 0)) / parseFloat(p.monto_presupuestado)) * 100
+          : 0,
+        notas: p.notas,
+      })));
+    }
+  };
+
+  const loadProgramacionesPago = async () => {
+    const { data } = await supabase
+      .from('programacion_pagos')
+      .select('*')
+      .in('estado', ['programado', 'aprobado'])
+      .order('fecha_programada');
+
+    if (data) {
+      setProgramacionesPago(data.map((p: any) => ({
+        id: p.id,
+        documentoId: p.documento_id,
+        proveedorId: p.proveedor_id,
+        proveedorNombre: p.proveedor_nombre,
+        fechaProgramada: p.fecha_programada,
+        monto: parseFloat(p.monto) || 0,
+        moneda: p.moneda || 'USD',
+        cuentaId: p.cuenta_id,
+        cuentaNombre: p.cuenta_nombre,
+        metodoPago: p.metodo_pago,
+        estado: p.estado,
+        prioridad: p.prioridad || 1,
+        aprobadoPor: p.aprobado_por,
+        ejecutadoPor: p.ejecutado_por,
+        transaccionId: p.transaccion_id,
+        notas: p.notas,
+        createdAt: p.created_at,
+      })));
+    }
+  };
+
+  // Recargar presupuestos cuando cambia año
+  useEffect(() => {
+    if (!loading) {
+      loadPresupuestos();
+    }
+  }, [añoPresupuesto]);
+
+  // ============================================
+  // CONTINÚA EN PARTE 3
+  // ============================================
   // ============================================
   // ACCIONES - CUENTAS
   // ============================================
@@ -691,7 +1081,7 @@ export default function FinanzasEnterprise() {
   };
 
   // ============================================
-  // ACCIONES - PAGOS CXC (COBROS)
+  // ACCIONES - COBROS (CxC)
   // ============================================
 
   const registrarCobro = async () => {
@@ -761,6 +1151,15 @@ export default function FinanzasEnterprise() {
         creado_por: user?.email,
       });
 
+      // Si la gestión de cobranza existe, actualizarla
+      const gestion = gestionesCobranza.find(g => g.documentoId === pagoForm.documentoId);
+      if (gestion && nuevoSaldo <= 0) {
+        await supabase.from('gestiones_cobranza').update({
+          estado: 'cobrado',
+          monto_pendiente: 0,
+        }).eq('id', gestion.id);
+      }
+
       toast.success('Cobro registrado');
       setModalType(null);
       resetPagoForm();
@@ -773,7 +1172,7 @@ export default function FinanzasEnterprise() {
   };
 
   // ============================================
-  // ACCIONES - PAGOS CXP
+  // ACCIONES - PAGOS (CxP)
   // ============================================
 
   const registrarPago = async () => {
@@ -811,7 +1210,7 @@ export default function FinanzasEnterprise() {
 
       if (pagoError) throw pagoError;
 
-      // Actualizar documento (monto pagado incluye retenciones)
+      // Actualizar documento
       const nuevoMontoPagado = doc.montoPagado + montoTotal;
       const nuevoSaldo = doc.total - nuevoMontoPagado;
       const nuevoEstado: EstadoDocumento = nuevoSaldo <= 0 ? 'pagado' : 'parcial';
@@ -822,7 +1221,7 @@ export default function FinanzasEnterprise() {
         estado: nuevoEstado,
       }).eq('id', pagoForm.documentoId);
 
-      // Actualizar saldo cuenta (solo el monto efectivo, no retenciones)
+      // Actualizar saldo cuenta
       const cuenta = cuentas.find(c => c.id === pagoForm.cuentaId);
       if (cuenta) {
         await supabase.from('cuentas_bancarias').update({
@@ -896,6 +1295,16 @@ export default function FinanzasEnterprise() {
         saldo_disponible: (cuenta.saldoDisponible || cuenta.saldoActual) + ajuste,
       }).eq('id', transaccionForm.cuentaId);
 
+      // Actualizar presupuesto real si hay categoría
+      if (transaccionForm.categoria) {
+        await actualizarPresupuestoReal(
+          transaccionForm.fecha,
+          transaccionForm.categoria,
+          transaccionForm.tipo === 'ingreso' ? 'ingreso' : 'egreso',
+          transaccionForm.monto
+        );
+      }
+
       toast.success('Transacción registrada');
       setModalType(null);
       resetTransaccionForm();
@@ -930,7 +1339,7 @@ export default function FinanzasEnterprise() {
         fecha_vencimiento: chequeForm.fechaVencimiento || null,
         beneficiario: chequeForm.beneficiario || null,
         librador: chequeForm.librador || null,
-        estado: chequeForm.tipo === 'recibido' ? 'cartera' : 'emitido',
+        estado: chequeForm.tipo === 'recibido' ? 'cartera' : 'entregado',
         notas: chequeForm.notas || null,
       });
 
@@ -1023,7 +1432,419 @@ export default function FinanzasEnterprise() {
   };
 
   // ============================================
-  // HELPERS RESET FORMS
+  // ACCIONES - NOTAS CRÉDITO/DÉBITO
+  // ============================================
+
+  const crearNota = async () => {
+    if (!notaForm.entidadId || notaForm.monto <= 0 || !notaForm.motivo) {
+      toast.warning('Complete los datos de la nota');
+      return;
+    }
+
+    try {
+      setProcesando('nota');
+
+      const entidad = notaForm.origen === 'cliente' 
+        ? clientes.find(c => c.id === notaForm.entidadId)
+        : proveedores.find(p => p.id === notaForm.entidadId);
+
+      const numero = `NC-${Date.now().toString().slice(-8)}`;
+
+      const { error } = await supabase.from('notas_credito_debito').insert({
+        numero,
+        tipo: notaForm.tipo,
+        origen: notaForm.origen,
+        entidad_id: notaForm.entidadId,
+        entidad_nombre: entidad?.nombre,
+        documento_origen_id: notaForm.documentoOrigenId || null,
+        fecha: new Date().toISOString().split('T')[0],
+        moneda: monedaActiva,
+        monto: notaForm.monto,
+        monto_aplicado: 0,
+        saldo: notaForm.monto,
+        motivo: notaForm.motivo,
+        estado: 'pendiente',
+        creado_por: user?.email,
+      });
+
+      if (error) throw error;
+
+      toast.success('Nota creada');
+      setModalType(null);
+      setNotaForm({ tipo: 'credito', origen: 'cliente', entidadId: '', documentoOrigenId: '', monto: 0, motivo: '' });
+      loadNotasCD();
+    } catch (error: any) {
+      toast.error('Error', error.message);
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  const aplicarNota = async (nota: NotaCreditoDebito, documentoId: string, monto: number) => {
+    try {
+      setProcesando(nota.id);
+
+      if (monto > nota.saldo) {
+        toast.warning('El monto excede el saldo de la nota');
+        return;
+      }
+
+      // Aplicar al documento
+      if (nota.origen === 'cliente') {
+        const doc = documentosCxC.find(d => d.id === documentoId);
+        if (doc) {
+          const nuevoSaldo = doc.saldo - monto;
+          await supabase.from('cuentas_por_cobrar').update({
+            monto_pagado: doc.montoPagado + monto,
+            saldo: nuevoSaldo,
+            estado: nuevoSaldo <= 0 ? 'pagado' : 'parcial',
+          }).eq('id', documentoId);
+        }
+      } else {
+        const doc = documentosCxP.find(d => d.id === documentoId);
+        if (doc) {
+          const nuevoSaldo = doc.saldo - monto;
+          await supabase.from('cuentas_por_pagar').update({
+            monto_pagado: doc.montoPagado + monto,
+            saldo: nuevoSaldo,
+            estado: nuevoSaldo <= 0 ? 'pagado' : 'parcial',
+          }).eq('id', documentoId);
+        }
+      }
+
+      // Actualizar nota
+      const nuevoMontoAplicado = nota.montoAplicado + monto;
+      const nuevoSaldoNota = nota.monto - nuevoMontoAplicado;
+
+      await supabase.from('notas_credito_debito').update({
+        monto_aplicado: nuevoMontoAplicado,
+        saldo: nuevoSaldoNota,
+        estado: nuevoSaldoNota <= 0 ? 'aplicada' : 'parcial',
+      }).eq('id', nota.id);
+
+      toast.success('Nota aplicada');
+      loadAllData();
+    } catch (error: any) {
+      toast.error('Error', error.message);
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  // ============================================
+  // ACCIONES - COBRANZA
+  // ============================================
+
+  const crearGestionCobranza = async (documentoId: string) => {
+    try {
+      setProcesando('gestion');
+
+      const doc = documentosCxC.find(d => d.id === documentoId);
+      if (!doc) throw new Error('Documento no encontrado');
+
+      const diasVencido = -getDiasVencimiento(doc.fechaVencimiento);
+
+      const { error } = await supabase.from('gestiones_cobranza').insert({
+        documento_id: documentoId,
+        cliente_id: doc.clienteId,
+        cliente_nombre: doc.cliente?.nombre,
+        estado: 'pendiente',
+        prioridad: diasVencido > 90 ? 'urgente' : diasVencido > 60 ? 'alta' : diasVencido > 30 ? 'media' : 'baja',
+        monto_original: doc.total,
+        monto_pendiente: doc.saldo,
+        dias_vencido: diasVencido,
+        asignado_a: user?.email,
+      });
+
+      if (error) throw error;
+
+      toast.success('Gestión de cobranza creada');
+      loadGestionesCobranza();
+    } catch (error: any) {
+      toast.error('Error', error.message);
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  const registrarContactoCobranza = async (gestionId: string) => {
+    if (!contactoForm.descripcion) {
+      toast.warning('Ingrese una descripción');
+      return;
+    }
+
+    try {
+      setProcesando('contacto');
+
+      const { error } = await supabase.from('contactos_cobranza').insert({
+        gestion_id: gestionId,
+        tipo: contactoForm.tipo,
+        fecha: new Date().toISOString(),
+        resultado: contactoForm.resultado,
+        descripcion: contactoForm.descripcion,
+        promesa_pago: contactoForm.promesaPago,
+        promesa_fecha: contactoForm.promesaPago ? contactoForm.promesaFecha : null,
+        promesa_monto: contactoForm.promesaPago ? contactoForm.promesaMonto : null,
+        proximo_contacto: contactoForm.proximoContacto || null,
+        realizado_por: user?.email,
+      });
+
+      if (error) throw error;
+
+      // Actualizar gestión
+      const nuevoEstado = contactoForm.promesaPago ? 'promesa_pago' : 'contactado';
+      await supabase.from('gestiones_cobranza').update({
+        estado: nuevoEstado,
+        fecha_ultimo_contacto: new Date().toISOString(),
+        fecha_proximo_contacto: contactoForm.proximoContacto || null,
+        promesa_pago_fecha: contactoForm.promesaPago ? contactoForm.promesaFecha : null,
+        promesa_pago_monto: contactoForm.promesaPago ? contactoForm.promesaMonto : null,
+      }).eq('id', gestionId);
+
+      toast.success('Contacto registrado');
+      setModalType(null);
+      resetContactoForm();
+      loadGestionesCobranza();
+    } catch (error: any) {
+      toast.error('Error', error.message);
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  // ============================================
+  // ACCIONES - PRESUPUESTO
+  // ============================================
+
+  const guardarPresupuesto = async () => {
+    if (!presupuestoForm.categoria || presupuestoForm.monto <= 0) {
+      toast.warning('Complete los datos del presupuesto');
+      return;
+    }
+
+    try {
+      setProcesando('presupuesto');
+
+      const { error } = await supabase.from('presupuestos_financieros').upsert({
+        año: añoPresupuesto,
+        mes: mesPresupuesto,
+        categoria: presupuestoForm.categoria,
+        tipo: presupuestoForm.tipo,
+        monto_presupuestado: presupuestoForm.monto,
+      }, {
+        onConflict: 'año,mes,categoria,tipo'
+      });
+
+      if (error) throw error;
+
+      toast.success('Presupuesto guardado');
+      setModalType(null);
+      setPresupuestoForm({ categoria: '', tipo: 'egreso', monto: 0 });
+      loadPresupuestos();
+    } catch (error: any) {
+      toast.error('Error', error.message);
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  const actualizarPresupuestoReal = async (fecha: string, categoria: string, tipo: 'ingreso' | 'egreso', monto: number) => {
+    try {
+      const fechaObj = new Date(fecha);
+      const año = fechaObj.getFullYear();
+      const mes = fechaObj.getMonth() + 1;
+
+      // Buscar presupuesto existente
+      const { data } = await supabase
+        .from('presupuestos_financieros')
+        .select('*')
+        .eq('año', año)
+        .eq('mes', mes)
+        .eq('categoria', categoria)
+        .eq('tipo', tipo)
+        .single();
+
+      if (data) {
+        await supabase.from('presupuestos_financieros').update({
+          monto_real: (parseFloat(data.monto_real) || 0) + monto,
+        }).eq('id', data.id);
+      }
+    } catch (error) {
+      console.error('Error actualizando presupuesto real:', error);
+    }
+  };
+
+  // ============================================
+  // ACCIONES - CONCILIACIÓN
+  // ============================================
+
+  const importarExtractoBancario = async (file: File) => {
+    try {
+      setProcesando('import');
+      
+      const text = await file.text();
+      const lines = text.split('\n');
+      const movimientos: any[] = [];
+
+      // Parsear CSV (formato: fecha, descripcion, referencia, debito, credito, saldo)
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
+        if (cols.length >= 5) {
+          const debito = parseFloat(cols[3]) || 0;
+          const credito = parseFloat(cols[4]) || 0;
+          
+          movimientos.push({
+            cuenta_id: cuentaConciliacion,
+            fecha: cols[0],
+            descripcion: cols[1],
+            referencia: cols[2] || null,
+            monto: credito > 0 ? credito : debito,
+            tipo: credito > 0 ? 'credito' : 'debito',
+            saldo_posterior: cols[5] ? parseFloat(cols[5]) : null,
+            estado_conciliacion: 'pendiente',
+            importado_desde: file.name,
+          });
+        }
+      }
+
+      if (movimientos.length > 0) {
+        const { error } = await supabase.from('movimientos_bancarios').insert(movimientos);
+        if (error) throw error;
+        
+        toast.success(`${movimientos.length} movimientos importados`);
+        loadMovimientosBancarios();
+      } else {
+        toast.warning('No se encontraron movimientos válidos');
+      }
+    } catch (error: any) {
+      toast.error('Error importando', error.message);
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  const loadMovimientosBancarios = async () => {
+    if (!cuentaConciliacion) return;
+
+    const { data } = await supabase
+      .from('movimientos_bancarios')
+      .select('*')
+      .eq('cuenta_id', cuentaConciliacion)
+      .eq('estado_conciliacion', 'pendiente')
+      .order('fecha');
+
+    if (data) {
+      setMovimientosParaConciliar(data.map((m: any) => ({
+        id: m.id,
+        cuentaId: m.cuenta_id,
+        fecha: m.fecha,
+        descripcion: m.descripcion,
+        referencia: m.referencia,
+        monto: parseFloat(m.monto) || 0,
+        tipo: m.tipo,
+        saldoPosterior: parseFloat(m.saldo_posterior) || undefined,
+        estadoConciliacion: m.estado_conciliacion,
+        transaccionId: m.transaccion_id,
+        notasConciliacion: m.notas_conciliacion,
+        importadoDesde: m.importado_desde,
+        createdAt: m.created_at,
+      })));
+    }
+
+    // Cargar transacciones no conciliadas de la cuenta
+    const { data: trans } = await supabase
+      .from('transacciones_financieras')
+      .select('*')
+      .eq('cuenta_id', cuentaConciliacion)
+      .eq('conciliado', false)
+      .order('fecha');
+
+    if (trans) {
+      setTransaccionesParaConciliar(trans.map((t: any) => ({
+        id: t.id,
+        cuentaId: t.cuenta_id,
+        tipo: t.tipo,
+        monto: parseFloat(t.monto) || 0,
+        moneda: t.moneda,
+        fecha: t.fecha,
+        concepto: t.concepto,
+        categoria: t.categoria,
+        referencia: t.referencia,
+        conciliado: t.conciliado,
+        createdAt: t.created_at,
+      })));
+    }
+  };
+
+  const conciliarMovimiento = async (movimientoId: string, transaccionId: string) => {
+    try {
+      setProcesando(movimientoId);
+
+      // Marcar movimiento bancario como conciliado
+      await supabase.from('movimientos_bancarios').update({
+        estado_conciliacion: 'conciliado',
+        transaccion_id: transaccionId,
+      }).eq('id', movimientoId);
+
+      // Marcar transacción como conciliada
+      await supabase.from('transacciones_financieras').update({
+        conciliado: true,
+      }).eq('id', transaccionId);
+
+      toast.success('Conciliación exitosa');
+      loadMovimientosBancarios();
+    } catch (error: any) {
+      toast.error('Error', error.message);
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  const autoMatchConciliacion = () => {
+    const matches = new Map<string, string>();
+
+    movimientosParaConciliar.forEach(mov => {
+      // Buscar transacción con mismo monto y fecha cercana
+      const match = transaccionesParaConciliar.find(trans => {
+        const montoMatch = Math.abs(trans.monto - mov.monto) < 0.01;
+        const fechaMov = new Date(mov.fecha);
+        const fechaTrans = new Date(trans.fecha);
+        const diasDif = Math.abs((fechaMov.getTime() - fechaTrans.getTime()) / (1000 * 60 * 60 * 24));
+        const fechaMatch = diasDif <= 3;
+        const tipoMatch = (mov.tipo === 'credito' && trans.tipo === 'ingreso') || 
+                         (mov.tipo === 'debito' && trans.tipo === 'egreso');
+        
+        return montoMatch && fechaMatch && tipoMatch && !Array.from(matches.values()).includes(trans.id);
+      });
+
+      if (match) {
+        matches.set(mov.id, match.id);
+      }
+    });
+
+    setMatchesConciliacion(matches);
+    toast.success(`${matches.size} coincidencias encontradas`);
+  };
+
+  const aplicarMatchesConciliacion = async () => {
+    try {
+      setProcesando('conciliar');
+
+      for (const [movId, transId] of matchesConciliacion.entries()) {
+        await conciliarMovimiento(movId, transId);
+      }
+
+      setMatchesConciliacion(new Map());
+      toast.success('Conciliación completada');
+    } catch (error: any) {
+      toast.error('Error', error.message);
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  // ============================================
+  // RESET FORMS
   // ============================================
 
   const resetPagoForm = () => {
@@ -1068,45 +1889,239 @@ export default function FinanzasEnterprise() {
     });
   };
 
+  const resetContactoForm = () => {
+    setContactoForm({
+      tipo: 'llamada',
+      resultado: 'exitoso',
+      descripcion: '',
+      promesaPago: false,
+      promesaFecha: '',
+      promesaMonto: 0,
+      proximoContacto: '',
+    });
+  };
+
+  // ============================================
+  // CONTINÚA EN PARTE 4
+  // ============================================
+  // ============================================
+  // GENERACIÓN DE ESTADOS DE CUENTA (PDF)
+  // ============================================
+
+  const generarEstadoCuentaCliente = async (clienteId: string) => {
+    const cliente = clientes.find(c => c.id === clienteId);
+    if (!cliente) return;
+
+    const docs = documentosCxC.filter(d => d.clienteId === clienteId && d.saldo > 0);
+    
+    let html = `
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; }
+          h1 { color: #1e293b; border-bottom: 2px solid #10b981; padding-bottom: 10px; }
+          .cliente-info { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background: #1e293b; color: white; padding: 12px; text-align: left; }
+          td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+          .monto { text-align: right; font-family: monospace; }
+          .total { font-weight: bold; font-size: 18px; }
+          .vencido { color: #ef4444; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; }
+        </style>
+      </head>
+      <body>
+        <h1>Estado de Cuenta</h1>
+        <div class="cliente-info">
+          <strong>${cliente.nombre}</strong><br>
+          Código: ${cliente.codigo}<br>
+          ${cliente.email ? `Email: ${cliente.email}` : ''}
+        </div>
+        <p>Fecha: ${formatDate(new Date().toISOString())}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Documento</th>
+              <th>Emisión</th>
+              <th>Vencimiento</th>
+              <th>Total</th>
+              <th>Pagado</th>
+              <th>Saldo</th>
+              <th>Días</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    let totalSaldo = 0;
+    docs.forEach(doc => {
+      const dias = -getDiasVencimiento(doc.fechaVencimiento);
+      const claseVencido = dias > 0 ? 'vencido' : '';
+      totalSaldo += doc.saldo;
+      
+      html += `
+        <tr>
+          <td>${doc.numero}</td>
+          <td>${formatDate(doc.fechaEmision)}</td>
+          <td class="${claseVencido}">${formatDate(doc.fechaVencimiento)}</td>
+          <td class="monto">${formatCurrency(doc.total, doc.moneda)}</td>
+          <td class="monto">${formatCurrency(doc.montoPagado, doc.moneda)}</td>
+          <td class="monto">${formatCurrency(doc.saldo, doc.moneda)}</td>
+          <td class="${claseVencido}">${dias > 0 ? dias : '-'}</td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5" style="text-align: right;"><strong>TOTAL PENDIENTE:</strong></td>
+              <td class="monto total">${formatCurrency(totalSaldo, 'USD')}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+        <div class="footer">
+          Documento generado automáticamente el ${formatDateTime(new Date().toISOString())}
+        </div>
+      </body>
+      </html>
+    `;
+
+    const ventana = window.open('', '_blank');
+    if (ventana) {
+      ventana.document.write(html);
+      ventana.document.close();
+      ventana.print();
+    }
+    toast.success('Estado de cuenta generado');
+  };
+
+  const generarEstadoCuentaProveedor = async (proveedorId: string) => {
+    const proveedor = proveedores.find(p => p.id === proveedorId);
+    if (!proveedor) return;
+
+    const docs = documentosCxP.filter(d => d.proveedorId === proveedorId && d.saldo > 0);
+    
+    let html = `
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; }
+          h1 { color: #1e293b; border-bottom: 2px solid #f59e0b; padding-bottom: 10px; }
+          .proveedor-info { background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background: #1e293b; color: white; padding: 12px; text-align: left; }
+          td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+          .monto { text-align: right; font-family: monospace; }
+          .total { font-weight: bold; font-size: 18px; }
+          .vencido { color: #ef4444; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; }
+        </style>
+      </head>
+      <body>
+        <h1>Estado de Cuenta - Proveedor</h1>
+        <div class="proveedor-info">
+          <strong>${proveedor.nombre}</strong><br>
+          Código: ${proveedor.codigo}
+        </div>
+        <p>Fecha: ${formatDate(new Date().toISOString())}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Documento</th>
+              <th>Emisión</th>
+              <th>Vencimiento</th>
+              <th>Total</th>
+              <th>Pagado</th>
+              <th>Saldo</th>
+              <th>Días</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    let totalSaldo = 0;
+    docs.forEach(doc => {
+      const dias = -getDiasVencimiento(doc.fechaVencimiento);
+      const claseVencido = dias > 0 ? 'vencido' : '';
+      totalSaldo += doc.saldo;
+      
+      html += `
+        <tr>
+          <td>${doc.numero}</td>
+          <td>${formatDate(doc.fechaEmision)}</td>
+          <td class="${claseVencido}">${formatDate(doc.fechaVencimiento)}</td>
+          <td class="monto">${formatCurrency(doc.total, doc.moneda)}</td>
+          <td class="monto">${formatCurrency(doc.montoPagado, doc.moneda)}</td>
+          <td class="monto">${formatCurrency(doc.saldo, doc.moneda)}</td>
+          <td class="${claseVencido}">${dias > 0 ? dias : '-'}</td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5" style="text-align: right;"><strong>TOTAL ADEUDADO:</strong></td>
+              <td class="monto total">${formatCurrency(totalSaldo, 'USD')}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+        <div class="footer">
+          Documento generado automáticamente el ${formatDateTime(new Date().toISOString())}
+        </div>
+      </body>
+      </html>
+    `;
+
+    const ventana = window.open('', '_blank');
+    if (ventana) {
+      ventana.document.write(html);
+      ventana.document.close();
+      ventana.print();
+    }
+    toast.success('Estado de cuenta generado');
+  };
+
   // ============================================
   // CÁLCULOS Y MÉTRICAS
   // ============================================
 
   const metricas = useMemo(() => {
-    // Saldos por moneda
     const saldosPorMoneda: Record<Moneda, number> = { USD: 0, UYU: 0, EUR: 0, BRL: 0, ARS: 0 };
     cuentas.filter(c => c.activo).forEach(c => {
       saldosPorMoneda[c.moneda] += c.saldoActual;
     });
 
-    // CxC
     const totalCxC = documentosCxC.filter(d => d.estado !== 'anulado').reduce((s, d) => s + d.saldo, 0);
     const cxcVencidas = documentosCxC.filter(d => d.estado !== 'anulado' && d.estado !== 'pagado' && getDiasVencimiento(d.fechaVencimiento) < 0);
     const totalCxCVencido = cxcVencidas.reduce((s, d) => s + d.saldo, 0);
 
-    // CxP
     const totalCxP = documentosCxP.filter(d => d.estado !== 'anulado').reduce((s, d) => s + d.saldo, 0);
     const cxpVencidas = documentosCxP.filter(d => d.estado !== 'anulado' && d.estado !== 'pagado' && getDiasVencimiento(d.fechaVencimiento) < 0);
     const totalCxPVencido = cxpVencidas.reduce((s, d) => s + d.saldo, 0);
 
-    // Cheques
     const chequesCartera = cheques.filter(ch => ch.tipo === 'recibido' && ch.estado === 'cartera');
     const totalChequesCartera = chequesCartera.reduce((s, ch) => s + ch.monto, 0);
     const chequesEmitidos = cheques.filter(ch => ch.tipo === 'emitido' && ch.estado === 'entregado');
     const totalChequesEmitidos = chequesEmitidos.reduce((s, ch) => s + ch.monto, 0);
 
-    // Transacciones del mes
+    const notasCreditoPendientes = notasCD.filter(n => n.tipo === 'credito' && n.saldo > 0);
+    const totalNotasCredito = notasCreditoPendientes.reduce((s, n) => s + n.saldo, 0);
+
     const hoy = new Date();
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
     const transMes = transacciones.filter(t => t.fecha >= inicioMes);
     const ingresosMes = transMes.filter(t => t.tipo === 'ingreso').reduce((s, t) => s + t.monto, 0);
     const egresosMes = transMes.filter(t => t.tipo === 'egreso').reduce((s, t) => s + t.monto, 0);
 
-    // Aging CxC y CxP
     const agingCxC = calcularAging(documentosCxC.filter(d => d.estado !== 'anulado' && d.estado !== 'pagado'));
     const agingCxP = calcularAging(documentosCxP.filter(d => d.estado !== 'anulado' && d.estado !== 'pagado'));
 
-    // Próximos vencimientos (7 días)
     const proxVencCxC = documentosCxC.filter(d => {
       const dias = getDiasVencimiento(d.fechaVencimiento);
       return d.saldo > 0 && dias >= 0 && dias <= 7;
@@ -1115,6 +2130,15 @@ export default function FinanzasEnterprise() {
       const dias = getDiasVencimiento(d.fechaVencimiento);
       return d.saldo > 0 && dias >= 0 && dias <= 7;
     });
+
+    const gestionesPendientes = gestionesCobranza.filter(g => !['cobrado', 'incobrable'].includes(g.estado));
+    const montoEnGestion = gestionesPendientes.reduce((s, g) => s + g.montoPendiente, 0);
+
+    const pagosProximos7Dias = programacionesPago.filter(p => {
+      const dias = getDiasVencimiento(p.fechaProgramada);
+      return dias >= 0 && dias <= 7;
+    });
+    const montoPagosProximos = pagosProximos7Dias.reduce((s, p) => s + p.monto, 0);
 
     return {
       saldosPorMoneda,
@@ -1128,6 +2152,8 @@ export default function FinanzasEnterprise() {
       chequesCartera: chequesCartera.length,
       totalChequesEmitidos,
       chequesEmitidos: chequesEmitidos.length,
+      totalNotasCredito,
+      notasCreditoPendientes: notasCreditoPendientes.length,
       ingresosMes,
       egresosMes,
       flujoNetoMes: ingresosMes - egresosMes,
@@ -1135,10 +2161,13 @@ export default function FinanzasEnterprise() {
       agingCxP,
       proxVencCxC,
       proxVencCxP,
+      gestionesPendientes: gestionesPendientes.length,
+      montoEnGestion,
+      pagosProximos7Dias: pagosProximos7Dias.length,
+      montoPagosProximos,
     };
-  }, [cuentas, documentosCxC, documentosCxP, cheques, transacciones]);
+  }, [cuentas, documentosCxC, documentosCxP, cheques, notasCD, transacciones, gestionesCobranza, programacionesPago]);
 
-  // Proyección de flujo de caja (30 días)
   const proyeccionFlujo = useMemo((): ProyeccionFlujo[] => {
     const proyeccion: ProyeccionFlujo[] = [];
     const hoy = new Date();
@@ -1149,18 +2178,20 @@ export default function FinanzasEnterprise() {
       fecha.setDate(fecha.getDate() + i);
       const fechaStr = fecha.toISOString().split('T')[0];
 
-      // Ingresos esperados (CxC que vencen ese día)
       const ingresosDelDia = documentosCxC
         .filter(d => d.fechaVencimiento === fechaStr && d.saldo > 0 && d.moneda === monedaActiva)
         .map(d => ({ concepto: `${d.numero} - ${d.cliente?.nombre}`, monto: d.saldo }));
       const totalIngresos = ingresosDelDia.reduce((s, i) => s + i.monto, 0);
 
-      // Egresos esperados (CxP que vencen ese día)
       const egresosDelDia = documentosCxP
         .filter(d => d.fechaVencimiento === fechaStr && d.saldo > 0 && d.moneda === monedaActiva)
         .map(d => ({ concepto: `${d.numero} - ${d.proveedor?.nombre}`, monto: d.saldo }));
-      const totalEgresos = egresosDelDia.reduce((s, e) => s + e.monto, 0);
+      
+      programacionesPago
+        .filter(p => p.fechaProgramada === fechaStr && p.moneda === monedaActiva)
+        .forEach(p => egresosDelDia.push({ concepto: `Prog: ${p.proveedorNombre}`, monto: p.monto }));
 
+      const totalEgresos = egresosDelDia.reduce((s, e) => s + e.monto, 0);
       saldoAcumulado += totalIngresos - totalEgresos;
 
       proyeccion.push({
@@ -1172,9 +2203,29 @@ export default function FinanzasEnterprise() {
         detalleEgresos: egresosDelDia,
       });
     }
-
     return proyeccion;
-  }, [documentosCxC, documentosCxP, cuentas, monedaActiva]);
+  }, [documentosCxC, documentosCxP, programacionesPago, cuentas, monedaActiva]);
+
+  const resumenPresupuesto = useMemo((): ResumenPresupuesto => {
+    const presupuestosMes = presupuestos.filter(p => p.mes === mesPresupuesto);
+    
+    const totalPresupuestadoIngresos = presupuestosMes.filter(p => p.tipo === 'ingreso').reduce((s, p) => s + p.montoPresupuestado, 0);
+    const totalRealIngresos = presupuestosMes.filter(p => p.tipo === 'ingreso').reduce((s, p) => s + p.montoReal, 0);
+    const totalPresupuestadoEgresos = presupuestosMes.filter(p => p.tipo === 'egreso').reduce((s, p) => s + p.montoPresupuestado, 0);
+    const totalRealEgresos = presupuestosMes.filter(p => p.tipo === 'egreso').reduce((s, p) => s + p.montoReal, 0);
+
+    return {
+      año: añoPresupuesto,
+      mes: mesPresupuesto,
+      totalPresupuestadoIngresos,
+      totalRealIngresos,
+      totalPresupuestadoEgresos,
+      totalRealEgresos,
+      balancePresupuestado: totalPresupuestadoIngresos - totalPresupuestadoEgresos,
+      balanceReal: totalRealIngresos - totalRealEgresos,
+      variacionBalance: (totalRealIngresos - totalRealEgresos) - (totalPresupuestadoIngresos - totalPresupuestadoEgresos),
+    };
+  }, [presupuestos, añoPresupuesto, mesPresupuesto]);
 
   // ============================================
   // FILTROS
@@ -1204,8 +2255,19 @@ export default function FinanzasEnterprise() {
     });
   }, [documentosCxP, filterEstado, searchTerm]);
 
+  const gestionesCobranzaFiltradas = useMemo(() => {
+    return gestionesCobranza.filter(g => {
+      if (filterEstadoCobranza !== 'todos' && g.estado !== filterEstadoCobranza) return false;
+      if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        if (!g.clienteNombre?.toLowerCase().includes(search)) return false;
+      }
+      return true;
+    });
+  }, [gestionesCobranza, filterEstadoCobranza, searchTerm]);
+
   // ============================================
-  // CONTINÚA EN PARTE 3 (RENDER)
+  // CONTINÚA EN PARTE 5 (RENDER)
   // ============================================
   // ============================================
   // RENDER
@@ -1233,7 +2295,6 @@ export default function FinanzasEnterprise() {
           <p className="text-slate-400 text-sm mt-1">Gestión financiera integral</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Selector de moneda */}
           <select
             value={monedaActiva}
             onChange={(e) => setMonedaActiva(e.target.value as Moneda)}
@@ -1243,17 +2304,10 @@ export default function FinanzasEnterprise() {
               <option key={key} value={key}>{config.simbolo} {config.nombre}</option>
             ))}
           </select>
-          <button
-            onClick={() => setModalType('tipoCambio')}
-            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-400"
-            title="Tipo de cambio"
-          >
+          <button onClick={() => setModalType('tipoCambio')} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-400" title="Tipo de cambio">
             <Calculator className="h-4 w-4" />
           </button>
-          <button
-            onClick={loadAllData}
-            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-400"
-          >
+          <button onClick={loadAllData} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-400">
             <RefreshCw className="h-4 w-4" />
           </button>
         </div>
@@ -1265,9 +2319,12 @@ export default function FinanzasEnterprise() {
           { id: 'dashboard', label: 'Dashboard', icon: <BarChart3 className="h-4 w-4" /> },
           { id: 'cxc', label: 'Cuentas por Cobrar', icon: <ArrowUpRight className="h-4 w-4" /> },
           { id: 'cxp', label: 'Cuentas por Pagar', icon: <ArrowDownRight className="h-4 w-4" /> },
+          { id: 'cobranza', label: 'Cobranza', icon: <Phone className="h-4 w-4" /> },
           { id: 'flujo', label: 'Flujo de Caja', icon: <TrendingUp className="h-4 w-4" /> },
           { id: 'transacciones', label: 'Transacciones', icon: <History className="h-4 w-4" /> },
           { id: 'cheques', label: 'Cheques', icon: <FileCheck className="h-4 w-4" /> },
+          { id: 'conciliacion', label: 'Conciliación', icon: <Scale className="h-4 w-4" /> },
+          { id: 'presupuesto', label: 'Presupuesto', icon: <Target className="h-4 w-4" /> },
         ].map(tab => (
           <button
             key={tab.id}
@@ -1343,49 +2400,44 @@ export default function FinanzasEnterprise() {
             </div>
           </div>
 
-          {/* Segunda fila - Cheques y alertas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Segunda fila KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-2">
                 <FileCheck className="h-5 w-5 text-blue-400" />
-                <span className="text-sm font-medium text-slate-300">Cheques en Cartera</span>
+                <span className="text-sm text-slate-400">Cheques Cartera</span>
               </div>
-              <div className="text-xl font-bold text-blue-400">
-                {formatCurrency(metricas.totalChequesCartera, monedaActiva)}
-              </div>
+              <div className="text-xl font-bold text-blue-400">{formatCurrency(metricas.totalChequesCartera, monedaActiva)}</div>
               <div className="text-xs text-slate-500">{metricas.chequesCartera} cheques</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <FileCheck className="h-5 w-5 text-orange-400" />
-                <span className="text-sm font-medium text-slate-300">Cheques Emitidos</span>
+              <div className="flex items-center gap-2 mb-2">
+                <Phone className="h-5 w-5 text-orange-400" />
+                <span className="text-sm text-slate-400">En Cobranza</span>
               </div>
-              <div className="text-xl font-bold text-orange-400">
-                {formatCurrency(metricas.totalChequesEmitidos, monedaActiva)}
-              </div>
-              <div className="text-xs text-slate-500">{metricas.chequesEmitidos} cheques</div>
+              <div className="text-xl font-bold text-orange-400">{formatCurrency(metricas.montoEnGestion, monedaActiva)}</div>
+              <div className="text-xs text-slate-500">{metricas.gestionesPendientes} gestiones</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="h-5 w-5 text-red-400" />
-                <span className="text-sm font-medium text-slate-300">Vencimientos Próximos</span>
+              <div className="flex items-center gap-2 mb-2">
+                <CalendarClock className="h-5 w-5 text-pink-400" />
+                <span className="text-sm text-slate-400">Pagos Próximos (7d)</span>
               </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">CxC (7 días)</span>
-                  <span className="text-cyan-400">{metricas.proxVencCxC.length}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">CxP (7 días)</span>
-                  <span className="text-amber-400">{metricas.proxVencCxP.length}</span>
-                </div>
+              <div className="text-xl font-bold text-pink-400">{formatCurrency(metricas.montoPagosProximos, monedaActiva)}</div>
+              <div className="text-xs text-slate-500">{metricas.pagosProximos7Dias} pagos</div>
+            </div>
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Receipt className="h-5 w-5 text-teal-400" />
+                <span className="text-sm text-slate-400">NC Pendientes</span>
               </div>
+              <div className="text-xl font-bold text-teal-400">{formatCurrency(metricas.totalNotasCredito, monedaActiva)}</div>
+              <div className="text-xs text-slate-500">{metricas.notasCreditoPendientes} notas</div>
             </div>
           </div>
 
           {/* Gráficos */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Aging CxC */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h3 className="text-sm font-semibold text-slate-400 mb-4">Antigüedad CxC</h3>
               <div className="h-48">
@@ -1403,8 +2455,6 @@ export default function FinanzasEnterprise() {
                 </ResponsiveContainer>
               </div>
             </div>
-
-            {/* Aging CxP */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h3 className="text-sm font-semibold text-slate-400 mb-4">Antigüedad CxP</h3>
               <div className="h-48">
@@ -1422,67 +2472,48 @@ export default function FinanzasEnterprise() {
                 </ResponsiveContainer>
               </div>
             </div>
+          </div>
 
-            {/* Flujo proyectado */}
-            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 lg:col-span-2">
-              <h3 className="text-sm font-semibold text-slate-400 mb-4">Flujo de Caja Proyectado (30 días)</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={proyeccionFlujo}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis 
-                      dataKey="fecha" 
-                      tick={{ fill: '#94a3b8', fontSize: 10 }} 
-                      tickFormatter={(v) => formatDateShort(v)}
-                    />
-                    <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                    <Tooltip 
-                      contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-                      formatter={(value: number) => formatCurrency(value, monedaActiva)}
-                      labelFormatter={(v) => formatDate(v)}
-                    />
-                    <Legend />
-                    <Area type="monotone" dataKey="saldoProyectado" stroke="#10b981" fill="#10b98133" name="Saldo Proyectado" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+          {/* Flujo proyectado */}
+          <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-slate-400 mb-4">Flujo de Caja Proyectado (30 días)</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={proyeccionFlujo}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="fecha" tick={{ fill: '#94a3b8', fontSize: 10 }} tickFormatter={(v) => formatDateShort(v)} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <Tooltip 
+                    contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                    formatter={(value: number) => formatCurrency(value, monedaActiva)}
+                    labelFormatter={(v) => formatDate(v)}
+                  />
+                  <Legend />
+                  <Area type="monotone" dataKey="saldoProyectado" stroke="#10b981" fill="#10b98133" name="Saldo Proyectado" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Cuentas bancarias */}
+          {/* Cuentas */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-400">Cuentas</h3>
-              <button
-                onClick={() => setModalType('cuenta')}
-                className="text-sm text-emerald-400 hover:text-emerald-300"
-              >
+              <button onClick={() => setModalType('cuenta')} className="text-sm text-emerald-400 hover:text-emerald-300">
                 + Nueva cuenta
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {cuentas.filter(c => c.activo).map(cuenta => {
-                const tipoConfig = TIPOS_CUENTA_CONFIG[cuenta.tipo];
-                return (
-                  <div key={cuenta.id} className="p-3 bg-slate-800/30 rounded-xl">
-                    <div className="flex items-center gap-2 mb-2">
-                      {tipoConfig.icono}
-                      <span className="text-sm font-medium text-slate-200">{cuenta.nombre}</span>
-                    </div>
-                    {cuenta.banco && (
-                      <div className="text-xs text-slate-500 mb-1">{cuenta.banco}</div>
-                    )}
-                    <div className="text-lg font-bold text-emerald-400">
-                      {formatCurrency(cuenta.saldoActual, cuenta.moneda)}
-                    </div>
+              {cuentas.filter(c => c.activo).map(cuenta => (
+                <div key={cuenta.id} className="p-3 bg-slate-800/30 rounded-xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    {TIPOS_CUENTA_CONFIG[cuenta.tipo].icono}
+                    <span className="text-sm font-medium text-slate-200">{cuenta.nombre}</span>
                   </div>
-                );
-              })}
-              {cuentas.filter(c => c.activo).length === 0 && (
-                <div className="col-span-full text-center py-6 text-slate-500">
-                  No hay cuentas configuradas
+                  {cuenta.banco && <div className="text-xs text-slate-500 mb-1">{cuenta.banco}</div>}
+                  <div className="text-lg font-bold text-emerald-400">{formatCurrency(cuenta.saldoActual, cuenta.moneda)}</div>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
@@ -1491,7 +2522,6 @@ export default function FinanzasEnterprise() {
       {/* ==================== CUENTAS POR COBRAR ==================== */}
       {tabActiva === 'cxc' && (
         <div className="space-y-4">
-          {/* Header CxC */}
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <div className="flex-1 flex gap-3">
               <div className="relative flex-1 max-w-md">
@@ -1516,16 +2546,18 @@ export default function FinanzasEnterprise() {
                 <option value="pagado">Pagados</option>
               </select>
             </div>
-            <button
-              onClick={() => setModalType('nuevoCxC')}
-              className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl"
-            >
-              <Plus className="h-4 w-4" />
-              Nuevo Documento
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => setModalType('nota')} className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl">
+                <Receipt className="h-4 w-4" />
+                Nueva NC
+              </button>
+              <button onClick={() => setModalType('nuevoCxC')} className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl">
+                <Plus className="h-4 w-4" />
+                Nuevo Documento
+              </button>
+            </div>
           </div>
 
-          {/* Tabla CxC */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -1533,7 +2565,6 @@ export default function FinanzasEnterprise() {
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Documento</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Cliente</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Emisión</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Vencimiento</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Total</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Saldo</th>
@@ -1542,55 +2573,37 @@ export default function FinanzasEnterprise() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50">
-                  {documentosCxCFiltrados.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
-                        No hay documentos
-                      </td>
-                    </tr>
-                  ) : (
-                    documentosCxCFiltrados.map(doc => {
-                      const estadoConfig = ESTADO_DOCUMENTO_CONFIG[doc.estado];
-                      const diasVenc = getDiasVencimiento(doc.fechaVencimiento);
-                      const estaVencido = diasVenc < 0 && doc.saldo > 0;
+                  {documentosCxCFiltrados.map(doc => {
+                    const estadoConfig = ESTADO_DOCUMENTO_CONFIG[doc.estado];
+                    const diasVenc = getDiasVencimiento(doc.fechaVencimiento);
+                    const estaVencido = diasVenc < 0 && doc.saldo > 0;
 
-                      return (
-                        <tr key={doc.id} className="hover:bg-slate-800/30">
-                          <td className="px-4 py-3">
-                            <div className="font-mono text-sm text-slate-200">{doc.numero}</div>
-                            <div className="text-xs text-slate-500 capitalize">{doc.tipo}</div>
-                          </td>
-                          <td className="px-4 py-3 text-slate-300">{doc.cliente?.nombre || '-'}</td>
-                          <td className="px-4 py-3 text-sm text-slate-400">{formatDate(doc.fechaEmision)}</td>
-                          <td className="px-4 py-3">
-                            <div className={`text-sm ${estaVencido ? 'text-red-400' : 'text-slate-400'}`}>
-                              {formatDate(doc.fechaVencimiento)}
-                            </div>
-                            {estaVencido && (
-                              <div className="text-xs text-red-400">{Math.abs(diasVenc)} días vencido</div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-right font-mono text-slate-300">
-                            {formatCurrency(doc.total, doc.moneda)}
-                          </td>
-                          <td className="px-4 py-3 text-right font-mono font-bold text-cyan-400">
-                            {formatCurrency(doc.saldo, doc.moneda)}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs border ${estadoConfig.bg} ${estadoConfig.color}`}>
-                              {estadoConfig.label}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-1">
-                              <button
-                                onClick={() => { setSelectedItem(doc); setModalType('verCxC'); }}
-                                className="p-1.5 hover:bg-slate-700 rounded-lg"
-                                title="Ver detalle"
-                              >
-                                <Eye className="h-4 w-4 text-blue-400" />
-                              </button>
-                              {doc.saldo > 0 && (
+                    return (
+                      <tr key={doc.id} className="hover:bg-slate-800/30">
+                        <td className="px-4 py-3">
+                          <div className="font-mono text-sm text-slate-200">{doc.numero}</div>
+                        </td>
+                        <td className="px-4 py-3 text-slate-300">{doc.cliente?.nombre || '-'}</td>
+                        <td className="px-4 py-3">
+                          <div className={`text-sm ${estaVencido ? 'text-red-400' : 'text-slate-400'}`}>
+                            {formatDate(doc.fechaVencimiento)}
+                          </div>
+                          {estaVencido && <div className="text-xs text-red-400">{Math.abs(diasVenc)}d vencido</div>}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-slate-300">{formatCurrency(doc.total, doc.moneda)}</td>
+                        <td className="px-4 py-3 text-right font-mono font-bold text-cyan-400">{formatCurrency(doc.saldo, doc.moneda)}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs border ${estadoConfig.bg} ${estadoConfig.color}`}>
+                            {estadoConfig.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1">
+                            <button onClick={() => generarEstadoCuentaCliente(doc.clienteId)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Estado de cuenta">
+                              <FileDown className="h-4 w-4 text-purple-400" />
+                            </button>
+                            {doc.saldo > 0 && (
+                              <>
                                 <button
                                   onClick={() => {
                                     setSelectedItem(doc);
@@ -1602,13 +2615,22 @@ export default function FinanzasEnterprise() {
                                 >
                                   <DollarSign className="h-4 w-4 text-emerald-400" />
                                 </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
+                                {!gestionesCobranza.find(g => g.documentoId === doc.id) && diasVenc < 0 && (
+                                  <button
+                                    onClick={() => crearGestionCobranza(doc.id)}
+                                    className="p-1.5 hover:bg-slate-700 rounded-lg"
+                                    title="Iniciar cobranza"
+                                  >
+                                    <Phone className="h-4 w-4 text-orange-400" />
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1616,10 +2638,10 @@ export default function FinanzasEnterprise() {
         </div>
       )}
 
+      {/* CONTINÚA EN PARTE 6 */}
       {/* ==================== CUENTAS POR PAGAR ==================== */}
       {tabActiva === 'cxp' && (
         <div className="space-y-4">
-          {/* Header CxP */}
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <div className="flex-1 flex gap-3">
               <div className="relative flex-1 max-w-md">
@@ -1644,16 +2666,12 @@ export default function FinanzasEnterprise() {
                 <option value="pagado">Pagados</option>
               </select>
             </div>
-            <button
-              onClick={() => setModalType('nuevoCxP')}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl"
-            >
+            <button onClick={() => setModalType('nuevoCxP')} className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl">
               <Plus className="h-4 w-4" />
               Nuevo Documento
             </button>
           </div>
 
-          {/* Tabla CxP */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -1661,7 +2679,6 @@ export default function FinanzasEnterprise() {
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Documento</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Proveedor</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Emisión</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Vencimiento</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Total</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Saldo</th>
@@ -1670,73 +2687,53 @@ export default function FinanzasEnterprise() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50">
-                  {documentosCxPFiltrados.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
-                        No hay documentos
-                      </td>
-                    </tr>
-                  ) : (
-                    documentosCxPFiltrados.map(doc => {
-                      const estadoConfig = ESTADO_DOCUMENTO_CONFIG[doc.estado];
-                      const diasVenc = getDiasVencimiento(doc.fechaVencimiento);
-                      const estaVencido = diasVenc < 0 && doc.saldo > 0;
+                  {documentosCxPFiltrados.map(doc => {
+                    const estadoConfig = ESTADO_DOCUMENTO_CONFIG[doc.estado];
+                    const diasVenc = getDiasVencimiento(doc.fechaVencimiento);
+                    const estaVencido = diasVenc < 0 && doc.saldo > 0;
 
-                      return (
-                        <tr key={doc.id} className="hover:bg-slate-800/30">
-                          <td className="px-4 py-3">
-                            <div className="font-mono text-sm text-slate-200">{doc.numero}</div>
-                            <div className="text-xs text-slate-500 capitalize">{doc.tipo}</div>
-                          </td>
-                          <td className="px-4 py-3 text-slate-300">{doc.proveedor?.nombre || '-'}</td>
-                          <td className="px-4 py-3 text-sm text-slate-400">{formatDate(doc.fechaEmision)}</td>
-                          <td className="px-4 py-3">
-                            <div className={`text-sm ${estaVencido ? 'text-red-400' : 'text-slate-400'}`}>
-                              {formatDate(doc.fechaVencimiento)}
-                            </div>
-                            {estaVencido && (
-                              <div className="text-xs text-red-400">{Math.abs(diasVenc)} días vencido</div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-right font-mono text-slate-300">
-                            {formatCurrency(doc.total, doc.moneda)}
-                          </td>
-                          <td className="px-4 py-3 text-right font-mono font-bold text-amber-400">
-                            {formatCurrency(doc.saldo, doc.moneda)}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs border ${estadoConfig.bg} ${estadoConfig.color}`}>
-                              {estadoConfig.label}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-1">
+                    return (
+                      <tr key={doc.id} className="hover:bg-slate-800/30">
+                        <td className="px-4 py-3">
+                          <div className="font-mono text-sm text-slate-200">{doc.numero}</div>
+                        </td>
+                        <td className="px-4 py-3 text-slate-300">{doc.proveedor?.nombre || '-'}</td>
+                        <td className="px-4 py-3">
+                          <div className={`text-sm ${estaVencido ? 'text-red-400' : 'text-slate-400'}`}>
+                            {formatDate(doc.fechaVencimiento)}
+                          </div>
+                          {estaVencido && <div className="text-xs text-red-400">{Math.abs(diasVenc)}d vencido</div>}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-slate-300">{formatCurrency(doc.total, doc.moneda)}</td>
+                        <td className="px-4 py-3 text-right font-mono font-bold text-amber-400">{formatCurrency(doc.saldo, doc.moneda)}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs border ${estadoConfig.bg} ${estadoConfig.color}`}>
+                            {estadoConfig.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1">
+                            <button onClick={() => generarEstadoCuentaProveedor(doc.proveedorId)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Estado de cuenta">
+                              <FileDown className="h-4 w-4 text-purple-400" />
+                            </button>
+                            {doc.saldo > 0 && (
                               <button
-                                onClick={() => { setSelectedItem(doc); setModalType('verCxP'); }}
+                                onClick={() => {
+                                  setSelectedItem(doc);
+                                  setPagoForm({ ...pagoForm, documentoId: doc.id, monto: doc.saldo });
+                                  setModalType('pago');
+                                }}
                                 className="p-1.5 hover:bg-slate-700 rounded-lg"
-                                title="Ver detalle"
+                                title="Registrar pago"
                               >
-                                <Eye className="h-4 w-4 text-blue-400" />
+                                <DollarSign className="h-4 w-4 text-emerald-400" />
                               </button>
-                              {doc.saldo > 0 && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedItem(doc);
-                                    setPagoForm({ ...pagoForm, documentoId: doc.id, monto: doc.saldo });
-                                    setModalType('pago');
-                                  }}
-                                  className="p-1.5 hover:bg-slate-700 rounded-lg"
-                                  title="Registrar pago"
-                                >
-                                  <DollarSign className="h-4 w-4 text-emerald-400" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1744,29 +2741,153 @@ export default function FinanzasEnterprise() {
         </div>
       )}
 
-      {/* CONTINÚA EN PARTE 4 */}
+      {/* ==================== COBRANZA ==================== */}
+      {tabActiva === 'cobranza' && (
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <div className="flex-1 flex gap-3">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Buscar por cliente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
+                />
+              </div>
+              <select
+                value={filterEstadoCobranza}
+                onChange={(e) => setFilterEstadoCobranza(e.target.value as any)}
+                className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
+              >
+                <option value="todos">Todos</option>
+                <option value="pendiente">Pendientes</option>
+                <option value="contactado">Contactados</option>
+                <option value="promesa_pago">Promesa Pago</option>
+                <option value="en_gestion">En Gestión</option>
+                <option value="legal">Legal</option>
+              </select>
+            </div>
+          </div>
+
+          {/* KPIs Cobranza */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Object.entries(ESTADO_COBRANZA_CONFIG).filter(([k]) => !['cobrado', 'incobrable'].includes(k)).map(([estado, config]) => {
+              const count = gestionesCobranza.filter(g => g.estado === estado).length;
+              const monto = gestionesCobranza.filter(g => g.estado === estado).reduce((s, g) => s + g.montoPendiente, 0);
+              return (
+                <div key={estado} className={`p-3 rounded-xl border ${config.bg}`}>
+                  <div className={`text-sm ${config.color}`}>{config.label}</div>
+                  <div className="text-xl font-bold text-slate-200">{count}</div>
+                  <div className="text-xs text-slate-500">{formatCurrency(monto, monedaActiva)}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Lista de gestiones */}
+          <div className="space-y-3">
+            {gestionesCobranzaFiltradas.map(gestion => {
+              const estadoConfig = ESTADO_COBRANZA_CONFIG[gestion.estado];
+              const prioridadConfig = PRIORIDAD_CONFIG[gestion.prioridad];
+              
+              return (
+                <div key={gestion.id} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="font-medium text-slate-200">{gestion.clienteNombre}</div>
+                      <div className="text-sm text-slate-500">{gestion.diasVencido} días vencido</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className={`px-2 py-1 rounded-lg text-xs ${prioridadConfig.bg} ${prioridadConfig.color}`}>
+                        {prioridadConfig.label}
+                      </span>
+                      <span className={`px-2 py-1 rounded-lg text-xs border ${estadoConfig.bg} ${estadoConfig.color}`}>
+                        {estadoConfig.label}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 text-sm">
+                    <div>
+                      <span className="text-slate-500">Monto Original:</span>
+                      <span className="ml-2 text-slate-300">{formatCurrency(gestion.montoOriginal, monedaActiva)}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">Pendiente:</span>
+                      <span className="ml-2 text-amber-400 font-bold">{formatCurrency(gestion.montoPendiente, monedaActiva)}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">Último contacto:</span>
+                      <span className="ml-2 text-slate-300">{gestion.fechaUltimoContacto ? formatDate(gestion.fechaUltimoContacto) : '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">Próximo:</span>
+                      <span className="ml-2 text-slate-300">{gestion.fechaProximoContacto ? formatDate(gestion.fechaProximoContacto) : '-'}</span>
+                    </div>
+                  </div>
+
+                  {gestion.promesaPagoFecha && (
+                    <div className="p-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg mb-3 text-sm">
+                      <span className="text-cyan-400">Promesa de pago:</span>
+                      <span className="ml-2 text-slate-300">{formatDate(gestion.promesaPagoFecha)}</span>
+                      <span className="ml-4 text-slate-300">{formatCurrency(gestion.promesaPagoMonto || 0, monedaActiva)}</span>
+                    </div>
+                  )}
+
+                  {/* Timeline de contactos */}
+                  {gestion.contactos && gestion.contactos.length > 0 && (
+                    <div className="border-t border-slate-800 pt-3 mt-3">
+                      <div className="text-xs text-slate-500 mb-2">Últimos contactos:</div>
+                      <div className="space-y-2 max-h-32 overflow-y-auto">
+                        {gestion.contactos.slice(0, 3).map(contacto => (
+                          <div key={contacto.id} className="flex items-start gap-2 text-sm">
+                            {TIPO_CONTACTO_CONFIG[contacto.tipo].icono}
+                            <div className="flex-1">
+                              <div className="text-slate-300">{contacto.descripcion}</div>
+                              <div className="text-xs text-slate-500">{formatDateTime(contacto.fecha)}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => {
+                        setSelectedItem(gestion);
+                        setModalType('contacto');
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-sm"
+                    >
+                      <Phone className="h-3 w-3" />
+                      Registrar Contacto
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* ==================== FLUJO DE CAJA ==================== */}
       {tabActiva === 'flujo' && (
         <div className="space-y-4">
-          {/* Resumen */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="text-sm text-slate-400 mb-1">Saldo Actual</div>
-              <div className="text-2xl font-bold text-emerald-400">
-                {formatCurrency(metricas.saldosPorMoneda[monedaActiva], monedaActiva)}
-              </div>
+              <div className="text-2xl font-bold text-emerald-400">{formatCurrency(metricas.saldosPorMoneda[monedaActiva], monedaActiva)}</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="text-sm text-slate-400 mb-1">Ingresos Esperados (30d)</div>
-              <div className="text-2xl font-bold text-cyan-400">
-                {formatCurrency(proyeccionFlujo.reduce((s, p) => s + p.ingresos, 0), monedaActiva)}
-              </div>
+              <div className="text-2xl font-bold text-cyan-400">{formatCurrency(proyeccionFlujo.reduce((s, p) => s + p.ingresos, 0), monedaActiva)}</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="text-sm text-slate-400 mb-1">Egresos Esperados (30d)</div>
-              <div className="text-2xl font-bold text-amber-400">
-                {formatCurrency(proyeccionFlujo.reduce((s, p) => s + p.egresos, 0), monedaActiva)}
-              </div>
+              <div className="text-2xl font-bold text-amber-400">{formatCurrency(proyeccionFlujo.reduce((s, p) => s + p.egresos, 0), monedaActiva)}</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="text-sm text-slate-400 mb-1">Saldo Proyectado</div>
@@ -1776,18 +2897,13 @@ export default function FinanzasEnterprise() {
             </div>
           </div>
 
-          {/* Gráfico grande */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
             <h3 className="text-sm font-semibold text-slate-400 mb-4">Proyección de Flujo de Caja</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={proyeccionFlujo}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis 
-                    dataKey="fecha" 
-                    tick={{ fill: '#94a3b8', fontSize: 10 }}
-                    tickFormatter={(v) => formatDateShort(v)}
-                  />
+                  <XAxis dataKey="fecha" tick={{ fill: '#94a3b8', fontSize: 10 }} tickFormatter={(v) => formatDateShort(v)} />
                   <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
                   <Tooltip 
                     contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
@@ -1803,7 +2919,6 @@ export default function FinanzasEnterprise() {
             </div>
           </div>
 
-          {/* Detalle por día */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
             <div className="p-4 border-b border-slate-800">
               <h3 className="text-sm font-semibold text-slate-400">Detalle por Día</h3>
@@ -1854,30 +2969,23 @@ export default function FinanzasEnterprise() {
       {/* ==================== TRANSACCIONES ==================== */}
       {tabActiva === 'transacciones' && (
         <div className="space-y-4">
-          {/* Header */}
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div className="flex-1 flex gap-3">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Buscar por concepto..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
-                />
-              </div>
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Buscar por concepto..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
+              />
             </div>
-            <button
-              onClick={() => setModalType('transaccion')}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl"
-            >
+            <button onClick={() => setModalType('transaccion')} className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl">
               <Plus className="h-4 w-4" />
               Nueva Transacción
             </button>
           </div>
 
-          {/* Tabla */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -1888,27 +2996,29 @@ export default function FinanzasEnterprise() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Concepto</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Categoría</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Monto</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Referencia</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Conc.</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50">
-                  {transacciones.filter(t => 
-                    !searchTerm || t.concepto.toLowerCase().includes(searchTerm.toLowerCase())
-                  ).slice(0, 100).map(trans => (
+                  {transacciones.filter(t => !searchTerm || t.concepto.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 100).map(trans => (
                     <tr key={trans.id} className="hover:bg-slate-800/30">
                       <td className="px-4 py-3 text-sm text-slate-400">{formatDate(trans.fecha)}</td>
                       <td className="px-4 py-3 text-sm text-slate-300">{trans.cuenta?.nombre || '-'}</td>
                       <td className="px-4 py-3">
                         <div className="text-sm text-slate-200">{trans.concepto}</div>
-                        {trans.notas && <div className="text-xs text-slate-500">{trans.notas}</div>}
+                        {trans.referencia && <div className="text-xs text-slate-500">Ref: {trans.referencia}</div>}
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-400">{trans.categoria || '-'}</td>
-                      <td className={`px-4 py-3 text-right font-mono font-bold ${
-                        trans.tipo === 'ingreso' ? 'text-emerald-400' : 'text-red-400'
-                      }`}>
+                      <td className={`px-4 py-3 text-right font-mono font-bold ${trans.tipo === 'ingreso' ? 'text-emerald-400' : 'text-red-400'}`}>
                         {trans.tipo === 'ingreso' ? '+' : '-'}{formatCurrency(trans.monto, trans.moneda)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-500">{trans.referencia || '-'}</td>
+                      <td className="px-4 py-3 text-center">
+                        {trans.conciliado ? (
+                          <CheckCircle className="h-4 w-4 text-emerald-400 mx-auto" />
+                        ) : (
+                          <div className="h-4 w-4 border border-slate-600 rounded mx-auto" />
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1918,45 +3028,24 @@ export default function FinanzasEnterprise() {
         </div>
       )}
 
+      {/* CONTINÚA EN PARTE 7 */}
       {/* ==================== CHEQUES ==================== */}
       {tabActiva === 'cheques' && (
         <div className="space-y-4">
-          {/* Header */}
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <div className="flex gap-2">
-              <button
-                onClick={() => setFilterEstadoCheque('todos')}
-                className={`px-3 py-1.5 rounded-lg text-sm ${filterEstadoCheque === 'todos' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
-                >
-                Todos
-                </button>
-                <button
-                onClick={() => setFilterEstadoCheque('cartera')}
-                className={`px-3 py-1.5 rounded-lg text-sm ${filterEstadoCheque === 'cartera' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
-                >
-                En Cartera
-                </button>
-                <button
-                onClick={() => setFilterEstadoCheque('depositado')}
-                className={`px-3 py-1.5 rounded-lg text-sm ${filterEstadoCheque === 'depositado' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
-                >
-                Depositados
-                </button>
+              <button onClick={() => setFilterEstadoCheque('todos')} className={`px-3 py-1.5 rounded-lg text-sm ${filterEstadoCheque === 'todos' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Todos</button>
+              <button onClick={() => setFilterEstadoCheque('cartera')} className={`px-3 py-1.5 rounded-lg text-sm ${filterEstadoCheque === 'cartera' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>En Cartera</button>
+              <button onClick={() => setFilterEstadoCheque('depositado')} className={`px-3 py-1.5 rounded-lg text-sm ${filterEstadoCheque === 'depositado' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Depositados</button>
             </div>
-            <button
-              onClick={() => setModalType('cheque')}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl"
-            >
+            <button onClick={() => setModalType('cheque')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl">
               <Plus className="h-4 w-4" />
               Nuevo Cheque
             </button>
           </div>
 
-          {/* Grid de cheques */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cheques.filter(ch => 
-              filterEstadoCheque === 'todos' || ch.estado === filterEstadoCheque
-            ).map(cheque => {
+            {cheques.filter(ch => filterEstadoCheque === 'todos' || ch.estado === filterEstadoCheque).map(cheque => {
               const estadoConfig = ESTADO_CHEQUE_CONFIG[cheque.estado];
               const diasVenc = getDiasVencimiento(cheque.fechaVencimiento);
               
@@ -1970,9 +3059,7 @@ export default function FinanzasEnterprise() {
                       </div>
                       <div className="font-mono text-lg text-slate-200 mt-1">#{cheque.numero}</div>
                     </div>
-                    <span className={`px-2 py-1 rounded-lg text-xs border ${estadoConfig.bg} ${estadoConfig.color}`}>
-                      {estadoConfig.label}
-                    </span>
+                    <span className={`px-2 py-1 rounded-lg text-xs border ${estadoConfig.bg} ${estadoConfig.color}`}>{estadoConfig.label}</span>
                   </div>
                   
                   <div className="space-y-2 text-sm">
@@ -1990,54 +3077,258 @@ export default function FinanzasEnterprise() {
                         {formatDate(cheque.fechaVencimiento)}
                       </span>
                     </div>
-                    {cheque.tipo === 'recibido' && cheque.librador && (
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Librador</span>
-                        <span className="text-slate-300">{cheque.librador}</span>
-                      </div>
-                    )}
-                    {cheque.tipo === 'emitido' && cheque.beneficiario && (
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Beneficiario</span>
-                        <span className="text-slate-300">{cheque.beneficiario}</span>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Acciones */}
                   {cheque.estado === 'cartera' && cheque.tipo === 'recibido' && (
                     <div className="mt-4 pt-3 border-t border-slate-800 flex gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedItem(cheque);
-                          setModalType('depositarCheque');
-                        }}
-                        className="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm"
-                      >
-                        Depositar
-                      </button>
-                      <button
-                        onClick={() => cambiarEstadoCheque(cheque, 'cobrado', cuentas[0]?.id)}
-                        disabled={procesando === cheque.id}
-                        className="flex-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm"
-                      >
-                        Cobrado
-                      </button>
+                      <button onClick={() => cambiarEstadoCheque(cheque, 'depositado')} className="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm">Depositar</button>
+                      <button onClick={() => cambiarEstadoCheque(cheque, 'cobrado', cuentas[0]?.id)} disabled={procesando === cheque.id} className="flex-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm">Cobrado</button>
                     </div>
                   )}
                 </div>
               );
             })}
-            {cheques.filter(ch => filterEstadoCheque === 'todos' || ch.estado === filterEstadoCheque).length === 0 && (
-              <div className="col-span-full text-center py-12 text-slate-500">
-                No hay cheques
-              </div>
-            )}
           </div>
         </div>
       )}
 
-      {/* CONTINÚA EN PARTE 5 - MODALES */}
+      {/* ==================== CONCILIACIÓN ==================== */}
+      {tabActiva === 'conciliacion' && (
+        <div className="space-y-4">
+          <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-slate-400 mb-4">Conciliación Bancaria</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Cuenta a conciliar</label>
+                <select
+                  value={cuentaConciliacion}
+                  onChange={(e) => { setCuentaConciliacion(e.target.value); }}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
+                >
+                  <option value="">Seleccionar cuenta...</option>
+                  {cuentas.filter(c => c.tipo === 'banco').map(c => (
+                    <option key={c.id} value={c.id}>{c.nombre} - {c.banco}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Importar extracto (CSV)</label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => e.target.files?.[0] && importarExtractoBancario(e.target.files[0])}
+                  disabled={!cuentaConciliacion}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-slate-700 file:text-slate-300"
+                />
+              </div>
+              <div className="flex items-end gap-2">
+                <button
+                  onClick={loadMovimientosBancarios}
+                  disabled={!cuentaConciliacion}
+                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl disabled:opacity-50"
+                >
+                  Cargar Pendientes
+                </button>
+                <button
+                  onClick={autoMatchConciliacion}
+                  disabled={movimientosParaConciliar.length === 0}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl disabled:opacity-50"
+                >
+                  Auto-Match
+                </button>
+              </div>
+            </div>
+
+            {matchesConciliacion.size > 0 && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl mb-4 flex items-center justify-between">
+                <span className="text-emerald-400">{matchesConciliacion.size} coincidencias encontradas</span>
+                <button
+                  onClick={aplicarMatchesConciliacion}
+                  disabled={procesando === 'conciliar'}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl"
+                >
+                  Aplicar Todas
+                </button>
+              </div>
+            )}
+          </div>
+
+          {cuentaConciliacion && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Movimientos bancarios */}
+              <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+                <h4 className="text-sm font-semibold text-slate-400 mb-3">Extracto Bancario ({movimientosParaConciliar.length})</h4>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {movimientosParaConciliar.map(mov => {
+                    const matched = matchesConciliacion.has(mov.id);
+                    return (
+                      <div key={mov.id} className={`p-3 rounded-xl border ${matched ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-800/30 border-slate-700/30'}`}>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="text-sm text-slate-300">{mov.descripcion}</div>
+                            <div className="text-xs text-slate-500">{formatDate(mov.fecha)} {mov.referencia && `• ${mov.referencia}`}</div>
+                          </div>
+                          <div className={`font-mono font-bold ${mov.tipo === 'credito' ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {mov.tipo === 'credito' ? '+' : '-'}{formatCurrency(mov.monto, monedaActiva)}
+                          </div>
+                        </div>
+                        {matched && <div className="text-xs text-emerald-400 mt-1">✓ Match encontrado</div>}
+                      </div>
+                    );
+                  })}
+                  {movimientosParaConciliar.length === 0 && (
+                    <div className="text-center py-8 text-slate-500">No hay movimientos pendientes</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Transacciones del sistema */}
+              <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+                <h4 className="text-sm font-semibold text-slate-400 mb-3">Transacciones Sistema ({transaccionesParaConciliar.length})</h4>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {transaccionesParaConciliar.map(trans => {
+                    const matched = Array.from(matchesConciliacion.values()).includes(trans.id);
+                    return (
+                      <div key={trans.id} className={`p-3 rounded-xl border ${matched ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-800/30 border-slate-700/30'}`}>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="text-sm text-slate-300">{trans.concepto}</div>
+                            <div className="text-xs text-slate-500">{formatDate(trans.fecha)} {trans.referencia && `• ${trans.referencia}`}</div>
+                          </div>
+                          <div className={`font-mono font-bold ${trans.tipo === 'ingreso' ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {trans.tipo === 'ingreso' ? '+' : '-'}{formatCurrency(trans.monto, trans.moneda)}
+                          </div>
+                        </div>
+                        {matched && <div className="text-xs text-emerald-400 mt-1">✓ Match encontrado</div>}
+                      </div>
+                    );
+                  })}
+                  {transaccionesParaConciliar.length === 0 && (
+                    <div className="text-center py-8 text-slate-500">No hay transacciones pendientes</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ==================== PRESUPUESTO ==================== */}
+      {tabActiva === 'presupuesto' && (
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <div className="flex gap-3">
+              <select
+                value={añoPresupuesto}
+                onChange={(e) => setAñoPresupuesto(parseInt(e.target.value))}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
+              >
+                {[2024, 2025, 2026].map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+              <select
+                value={mesPresupuesto}
+                onChange={(e) => setMesPresupuesto(parseInt(e.target.value))}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                  <option key={m} value={m}>{getMesNombre(m)}</option>
+                ))}
+              </select>
+            </div>
+            <button onClick={() => setModalType('presupuesto')} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-xl">
+              <Plus className="h-4 w-4" />
+              Agregar Presupuesto
+            </button>
+          </div>
+
+          {/* Resumen */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+              <div className="text-sm text-slate-400 mb-2">Ingresos</div>
+              <div className="flex justify-between items-end">
+                <div>
+                  <div className="text-xs text-slate-500">Presupuestado</div>
+                  <div className="text-lg font-bold text-slate-300">{formatCurrency(resumenPresupuesto.totalPresupuestadoIngresos, monedaActiva)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-slate-500">Real</div>
+                  <div className="text-lg font-bold text-emerald-400">{formatCurrency(resumenPresupuesto.totalRealIngresos, monedaActiva)}</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+              <div className="text-sm text-slate-400 mb-2">Egresos</div>
+              <div className="flex justify-between items-end">
+                <div>
+                  <div className="text-xs text-slate-500">Presupuestado</div>
+                  <div className="text-lg font-bold text-slate-300">{formatCurrency(resumenPresupuesto.totalPresupuestadoEgresos, monedaActiva)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-slate-500">Real</div>
+                  <div className="text-lg font-bold text-red-400">{formatCurrency(resumenPresupuesto.totalRealEgresos, monedaActiva)}</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+              <div className="text-sm text-slate-400 mb-2">Balance</div>
+              <div className="flex justify-between items-end">
+                <div>
+                  <div className="text-xs text-slate-500">Presupuestado</div>
+                  <div className={`text-lg font-bold ${resumenPresupuesto.balancePresupuestado >= 0 ? 'text-slate-300' : 'text-red-400'}`}>
+                    {formatCurrency(resumenPresupuesto.balancePresupuestado, monedaActiva)}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-slate-500">Real</div>
+                  <div className={`text-lg font-bold ${resumenPresupuesto.balanceReal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {formatCurrency(resumenPresupuesto.balanceReal, monedaActiva)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Detalle por categoría */}
+          <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-800/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Categoría</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Tipo</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Presupuestado</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Real</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Variación</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">%</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50">
+                  {presupuestos.filter(p => p.mes === mesPresupuesto).map(p => (
+                    <tr key={p.id} className="hover:bg-slate-800/30">
+                      <td className="px-4 py-3 text-slate-300">{p.categoria}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded text-xs ${p.tipo === 'ingreso' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                          {p.tipo === 'ingreso' ? 'Ingreso' : 'Egreso'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-slate-300">{formatCurrency(p.montoPresupuestado, monedaActiva)}</td>
+                      <td className="px-4 py-3 text-right font-mono text-slate-300">{formatCurrency(p.montoReal, monedaActiva)}</td>
+                      <td className={`px-4 py-3 text-right font-mono ${p.variacion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {p.variacion >= 0 ? '+' : ''}{formatCurrency(p.variacion, monedaActiva)}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-mono ${p.variacionPct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {p.variacionPct >= 0 ? '+' : ''}{formatPercent(p.variacionPct)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ==================== MODALES ==================== */}
 
       {/* MODAL: NUEVA CUENTA */}
@@ -2046,91 +3337,41 @@ export default function FinanzasEnterprise() {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100">Nueva Cuenta</h3>
-              <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg">
-                <X className="h-5 w-5 text-slate-400" />
-              </button>
+              <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
-
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Nombre *</label>
-                <input
-                  type="text"
-                  value={cuentaForm.nombre}
-                  onChange={(e) => setCuentaForm({ ...cuentaForm, nombre: e.target.value })}
-                  placeholder="Ej: Banco Santander USD"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                />
+                <input type="text" value={cuentaForm.nombre} onChange={(e) => setCuentaForm({ ...cuentaForm, nombre: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Tipo</label>
-                  <select
-                    value={cuentaForm.tipo}
-                    onChange={(e) => setCuentaForm({ ...cuentaForm, tipo: e.target.value as TipoCuenta })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  >
-                    {Object.entries(TIPOS_CUENTA_CONFIG).map(([key, config]) => (
-                      <option key={key} value={key}>{config.nombre}</option>
-                    ))}
+                  <select value={cuentaForm.tipo} onChange={(e) => setCuentaForm({ ...cuentaForm, tipo: e.target.value as TipoCuenta })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    {Object.entries(TIPOS_CUENTA_CONFIG).map(([key, config]) => (<option key={key} value={key}>{config.nombre}</option>))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Moneda</label>
-                  <select
-                    value={cuentaForm.moneda}
-                    onChange={(e) => setCuentaForm({ ...cuentaForm, moneda: e.target.value as Moneda })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  >
-                    {Object.entries(MONEDAS_CONFIG).map(([key, config]) => (
-                      <option key={key} value={key}>{config.simbolo} {config.nombre}</option>
-                    ))}
+                  <select value={cuentaForm.moneda} onChange={(e) => setCuentaForm({ ...cuentaForm, moneda: e.target.value as Moneda })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    {Object.entries(MONEDAS_CONFIG).map(([key, config]) => (<option key={key} value={key}>{config.simbolo} {config.nombre}</option>))}
                   </select>
                 </div>
               </div>
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Banco</label>
-                <input
-                  type="text"
-                  value={cuentaForm.banco}
-                  onChange={(e) => setCuentaForm({ ...cuentaForm, banco: e.target.value })}
-                  placeholder="Nombre del banco"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-400 mb-1">Número de Cuenta</label>
-                <input
-                  type="text"
-                  value={cuentaForm.numeroCuenta}
-                  onChange={(e) => setCuentaForm({ ...cuentaForm, numeroCuenta: e.target.value })}
-                  placeholder="Número de cuenta"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                />
+                <input type="text" value={cuentaForm.banco} onChange={(e) => setCuentaForm({ ...cuentaForm, banco: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
               </div>
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Saldo Inicial</label>
-                <input
-                  type="number"
-                  value={cuentaForm.saldoActual}
-                  onChange={(e) => setCuentaForm({ ...cuentaForm, saldoActual: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  step="0.01"
-                />
+                <input type="number" value={cuentaForm.saldoActual} onChange={(e) => setCuentaForm({ ...cuentaForm, saldoActual: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
               </div>
             </div>
-
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={crearCuenta}
-                disabled={procesando === 'cuenta'}
-                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl"
-              >
+              <button onClick={crearCuenta} disabled={procesando === 'cuenta'} className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl">
                 {procesando === 'cuenta' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Crear Cuenta'}
               </button>
-              <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">
-                Cancelar
-              </button>
+              <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
             </div>
           </div>
         </div>
@@ -2142,92 +3383,50 @@ export default function FinanzasEnterprise() {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100">Registrar Cobro</h3>
-              <button onClick={() => { setModalType(null); resetPagoForm(); }} className="p-2 hover:bg-slate-800 rounded-lg">
-                <X className="h-5 w-5 text-slate-400" />
-              </button>
+              <button onClick={() => { setModalType(null); resetPagoForm(); }} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
-
             <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl mb-4">
-              <div className="text-sm text-slate-400">Documento</div>
               <div className="font-mono text-lg text-slate-200">{selectedItem.numero}</div>
               <div className="text-sm text-slate-400">{selectedItem.cliente?.nombre}</div>
               <div className="flex justify-between mt-2">
-                <span className="text-slate-500">Saldo pendiente:</span>
+                <span className="text-slate-500">Saldo:</span>
                 <span className="font-bold text-cyan-400">{formatCurrency(selectedItem.saldo, selectedItem.moneda)}</span>
               </div>
             </div>
-
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Cuenta destino *</label>
-                <select
-                  value={pagoForm.cuentaId}
-                  onChange={(e) => setPagoForm({ ...pagoForm, cuentaId: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                >
+                <select value={pagoForm.cuentaId} onChange={(e) => setPagoForm({ ...pagoForm, cuentaId: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
                   <option value="">Seleccionar...</option>
-                  {cuentas.filter(c => c.activo).map(c => (
-                    <option key={c.id} value={c.id}>{c.nombre} ({formatCurrency(c.saldoActual, c.moneda)})</option>
-                  ))}
+                  {cuentas.filter(c => c.activo).map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Fecha *</label>
-                  <input
-                    type="date"
-                    value={pagoForm.fecha}
-                    onChange={(e) => setPagoForm({ ...pagoForm, fecha: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  />
+                  <label className="block text-sm text-slate-400 mb-1">Fecha</label>
+                  <input type="date" value={pagoForm.fecha} onChange={(e) => setPagoForm({ ...pagoForm, fecha: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Monto *</label>
-                  <input
-                    type="number"
-                    value={pagoForm.monto}
-                    onChange={(e) => setPagoForm({ ...pagoForm, monto: parseFloat(e.target.value) || 0 })}
-                    max={selectedItem.saldo}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                    step="0.01"
-                  />
+                  <label className="block text-sm text-slate-400 mb-1">Monto</label>
+                  <input type="number" value={pagoForm.monto} onChange={(e) => setPagoForm({ ...pagoForm, monto: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-slate-400 mb-1">Método de pago</label>
-                <select
-                  value={pagoForm.metodoPago}
-                  onChange={(e) => setPagoForm({ ...pagoForm, metodoPago: e.target.value as MetodoPago })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                >
-                  {Object.entries(METODOS_PAGO_CONFIG).map(([key, config]) => (
-                    <option key={key} value={key}>{config.nombre}</option>
-                  ))}
+                <label className="block text-sm text-slate-400 mb-1">Método</label>
+                <select value={pagoForm.metodoPago} onChange={(e) => setPagoForm({ ...pagoForm, metodoPago: e.target.value as MetodoPago })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                  {Object.entries(METODOS_PAGO_CONFIG).map(([key, config]) => (<option key={key} value={key}>{config.nombre}</option>))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Referencia</label>
-                <input
-                  type="text"
-                  value={pagoForm.referencia}
-                  onChange={(e) => setPagoForm({ ...pagoForm, referencia: e.target.value })}
-                  placeholder="Nº transferencia, recibo, etc."
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                />
+                <input type="text" value={pagoForm.referencia} onChange={(e) => setPagoForm({ ...pagoForm, referencia: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
               </div>
             </div>
-
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={registrarCobro}
-                disabled={procesando === 'cobro' || !pagoForm.cuentaId || pagoForm.monto <= 0}
-                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl"
-              >
+              <button onClick={registrarCobro} disabled={procesando === 'cobro'} className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl">
                 {procesando === 'cobro' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Registrar Cobro'}
               </button>
-              <button onClick={() => { setModalType(null); resetPagoForm(); }} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">
-                Cancelar
-              </button>
+              <button onClick={() => { setModalType(null); resetPagoForm(); }} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
             </div>
           </div>
         </div>
@@ -2239,485 +3438,382 @@ export default function FinanzasEnterprise() {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100">Registrar Pago</h3>
-              <button onClick={() => { setModalType(null); resetPagoForm(); }} className="p-2 hover:bg-slate-800 rounded-lg">
-                <X className="h-5 w-5 text-slate-400" />
-              </button>
+              <button onClick={() => { setModalType(null); resetPagoForm(); }} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
-
             <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl mb-4">
-              <div className="text-sm text-slate-400">Documento</div>
               <div className="font-mono text-lg text-slate-200">{selectedItem.numero}</div>
               <div className="text-sm text-slate-400">{selectedItem.proveedor?.nombre}</div>
               <div className="flex justify-between mt-2">
-                <span className="text-slate-500">Saldo pendiente:</span>
+                <span className="text-slate-500">Saldo:</span>
                 <span className="font-bold text-amber-400">{formatCurrency(selectedItem.saldo, selectedItem.moneda)}</span>
               </div>
             </div>
-
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Cuenta origen *</label>
-                <select
-                  value={pagoForm.cuentaId}
-                  onChange={(e) => setPagoForm({ ...pagoForm, cuentaId: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                >
+                <select value={pagoForm.cuentaId} onChange={(e) => setPagoForm({ ...pagoForm, cuentaId: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
                   <option value="">Seleccionar...</option>
-                  {cuentas.filter(c => c.activo).map(c => (
-                    <option key={c.id} value={c.id}>{c.nombre} ({formatCurrency(c.saldoActual, c.moneda)})</option>
-                  ))}
+                  {cuentas.filter(c => c.activo).map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Fecha *</label>
-                  <input
-                    type="date"
-                    value={pagoForm.fecha}
-                    onChange={(e) => setPagoForm({ ...pagoForm, fecha: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  />
+                  <label className="block text-sm text-slate-400 mb-1">Fecha</label>
+                  <input type="date" value={pagoForm.fecha} onChange={(e) => setPagoForm({ ...pagoForm, fecha: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Monto efectivo *</label>
-                  <input
-                    type="number"
-                    value={pagoForm.monto}
-                    onChange={(e) => setPagoForm({ ...pagoForm, monto: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                    step="0.01"
-                  />
+                  <label className="block text-sm text-slate-400 mb-1">Monto</label>
+                  <input type="number" value={pagoForm.monto} onChange={(e) => setPagoForm({ ...pagoForm, monto: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm text-slate-400 mb-1">Método de pago</label>
-                <select
-                  value={pagoForm.metodoPago}
-                  onChange={(e) => setPagoForm({ ...pagoForm, metodoPago: e.target.value as MetodoPago })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                >
-                  {Object.entries(METODOS_PAGO_CONFIG).map(([key, config]) => (
-                    <option key={key} value={key}>{config.nombre}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Retenciones */}
               <div className="p-3 bg-slate-800/50 rounded-xl">
                 <div className="text-sm text-slate-400 mb-2">Retenciones (DGI)</div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">Ret. IVA</label>
-                    <input
-                      type="number"
-                      value={pagoForm.retencionIVA}
-                      onChange={(e) => setPagoForm({ ...pagoForm, retencionIVA: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-100"
-                      step="0.01"
-                    />
+                    <input type="number" value={pagoForm.retencionIVA} onChange={(e) => setPagoForm({ ...pagoForm, retencionIVA: parseFloat(e.target.value) || 0 })} className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-100" step="0.01" />
                   </div>
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">Ret. Renta</label>
-                    <input
-                      type="number"
-                      value={pagoForm.retencionRenta}
-                      onChange={(e) => setPagoForm({ ...pagoForm, retencionRenta: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-100"
-                      step="0.01"
-                    />
+                    <input type="number" value={pagoForm.retencionRenta} onChange={(e) => setPagoForm({ ...pagoForm, retencionRenta: parseFloat(e.target.value) || 0 })} className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-100" step="0.01" />
                   </div>
                 </div>
                 <div className="flex justify-between mt-2 text-sm">
                   <span className="text-slate-500">Total aplicado:</span>
-                  <span className="text-emerald-400 font-bold">
-                    {formatCurrency(pagoForm.monto + pagoForm.retencionIVA + pagoForm.retencionRenta, selectedItem.moneda)}
-                  </span>
+                  <span className="text-emerald-400 font-bold">{formatCurrency(pagoForm.monto + pagoForm.retencionIVA + pagoForm.retencionRenta, selectedItem.moneda)}</span>
                 </div>
               </div>
-
-              <div>
-                <label className="block text-sm text-slate-400 mb-1">Referencia</label>
-                <input
-                  type="text"
-                  value={pagoForm.referencia}
-                  onChange={(e) => setPagoForm({ ...pagoForm, referencia: e.target.value })}
-                  placeholder="Nº transferencia, cheque, etc."
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                />
-              </div>
             </div>
-
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={registrarPago}
-                disabled={procesando === 'pago' || !pagoForm.cuentaId || pagoForm.monto <= 0}
-                className="flex-1 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-xl"
-              >
+              <button onClick={registrarPago} disabled={procesando === 'pago'} className="flex-1 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-xl">
                 {procesando === 'pago' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Registrar Pago'}
               </button>
-              <button onClick={() => { setModalType(null); resetPagoForm(); }} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">
-                Cancelar
-              </button>
+              <button onClick={() => { setModalType(null); resetPagoForm(); }} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL: NUEVA TRANSACCIÓN */}
+      {/* MODAL: TRANSACCIÓN */}
       {modalType === 'transaccion' && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100">Nueva Transacción</h3>
-              <button onClick={() => { setModalType(null); resetTransaccionForm(); }} className="p-2 hover:bg-slate-800 rounded-lg">
-                <X className="h-5 w-5 text-slate-400" />
-              </button>
+              <button onClick={() => { setModalType(null); resetTransaccionForm(); }} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
-
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-400 mb-1">Tipo *</label>
+                <label className="block text-sm text-slate-400 mb-1">Tipo</label>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => setTransaccionForm({ ...transaccionForm, tipo: 'ingreso' })}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${
-                      transaccionForm.tipo === 'ingreso' 
-                        ? 'bg-emerald-600 text-white' 
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}
-                  >
-                    Ingreso
-                  </button>
-                  <button
-                    onClick={() => setTransaccionForm({ ...transaccionForm, tipo: 'egreso' })}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${
-                      transaccionForm.tipo === 'egreso' 
-                        ? 'bg-red-600 text-white' 
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}
-                  >
-                    Egreso
-                  </button>
+                  <button onClick={() => setTransaccionForm({ ...transaccionForm, tipo: 'ingreso' })} className={`flex-1 py-2 rounded-xl text-sm font-medium ${transaccionForm.tipo === 'ingreso' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Ingreso</button>
+                  <button onClick={() => setTransaccionForm({ ...transaccionForm, tipo: 'egreso' })} className={`flex-1 py-2 rounded-xl text-sm font-medium ${transaccionForm.tipo === 'egreso' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Egreso</button>
                 </div>
               </div>
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Cuenta *</label>
-                <select
-                  value={transaccionForm.cuentaId}
-                  onChange={(e) => setTransaccionForm({ ...transaccionForm, cuentaId: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                >
+                <select value={transaccionForm.cuentaId} onChange={(e) => setTransaccionForm({ ...transaccionForm, cuentaId: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
                   <option value="">Seleccionar...</option>
-                  {cuentas.filter(c => c.activo).map(c => (
-                    <option key={c.id} value={c.id}>{c.nombre} ({formatCurrency(c.saldoActual, c.moneda)})</option>
-                  ))}
+                  {cuentas.filter(c => c.activo).map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Fecha *</label>
-                  <input
-                    type="date"
-                    value={transaccionForm.fecha}
-                    onChange={(e) => setTransaccionForm({ ...transaccionForm, fecha: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  />
+                  <label className="block text-sm text-slate-400 mb-1">Fecha</label>
+                  <input type="date" value={transaccionForm.fecha} onChange={(e) => setTransaccionForm({ ...transaccionForm, fecha: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
                 </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Monto *</label>
-                  <input
-                    type="number"
-                    value={transaccionForm.monto}
-                    onChange={(e) => setTransaccionForm({ ...transaccionForm, monto: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                    step="0.01"
-                  />
+                  <input type="number" value={transaccionForm.monto} onChange={(e) => setTransaccionForm({ ...transaccionForm, monto: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Concepto *</label>
-                <input
-                  type="text"
-                  value={transaccionForm.concepto}
-                  onChange={(e) => setTransaccionForm({ ...transaccionForm, concepto: e.target.value })}
-                  placeholder="Descripción de la transacción"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                />
+                <input type="text" value={transaccionForm.concepto} onChange={(e) => setTransaccionForm({ ...transaccionForm, concepto: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
               </div>
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Categoría</label>
-                <select
-                  value={transaccionForm.categoria}
-                  onChange={(e) => setTransaccionForm({ ...transaccionForm, categoria: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                >
+                <select value={transaccionForm.categoria} onChange={(e) => setTransaccionForm({ ...transaccionForm, categoria: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
                   <option value="">Sin categoría</option>
-                  {(transaccionForm.tipo === 'ingreso' ? CATEGORIAS_INGRESO : CATEGORIAS_GASTO).map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
+                  {(transaccionForm.tipo === 'ingreso' ? CATEGORIAS_INGRESO : CATEGORIAS_GASTO).map(cat => (<option key={cat} value={cat}>{cat}</option>))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm text-slate-400 mb-1">Referencia</label>
-                <input
-                  type="text"
-                  value={transaccionForm.referencia}
-                  onChange={(e) => setTransaccionForm({ ...transaccionForm, referencia: e.target.value })}
-                  placeholder="Nº comprobante, factura, etc."
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                />
-              </div>
             </div>
-
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={crearTransaccion}
-                disabled={procesando === 'transaccion' || !transaccionForm.cuentaId || transaccionForm.monto <= 0 || !transaccionForm.concepto}
-                className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-xl"
-              >
+              <button onClick={crearTransaccion} disabled={procesando === 'transaccion'} className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-xl">
                 {procesando === 'transaccion' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Registrar'}
               </button>
-              <button onClick={() => { setModalType(null); resetTransaccionForm(); }} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">
-                Cancelar
-              </button>
+              <button onClick={() => { setModalType(null); resetTransaccionForm(); }} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL: NUEVO CHEQUE */}
+      {/* MODAL: CHEQUE */}
       {modalType === 'cheque' && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100">Nuevo Cheque</h3>
-              <button onClick={() => { setModalType(null); resetChequeForm(); }} className="p-2 hover:bg-slate-800 rounded-lg">
-                <X className="h-5 w-5 text-slate-400" />
-              </button>
+              <button onClick={() => { setModalType(null); resetChequeForm(); }} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
-
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-400 mb-1">Tipo *</label>
+                <label className="block text-sm text-slate-400 mb-1">Tipo</label>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => setChequeForm({ ...chequeForm, tipo: 'recibido' })}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${
-                      chequeForm.tipo === 'recibido' 
-                        ? 'bg-cyan-600 text-white' 
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}
-                  >
-                    Recibido
-                  </button>
-                  <button
-                    onClick={() => setChequeForm({ ...chequeForm, tipo: 'emitido' })}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${
-                      chequeForm.tipo === 'emitido' 
-                        ? 'bg-orange-600 text-white' 
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}
-                  >
-                    Emitido
-                  </button>
+                  <button onClick={() => setChequeForm({ ...chequeForm, tipo: 'recibido' })} className={`flex-1 py-2 rounded-xl text-sm font-medium ${chequeForm.tipo === 'recibido' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Recibido</button>
+                  <button onClick={() => setChequeForm({ ...chequeForm, tipo: 'emitido' })} className={`flex-1 py-2 rounded-xl text-sm font-medium ${chequeForm.tipo === 'emitido' ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Emitido</button>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Número *</label>
-                  <input
-                    type="text"
-                    value={chequeForm.numero}
-                    onChange={(e) => setChequeForm({ ...chequeForm, numero: e.target.value })}
-                    placeholder="Nº cheque"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  />
+                  <input type="text" value={chequeForm.numero} onChange={(e) => setChequeForm({ ...chequeForm, numero: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
                 </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Banco *</label>
-                  <input
-                    type="text"
-                    value={chequeForm.banco}
-                    onChange={(e) => setChequeForm({ ...chequeForm, banco: e.target.value })}
-                    placeholder="Banco emisor"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  />
+                  <input type="text" value={chequeForm.banco} onChange={(e) => setChequeForm({ ...chequeForm, banco: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Monto *</label>
-                  <input
-                    type="number"
-                    value={chequeForm.monto}
-                    onChange={(e) => setChequeForm({ ...chequeForm, monto: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                    step="0.01"
-                  />
+                  <input type="number" value={chequeForm.monto} onChange={(e) => setChequeForm({ ...chequeForm, monto: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
                 </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Moneda</label>
-                  <select
-                    value={chequeForm.moneda}
-                    onChange={(e) => setChequeForm({ ...chequeForm, moneda: e.target.value as Moneda })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  >
-                    {Object.entries(MONEDAS_CONFIG).map(([key, config]) => (
-                      <option key={key} value={key}>{config.simbolo} {config.nombre}</option>
-                    ))}
+                  <select value={chequeForm.moneda} onChange={(e) => setChequeForm({ ...chequeForm, moneda: e.target.value as Moneda })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    {Object.entries(MONEDAS_CONFIG).map(([key, config]) => (<option key={key} value={key}>{config.simbolo}</option>))}
                   </select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Fecha Emisión</label>
-                  <input
-                    type="date"
-                    value={chequeForm.fechaEmision}
-                    onChange={(e) => setChequeForm({ ...chequeForm, fechaEmision: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  />
+                  <label className="block text-sm text-slate-400 mb-1">Emisión</label>
+                  <input type="date" value={chequeForm.fechaEmision} onChange={(e) => setChequeForm({ ...chequeForm, fechaEmision: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Fecha Vencimiento</label>
-                  <input
-                    type="date"
-                    value={chequeForm.fechaVencimiento}
-                    onChange={(e) => setChequeForm({ ...chequeForm, fechaVencimiento: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  />
+                  <label className="block text-sm text-slate-400 mb-1">Vencimiento</label>
+                  <input type="date" value={chequeForm.fechaVencimiento} onChange={(e) => setChequeForm({ ...chequeForm, fechaVencimiento: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
                 </div>
               </div>
-              {chequeForm.tipo === 'recibido' ? (
-                <div>
-                  <label className="block text-sm text-slate-400 mb-1">Librador</label>
-                  <input
-                    type="text"
-                    value={chequeForm.librador}
-                    onChange={(e) => setChequeForm({ ...chequeForm, librador: e.target.value })}
-                    placeholder="Quien emitió el cheque"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-sm text-slate-400 mb-1">Beneficiario</label>
-                  <input
-                    type="text"
-                    value={chequeForm.beneficiario}
-                    onChange={(e) => setChequeForm({ ...chequeForm, beneficiario: e.target.value })}
-                    placeholder="A quien va dirigido"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  />
-                </div>
-              )}
             </div>
-
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={crearCheque}
-                disabled={procesando === 'cheque' || !chequeForm.numero || !chequeForm.banco || chequeForm.monto <= 0}
-                className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl"
-              >
-                {procesando === 'cheque' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Registrar Cheque'}
+              <button onClick={crearCheque} disabled={procesando === 'cheque'} className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl">
+                {procesando === 'cheque' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Registrar'}
               </button>
-              <button onClick={() => { setModalType(null); resetChequeForm(); }} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">
-                Cancelar
-              </button>
+              <button onClick={() => { setModalType(null); resetChequeForm(); }} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL: TIPO DE CAMBIO */}
+      {/* MODAL: CONTACTO COBRANZA */}
+      {modalType === 'contacto' && selectedItem && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-100">Registrar Contacto</h3>
+              <button onClick={() => { setModalType(null); resetContactoForm(); }} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
+            </div>
+            <div className="p-3 bg-orange-500/10 border border-orange-500/30 rounded-xl mb-4">
+              <div className="font-medium text-slate-200">{selectedItem.clienteNombre}</div>
+              <div className="text-sm text-slate-400">Pendiente: {formatCurrency(selectedItem.montoPendiente, monedaActiva)}</div>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Tipo</label>
+                  <select value={contactoForm.tipo} onChange={(e) => setContactoForm({ ...contactoForm, tipo: e.target.value as TipoContactoCobranza })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    {Object.entries(TIPO_CONTACTO_CONFIG).map(([key, config]) => (<option key={key} value={key}>{config.label}</option>))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Resultado</label>
+                  <select value={contactoForm.resultado} onChange={(e) => setContactoForm({ ...contactoForm, resultado: e.target.value as ResultadoContacto })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    <option value="exitoso">Exitoso</option>
+                    <option value="no_contesta">No contesta</option>
+                    <option value="promesa">Promesa</option>
+                    <option value="rechazo">Rechazo</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Descripción *</label>
+                <textarea value={contactoForm.descripcion} onChange={(e) => setContactoForm({ ...contactoForm, descripcion: e.target.value })} rows={3} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" checked={contactoForm.promesaPago} onChange={(e) => setContactoForm({ ...contactoForm, promesaPago: e.target.checked })} className="rounded" />
+                <label className="text-sm text-slate-400">Promesa de pago</label>
+              </div>
+              {contactoForm.promesaPago && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">Fecha promesa</label>
+                    <input type="date" value={contactoForm.promesaFecha} onChange={(e) => setContactoForm({ ...contactoForm, promesaFecha: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">Monto</label>
+                    <input type="number" value={contactoForm.promesaMonto} onChange={(e) => setContactoForm({ ...contactoForm, promesaMonto: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
+                  </div>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Próximo contacto</label>
+                <input type="date" value={contactoForm.proximoContacto} onChange={(e) => setContactoForm({ ...contactoForm, proximoContacto: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => registrarContactoCobranza(selectedItem.id)} disabled={procesando === 'contacto'} className="flex-1 px-4 py-2.5 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white rounded-xl">
+                {procesando === 'contacto' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Registrar'}
+              </button>
+              <button onClick={() => { setModalType(null); resetContactoForm(); }} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: PRESUPUESTO */}
+      {modalType === 'presupuesto' && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-100">Agregar Presupuesto</h3>
+              <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
+            </div>
+            <div className="p-3 bg-violet-500/10 border border-violet-500/30 rounded-xl mb-4">
+              <span className="text-violet-400">{getMesNombre(mesPresupuesto)} {añoPresupuesto}</span>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Tipo</label>
+                <div className="flex gap-2">
+                  <button onClick={() => setPresupuestoForm({ ...presupuestoForm, tipo: 'ingreso' })} className={`flex-1 py-2 rounded-xl text-sm font-medium ${presupuestoForm.tipo === 'ingreso' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Ingreso</button>
+                  <button onClick={() => setPresupuestoForm({ ...presupuestoForm, tipo: 'egreso' })} className={`flex-1 py-2 rounded-xl text-sm font-medium ${presupuestoForm.tipo === 'egreso' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Egreso</button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Categoría *</label>
+                <select value={presupuestoForm.categoria} onChange={(e) => setPresupuestoForm({ ...presupuestoForm, categoria: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                  <option value="">Seleccionar...</option>
+                  {(presupuestoForm.tipo === 'ingreso' ? CATEGORIAS_INGRESO : CATEGORIAS_GASTO).map(cat => (<option key={cat} value={cat}>{cat}</option>))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Monto presupuestado *</label>
+                <input type="number" value={presupuestoForm.monto} onChange={(e) => setPresupuestoForm({ ...presupuestoForm, monto: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={guardarPresupuesto} disabled={procesando === 'presupuesto'} className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-xl">
+                {procesando === 'presupuesto' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Guardar'}
+              </button>
+              <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: TIPO CAMBIO */}
       {modalType === 'tipoCambio' && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100">Tipo de Cambio</h3>
-              <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg">
-                <X className="h-5 w-5 text-slate-400" />
-              </button>
+              <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
-
-            {/* Últimos tipos de cambio */}
             {tiposCambio.length > 0 && (
               <div className="mb-4 p-3 bg-slate-800/50 rounded-xl">
                 <div className="text-xs text-slate-500 mb-2">Últimos registrados</div>
-                <div className="space-y-1">
-                  {tiposCambio.slice(0, 3).map(tc => (
-                    <div key={tc.id} className="flex justify-between text-sm">
-                      <span className="text-slate-400">{tc.monedaOrigen}/{tc.monedaDestino}</span>
-                      <span className="text-slate-200">{tc.tasa.toFixed(4)}</span>
-                      <span className="text-slate-500">{formatDate(tc.fecha)}</span>
-                    </div>
-                  ))}
-                </div>
+                {tiposCambio.slice(0, 3).map(tc => (
+                  <div key={tc.id} className="flex justify-between text-sm">
+                    <span className="text-slate-400">{tc.monedaOrigen}/{tc.monedaDestino}</span>
+                    <span className="text-slate-200">{tc.tasa.toFixed(4)}</span>
+                    <span className="text-slate-500">{formatDate(tc.fecha)}</span>
+                  </div>
+                ))}
               </div>
             )}
-
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Moneda Origen</label>
-                  <select
-                    value={tipoCambioForm.monedaOrigen}
-                    onChange={(e) => setTipoCambioForm({ ...tipoCambioForm, monedaOrigen: e.target.value as Moneda })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  >
-                    {Object.entries(MONEDAS_CONFIG).map(([key, config]) => (
-                      <option key={key} value={key}>{config.simbolo} {key}</option>
-                    ))}
+                  <label className="block text-sm text-slate-400 mb-1">Origen</label>
+                  <select value={tipoCambioForm.monedaOrigen} onChange={(e) => setTipoCambioForm({ ...tipoCambioForm, monedaOrigen: e.target.value as Moneda })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    {Object.keys(MONEDAS_CONFIG).map(k => (<option key={k} value={k}>{k}</option>))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Moneda Destino</label>
-                  <select
-                    value={tipoCambioForm.monedaDestino}
-                    onChange={(e) => setTipoCambioForm({ ...tipoCambioForm, monedaDestino: e.target.value as Moneda })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  >
-                    {Object.entries(MONEDAS_CONFIG).map(([key, config]) => (
-                      <option key={key} value={key}>{config.simbolo} {key}</option>
-                    ))}
+                  <label className="block text-sm text-slate-400 mb-1">Destino</label>
+                  <select value={tipoCambioForm.monedaDestino} onChange={(e) => setTipoCambioForm({ ...tipoCambioForm, monedaDestino: e.target.value as Moneda })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    {Object.keys(MONEDAS_CONFIG).map(k => (<option key={k} value={k}>{k}</option>))}
                   </select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Tasa</label>
-                  <input
-                    type="number"
-                    value={tipoCambioForm.tasa}
-                    onChange={(e) => setTipoCambioForm({ ...tipoCambioForm, tasa: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                    step="0.0001"
-                    placeholder="Ej: 40.50"
-                  />
+                  <input type="number" value={tipoCambioForm.tasa} onChange={(e) => setTipoCambioForm({ ...tipoCambioForm, tasa: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.0001" />
                 </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Fecha</label>
-                  <input
-                    type="date"
-                    value={tipoCambioForm.fecha}
-                    onChange={(e) => setTipoCambioForm({ ...tipoCambioForm, fecha: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                  />
+                  <input type="date" value={tipoCambioForm.fecha} onChange={(e) => setTipoCambioForm({ ...tipoCambioForm, fecha: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
                 </div>
               </div>
             </div>
-
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={guardarTipoCambio}
-                disabled={procesando === 'tipocambio' || tipoCambioForm.tasa <= 0}
-                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl"
-              >
-                {procesando === 'tipocambio' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Guardar'}
+              <button onClick={guardarTipoCambio} disabled={procesando === 'tipocambio'} className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl">Guardar</button>
+              <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: NOTA C/D */}
+      {modalType === 'nota' && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-100">Nueva Nota</h3>
+              <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Tipo</label>
+                  <select value={notaForm.tipo} onChange={(e) => setNotaForm({ ...notaForm, tipo: e.target.value as TipoNota })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    <option value="credito">Crédito</option>
+                    <option value="debito">Débito</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Origen</label>
+                  <select value={notaForm.origen} onChange={(e) => setNotaForm({ ...notaForm, origen: e.target.value as OrigenNota, entidadId: '' })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    <option value="cliente">Cliente</option>
+                    <option value="proveedor">Proveedor</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">{notaForm.origen === 'cliente' ? 'Cliente' : 'Proveedor'} *</label>
+                <select value={notaForm.entidadId} onChange={(e) => setNotaForm({ ...notaForm, entidadId: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                  <option value="">Seleccionar...</option>
+                  {(notaForm.origen === 'cliente' ? clientes : proveedores).map(e => (<option key={e.id} value={e.id}>{e.nombre}</option>))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Monto *</label>
+                <input type="number" value={notaForm.monto} onChange={(e) => setNotaForm({ ...notaForm, monto: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Motivo *</label>
+                <textarea value={notaForm.motivo} onChange={(e) => setNotaForm({ ...notaForm, motivo: e.target.value })} rows={2} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={crearNota} disabled={procesando === 'nota'} className="flex-1 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white rounded-xl">
+                {procesando === 'nota' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Crear Nota'}
               </button>
-              <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">
-                Cerrar
-              </button>
+              <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
             </div>
           </div>
         </div>
