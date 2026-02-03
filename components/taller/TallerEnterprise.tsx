@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
-  Wrench, Hammer, Car, Truck, Package, Settings, ClipboardList,
+  Wrench, Car, Truck, Package, Settings, ClipboardList, Hammer,
   Plus, Search, Filter, RefreshCw, Eye, Edit, Trash2, X,
   ChevronRight, ChevronDown, ChevronLeft, Phone, Mail, Building2,
   User, FileText, Calendar, Clock, AlertTriangle, CheckCircle, XCircle,
@@ -429,7 +429,7 @@ export default function TallerEnterprise() {
   const [filtroTipo, setFiltroTipo] = useState<TipoOrden | 'todos'>('todos');
   const [filtroPrioridad, setFiltroPrioridad] = useState<Prioridad | 'todos'>('todos');
   const [searchTerm, setSearchTerm] = useState('');
-  const [columnasKanban, setColumnasKanban] = useState<EstadoOrden[]>(COLUMNAS_KANBAN_TODAS);
+  const [columnasKanban, setColumnasKanban] = useState<EstadoOrden[]>(['recepcion', 'diagnostico', 'cotizacion', 'aprobado', 'en_reparacion', 'reparado', 'facturado', 'listo_entrega', 'entregado']);
 
   // Modales
   const [modalType, setModalType] = useState<string | null>(null);
@@ -1549,25 +1549,25 @@ export default function TallerEnterprise() {
 
       {/* ==================== VISTA KANBAN ==================== */}
       {vistaActiva === 'kanban' && (
-        <div className="overflow-x-auto pb-4">
-          <div className="flex gap-4 min-w-max">
+        <div className="w-full">
+          <div className="grid grid-cols-9 gap-2">
             {columnasKanban.map(estado => {
               const config = ESTADO_CONFIG[estado];
               const ordenesColumna = ordenesPorEstado[estado];
               
               return (
-                <div key={estado} className="w-72 flex-shrink-0">
+                <div key={estado} className="min-w-0">
                   {/* Header columna */}
-                  <div className={`flex items-center gap-2 p-3 rounded-t-xl border-b-2 ${config.bg}`}>
+                  <div className={`flex items-center gap-1 p-2 rounded-t-xl border-b-2 ${config.bg}`}>
                     {config.icon}
-                    <span className={`font-medium ${config.color}`}>{config.label}</span>
-                    <span className="ml-auto bg-slate-800 px-2 py-0.5 rounded-full text-xs text-slate-300">
+                    <span className={`font-medium text-xs truncate ${config.color}`}>{config.label}</span>
+                    <span className="ml-auto bg-slate-800 px-1.5 py-0.5 rounded-full text-xs text-slate-300">
                       {ordenesColumna.length}
                     </span>
                   </div>
                   
                   {/* Cards */}
-                  <div className="bg-slate-900/30 rounded-b-xl p-2 min-h-[400px] space-y-2">
+                  <div className="bg-slate-900/30 rounded-b-xl p-1.5 min-h-[400px] space-y-1.5">
                     {ordenesColumna.map(orden => (
                       <KanbanCard 
                         key={orden.id} 
@@ -1580,7 +1580,7 @@ export default function TallerEnterprise() {
                     ))}
                     
                     {ordenesColumna.length === 0 && (
-                      <div className="text-center py-8 text-slate-600 text-sm">
+                      <div className="text-center py-6 text-slate-600 text-xs">
                         Sin órdenes
                       </div>
                     )}
