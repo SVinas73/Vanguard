@@ -428,6 +428,7 @@ export default function TallerEnterprise() {
   const [filtroEstado, setFiltroEstado] = useState<EstadoOrden | 'todos'>('todos');
   const [filtroTipo, setFiltroTipo] = useState<TipoOrden | 'todos'>('todos');
   const [filtroPrioridad, setFiltroPrioridad] = useState<Prioridad | 'todos'>('todos');
+  const [filtroFecha, setFiltroFecha] = useState<'activas' | 'hoy' | 'semana' | 'mes' | 'todas'>('activas');
   const [searchTerm, setSearchTerm] = useState('');
   const [columnasKanban, setColumnasKanban] = useState<EstadoOrden[]>(['recepcion', 'diagnostico', 'cotizacion', 'aprobado', 'en_reparacion', 'reparado', 'facturado', 'listo_entrega', 'entregado']);
 
@@ -524,7 +525,8 @@ export default function TallerEnterprise() {
   };
 
   const loadOrdenes = async () => {
-    const { data } = await supabase
+    // Cargar órdenes activas (no entregadas ni canceladas) + las últimas 100 históricas
+    const { data: activas } = await supabase
       .from('ordenes_taller')
       .select(`
         *,
@@ -534,7 +536,24 @@ export default function TallerEnterprise() {
         historial:historial_ordenes_taller(*),
         notas:notas_ordenes_taller(*)
       `)
+      .not('estado', 'in', '("entregado","cancelado")')
       .order('created_at', { ascending: false });
+
+    const { data: historicas } = await supabase
+      .from('ordenes_taller')
+      .select(`
+        *,
+        cliente:clientes(id, nombre, rut, telefono, email),
+        cotizacion:cotizaciones_taller(*),
+        repuestos:repuestos_usados_taller(*),
+        historial:historial_ordenes_taller(*),
+        notas:notas_ordenes_taller(*)
+      `)
+      .in('estado', ['entregado', 'cancelado'])
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    const data = [...(activas || []), ...(historicas || [])];
 
     if (data) {
       setOrdenes(data.map((o: any) => ({
@@ -1366,7 +1385,30 @@ export default function TallerEnterprise() {
   // ============================================
 
   const ordenesFiltradas = useMemo(() => {
+    const hoy = new Date();
+    const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    const inicioSemana = new Date(inicioHoy);
+    inicioSemana.setDate(inicioSemana.getDate() - 7);
+    const inicioMes = new Date(inicioHoy);
+    inicioMes.setDate(inicioMes.getDate() - 30);
+
     return ordenes.filter(o => {
+      // Filtro por fecha/estado activo
+      if (filtroFecha === 'activas') {
+        // Solo órdenes que NO están entregadas ni canceladas
+        if (['entregado', 'cancelado'].includes(o.estado)) return false;
+      } else if (filtroFecha === 'hoy') {
+        const fechaOrden = new Date(o.createdAt);
+        if (fechaOrden < inicioHoy) return false;
+      } else if (filtroFecha === 'semana') {
+        const fechaOrden = new Date(o.createdAt);
+        if (fechaOrden < inicioSemana) return false;
+      } else if (filtroFecha === 'mes') {
+        const fechaOrden = new Date(o.createdAt);
+        if (fechaOrden < inicioMes) return false;
+      }
+      // 'todas' no filtra por fecha
+
       if (filtroEstado !== 'todos' && o.estado !== filtroEstado) return false;
       if (filtroTipo !== 'todos' && o.tipoOrden !== filtroTipo) return false;
       if (filtroPrioridad !== 'todos' && o.prioridad !== filtroPrioridad) return false;
@@ -1384,7 +1426,7 @@ export default function TallerEnterprise() {
       
       return true;
     });
-  }, [ordenes, filtroEstado, filtroTipo, filtroPrioridad, searchTerm]);
+  }, [ordenes, filtroEstado, filtroTipo, filtroPrioridad, filtroFecha, searchTerm]);
 
   // Órdenes agrupadas por estado para Kanban
   const ordenesPorEstado = useMemo(() => {
@@ -1525,6 +1567,19 @@ export default function TallerEnterprise() {
             <option value="alta">🟠 Alta</option>
             <option value="normal">🔵 Normal</option>
             <option value="baja">⚪ Baja</option>
+          </select>
+
+          {/* Filtro fecha/activas */}
+          <select
+            value={filtroFecha}
+            onChange={(e) => setFiltroFecha(e.target.value as any)}
+            className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
+          >
+            <option value="activas">📌 Solo activas</option>
+            <option value="hoy">📅 Hoy</option>
+            <option value="semana">📅 Última semana</option>
+            <option value="mes">📅 Último mes</option>
+            <option value="todas">📋 Todas (historial)</option>
           </select>
         </div>
 
