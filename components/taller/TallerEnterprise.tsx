@@ -2884,6 +2884,7 @@ function ModalFacturar({ orden, onFacturar, onClose, procesando }: {
 // COMPONENTE: MODAL ENTREGAR
 // ============================================
 
+
 function ModalEntregar({ orden, onEntregar, onClose, procesando }: { 
   orden: OrdenTrabajo; 
   onEntregar: (entregadoA: string, metodo: 'retiro' | 'envio' | 'instalacion') => void; 
