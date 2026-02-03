@@ -710,6 +710,28 @@ export default function FinanzasEnterprise() {
     monto: 0,
   });
 
+  const [cxcForm, setCxcForm] = useState({
+    clienteId: '',
+    tipo: 'factura' as 'factura' | 'nota_debito' | 'otro',
+    numero: '',
+    fechaEmision: new Date().toISOString().split('T')[0],
+    fechaVencimiento: '',
+    subtotal: 0,
+    impuestos: 0,
+    notas: '',
+  });
+
+  const [cxpForm, setCxpForm] = useState({
+    proveedorId: '',
+    tipo: 'factura' as 'factura' | 'nota_debito' | 'gasto' | 'otro',
+    numero: '',
+    fechaEmision: new Date().toISOString().split('T')[0],
+    fechaVencimiento: '',
+    subtotal: 0,
+    impuestos: 0,
+    notas: '',
+  });
+
   // ============================================
   // CARGA DE DATOS
   // ============================================
@@ -1073,6 +1095,115 @@ export default function FinanzasEnterprise() {
       setModalType(null);
       setCuentaForm({ nombre: '', banco: '', numeroCuenta: '', tipo: 'banco', moneda: 'USD', saldoActual: 0 });
       loadCuentas();
+    } catch (error: any) {
+      toast.error('Error', error.message);
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  // ============================================
+  // ACCIONES - CREAR DOCUMENTO CxC
+  // ============================================
+
+  const crearDocumentoCxC = async () => {
+    if (!cxcForm.clienteId || !cxcForm.numero || cxcForm.subtotal <= 0) {
+      toast.warning('Complete los campos requeridos');
+      return;
+    }
+
+    try {
+      setProcesando('cxc');
+
+      const total = cxcForm.subtotal + cxcForm.impuestos;
+      const cliente = clientes.find(c => c.id === cxcForm.clienteId);
+
+      const { error } = await supabase.from('cuentas_por_cobrar').insert({
+        numero: cxcForm.numero,
+        cliente_id: cxcForm.clienteId,
+        tipo: cxcForm.tipo,
+        fecha_emision: cxcForm.fechaEmision,
+        fecha_vencimiento: cxcForm.fechaVencimiento || cxcForm.fechaEmision,
+        moneda: monedaActiva,
+        subtotal: cxcForm.subtotal,
+        impuestos: cxcForm.impuestos,
+        total: total,
+        monto_pagado: 0,
+        saldo: total,
+        estado: 'pendiente',
+        notas: cxcForm.notas || null,
+      });
+
+      if (error) throw error;
+
+      toast.success('Documento creado');
+      setModalType(null);
+      setCxcForm({
+        clienteId: '',
+        tipo: 'factura',
+        numero: '',
+        fechaEmision: new Date().toISOString().split('T')[0],
+        fechaVencimiento: '',
+        subtotal: 0,
+        impuestos: 0,
+        notas: '',
+      });
+      loadDocumentosCxC();
+    } catch (error: any) {
+      toast.error('Error', error.message);
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  // ============================================
+  // ACCIONES - CREAR DOCUMENTO CxP
+  // ============================================
+
+  const crearDocumentoCxP = async () => {
+    if (!cxpForm.proveedorId || !cxpForm.numero || cxpForm.subtotal <= 0) {
+      toast.warning('Complete los campos requeridos');
+      return;
+    }
+
+    try {
+      setProcesando('cxp');
+
+      const total = cxpForm.subtotal + cxpForm.impuestos;
+      const proveedor = proveedores.find(p => p.id === cxpForm.proveedorId);
+
+      const { error } = await supabase.from('cuentas_por_pagar').insert({
+        numero: cxpForm.numero,
+        proveedor_id: cxpForm.proveedorId,
+        tipo: cxpForm.tipo,
+        fecha_emision: cxpForm.fechaEmision,
+        fecha_vencimiento: cxpForm.fechaVencimiento || cxpForm.fechaEmision,
+        moneda: monedaActiva,
+        subtotal: cxpForm.subtotal,
+        impuestos: cxpForm.impuestos,
+        retenciones: 0,
+        total: total,
+        monto_pagado: 0,
+        saldo: total,
+        estado: 'pendiente',
+        notas: cxpForm.notas || null,
+      });
+
+      if (error) throw error;
+
+      toast.success('Documento creado');
+      setModalType(null);
+      setCxpForm({
+        proveedorId: '',
+        tipo: 'factura',
+        numero: '',
+        fechaEmision: new Date().toISOString().split('T')[0],
+        fechaVencimiento: '',
+        subtotal: 0,
+        impuestos: 0,
+        notas: '',
+      });
+      loadDocumentosCxP();
     } catch (error: any) {
       toast.error('Error', error.message);
     } finally {
@@ -3812,6 +3943,149 @@ export default function FinanzasEnterprise() {
             <div className="flex gap-3 mt-6">
               <button onClick={crearNota} disabled={procesando === 'nota'} className="flex-1 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white rounded-xl">
                 {procesando === 'nota' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Crear Nota'}
+              </button>
+              <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: NUEVO DOCUMENTO CxC */}
+      {modalType === 'nuevoCxC' && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-100">Nuevo Documento por Cobrar</h3>
+              <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Cliente *</label>
+                <select value={cxcForm.clienteId} onChange={(e) => setCxcForm({ ...cxcForm, clienteId: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                  <option value="">Seleccionar cliente...</option>
+                  {clientes.map(c => (<option key={c.id} value={c.id}>{c.codigo} - {c.nombre}</option>))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Tipo</label>
+                  <select value={cxcForm.tipo} onChange={(e) => setCxcForm({ ...cxcForm, tipo: e.target.value as any })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    <option value="factura">Factura</option>
+                    <option value="nota_debito">Nota Débito</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Número *</label>
+                  <input type="text" value={cxcForm.numero} onChange={(e) => setCxcForm({ ...cxcForm, numero: e.target.value })} placeholder="FAC-001" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Fecha Emisión</label>
+                  <input type="date" value={cxcForm.fechaEmision} onChange={(e) => setCxcForm({ ...cxcForm, fechaEmision: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Fecha Vencimiento</label>
+                  <input type="date" value={cxcForm.fechaVencimiento} onChange={(e) => setCxcForm({ ...cxcForm, fechaVencimiento: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Subtotal *</label>
+                  <input type="number" value={cxcForm.subtotal} onChange={(e) => setCxcForm({ ...cxcForm, subtotal: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Impuestos</label>
+                  <input type="number" value={cxcForm.impuestos} onChange={(e) => setCxcForm({ ...cxcForm, impuestos: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
+                </div>
+              </div>
+              <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Total:</span>
+                  <span className="text-xl font-bold text-cyan-400">{formatCurrency(cxcForm.subtotal + cxcForm.impuestos, monedaActiva)}</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Notas</label>
+                <textarea value={cxcForm.notas} onChange={(e) => setCxcForm({ ...cxcForm, notas: e.target.value })} rows={2} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={crearDocumentoCxC} disabled={procesando === 'cxc'} className="flex-1 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-xl">
+                {procesando === 'cxc' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Crear Documento'}
+              </button>
+              <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: NUEVO DOCUMENTO CxP */}
+      {modalType === 'nuevoCxP' && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-100">Nuevo Documento por Pagar</h3>
+              <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Proveedor *</label>
+                <select value={cxpForm.proveedorId} onChange={(e) => setCxpForm({ ...cxpForm, proveedorId: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                  <option value="">Seleccionar proveedor...</option>
+                  {proveedores.map(p => (<option key={p.id} value={p.id}>{p.codigo} - {p.nombre}</option>))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Tipo</label>
+                  <select value={cxpForm.tipo} onChange={(e) => setCxpForm({ ...cxpForm, tipo: e.target.value as any })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    <option value="factura">Factura</option>
+                    <option value="nota_debito">Nota Débito</option>
+                    <option value="gasto">Gasto</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Número *</label>
+                  <input type="text" value={cxpForm.numero} onChange={(e) => setCxpForm({ ...cxpForm, numero: e.target.value })} placeholder="FAC-PROV-001" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Fecha Emisión</label>
+                  <input type="date" value={cxpForm.fechaEmision} onChange={(e) => setCxpForm({ ...cxpForm, fechaEmision: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Fecha Vencimiento</label>
+                  <input type="date" value={cxpForm.fechaVencimiento} onChange={(e) => setCxpForm({ ...cxpForm, fechaVencimiento: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Subtotal *</label>
+                  <input type="number" value={cxpForm.subtotal} onChange={(e) => setCxpForm({ ...cxpForm, subtotal: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Impuestos</label>
+                  <input type="number" value={cxpForm.impuestos} onChange={(e) => setCxpForm({ ...cxpForm, impuestos: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
+                </div>
+              </div>
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Total:</span>
+                  <span className="text-xl font-bold text-amber-400">{formatCurrency(cxpForm.subtotal + cxpForm.impuestos, monedaActiva)}</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Notas</label>
+                <textarea value={cxpForm.notas} onChange={(e) => setCxpForm({ ...cxpForm, notas: e.target.value })} rows={2} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={crearDocumentoCxP} disabled={procesando === 'cxp'} className="flex-1 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-xl">
+                {procesando === 'cxp' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Crear Documento'}
               </button>
               <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
             </div>

@@ -102,6 +102,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'ventas', label: t('nav.sales'), icon: TrendingUp },
         { id: 'finanzas', label: 'Finanzas', icon: Landmark },
         { id: 'proyectos', label: 'Gestión de Proyectos', icon: Kanban },
+        { id: 'taller', label: 'Taller', icon: Wrench },
         // Almacenes removido de aquí - ahora está dentro de Stock
       ]
     },

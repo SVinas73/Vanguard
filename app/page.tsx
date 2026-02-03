@@ -9,6 +9,7 @@ import { StockDashboard } from '@/components/stock';
 import { ImportCSV } from '@/components/import';
 import { IntegracionesDashboard } from '@/components/integraciones';
 import { ProductImage } from '@/components/productos';
+import TallerEnterprise from '@/components/taller';
 import { VentasDashboard } from '@/components/ventas';
 import { ComprasDashboard } from '@/components/compras';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
@@ -531,6 +532,12 @@ export default function HomePage() {
         {activeTab === 'finanzas' && (
           <div className="w-full">
             <FinanzasEnterprise />
+          </div>
+        )}
+
+        {activeTab === 'taller' && (
+          <div className="w-full">
+            <TallerEnterprise />
           </div>
         )}
 
