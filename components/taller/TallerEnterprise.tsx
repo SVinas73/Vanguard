@@ -2101,6 +2101,26 @@ export default function TallerEnterprise() {
                   </div>
                 )}
 
+                {/* Aviso para crear cotización */}
+                {ordenSeleccionada.estado === 'cotizacion' && !ordenSeleccionada.cotizacion && (
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                    <h4 className="text-sm font-semibold text-amber-400 mb-2 flex items-center gap-2">
+                      <Receipt className="h-4 w-4" />
+                      Pendiente crear cotización
+                    </h4>
+                    <p className="text-sm text-slate-400 mb-3">
+                      El diagnóstico está listo. Ahora debe crear la cotización con los repuestos y mano de obra.
+                    </p>
+                    <button
+                      onClick={() => setModalType('cotizacion')}
+                      className="w-full px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-sm flex items-center justify-center gap-2"
+                    >
+                      <Receipt className="h-4 w-4" />
+                      Crear Cotización
+                    </button>
+                  </div>
+                )}
+
                 {/* Cotización */}
                 {ordenSeleccionada.cotizacion && (
                   <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
@@ -2259,7 +2279,7 @@ export default function TallerEnterprise() {
                     )}
 
                     {/* Crear cotización */}
-                    {ordenSeleccionada.estado === 'diagnostico' && !ordenSeleccionada.esGarantia && ordenSeleccionada.diagnostico && (
+                    {(ordenSeleccionada.estado === 'diagnostico' || (ordenSeleccionada.estado === 'cotizacion' && !ordenSeleccionada.cotizacion)) && !ordenSeleccionada.esGarantia && ordenSeleccionada.diagnostico && (
                       <button
                         onClick={() => setModalType('cotizacion')}
                         className="w-full px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-sm flex items-center justify-center gap-2"
