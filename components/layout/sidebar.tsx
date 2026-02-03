@@ -14,6 +14,7 @@ import {
   TrendingUp,
   FileText,
   DollarSign,
+  CircleDollarSign,
   Shield,
   Plug,
   ChevronLeft,
@@ -103,6 +104,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'finanzas', label: 'Finanzas', icon: Landmark },
         { id: 'proyectos', label: 'Gestión de Proyectos', icon: Kanban },
         { id: 'taller', label: 'Taller', icon: Wrench },
+        { id: 'costos', label: 'Costos', icon: CircleDollarSign },
         // Almacenes removido de aquí - ahora está dentro de Stock
       ]
     },

@@ -14,7 +14,7 @@ import { VentasDashboard } from '@/components/ventas';
 import { ComprasDashboard } from '@/components/compras';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { AuditLogPanel } from '@/components/audit';
-import { CostAnalysisDashboard } from '@/components/costs';
+import CostosEnterprise from '@/components/costos';
 import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
 import { ReportsEnterprise } from '@/components/reports';
@@ -558,8 +558,8 @@ export default function HomePage() {
 
         {/* ==================== COSTOS ==================== */}
         {activeTab === 'costos' && (
-          <div className="max-w-5xl mx-auto">
-            <CostAnalysisDashboard products={products} />
+          <div className="w-full">
+            <CostosEnterprise />
           </div>
         )}
 
