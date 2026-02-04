@@ -366,14 +366,19 @@ export default function CostosEnterprise() {
   };
 
   const loadProductos = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('productos')
       .select(`
         *,
         proveedor:proveedores(id, nombre)
       `)
-      .eq('activo', true)
+      .is('deleted_at', null)  // ← CAMBIO: usar deleted_at en vez de activo
       .order('codigo');
+
+    if (error) {
+      console.error('Error cargando productos:', error);
+      return;
+    }
 
     if (data) {
       const productosFormateados = data.map((p: any) => ({
@@ -385,14 +390,16 @@ export default function CostosEnterprise() {
         marca: p.marca,
         proveedor_id: p.proveedor_id,
         proveedor_nombre: p.proveedor?.nombre,
-        precio: parseFloat(p.precio_venta) || 0,
-        costo: parseFloat(p.costo) || 0,
-        costoPromedio: parseFloat(p.costo_promedio) || parseFloat(p.costo) || 0,
-        costoUltimaCompra: parseFloat(p.costo_ultima_compra) || parseFloat(p.costo) || 0,
-        costoReposicion: parseFloat(p.costo_reposicion) || parseFloat(p.costo) || 0,
-        stock: p.stock_actual || 0,
-        stockMinimo: p.stock_minimo || 0,
-        activo: p.activo,
+        // ========= CAMPOS CORREGIDOS =========
+        precio: parseFloat(p.precio) || 0,                    // era: p.precio_venta
+        costo: parseFloat(p.costo_promedio) || 0,             // era: p.costo
+        costoPromedio: parseFloat(p.costo_promedio) || 0,
+        costoUltimaCompra: parseFloat(p.costo_ultima_compra || p.costo_promedio) || 0,
+        costoReposicion: parseFloat(p.costo_reposicion || p.costo_promedio) || 0,
+        stock: p.stock ?? 0,                                   // era: p.stock_actual
+        stockMinimo: p.stock_minimo ?? 0,
+        activo: p.deleted_at === null,                        // era: p.activo
+        // =====================================
         costoFlete: parseFloat(p.costo_flete) || 0,
         costoSeguro: parseFloat(p.costo_seguro) || 0,
         costoAduanas: parseFloat(p.costo_aduanas) || 0,
