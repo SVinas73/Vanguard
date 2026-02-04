@@ -426,7 +426,7 @@ export default function HomePage() {
       />
 
       <main className="ml-[260px] transition-all duration-300 min-h-screen">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="w-full px-6 py-6">
 
         {/* ==================== DASHBOARD ==================== */}
         {activeTab === 'dashboard' && (
@@ -614,10 +614,8 @@ export default function HomePage() {
 
         
         {activeTab === 'proyectos' && (
-          <div className="-mx-6 -my-6">
-            <div className="px-6 py-6">
-              <ProyectosDashboard />
-            </div>
+          <div className="w-full">
+            <ProyectosDashboard />
           </div>
         )}
 

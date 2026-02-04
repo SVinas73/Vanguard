@@ -917,7 +917,7 @@ export function ProyectosDashboard() {
     switch (vistaActual) {
       case 'kanban':
         return (
-          <div className="overflow-x-auto pb-4">
+          <div className="w-full overflow-x-auto">
             <KanbanBoard
               columnas={columnas}
               tareas={tareasFiltradas}
