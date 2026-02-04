@@ -917,19 +917,21 @@ export function ProyectosDashboard() {
     switch (vistaActual) {
       case 'kanban':
         return (
-          <KanbanBoard
-            columnas={columnas}
-            tareas={tareasFiltradas}
-            onTareaClick={handleEditarTarea}
-            onTareaMover={handleMoverTarea}
-            onAddTarea={handleNuevaTarea}
-            onUpdateColumna={handleUpdateColumna}
-            onDeleteColumna={handleDeleteColumna}
-            onMoveColumna={handleMoveColumna}
-            onDuplicateTarea={handleDuplicateTarea}
-            onDeleteTarea={handleDeleteTarea}
-            onAddColumna={() => setShowColumnaModal(true)}
-          />
+          <div className="overflow-x-auto pb-4">
+            <KanbanBoard
+              columnas={columnas}
+              tareas={tareasFiltradas}
+              onTareaClick={handleEditarTarea}
+              onTareaMover={handleMoverTarea}
+              onAddTarea={handleNuevaTarea}
+              onUpdateColumna={handleUpdateColumna}
+              onDeleteColumna={handleDeleteColumna}
+              onMoveColumna={handleMoveColumna}
+              onDuplicateTarea={handleDuplicateTarea}
+              onDeleteTarea={handleDeleteTarea}
+              onAddColumna={() => setShowColumnaModal(true)}
+            />
+          </div>
         );
 
       case 'lista':
