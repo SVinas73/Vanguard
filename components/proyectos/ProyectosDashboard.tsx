@@ -603,10 +603,13 @@ export function ProyectosDashboard() {
   };
 
   const handleDeleteTarea = async (tareaId: string) => {
-    if (!proyectoActual) return;
+    if (!proyectoActual || !user?.email) return;
 
     const confirmDelete = window.confirm('¿Estás seguro de eliminar esta tarea?');
     if (!confirmDelete) return;
+
+    // Obtener datos de la tarea antes de eliminar (para el log)
+    const tareaAEliminar = tareas.find(t => t.id === tareaId);
 
     const { error } = await supabase
       .from('proyecto_tareas')
@@ -617,6 +620,17 @@ export function ProyectosDashboard() {
       console.error('Error eliminando tarea:', error);
       alert('Error al eliminar tarea');
     } else {
+      // Registrar actividad manualmente
+      if (tareaAEliminar) {
+        await supabase.from('proyecto_actividades').insert({
+          proyecto_id: proyectoActual.id,
+          usuario_email: user.email,  // ← ESTO FALTABA
+          tipo: 'tarea_eliminada',
+          descripcion: `Eliminó la tarea "${tareaAEliminar.titulo}"`,
+          tarea_id: null,  // Ya no existe
+        });
+      }
+      
       setTareaSeleccionada(null);
       fetchProyectoData(proyectoActual.id);
     }
@@ -1005,11 +1019,11 @@ export function ProyectosDashboard() {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full w-full">
       {/* ============================================
           CONTENIDO PRINCIPAL
           ============================================ */}
-      <div className={cn('flex-1 space-y-6 transition-all', showSidebar ? 'mr-80' : '')}>
+      <div className={cn('flex-1 space-y-6 transition-all w-full', showSidebar ? 'pr-80' : '')}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
