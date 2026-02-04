@@ -1575,6 +1575,145 @@ export default function CostosEnterprise() {
         </div>
       )}
 
+      {/* ==================== PRODUCTOS ==================== */}
+      {tabActiva === 'productos' && (
+        <div className="space-y-4">
+          {/* Filtros */}
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Buscar código o descripción..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 w-full"
+              />
+            </div>
+            <select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}
+              className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100">
+              <option value="todas">Todas las categorías</option>
+              {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={filtroABC} onChange={(e) => setFiltroABC(e.target.value as any)}
+              className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100">
+              <option value="todos">Todas las clases</option>
+              <option value="A">Clase A</option>
+              <option value="B">Clase B</option>
+              <option value="C">Clase C</option>
+            </select>
+            <select value={ordenarPor} onChange={(e) => setOrdenarPor(e.target.value as any)}
+              className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100">
+              <option value="valor">Mayor valor</option>
+              <option value="margen">Menor margen</option>
+              <option value="stock">Mayor stock</option>
+              <option value="codigo">Código</option>
+            </select>
+            <div className="flex gap-1 ml-auto">
+              {(['tabla', 'alertas'] as const).map(v => (
+                <button key={v} onClick={() => setVistaProductos(v)}
+                  className={`px-3 py-2 rounded-lg text-sm ${vistaProductos === v ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                  {v === 'alertas' ? `Alertas (${metricas.alertasMargen.length})` : 'Tabla'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Vista Tabla */}
+          {vistaProductos === 'tabla' && (
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-800/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Código</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Descripción</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Costo</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Precio</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Margen</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Stock</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Valor</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">ABC</th>
+                      <th className="px-4 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/50">
+                    {productosFiltrados.slice(0, 100).map(p => (
+                      <tr key={p.id} className="hover:bg-slate-800/30 cursor-pointer" onClick={() => { setProductoSeleccionado(p); setModalType('detalle_producto'); }}>
+                        <td className="px-4 py-3 font-mono text-sm text-slate-200">{p.codigo}</td>
+                        <td className="px-4 py-3 text-sm text-slate-300 truncate max-w-[200px]">{p.descripcion}</td>
+                        <td className="px-4 py-3 text-right font-mono text-sm text-slate-400">{formatCurrency(p.costoPromedio || p.costo)}</td>
+                        <td className="px-4 py-3 text-right font-mono text-sm text-slate-200">{formatCurrency(p.precio)}</td>
+                        <td className="px-4 py-3 text-right">
+                          <span className={`font-mono text-sm ${(p.margenPorcentaje || 0) < 0 ? 'text-red-400' : (p.margenPorcentaje || 0) < 10 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                            {formatPercent(p.margenPorcentaje || 0)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-sm text-slate-300">{p.stock}</td>
+                        <td className="px-4 py-3 text-right font-mono text-sm text-cyan-400">{formatCurrency(p.valorStock || 0)}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${CLASIFICACION_ABC[p.clasificacionABC || 'C'].bg} ${CLASIFICACION_ABC[p.clasificacionABC || 'C'].color}`}>
+                            {p.clasificacionABC}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button className="p-1.5 hover:bg-slate-700 rounded-lg">
+                            <Eye className="h-4 w-4 text-slate-400" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-3 bg-slate-800/30 text-sm text-slate-500">
+                Mostrando {Math.min(100, productosFiltrados.length)} de {productosFiltrados.length} productos
+              </div>
+            </div>
+          )}
+
+          {/* Vista Alertas */}
+          {vistaProductos === 'alertas' && (
+            <div className="space-y-4">
+              {(['negativo', 'critico', 'bajo'] as const).map(tipo => {
+                const alertas = metricas.alertasMargen.filter(a => a.tipo === tipo);
+                if (alertas.length === 0) return null;
+                const config = ALERTA_MARGEN[tipo];
+                return (
+                  <div key={tipo} className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
+                    <div className={`p-3 ${config.bg} flex justify-between items-center`}>
+                      <span className={`font-medium ${config.color}`}>{config.label}</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${config.bg} ${config.color}`}>{alertas.length}</span>
+                    </div>
+                    <div className="divide-y divide-slate-800/50">
+                      {alertas.slice(0, 20).map(a => (
+                        <div key={a.producto.id} className="p-3 flex justify-between items-center hover:bg-slate-800/30 cursor-pointer"
+                          onClick={() => { setProductoSeleccionado(a.producto); setModalType('detalle_producto'); }}>
+                          <div>
+                            <div className="font-mono text-sm text-slate-200">{a.producto.codigo}</div>
+                            <div className="text-xs text-slate-500 truncate max-w-[300px]">{a.producto.descripcion}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className={`font-mono font-bold ${config.color}`}>{formatPercent(a.margenPorcentaje)}</div>
+                            <div className="text-xs text-slate-500">C: {formatCurrency(a.producto.costoPromedio || a.producto.costo)} → P: {formatCurrency(a.producto.precio)}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              {metricas.alertasMargen.length === 0 && (
+                <div className="text-center py-12 text-slate-500">
+                  <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
+                  <p>Todos los productos tienen márgenes saludables</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ==================== LOTES FIFO ==================== */}
       {tabActiva === 'lotes' && (
         <div className="space-y-6">

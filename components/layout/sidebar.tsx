@@ -113,7 +113,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       items: [
         { id: 'analytics', label: t('nav.analytics'), icon: Brain, badge: 'IA' },
         { id: 'reportes', label: t('nav.reports'), icon: FileText, permission: 'canViewReports' },
-        { id: 'costos', label: t('nav.costs'), icon: DollarSign, permission: 'canViewCosts' },
+        
       ]
     },
     {
