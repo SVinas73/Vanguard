@@ -368,11 +368,8 @@ export default function CostosEnterprise() {
   const loadProductos = async () => {
     const { data, error } = await supabase
       .from('productos')
-      .select(`
-        *,
-        proveedor:proveedores(id, nombre)
-      `)
-      .is('deleted_at', null)  // ← CAMBIO: usar deleted_at en vez de activo
+      .select('*')
+      .is('deleted_at', null)
       .order('codigo');
 
     if (error) {
@@ -381,47 +378,49 @@ export default function CostosEnterprise() {
     }
 
     if (data) {
-      const productosFormateados = data.map((p: any) => ({
-        id: p.id,
-        codigo: p.codigo,
-        descripcion: p.descripcion,
-        categoria: p.categoria,
-        subcategoria: p.subcategoria,
-        marca: p.marca,
-        proveedor_id: p.proveedor_id,
-        proveedor_nombre: p.proveedor?.nombre,
-        // ========= CAMPOS CORREGIDOS =========
-        precio: parseFloat(p.precio) || 0,                    // era: p.precio_venta
-        costo: parseFloat(p.costo_promedio) || 0,             // era: p.costo
-        costoPromedio: parseFloat(p.costo_promedio) || 0,
-        costoUltimaCompra: parseFloat(p.costo_ultima_compra || p.costo_promedio) || 0,
-        costoReposicion: parseFloat(p.costo_reposicion || p.costo_promedio) || 0,
-        stock: p.stock ?? 0,                                   // era: p.stock_actual
-        stockMinimo: p.stock_minimo ?? 0,
-        activo: p.deleted_at === null,                        // era: p.activo
-        // =====================================
-        costoFlete: parseFloat(p.costo_flete) || 0,
-        costoSeguro: parseFloat(p.costo_seguro) || 0,
-        costoAduanas: parseFloat(p.costo_aduanas) || 0,
-        comisionVenta: parseFloat(p.comision_venta) || 0,
-      }));
-
-      // Calcular márgenes y clasificar ABC
-      const productosConMargen = productosFormateados.map(p => {
-        const costoTotal = calcularCostoTotal(p);
-        const margen = calcularMargen(p.precio, costoTotal);
-        const margenPorcentaje = calcularMargenPorcentaje(p.precio, costoTotal);
-        const valorStock = p.stock * (p.costoPromedio || p.costo || 0);
+      const productosFormateados: Producto[] = data.map((p: any) => {
+        const costoBase = parseFloat(p.costo_promedio) || 0;
+        const precio = parseFloat(p.precio) || 0;
+        const stock = p.stock ?? 0;
+        const costoFlete = parseFloat(p.costo_flete) || 0;
+        const costoSeguro = parseFloat(p.costo_seguro) || 0;
+        const costoAduanas = parseFloat(p.costo_aduanas) || 0;
+        
+        // Calcular costo total y márgenes inline
+        const costoTotal = costoBase + costoFlete + costoSeguro + costoAduanas;
+        const margen = precio - costoTotal;
+        const margenPorcentaje = precio > 0 ? ((precio - costoTotal) / precio) * 100 : 0;
+        const valorStock = stock * costoBase;
 
         return {
-          ...p,
+          id: p.id,
+          codigo: p.codigo,
+          descripcion: p.descripcion,
+          categoria: p.categoria,
+          subcategoria: p.subcategoria,
+          marca: p.marca,
+          proveedor_id: undefined,
+          proveedor_nombre: undefined,
+          precio,
+          costo: costoBase,
+          costoPromedio: costoBase,
+          costoUltimaCompra: parseFloat(p.costo_ultima_compra || p.costo_promedio) || 0,
+          costoReposicion: parseFloat(p.costo_reposicion || p.costo_promedio) || 0,
+          stock,
+          stockMinimo: p.stock_minimo ?? 0,
+          activo: p.deleted_at === null,
+          costoFlete,
+          costoSeguro,
+          costoAduanas,
+          comisionVenta: parseFloat(p.comision_venta) || 0,
           margen,
           margenPorcentaje,
           valorStock,
         };
       });
 
-      const productosClasificados = clasificarABC(productosConMargen);
+      // Clasificar ABC
+      const productosClasificados = clasificarABC(productosFormateados);
       setProductos(productosClasificados);
     }
   };
