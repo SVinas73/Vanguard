@@ -2,6 +2,8 @@
 
 import { ComercialDashboard, ComprasEnterprisePanel, VentasEnterprisePanel } from '@/components/comercial';
 
+
+import { QMSDashboard } from '@/components/qms';
 import { ProyectosDashboard } from '@/components/proyectos';
 import { WelcomeHeader, StatsGrid } from '@/components/dashboard';
 import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
@@ -538,6 +540,12 @@ export default function HomePage() {
         {activeTab === 'taller' && (
           <div className="w-full">
             <TallerEnterprise />
+          </div>
+        )}
+
+        {activeTab === 'qms' && (
+          <div className="w-full">
+            <QMSDashboard />
           </div>
         )}
 
