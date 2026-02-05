@@ -667,476 +667,485 @@ function DashboardView({
       </div>
 
       {/* Instrumentos próximos a calibrar */}
-      {metricas.instrumentosPorCalibrar > 0 && (
-        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-          <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-            <Thermometer className="h-5 w-5 text-cyan-400" />
-            Instrumentos Próximos a Calibrar
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {instrumentos.filter(i => i.dias_para_calibracion !== null && i.dias_para_calibracion <= 30).slice(0, 8).map(inst => (
-              <div key={inst.id} className={`p-3 rounded-lg ${
-                inst.dias_para_calibracion! < 0 ? 'bg-red-500/10 border border-red-500/30' :
-                inst.dias_para_calibracion! <= 7 ? 'bg-amber-500/10 border border-amber-500/30' :
-                'bg-slate-800/30 border border-slate-700/30'
-              }`}>
-                <div className="font-mono text-sm text-slate-200">{inst.codigo}</div>
-                <div className="text-xs text-slate-400 truncate">{inst.nombre}</div>
-                <div className={`text-xs mt-1 font-medium ${
-                  inst.dias_para_calibracion! < 0 ? 'text-red-400' :
-                  inst.dias_para_calibracion! <= 7 ? 'text-amber-400' : 'text-slate-400'
-                }`}>
-                  {inst.dias_para_calibracion! < 0 
-                    ? `Vencido hace ${Math.abs(inst.dias_para_calibracion!)} días`
-                    : `${inst.dias_para_calibracion} días restantes`
-                  }
+            {metricas.instrumentosPorCalibrar > 0 && (
+              <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+                <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                  <Thermometer className="h-5 w-5 text-cyan-400" />
+                  Instrumentos Próximos a Calibrar
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {instrumentos
+                    .filter(i => i.dias_para_calibracion !== null && i.dias_para_calibracion <= 30)
+                    .slice(0, 8)
+                    .map(inst => {
+                      const dias = inst.dias_para_calibracion as number;
+                      return (
+                        <div key={inst.id} className={`p-3 rounded-lg ${
+                          dias < 0 ? 'bg-red-500/10 border border-red-500/30' :
+                          dias <= 7 ? 'bg-amber-500/10 border border-amber-500/30' :
+                          'bg-slate-800/30 border border-slate-700/30'
+                        }`}>
+                          <div className="font-mono text-sm text-slate-200">{inst.codigo}</div>
+                          <div className="text-xs text-slate-400 truncate">{inst.nombre}</div>
+                          <div className={`text-xs mt-1 font-medium ${
+                            dias < 0 ? 'text-red-400' :
+                            dias <= 7 ? 'text-amber-400' : 'text-slate-400'
+                          }`}>
+                            {dias < 0 
+                              ? `Vencido hace ${Math.abs(dias)} días`
+                              : `${dias} días restantes`
+                            }
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
-            ))}
+            )}
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
+        );
+      }
 
-// Vista de Inspecciones
-function InspeccionesView({ inspecciones, searchTerm, setSearchTerm, filtroEstado, setFiltroEstado }: {
-  inspecciones: Inspeccion[];
-  searchTerm: string;
-  setSearchTerm: (v: string) => void;
-  filtroEstado: string;
-  setFiltroEstado: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-3 items-center justify-between">
-        <div className="flex gap-3 items-center">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-            <input
-              type="text"
-              placeholder="Buscar..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 w-64"
-            />
-          </div>
-          <select 
-            value={filtroEstado} 
-            onChange={(e) => setFiltroEstado(e.target.value)}
-            className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
-          >
-            <option value="todos">Todos</option>
-            <option value="pendiente">Pendientes</option>
-            <option value="aprobado">Aprobados</option>
-            <option value="rechazado">Rechazados</option>
-          </select>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium">
-          <Plus className="h-4 w-4" />
-          Nueva Inspección
-        </button>
-      </div>
+      // Vista de Inspecciones
+      function InspeccionesView({ inspecciones, searchTerm, setSearchTerm, filtroEstado, setFiltroEstado }: {
+        inspecciones: Inspeccion[];
+        searchTerm: string;
+        setSearchTerm: (v: string) => void;
+        filtroEstado: string;
+        setFiltroEstado: (v: string) => void;
+      }) {
+        return (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3 items-center justify-between">
+              <div className="flex gap-3 items-center">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Buscar..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 w-64"
+                  />
+                </div>
+                <select 
+                  value={filtroEstado} 
+                  onChange={(e) => setFiltroEstado(e.target.value)}
+                  className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="pendiente">Pendientes</option>
+                  <option value="aprobado">Aprobados</option>
+                  <option value="rechazado">Rechazados</option>
+                </select>
+              </div>
+              <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium">
+                <Plus className="h-4 w-4" />
+                Nueva Inspección
+              </button>
+            </div>
 
-      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-800/50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Número</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Tipo</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Producto</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Lote</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Cantidad</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Estado</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Fecha</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/50">
-              {inspecciones
-                .filter(i => filtroEstado === 'todos' || i.estado === filtroEstado)
-                .filter(i => !searchTerm || 
-                  i.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  i.producto_codigo?.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-                .map(insp => {
-                  const config = ESTADO_INSPECCION_CONFIG[insp.estado];
-                  return (
-                    <tr key={insp.id} className="hover:bg-slate-800/30">
-                      <td className="px-4 py-3 font-mono text-sm text-emerald-400">{insp.numero}</td>
-                      <td className="px-4 py-3 text-sm text-slate-300 capitalize">{insp.tipo}</td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm text-slate-200">{insp.producto_codigo}</div>
-                        <div className="text-xs text-slate-500 truncate max-w-[200px]">{insp.producto_descripcion}</div>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-sm text-slate-400">{insp.lote_numero || '-'}</td>
-                      <td className="px-4 py-3 text-right font-mono text-sm text-slate-300">{insp.cantidad_recibida}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`px-2 py-1 rounded-full text-xs ${config?.bg} ${config?.color}`}>
-                          {config?.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-400">{formatDate(insp.fecha_inspeccion)}</td>
-                      <td className="px-4 py-3">
-                        <button className="p-1.5 hover:bg-slate-700 rounded-lg">
-                          <Eye className="h-4 w-4 text-slate-400" />
-                        </button>
-                      </td>
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-800/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Número</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Tipo</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Producto</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Lote</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Cantidad</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Estado</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Fecha</th>
+                      <th className="px-4 py-3"></th>
                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/50">
+                    {inspecciones
+                      .filter(i => filtroEstado === 'todos' || i.estado === filtroEstado)
+                      .filter(i => !searchTerm || 
+                        i.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        i.producto_codigo?.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map(insp => {
+                        const config = ESTADO_INSPECCION_CONFIG[insp.estado];
+                        return (
+                          <tr key={insp.id} className="hover:bg-slate-800/30">
+                            <td className="px-4 py-3 font-mono text-sm text-emerald-400">{insp.numero}</td>
+                            <td className="px-4 py-3 text-sm text-slate-300 capitalize">{insp.tipo}</td>
+                            <td className="px-4 py-3">
+                              <div className="text-sm text-slate-200">{insp.producto_codigo}</div>
+                              <div className="text-xs text-slate-500 truncate max-w-[200px]">{insp.producto_descripcion}</div>
+                            </td>
+                            <td className="px-4 py-3 font-mono text-sm text-slate-400">{insp.lote_numero || '-'}</td>
+                            <td className="px-4 py-3 text-right font-mono text-sm text-slate-300">{insp.cantidad_recibida}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`px-2 py-1 rounded-full text-xs ${config?.bg} ${config?.color}`}>
+                                {config?.label}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-400">{formatDate(insp.fecha_inspeccion)}</td>
+                            <td className="px-4 py-3">
+                              <button className="p-1.5 hover:bg-slate-700 rounded-lg">
+                                <Eye className="h-4 w-4 text-slate-400" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+              {inspecciones.length === 0 && (
+                <div className="p-12 text-center text-slate-500">
+                  <ClipboardCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No hay inspecciones</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      // Vista de NCRs
+      function NCRsView({ ncrs, searchTerm, setSearchTerm, filtroEstado, setFiltroEstado }: {
+        ncrs: NoConformidad[];
+        searchTerm: string;
+        setSearchTerm: (v: string) => void;
+        filtroEstado: string;
+        setFiltroEstado: (v: string) => void;
+      }) {
+        return (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3 items-center justify-between">
+              <div className="flex gap-3 items-center">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Buscar..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 w-64"
+                  />
+                </div>
+                <select 
+                  value={filtroEstado} 
+                  onChange={(e) => setFiltroEstado(e.target.value)}
+                  className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="abierta">Abiertas</option>
+                  <option value="en_analisis">En Análisis</option>
+                  <option value="cerrada">Cerradas</option>
+                </select>
+              </div>
+              <button className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-medium">
+                <Plus className="h-4 w-4" />
+                Nueva NCR
+              </button>
+            </div>
+
+            <div className="grid gap-4">
+              {ncrs
+                .filter(n => filtroEstado === 'todos' || n.estado === filtroEstado)
+                .filter(n => !searchTerm || n.numero?.toLowerCase().includes(searchTerm.toLowerCase()) || n.titulo?.toLowerCase().includes(searchTerm.toLowerCase()))
+                .map(ncr => {
+                  const config = SEVERIDAD_NCR_CONFIG[ncr.severidad];
+                  const diasRestantes = ncr.fecha_objetivo ? getDiasRestantes(ncr.fecha_objetivo) : null;
+                  
+                  return (
+                    <div key={ncr.id} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 hover:border-slate-700 cursor-pointer">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="font-mono text-sm text-orange-400">{ncr.numero}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs ${config?.bg} ${config?.color}`}>
+                              {config?.label}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-300 capitalize">
+                              {ncr.estado.replace('_', ' ')}
+                            </span>
+                          </div>
+                          <h4 className="text-slate-200 font-medium mb-1">{ncr.titulo}</h4>
+                          <p className="text-sm text-slate-400 line-clamp-2">{ncr.descripcion}</p>
+                          <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
+                            {ncr.producto_codigo && (
+                              <span className="flex items-center gap-1">
+                                <Package className="h-3 w-3" />
+                                {ncr.producto_codigo}
+                              </span>
+                            )}
+                            {ncr.responsable && (
+                              <span className="flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                {ncr.responsable}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatDate(ncr.fecha_deteccion)}
+                            </span>
+                            {diasRestantes !== null && (
+                              <span className={`flex items-center gap-1 ${diasRestantes < 0 ? 'text-red-400' : diasRestantes <= 3 ? 'text-amber-400' : ''}`}>
+                                <Clock className="h-3 w-3" />
+                                {diasRestantes < 0 ? `Vencida hace ${Math.abs(diasRestantes)}d` : `${diasRestantes}d`}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <button className="p-2 hover:bg-slate-800 rounded-lg">
+                          <MoreHorizontal className="h-5 w-5 text-slate-400" />
+                        </button>
+                      </div>
+                    </div>
                   );
                 })}
-            </tbody>
-          </table>
-        </div>
-        {inspecciones.length === 0 && (
-          <div className="p-12 text-center text-slate-500">
-            <ClipboardCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No hay inspecciones</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Vista de NCRs
-function NCRsView({ ncrs, searchTerm, setSearchTerm, filtroEstado, setFiltroEstado }: {
-  ncrs: NoConformidad[];
-  searchTerm: string;
-  setSearchTerm: (v: string) => void;
-  filtroEstado: string;
-  setFiltroEstado: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-3 items-center justify-between">
-        <div className="flex gap-3 items-center">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-            <input
-              type="text"
-              placeholder="Buscar..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 w-64"
-            />
-          </div>
-          <select 
-            value={filtroEstado} 
-            onChange={(e) => setFiltroEstado(e.target.value)}
-            className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
-          >
-            <option value="todos">Todos</option>
-            <option value="abierta">Abiertas</option>
-            <option value="en_analisis">En Análisis</option>
-            <option value="cerrada">Cerradas</option>
-          </select>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-medium">
-          <Plus className="h-4 w-4" />
-          Nueva NCR
-        </button>
-      </div>
-
-      <div className="grid gap-4">
-        {ncrs
-          .filter(n => filtroEstado === 'todos' || n.estado === filtroEstado)
-          .filter(n => !searchTerm || n.numero?.toLowerCase().includes(searchTerm.toLowerCase()) || n.titulo?.toLowerCase().includes(searchTerm.toLowerCase()))
-          .map(ncr => {
-            const config = SEVERIDAD_NCR_CONFIG[ncr.severidad];
-            const diasRestantes = ncr.fecha_objetivo ? getDiasRestantes(ncr.fecha_objetivo) : null;
-            
-            return (
-              <div key={ncr.id} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 hover:border-slate-700 cursor-pointer">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="font-mono text-sm text-orange-400">{ncr.numero}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${config?.bg} ${config?.color}`}>
-                        {config?.label}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-300 capitalize">
-                        {ncr.estado.replace('_', ' ')}
-                      </span>
-                    </div>
-                    <h4 className="text-slate-200 font-medium mb-1">{ncr.titulo}</h4>
-                    <p className="text-sm text-slate-400 line-clamp-2">{ncr.descripcion}</p>
-                    <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
-                      {ncr.producto_codigo && (
-                        <span className="flex items-center gap-1">
-                          <Package className="h-3 w-3" />
-                          {ncr.producto_codigo}
-                        </span>
-                      )}
-                      {ncr.responsable && (
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {ncr.responsable}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(ncr.fecha_deteccion)}
-                      </span>
-                      {diasRestantes !== null && (
-                        <span className={`flex items-center gap-1 ${diasRestantes < 0 ? 'text-red-400' : diasRestantes <= 3 ? 'text-amber-400' : ''}`}>
-                          <Clock className="h-3 w-3" />
-                          {diasRestantes < 0 ? `Vencida hace ${Math.abs(diasRestantes)}d` : `${diasRestantes}d`}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button className="p-2 hover:bg-slate-800 rounded-lg">
-                    <MoreHorizontal className="h-5 w-5 text-slate-400" />
-                  </button>
+              
+              {ncrs.length === 0 && (
+                <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center text-slate-500">
+                  <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
+                  <p>No hay NCRs</p>
                 </div>
-              </div>
-            );
-          })}
-        
-        {ncrs.length === 0 && (
-          <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center text-slate-500">
-            <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
-            <p>No hay NCRs</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Vista de CAPAs
-function CAPAsView({ capas, searchTerm, setSearchTerm }: {
-  capas: AccionCorrectiva[];
-  searchTerm: string;
-  setSearchTerm: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-3 items-center justify-between">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-          <input
-            type="text"
-            placeholder="Buscar..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 w-64"
-          />
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-medium">
-          <Plus className="h-4 w-4" />
-          Nueva CAPA
-        </button>
-      </div>
-
-      <div className="grid gap-4">
-        {capas.map(capa => {
-          const diasRestantes = capa.fecha_objetivo ? getDiasRestantes(capa.fecha_objetivo) : null;
-          
-          return (
-            <div key={capa.id} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 hover:border-slate-700 cursor-pointer">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="font-mono text-sm text-purple-400">{capa.numero}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${
-                      capa.tipo === 'correctiva' ? 'bg-red-500/20 text-red-400' :
-                      capa.tipo === 'preventiva' ? 'bg-blue-500/20 text-blue-400' :
-                      'bg-emerald-500/20 text-emerald-400'
-                    }`}>
-                      {capa.tipo.charAt(0).toUpperCase() + capa.tipo.slice(1)}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-300 capitalize">
-                      {capa.estado.replace('_', ' ')}
-                    </span>
-                  </div>
-                  <h4 className="text-slate-200 font-medium mb-2">{capa.titulo}</h4>
-                  
-                  <div className="mb-3">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-slate-400">Progreso</span>
-                      <span className="text-slate-300">{capa.porcentaje_avance}%</span>
-                    </div>
-                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full transition-all ${
-                          capa.porcentaje_avance >= 100 ? 'bg-emerald-500' :
-                          capa.porcentaje_avance >= 50 ? 'bg-purple-500' : 'bg-amber-500'
-                        }`}
-                        style={{ width: `${capa.porcentaje_avance}%` }}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-xs text-slate-500">
-                    {capa.responsable && (
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {capa.responsable}
-                      </span>
-                    )}
-                    {diasRestantes !== null && (
-                      <span className={`flex items-center gap-1 ${diasRestantes < 0 ? 'text-red-400' : diasRestantes <= 7 ? 'text-amber-400' : ''}`}>
-                        <Clock className="h-3 w-3" />
-                        {diasRestantes < 0 ? `Vencida hace ${Math.abs(diasRestantes)}d` : `${diasRestantes}d restantes`}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <button className="p-2 hover:bg-slate-800 rounded-lg">
-                  <MoreHorizontal className="h-5 w-5 text-slate-400" />
-                </button>
-              </div>
+              )}
             </div>
-          );
-        })}
-        
-        {capas.length === 0 && (
-          <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center text-slate-500">
-            <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No hay CAPAs</p>
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
+        );
+      }
 
-// Vista de Certificados
-function CertificadosView() {
-  return (
-    <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center text-slate-500">
-      <FileCheck className="h-16 w-16 mx-auto mb-4 opacity-50" />
-      <h3 className="text-lg font-medium text-slate-300 mb-2">Certificados de Calidad</h3>
-      <p className="max-w-md mx-auto mb-4">
-        Los certificados COA y COC se generan automáticamente basados en inspecciones aprobadas.
-      </p>
-      <button className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl">
-        Generar Certificado
-      </button>
-    </div>
-  );
-}
-
-// Vista de Recalls
-function RecallsView({ recalls }: { recalls: Recall[] }) {
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-slate-400">Gestión de recalls con trazabilidad completa.</p>
-        <button className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl font-medium">
-          <AlertOctagon className="h-4 w-4" />
-          Iniciar Recall
-        </button>
-      </div>
-
-      {recalls.length > 0 ? (
-        <div className="grid gap-4">
-          {recalls.map(recall => {
-            const claseConfig = CLASE_RECALL_CONFIG[recall.clase];
-            return (
-              <div key={recall.id} className={`bg-slate-900/50 border rounded-xl p-4 ${
-                recall.estado !== 'cerrado' ? 'border-red-500/30' : 'border-slate-800/50'
-              }`}>
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="font-mono text-sm text-red-400">{recall.numero}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-xs bg-red-500/20 ${claseConfig.color}`}>
-                    {claseConfig.label}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-300 capitalize">
-                    {recall.estado.replace('_', ' ')}
-                  </span>
-                </div>
-                <h4 className="text-slate-200 font-medium">{recall.producto_codigo} - {recall.producto_descripcion}</h4>
-                <p className="text-sm text-slate-400 mt-1">{recall.motivo}</p>
-                <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
-                  <span>{recall.cantidad_total_afectada} unidades afectadas</span>
-                  <span>{recall.porcentaje_recuperacion?.toFixed(1) || 0}% recuperado</span>
-                  <span>{formatDate(recall.fecha_inicio)}</span>
-                </div>
+      // Vista de CAPAs
+      function CAPAsView({ capas, searchTerm, setSearchTerm }: {
+        capas: AccionCorrectiva[];
+        searchTerm: string;
+        setSearchTerm: (v: string) => void;
+      }) {
+        return (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3 items-center justify-between">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 w-64"
+                />
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center text-slate-500">
-          <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
-          <p>No hay recalls activos</p>
-        </div>
-      )}
-    </div>
-  );
-}
+              <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-medium">
+                <Plus className="h-4 w-4" />
+                Nueva CAPA
+              </button>
+            </div>
 
-// Vista de Instrumentos
-function InstrumentosView({ instrumentos }: { instrumentos: Instrumento[] }) {
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-slate-400">Control de calibración de instrumentos de medición.</p>
-        <button className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-medium">
-          <Plus className="h-4 w-4" />
-          Nuevo Instrumento
-        </button>
-      </div>
-
-      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-800/50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Código</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Nombre</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Ubicación</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Próxima Calibración</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/50">
-              {instrumentos.map(inst => (
-                <tr key={inst.id} className="hover:bg-slate-800/30">
-                  <td className="px-4 py-3 font-mono text-sm text-cyan-400">{inst.codigo}</td>
-                  <td className="px-4 py-3 text-sm text-slate-200">{inst.nombre}</td>
-                  <td className="px-4 py-3 text-sm text-slate-400">{inst.ubicacion || '-'}</td>
-                  <td className="px-4 py-3">
-                    {inst.proxima_calibracion ? (
-                      <span className={`text-sm ${
-                        inst.dias_para_calibracion! < 0 ? 'text-red-400' :
-                        inst.dias_para_calibracion! <= 7 ? 'text-amber-400' : 'text-slate-300'
-                      }`}>
-                        {formatDate(inst.proxima_calibracion)}
-                        {inst.dias_para_calibracion !== null && (
-                          <span className="text-xs ml-2">
-                            ({inst.dias_para_calibracion < 0 ? 'Vencido' : `${inst.dias_para_calibracion}d`})
+            <div className="grid gap-4">
+              {capas.map(capa => {
+                const diasRestantes = capa.fecha_objetivo ? getDiasRestantes(capa.fecha_objetivo) : null;
+                
+                return (
+                  <div key={capa.id} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 hover:border-slate-700 cursor-pointer">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="font-mono text-sm text-purple-400">{capa.numero}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${
+                            capa.tipo === 'correctiva' ? 'bg-red-500/20 text-red-400' :
+                            capa.tipo === 'preventiva' ? 'bg-blue-500/20 text-blue-400' :
+                            'bg-emerald-500/20 text-emerald-400'
+                          }`}>
+                            {capa.tipo.charAt(0).toUpperCase() + capa.tipo.slice(1)}
                           </span>
-                        )}
-                      </span>
-                    ) : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      inst.estado === 'activo' ? 'bg-emerald-500/20 text-emerald-400' :
-                      inst.estado === 'en_calibracion' ? 'bg-amber-500/20 text-amber-400' :
-                      'bg-red-500/20 text-red-400'
-                    }`}>
-                      {inst.estado}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {instrumentos.length === 0 && (
-          <div className="p-12 text-center text-slate-500">
-            <Thermometer className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No hay instrumentos registrados</p>
+                          <span className="px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-300 capitalize">
+                            {capa.estado.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <h4 className="text-slate-200 font-medium mb-2">{capa.titulo}</h4>
+                        
+                        <div className="mb-3">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-slate-400">Progreso</span>
+                            <span className="text-slate-300">{capa.porcentaje_avance}%</span>
+                          </div>
+                          <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full transition-all ${
+                                capa.porcentaje_avance >= 100 ? 'bg-emerald-500' :
+                                capa.porcentaje_avance >= 50 ? 'bg-purple-500' : 'bg-amber-500'
+                              }`}
+                              style={{ width: `${capa.porcentaje_avance}%` }}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 text-xs text-slate-500">
+                          {capa.responsable && (
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {capa.responsable}
+                            </span>
+                          )}
+                          {diasRestantes !== null && (
+                            <span className={`flex items-center gap-1 ${diasRestantes < 0 ? 'text-red-400' : diasRestantes <= 7 ? 'text-amber-400' : ''}`}>
+                              <Clock className="h-3 w-3" />
+                              {diasRestantes < 0 ? `Vencida hace ${Math.abs(diasRestantes)}d` : `${diasRestantes}d restantes`}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <button className="p-2 hover:bg-slate-800 rounded-lg">
+                        <MoreHorizontal className="h-5 w-5 text-slate-400" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {capas.length === 0 && (
+                <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center text-slate-500">
+                  <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No hay CAPAs</p>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
+        );
+      }
+
+      // Vista de Certificados
+      function CertificadosView() {
+        return (
+          <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center text-slate-500">
+            <FileCheck className="h-16 w-16 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-medium text-slate-300 mb-2">Certificados de Calidad</h3>
+            <p className="max-w-md mx-auto mb-4">
+              Los certificados COA y COC se generan automáticamente basados en inspecciones aprobadas.
+            </p>
+            <button className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl">
+              Generar Certificado
+            </button>
+          </div>
+        );
+      }
+
+      // Vista de Recalls
+      function RecallsView({ recalls }: { recalls: Recall[] }) {
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <p className="text-slate-400">Gestión de recalls con trazabilidad completa.</p>
+              <button className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl font-medium">
+                <AlertOctagon className="h-4 w-4" />
+                Iniciar Recall
+              </button>
+            </div>
+
+            {recalls.length > 0 ? (
+              <div className="grid gap-4">
+                {recalls.map(recall => {
+                  const claseConfig = CLASE_RECALL_CONFIG[recall.clase];
+                  return (
+                    <div key={recall.id} className={`bg-slate-900/50 border rounded-xl p-4 ${
+                      recall.estado !== 'cerrado' ? 'border-red-500/30' : 'border-slate-800/50'
+                    }`}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="font-mono text-sm text-red-400">{recall.numero}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs bg-red-500/20 ${claseConfig?.color}`}>
+                          {claseConfig?.label}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-300 capitalize">
+                          {recall.estado.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <h4 className="text-slate-200 font-medium">{recall.producto_codigo} - {recall.producto_descripcion}</h4>
+                      <p className="text-sm text-slate-400 mt-1">{recall.motivo}</p>
+                      <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
+                        <span>{recall.cantidad_total_afectada} unidades afectadas</span>
+                        <span>{recall.porcentaje_recuperacion?.toFixed(1) || 0}% recuperado</span>
+                        <span>{formatDate(recall.fecha_inicio)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center text-slate-500">
+                <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
+                <p>No hay recalls activos</p>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Vista de Instrumentos
+      function InstrumentosView({ instrumentos }: { instrumentos: Instrumento[] }) {
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <p className="text-slate-400">Control de calibración de instrumentos de medición.</p>
+              <button className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-medium">
+                <Plus className="h-4 w-4" />
+                Nuevo Instrumento
+              </button>
+            </div>
+
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-800/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Código</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Nombre</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Ubicación</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Próxima Calibración</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/50">
+                    {instrumentos.map(inst => {
+                      const dias = inst.dias_para_calibracion;
+                      return (
+                        <tr key={inst.id} className="hover:bg-slate-800/30">
+                          <td className="px-4 py-3 font-mono text-sm text-cyan-400">{inst.codigo}</td>
+                          <td className="px-4 py-3 text-sm text-slate-200">{inst.nombre}</td>
+                          <td className="px-4 py-3 text-sm text-slate-400">{inst.ubicacion || '-'}</td>
+                          <td className="px-4 py-3">
+                            {inst.proxima_calibracion ? (
+                              <span className={`text-sm ${
+                                dias !== null && dias < 0 ? 'text-red-400' :
+                                dias !== null && dias <= 7 ? 'text-amber-400' : 'text-slate-300'
+                              }`}>
+                                {formatDate(inst.proxima_calibracion)}
+                                {dias !== null && (
+                                  <span className="text-xs ml-2">
+                                    ({dias < 0 ? 'Vencido' : `${dias}d`})
+                                  </span>
+                                )}
+                              </span>
+                            ) : '-'}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              inst.estado === 'activo' ? 'bg-emerald-500/20 text-emerald-400' :
+                              inst.estado === 'en_calibracion' ? 'bg-amber-500/20 text-amber-400' :
+                              'bg-red-500/20 text-red-400'
+                            }`}>
+                              {inst.estado}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {instrumentos.length === 0 && (
+                <div className="p-12 text-center text-slate-500">
+                  <Thermometer className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No hay instrumentos registrados</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }

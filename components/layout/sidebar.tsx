@@ -105,6 +105,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'proyectos', label: 'Gestión de Proyectos', icon: Kanban },
         { id: 'taller', label: 'Taller', icon: Wrench },
         { id: 'costos', label: 'Costos', icon: CircleDollarSign },
+        
         // Almacenes removido de aquí - ahora está dentro de Stock
       ]
     },
@@ -113,6 +114,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       items: [
         { id: 'analytics', label: t('nav.analytics'), icon: Brain, badge: 'IA' },
         { id: 'reportes', label: t('nav.reports'), icon: FileText, permission: 'canViewReports' },
+        { id: 'qms', label: 'Calidad (QMS)', icon: Shield },
         
       ]
     },

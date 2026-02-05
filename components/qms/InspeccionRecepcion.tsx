@@ -180,7 +180,7 @@ export default function InspeccionRecepcion() {
     const { data, error } = await supabase
       .from('ordenes_compra')
       .select(`
-        id, numero, proveedor_id, estado, fecha_orden,
+        id, numero, proveedorId:proveedor_id, estado, fecha_orden,
         proveedor:proveedores(nombre)
       `)
       .in('estado', ['enviada', 'parcial'])
@@ -289,12 +289,13 @@ export default function InspeccionRecepcion() {
   };
 
   const handleSelectOrdenCompra = (oc: OrdenCompra) => {
-    const proveedor = proveedores.find(p => p.id === oc.proveedor_id);
+    const proveedorId = oc.proveedorId;
+    const proveedor = proveedores.find(p => p.id === proveedorId);
     setFormData(prev => ({
       ...prev,
       orden_compra_id: oc.id,
       orden_compra_numero: oc.numero,
-      proveedor_id: oc.proveedor_id,
+      proveedor_id: proveedorId,
       proveedor_nombre: proveedor?.nombre || (oc as any).proveedor?.nombre,
     }));
   };
@@ -545,13 +546,15 @@ export default function InspeccionRecepcion() {
   // RENDER HELPERS
   // ============================================
 
-  const formatDate = (date: string) => {
+  const formatDate = (date: string | Date | undefined | null): string => {
+    if (!date) return '-';
     return new Date(date).toLocaleDateString('es-UY', { 
       day: '2-digit', month: '2-digit', year: 'numeric' 
     });
   };
 
-  const formatDateTime = (date: string) => {
+  const formatDateTime = (date: string | Date | undefined | null): string => {
+    if (!date) return '-';
     return new Date(date).toLocaleString('es-UY', { 
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit'
