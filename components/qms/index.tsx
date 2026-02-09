@@ -15,11 +15,9 @@ export { default as NoConformidades } from './NoConformidades';
 export { default as AccionesCorrectivas } from './AccionesCorrectivas';
 export { default as Certificados } from './Certificados';
 export { default as RecallManagement } from './RecallManagement';
-
-// TODO: Próximos componentes a implementar
-// export { default as ControlProceso } from './ControlProceso';
-// export { default as Instrumentos } from './Instrumentos';
-// export { default as Auditorias } from './Auditorias';
+export { default as Instrumentos } from './Instrumentos';
+export { default as Auditorias } from './Auditorias';
+export { default as ControlProceso } from './ControlProceso';
 
 // Types locales del módulo QMS
 export * from './types';

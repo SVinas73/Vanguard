@@ -14,6 +14,10 @@ import NoConformidades from './NoConformidades';
 import AccionesCorrectivas from './AccionesCorrectivas';
 import Certificados from './Certificados';
 import RecallManagement from './RecallManagement';
+import Instrumentos from './Instrumentos';
+import Auditorias from './Auditorias';
+import ControlProceso from './ControlProceso';
+
 
 // ============================================
 // TIPOS
@@ -64,9 +68,9 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'control-proceso',
     label: 'Control en Proceso',
     icon: Activity,
-    color: 'text-blue-400',
+    color: 'text-teal-400',  // cambié a teal para diferenciar
     descripcion: 'QC durante producción',
-    disponible: false,
+    disponible: true,  // ← CAMBIAR DE false A true
   },
   {
     id: 'no-conformidades',
@@ -106,7 +110,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     icon: Thermometer,
     color: 'text-amber-400',
     descripcion: 'Control de calibración',
-    disponible: false,
+    disponible: true,
   },
   {
     id: 'auditorias',
@@ -114,7 +118,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     icon: Search,
     color: 'text-indigo-400',
     descripcion: 'Auditorías internas/externas',
-    disponible: false,
+    disponible: true,
   },
 ];
 
@@ -142,21 +146,13 @@ export default function QMSModule() {
         return <Certificados />;
       case 'recalls':
         return <RecallManagement />;
+      case 'instrumentos':
+        return <Instrumentos />;
+      case 'auditorias':
+        return <Auditorias />;
       // Módulos pendientes
       case 'control-proceso':
-      case 'instrumentos':
-      case 'auditorias':
-        return (
-          <div className="flex flex-col items-center justify-center p-12 text-center">
-            <Layers className="h-16 w-16 text-slate-600 mb-4" />
-            <h3 className="text-xl font-semibold text-slate-300 mb-2">
-              Módulo en Desarrollo
-            </h3>
-            <p className="text-slate-500 max-w-md">
-              El módulo de {moduloConfig?.label} está siendo desarrollado y estará disponible próximamente.
-            </p>
-          </div>
-        );
+        return <ControlProceso />;
       default:
         return <QMSDashboard />;
     }
