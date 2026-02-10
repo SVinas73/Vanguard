@@ -11,6 +11,8 @@ export { default as WMSDashboard } from './WMSDashboard';
 
 // Módulos implementados
 export { default as Ubicaciones } from './Ubicaciones';
+export { default as Recepcion } from './Recepcion';
+export { default as Picking } from './Picking';
 
 // TODO: Módulos a implementar
 // export { default as Recepcion } from './Recepcion';

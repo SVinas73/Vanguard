@@ -10,9 +10,9 @@ import {
 // Importar componentes WMS
 import WMSDashboard from './WMSDashboard';
 import Ubicaciones from './Ubicaciones';
+import Recepcion from './Recepcion';
+import Picking from './Picking';
 // Los demás se importarán cuando se creen:
-// import Recepcion from './Recepcion';
-// import Picking from './Picking';
 // import Inventario from './Inventario';
 // import Movimientos from './Movimientos';
 // import Slotting from './Slotting';
@@ -67,7 +67,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     icon: Truck,
     color: 'text-amber-400',
     descripcion: 'Put-away automático',
-    disponible: false,
+    disponible: true,
   },
   {
     id: 'picking',
@@ -75,7 +75,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     icon: Target,
     color: 'text-purple-400',
     descripcion: 'Wave picking y rutas',
-    disponible: false,
+    disponible: true,
   },
   {
     id: 'inventario',
@@ -127,9 +127,11 @@ export default function WMSModule() {
         return <WMSDashboard />;
       case 'ubicaciones':
         return <Ubicaciones />;
-      // Módulos pendientes
       case 'recepcion':
+        return <Recepcion />;
       case 'picking':
+        return <Picking />;
+      // Módulos pendientes
       case 'inventario':
       case 'movimientos':
       case 'slotting':
