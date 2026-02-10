@@ -172,7 +172,7 @@ export interface StatsData {
   todayMovements: number;
 }
 
-export type TabType = 'dashboard' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes' | 'proyectos' | 'comercial' | 'finanzas' | 'taller' | 'qms';
+export type TabType = 'dashboard' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes' | 'proyectos' | 'comercial' | 'finanzas' | 'taller' | 'qms' | 'wms';
 
 export interface ModalState {
   showNewProduct: boolean;
@@ -2328,3 +2328,24 @@ export const getBgColorPorDiasRestantes = (dias: number): string => {
   if (dias <= 14) return 'bg-amber-500/10';
   return 'bg-slate-500/10';
 };
+
+// ============================================
+// WMS - WAREHOUSE MANAGEMENT SYSTEM
+// ============================================
+
+export type {
+  
+  Zona,
+  Ubicacion,
+  OrdenRecepcion,
+  LineaRecepcion,
+  TareaPutaway,
+  WavePicking,
+  OrdenPicking,
+  LineaPicking,
+  MovimientoInventario,
+  StockUbicacion,
+  AnalisisSlotting,
+  MetricasWMS,
+  ConfiguracionWMS,
+} from '@/components/wms/types';

@@ -2,6 +2,7 @@
 
 import { ComercialDashboard, ComprasEnterprisePanel, VentasEnterprisePanel } from '@/components/comercial';
 
+import { WMSModule } from '@/components/wms';
 import { AccionesCorrectivas } from '@/components/qms';
 import { Certificados } from '@/components/qms';
 import { QMSModule } from '@/components/qms';
@@ -547,6 +548,12 @@ export default function HomePage() {
         {activeTab === 'qms' && (
           <div className="w-full">
             <QMSModule />
+          </div>
+        )}
+
+        {activeTab === 'wms' && (
+          <div className="w-full">
+            <WMSModule />
           </div>
         )}
 

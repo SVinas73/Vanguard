@@ -32,6 +32,7 @@ import {
   Kanban,
   Boxes,
   BarChart3,
+  Warehouse,
   Wrench
 } from 'lucide-react';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -104,6 +105,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'finanzas', label: 'Finanzas', icon: Landmark },
         { id: 'proyectos', label: 'Gestión de Proyectos', icon: Kanban },
         { id: 'taller', label: 'Taller', icon: Wrench },
+        { id: 'wms', label: 'WMS', icon: Warehouse },
         { id: 'costos', label: 'Costos', icon: CircleDollarSign },
         
         // Almacenes removido de aquí - ahora está dentro de Stock
