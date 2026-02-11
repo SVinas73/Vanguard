@@ -2,6 +2,7 @@
 
 import { ComercialDashboard, ComprasEnterprisePanel, VentasEnterprisePanel } from '@/components/comercial';
 
+import { DemandPlanningModule } from '@/components/demand-planning';
 import { WMSModule } from '@/components/wms';
 import { AccionesCorrectivas } from '@/components/qms';
 import { Certificados } from '@/components/qms';
@@ -632,6 +633,12 @@ export default function HomePage() {
         {activeTab === 'proyectos' && (
           <div className="w-full">
             <ProyectosDashboard />
+          </div>
+        )}
+
+        {activeTab === 'demand' && (
+          <div className="w-full">
+            <DemandPlanningModule />
           </div>
         )}
 
