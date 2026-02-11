@@ -33,7 +33,8 @@ import {
   Boxes,
   BarChart3,
   Warehouse,
-  Wrench
+  Wrench,
+  Zap
 } from 'lucide-react';
 import { LanguageSelector } from '@/components/ui/language-selector';
 import { NotificacionesBell } from '@/components/proyectos/NotificacionesBell';
@@ -115,6 +116,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       title: t('nav.analysis') || 'Análisis',
       items: [
         { id: 'analytics', label: t('nav.analytics'), icon: Brain, badge: 'IA' },
+        { id: 'demand', label: 'Demand Planning', icon: Zap, badge: 'IA' },
         { id: 'reportes', label: t('nav.reports'), icon: FileText, permission: 'canViewReports' },
         { id: 'qms', label: 'Calidad (QMS)', icon: Shield },
         
