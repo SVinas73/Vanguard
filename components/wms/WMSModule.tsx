@@ -12,10 +12,9 @@ import WMSDashboard from './WMSDashboard';
 import Ubicaciones from './Ubicaciones';
 import Recepcion from './Recepcion';
 import Picking from './Picking';
-// Los demás se importarán cuando se creen:
-// import Inventario from './Inventario';
-// import Movimientos from './Movimientos';
-// import Slotting from './Slotting';
+import Inventario from './Inventario';
+import Movimientos from './Movimientos';
+import Slotting from './Slotting';
 
 // ============================================
 // TIPOS
@@ -83,7 +82,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     icon: Package,
     color: 'text-cyan-400',
     descripcion: 'Stock por ubicación',
-    disponible: false,
+    disponible: true,
   },
   {
     id: 'movimientos',
@@ -91,7 +90,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     icon: ArrowRight,
     color: 'text-orange-400',
     descripcion: 'Transferencias internas',
-    disponible: false,
+    disponible: true,
   },
   {
     id: 'slotting',
@@ -99,7 +98,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     icon: Layers,
     color: 'text-pink-400',
     descripcion: 'Optimización ABC',
-    disponible: false,
+    disponible: true,
   },
   {
     id: 'configuracion',
@@ -131,10 +130,13 @@ export default function WMSModule() {
         return <Recepcion />;
       case 'picking':
         return <Picking />;
-      // Módulos pendientes
       case 'inventario':
+        return <Inventario />;
       case 'movimientos':
+        return <Movimientos />;
       case 'slotting':
+        return <Slotting />;
+      // Módulos pendientes
       case 'configuracion':
         return (
           <div className="flex flex-col items-center justify-center p-12 text-center">

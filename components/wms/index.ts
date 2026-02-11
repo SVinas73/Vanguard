@@ -13,8 +13,11 @@ export { default as WMSDashboard } from './WMSDashboard';
 export { default as Ubicaciones } from './Ubicaciones';
 export { default as Recepcion } from './Recepcion';
 export { default as Picking } from './Picking';
+export { default as Inventario } from './Inventario';
+export { default as Movimientos } from './Movimientos';
+export { default as Slotting } from './Slotting';
 
-// TODO: Módulos a implementar
+// Tipos
 // export { default as Recepcion } from './Recepcion';
 // export { default as Picking } from './Picking';
 // export { default as Inventario } from './Inventario';
