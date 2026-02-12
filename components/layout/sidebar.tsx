@@ -102,6 +102,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'stock', label: t('nav.stock'), icon: Package },
         { id: 'movimientos', label: t('nav.movements'), icon: ArrowLeftRight },
         { id: 'chat', label: 'Mensajes', icon: MessageCircle },
+        { id: 'asistente', label: 'Asistente IA', icon: Brain, badge: 'AI' },
       ]
     },
     {
