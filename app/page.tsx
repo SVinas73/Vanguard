@@ -2,6 +2,7 @@
 
 import { ComercialDashboard, ComprasEnterprisePanel, VentasEnterprisePanel } from '@/components/comercial';
 
+import { ChatModule } from '@/components/chat';
 import { DemandPlanningModule } from '@/components/demand-planning';
 import { WMSModule } from '@/components/wms';
 import { AccionesCorrectivas } from '@/components/qms';
@@ -591,6 +592,12 @@ export default function HomePage() {
         {activeTab === 'integraciones' && (
           <div className="max-w-4xl mx-auto">
             <IntegracionesDashboard />
+          </div>
+        )}
+
+        {activeTab === 'chat' && (
+          <div className="w-full">
+            <ChatModule />
           </div>
         )}
 
