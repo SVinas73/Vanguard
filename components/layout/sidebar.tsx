@@ -31,10 +31,12 @@ import {
   Warehouse,
   Wrench,
   Zap,
-  ChevronDown
+  ChevronDown,
+  MessageCircle
 } from 'lucide-react';
 import { LanguageSelector } from '@/components/ui/language-selector';
 import { NotificacionesBell } from '@/components/proyectos/NotificacionesBell';
+import { ChatBadge } from '@/components/chat';
 
 // ============================================
 // TIPOS
@@ -99,6 +101,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
         { id: 'stock', label: t('nav.stock'), icon: Package },
         { id: 'movimientos', label: t('nav.movements'), icon: ArrowLeftRight },
+        { id: 'chat', label: 'Mensajes', icon: MessageCircle },
       ]
     },
     {
@@ -246,6 +249,10 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                           <span className="flex-1 text-left text-[13px] font-medium">
                             {item.label}
                           </span>
+                          
+                          {item.id === 'chat' && (
+                            <ChatBadge />
+                          )}
                           
                           {item.badge && (
                             <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/15 text-blue-400 rounded">
