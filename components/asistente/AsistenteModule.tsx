@@ -36,6 +36,10 @@ export default function AsistenteModule() {
   const [loading, setLoading] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   
+  // ✅ PASO 2: Estados para warm-up del servidor
+  const [isServerReady, setIsServerReady] = useState(false);
+  const [isWarmingUp, setIsWarmingUp] = useState(true);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -43,6 +47,29 @@ export default function AsistenteModule() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [mensajes]);
+
+  // ✅ PASO 2: Despertar el servidor al cargar
+  useEffect(() => {
+    const wakeUpServer = async () => {
+      try {
+        console.log('🔄 Despertando servidor de IA...');
+        const response = await fetch('https://vanguard-ia.onrender.com/health', {
+          signal: AbortSignal.timeout(60000)
+        });
+        
+        if (response.ok) {
+          console.log('✅ Servidor de IA listo');
+          setIsServerReady(true);
+        }
+      } catch (error) {
+        console.warn('⚠️ El servidor tardará en responder la primera vez');
+      } finally {
+        setIsWarmingUp(false);
+      }
+    };
+
+    wakeUpServer();
+  }, []);
 
   // Mensaje de bienvenida
   useEffect(() => {
@@ -55,10 +82,10 @@ export default function AsistenteModule() {
 Soy el **Asistente Inteligente de Vanguard**, potenciado por IA.
 
 Puedo ayudarte a:
-• 📦 Consultar y analizar tu inventario
-• 📊 Generar reportes y métricas de ventas
-• 🔮 Predecir demanda y detectar tendencias  
-• ⚡ Ejecutar acciones como crear órdenes de compra
+- 📦 Consultar y analizar tu inventario
+- 📊 Generar reportes y métricas de ventas
+- 🔮 Predecir demanda y detectar tendencias  
+- ⚡ Ejecutar acciones como crear órdenes de compra
 
 **Tip:** Puedo encadenar múltiples tareas. Por ejemplo: *"Analiza los productos críticos y genera una orden de compra"*
 
@@ -66,10 +93,10 @@ Puedo ayudarte a:
         timestamp: new Date(),
       }]);
     }
-  }, [user?.nombre]);
+  }, [user?.nombre, mensajes.length]);
 
-  // Enviar mensaje
-  const handleSend = async (mensajeOverride?: string) => {
+  // ✅ PASO 3: Enviar mensaje con reintentos automáticos
+  const handleSend = async (mensajeOverride?: string, reintentos = 2) => {
     const mensaje = mensajeOverride || input.trim();
     if (!mensaje || loading) return;
 
@@ -111,6 +138,7 @@ Puedo ayudarte a:
             usuario_nombre: user?.nombre,
           },
         }),
+        signal: AbortSignal.timeout(90000), // ✅ 90 segundos de timeout
       });
 
       const data = await response.json();
@@ -139,12 +167,34 @@ Puedo ayudarte a:
       ));
 
     } catch (error: any) {
+      // ✅ PASO 3: Reintentar si es timeout
+      if ((error.name === 'TimeoutError' || error.name === 'AbortError') && reintentos > 0) {
+        console.log(`⏱️ Timeout, reintentando... (${reintentos} intentos restantes)`);
+        
+        // Actualizar mensaje de carga
+        setMensajes(prev => prev.map(m =>
+          m.id === loadingId
+            ? {
+                ...m,
+                contenido: `⏱️ El servidor está tardando... Reintentando (${reintentos} ${reintentos === 1 ? 'intento' : 'intentos'} restantes)`,
+              }
+            : m
+        ));
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setLoading(false);
+        return handleSend(mensaje, reintentos - 1);
+      }
+      
+      // Si ya no quedan reintentos o es otro error
       setMensajes(prev => prev.map(m =>
         m.id === loadingId
           ? {
               id: `error-${Date.now()}`,
               rol: 'assistant' as const,
-              contenido: `❌ ${error.message}\n\nPor favor intenta de nuevo o reformula tu pregunta.`,
+              contenido: error.name === 'TimeoutError' || error.name === 'AbortError'
+                ? `⏱️ El servidor está tardando más de lo normal. Esto puede suceder si el servidor estaba inactivo.\n\nPor favor, intenta de nuevo en unos segundos.`
+                : `❌ ${error.message}\n\nPor favor intenta de nuevo o reformula tu pregunta.`,
               timestamp: new Date(),
               error: true,
             }
@@ -203,6 +253,21 @@ Puedo ayudarte a:
           )}
         </div>
       </div>
+
+      {/* ✅ PASO 2: Banner de warm-up */}
+      {isWarmingUp && (
+        <div className="flex-shrink-0 mx-4 mt-4">
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+            <div className="flex items-center gap-3">
+              <Loader2 size={16} className="animate-spin text-amber-400" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-200">Preparando el asistente de IA...</p>
+                <p className="text-xs text-amber-400/80">Esto puede tomar hasta 50 segundos la primera vez</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mensajes */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
