@@ -5,9 +5,8 @@
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { AgentExecutor, createToolCallingAgent } from 'langchain/agents';
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
-import { BufferMemory } from 'langchain/memory';
-import { ChatMessageHistory } from 'langchain/stores/message/in_memory';
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { BufferMemory, ChatMessageHistory } from 'langchain/memory';
 import { allTools } from './tools';
 
 // ============================================
@@ -51,12 +50,14 @@ Tú: Primero uso metricas_dashboard, luego productos_criticos, y doy un resumen 
 // ============================================
 
 export async function createAgent(conversationHistory: Array<{ rol: string; contenido: string }> = []) {
+  // Inicializar modelo
   const model = new ChatGoogleGenerativeAI({
-    model: 'gemini-1.5-flash', // ✅
+    modelName: 'gemini-1.5-flash',
     temperature: 0.7,
     apiKey: process.env.GOOGLE_AI_API_KEY,
   });
 
+  // Crear prompt template
   const prompt = ChatPromptTemplate.fromMessages([
     ['system', SYSTEM_PROMPT],
     new MessagesPlaceholder('chat_history'),
@@ -64,14 +65,17 @@ export async function createAgent(conversationHistory: Array<{ rol: string; cont
     new MessagesPlaceholder('agent_scratchpad'),
   ]);
 
-  const agent = await createToolCallingAgent({ // ✅
+  // Crear agente con tool calling
+  const agent = createToolCallingAgent({
     llm: model,
     tools: allTools,
     prompt,
   });
 
+  // Crear historial de mensajes
   const messageHistory = new ChatMessageHistory();
   
+  // Agregar historial previo
   for (const msg of conversationHistory) {
     if (msg.rol === 'user') {
       await messageHistory.addMessage(new HumanMessage(msg.contenido));
@@ -80,6 +84,7 @@ export async function createAgent(conversationHistory: Array<{ rol: string; cont
     }
   }
 
+  // Crear memoria
   const memory = new BufferMemory({
     memoryKey: 'chat_history',
     chatHistory: messageHistory,
@@ -88,6 +93,7 @@ export async function createAgent(conversationHistory: Array<{ rol: string; cont
     outputKey: 'output',
   });
 
+  // Crear executor
   const executor = new AgentExecutor({
     agent,
     tools: allTools,
@@ -95,7 +101,7 @@ export async function createAgent(conversationHistory: Array<{ rol: string; cont
     verbose: process.env.NODE_ENV === 'development',
     maxIterations: 10,
     returnIntermediateSteps: true,
-    handleParsingErrors: (error: Error) => { // ✅
+    handleParsingErrors: (error) => {
       console.error('Agent parsing error:', error);
       return 'Hubo un error procesando la solicitud. Por favor, intenta reformular tu pregunta.';
     },
