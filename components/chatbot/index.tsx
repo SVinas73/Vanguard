@@ -204,6 +204,16 @@ export function ChatbotWidget() {
     setIsLoading(true);
     setError(null);
 
+    // Crear mensaje del asistente vacío para streaming
+    const assistantId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      toolsUsed: [],
+    }]);
+
     try {
       // Preparar historial (últimos 10 mensajes, sin el welcome)
       const historial = messages
@@ -211,7 +221,7 @@ export function ChatbotWidget() {
         .slice(-10)
         .map(m => ({ rol: m.role, contenido: m.content }));
 
-      // Llamar a la API de Next.js (NO a Render)
+      // Llamar a la API con streaming
       const response = await fetch('/api/asistente/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -230,20 +240,71 @@ export function ChatbotWidget() {
         throw new Error(errorData.error || 'Error al comunicarse con el asistente');
       }
 
-      const data = await response.json();
+      // Leer el stream
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      
+      let accumulatedContent = '';
+      let toolsUsed: string[] = [];
+      let suggestions: string[] = [];
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.respuesta,
-        timestamp: new Date(),
-        suggestions: data.sugerencias,
-        toolsUsed: data.tool_calls?.map((tc: any) => tc.nombre),
-      };
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      setMessages(prev => [...prev, assistantMessage]);
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                
+                if (data.type === 'text') {
+                  accumulatedContent += data.content;
+                  // Actualizar mensaje en tiempo real
+                  setMessages(prev => prev.map(m => 
+                    m.id === assistantId 
+                      ? { ...m, content: accumulatedContent }
+                      : m
+                  ));
+                }
+                
+                if (data.type === 'tool') {
+                  toolsUsed.push(data.name);
+                  // Actualizar herramientas usadas
+                  setMessages(prev => prev.map(m => 
+                    m.id === assistantId 
+                      ? { ...m, toolsUsed: [...toolsUsed] }
+                      : m
+                  ));
+                }
+                
+                if (data.type === 'done') {
+                  suggestions = data.sugerencias || [];
+                  // Actualizar mensaje final con sugerencias
+                  setMessages(prev => prev.map(m => 
+                    m.id === assistantId 
+                      ? { ...m, suggestions, toolsUsed: data.toolsUsed || toolsUsed }
+                      : m
+                  ));
+                }
+                
+                if (data.type === 'error') {
+                  throw new Error(data.message);
+                }
+              } catch (parseError) {
+                // Ignorar líneas que no son JSON válido
+              }
+            }
+          }
+        }
+      }
     } catch (err: any) {
       setError(err.message || 'No se pudo conectar con el asistente');
+      // Remover mensaje vacío del asistente si hay error
+      setMessages(prev => prev.filter(m => m.id !== assistantId));
       console.error('Chat error:', err);
     } finally {
       setIsLoading(false);
