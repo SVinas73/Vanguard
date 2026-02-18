@@ -9,7 +9,7 @@ import { AccionesCorrectivas } from '@/components/qms';
 import { Certificados } from '@/components/qms';
 import { QMSModule } from '@/components/qms';
 import { ProyectosDashboard } from '@/components/proyectos';
-import { WelcomeHeader, StatsGrid } from '@/components/dashboard';
+import { WelcomeHeader, StatsGrid, InsightsPanel } from '@/components/dashboard';
 import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
 import { StockDashboard } from '@/components/stock';
 import { ImportCSV } from '@/components/import';
@@ -438,10 +438,14 @@ export default function HomePage() {
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             {/* Welcome Header */}
-            <WelcomeHeader userName={user?.nombre || user?.email?.split('@')[0]} />
+            <WelcomeHeader 
+              userName={user?.nombre || user?.email?.split('@')[0]}
+              products={products}
+              predictions={predictions}
+            />
 
             {/* Stats */}
-            <StatsGrid stats={stats} />
+            <StatsGrid stats={stats} products={products} movements={movements} />
 
             {/* Enterprise Panels Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -476,6 +480,14 @@ export default function HomePage() {
                 maxItems={8}
               />
             </div>
+            
+            {/* AI Insights */}
+            <InsightsPanel 
+              products={products}
+              movements={movements}
+              predictions={predictions}
+              onNavigate={(tab) => setActiveTab(tab as TabType)}
+            />
 
             {/* AI Panels */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
