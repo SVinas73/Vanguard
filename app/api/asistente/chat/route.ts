@@ -1,46 +1,41 @@
 // ============================================
 // API ROUTE: /api/asistente/chat
-// Agente LangChain con Streaming
+// Agente Lite - Sin LangChain (rápido)
 // ============================================
 
-import { NextRequest } from 'next/server';
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
-import { AgentExecutor, createToolCallingAgent } from 'langchain/agents';
-import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
-import { allTools } from '@/components/asistente/tools';
-
-// Configuración de runtime
-export const runtime = 'nodejs';
-export const maxDuration = 60;
+import { NextRequest, NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { ejecutarHerramienta } from '@/components/asistente/tools';
 
 // ============================================
-// SYSTEM PROMPT
+// CONFIGURACIÓN
 // ============================================
 
-const SYSTEM_PROMPT = `Eres el Asistente Inteligente de Vanguard, un sistema avanzado de gestión de inventario empresarial.
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
-## Tu Personalidad
-- Eres profesional, eficiente y amigable
-- Respondes siempre en español
-- Eres proactivo: si detectas problemas, los mencionas
-- Usas emojis ocasionalmente para hacer la conversación más amena (📦 📊 ⚠️ ✅ 💡)
+const SYSTEM_PROMPT = `Eres el Asistente de Vanguard, un sistema de gestión de inventario. Respondes en español, eres conciso y profesional.
 
-## Tus Capacidades
-Tienes acceso a herramientas para:
-1. Consultar stock, productos, clientes, proveedores
-2. Analizar ventas, compras, tendencias y métricas
-3. Predecir demanda y detectar productos críticos
-4. Crear movimientos de inventario y órdenes de compra
+HERRAMIENTAS DISPONIBLES (usa el formato exacto):
+- consultar_stock: Ver stock de productos. Params: {codigo?, categoria?, solo_criticos?}
+- buscar_productos: Buscar por nombre/código. Params: {query, limite?}
+- productos_criticos: Listar productos con stock bajo. Params: {limite?}
+- analisis_ventas: Analizar ventas. Params: {periodo: "hoy"|"semana"|"mes"|"año"}
+- analisis_compras: Analizar compras. Params: {periodo?}
+- metricas_dashboard: Resumen general del negocio. Params: {periodo?}
+- analisis_tendencias: Ver tendencias de productos. Params: {dias?, limite?}
+- recomendaciones_reposicion: Qué productos reponer. Params: {urgencia?, limite?}
+- consultar_proveedores: Listar proveedores. Params: {query?, limite?}
+- crear_movimiento: Crear entrada/salida de stock. Params: {producto_codigo, tipo, cantidad, motivo?}
+- crear_orden_compra: Crear OC. Params: {proveedor_id, productos: [{codigo, cantidad, precio}], notas?}
 
-## Reglas
-- SIEMPRE usa las herramientas para obtener datos reales, NO inventes
-- Para ACCIONES destructivas (crear, modificar), confirma con el usuario primero
-- Sé conciso pero completo en tus respuestas
-- Si algo falla, informa al usuario y sugiere alternativas`;
+PARA USAR UNA HERRAMIENTA responde SOLO con este JSON:
+{"herramienta": "nombre", "parametros": {...}}
+
+Si NO necesitas herramienta, responde normalmente en texto.
+Si el usuario pregunta algo que requiere datos, USA la herramienta primero.`;
 
 // ============================================
-// STREAMING HANDLER
+// HANDLER PRINCIPAL
 // ============================================
 
 export async function POST(request: NextRequest) {
@@ -49,142 +44,91 @@ export async function POST(request: NextRequest) {
     const { mensaje, historial = [], contexto } = body;
 
     if (!mensaje) {
-      return new Response(JSON.stringify({ error: 'Mensaje requerido' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return NextResponse.json({ error: 'Mensaje requerido' }, { status: 400 });
     }
 
     if (!process.env.GOOGLE_AI_API_KEY) {
-      return new Response(JSON.stringify({ error: 'API Key no configurada' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return NextResponse.json({ error: 'API Key no configurada' }, { status: 500 });
     }
 
-    // Crear encoder para streaming
-    const encoder = new TextEncoder();
-    
-    // Crear stream
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          // Inicializar modelo
-          const model = new ChatGoogleGenerativeAI({
-            modelName: 'gemini-1.5-flash',
-            temperature: 0.7,
-            apiKey: process.env.GOOGLE_AI_API_KEY,
-            streaming: true,
-          });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-          // Crear prompt
-          const prompt = ChatPromptTemplate.fromMessages([
-            ['system', SYSTEM_PROMPT],
-            new MessagesPlaceholder('chat_history'),
-            ['human', '{input}'],
-            new MessagesPlaceholder('agent_scratchpad'),
-          ]);
+    // Construir historial para Gemini
+    const history = historial.slice(-6).map((msg: any) => ({
+      role: msg.rol === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.contenido }],
+    }));
 
-          // Crear agente
-          const agent = createToolCallingAgent({
-            llm: model,
-            tools: allTools,
-            prompt,
-          });
-
-          // Crear executor
-          const executor = new AgentExecutor({
-            agent,
-            tools: allTools,
-            maxIterations: 8,
-            returnIntermediateSteps: true,
-          });
-
-          // Preparar historial
-          const chatHistory = historial.map((msg: any) => 
-            msg.rol === 'user' 
-              ? new HumanMessage(msg.contenido)
-              : new AIMessage(msg.contenido)
-          );
-
-          // Variables para tracking
-          const toolsUsed: string[] = [];
-
-          // Ejecutar con streaming de eventos
-          const eventStream = await executor.streamEvents(
-            { input: mensaje, chat_history: chatHistory },
-            { version: 'v2' }
-          );
-
-          for await (const event of eventStream) {
-            const kind = event.event;
-
-            // Cuando empieza a usar una herramienta
-            if (kind === 'on_tool_start') {
-              const toolName = event.name;
-              toolsUsed.push(toolName);
-              
-              const toolEvent = {
-                type: 'tool',
-                name: toolName,
-              };
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify(toolEvent)}\n\n`));
-            }
-
-            // Cuando el LLM genera tokens
-            if (kind === 'on_chat_model_stream') {
-              const chunk = event.data?.chunk;
-              if (chunk?.content) {
-                const content = typeof chunk.content === 'string' 
-                  ? chunk.content 
-                  : chunk.content[0]?.text || '';
-                
-                if (content) {
-                  const textEvent = {
-                    type: 'text',
-                    content: content,
-                  };
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(textEvent)}\n\n`));
-                }
-              }
-            }
-          }
-
-          // Enviar evento final
-          const finalEvent = {
-            type: 'done',
-            toolsUsed,
-            sugerencias: generarSugerencias(toolsUsed),
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalEvent)}\n\n`));
-          
-        } catch (error: any) {
-          console.error('Streaming error:', error);
-          const errorEvent = {
-            type: 'error',
-            message: error.message || 'Error procesando solicitud',
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
-        } finally {
-          controller.close();
-        }
-      },
+    // Primera llamada: decidir si usar herramienta
+    const chat = model.startChat({
+      history: [
+        { role: 'user', parts: [{ text: SYSTEM_PROMPT }] },
+        { role: 'model', parts: [{ text: 'Entendido. Soy el asistente de Vanguard. ¿En qué puedo ayudarte?' }] },
+        ...history,
+      ],
     });
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
+    const result = await chat.sendMessage(mensaje);
+    let respuesta = result.response.text();
+
+    // Verificar si quiere usar herramienta
+    const toolsUsed: string[] = [];
+    let intentos = 0;
+    const maxIntentos = 3;
+
+    while (intentos < maxIntentos) {
+      const toolMatch = respuesta.match(/\{[\s\S]*"herramienta"[\s\S]*\}/);
+      
+      if (!toolMatch) break;
+
+      try {
+        const toolCall = JSON.parse(toolMatch[0]);
+        
+        if (toolCall.herramienta) {
+          toolsUsed.push(toolCall.herramienta);
+          
+          // Ejecutar herramienta
+          const toolResult = await ejecutarHerramienta(
+            toolCall.herramienta,
+            toolCall.parametros || {},
+            contexto?.usuario_email || 'sistema'
+          );
+
+          // Enviar resultado al modelo para que genere respuesta
+          const followUp = await chat.sendMessage(
+            `Resultado de ${toolCall.herramienta}:\n${JSON.stringify(toolResult, null, 2)}\n\nGenera una respuesta clara y útil para el usuario basándote en estos datos. NO uses formato JSON, responde en texto natural.`
+          );
+          
+          respuesta = followUp.response.text();
+        } else {
+          break;
+        }
+      } catch (e) {
+        break;
+      }
+      
+      intentos++;
+    }
+
+    // Limpiar respuesta de posibles JSONs residuales
+    respuesta = respuesta.replace(/```json[\s\S]*?```/g, '').trim();
+    respuesta = respuesta.replace(/\{[\s\S]*"herramienta"[\s\S]*\}/g, '').trim();
+
+    // Generar sugerencias
+    const sugerencias = generarSugerencias(toolsUsed);
+
+    return NextResponse.json({
+      respuesta,
+      tool_calls: toolsUsed.map(t => ({ nombre: t })),
+      sugerencias,
     });
 
   } catch (error: any) {
-    console.error('Error en agente:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error('Error en asistente:', error);
+    return NextResponse.json(
+      { error: error.message || 'Error procesando solicitud' },
+      { status: 500 }
+    );
   }
 }
 
@@ -196,19 +140,17 @@ function generarSugerencias(toolsUsed: string[]): string[] {
   const sugerencias: string[] = [];
 
   if (toolsUsed.includes('productos_criticos')) {
-    sugerencias.push('Generar orden de compra para críticos');
-    sugerencias.push('Ver predicción de demanda');
+    sugerencias.push('Ver recomendaciones de reposición');
   }
   if (toolsUsed.includes('metricas_dashboard')) {
     sugerencias.push('Analizar ventas en detalle');
     sugerencias.push('Ver productos críticos');
   }
   if (toolsUsed.includes('analisis_ventas')) {
-    sugerencias.push('Comparar con período anterior');
     sugerencias.push('Ver tendencias de productos');
   }
   if (toolsUsed.includes('recomendaciones_reposicion')) {
-    sugerencias.push('Crear orden de compra');
+    sugerencias.push('Ver proveedores disponibles');
   }
 
   if (sugerencias.length === 0) {
@@ -224,14 +166,10 @@ function generarSugerencias(toolsUsed: string[]): string[] {
 // HEALTH CHECK
 // ============================================
 
-
 export async function GET() {
-  return new Response(JSON.stringify({
+  return NextResponse.json({
     status: 'ok',
-    agent: 'LangChain + Google Gemini',
-    streaming: true,
-    tools: 12,
-  }), {
-    headers: { 'Content-Type': 'application/json' },
+    agent: 'Gemini Lite (sin LangChain)',
+    tools: 11,
   });
 }

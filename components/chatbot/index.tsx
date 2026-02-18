@@ -35,20 +35,11 @@ interface Message {
 // CHAT MESSAGE COMPONENT
 // ============================================
 
-interface ChatMessageProps {
-  message: Message;
-  onSuggestionClick?: (suggestion: string) => void;
-}
-
-function ChatMessage({ message, onSuggestionClick }: ChatMessageProps) {
+function ChatMessage({ message, onSuggestionClick }: { message: Message; onSuggestionClick?: (s: string) => void }) {
   const isUser = message.role === 'user';
   
   return (
-    <div className={cn(
-      'flex gap-3 mb-4',
-      isUser ? 'flex-row-reverse' : 'flex-row'
-    )}>
-      {/* Avatar */}
+    <div className={cn('flex gap-3 mb-4', isUser ? 'flex-row-reverse' : 'flex-row')}>
       <div className={cn(
         'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
         isUser 
@@ -58,14 +49,10 @@ function ChatMessage({ message, onSuggestionClick }: ChatMessageProps) {
         {isUser ? <User size={16} /> : <Bot size={16} />}
       </div>
       
-      {/* Message content */}
       <div className={cn(
         'max-w-[80%] rounded-2xl px-4 py-3',
-        isUser 
-          ? 'bg-blue-500/20 text-slate-100' 
-          : 'bg-slate-800/80 text-slate-200'
+        isUser ? 'bg-blue-500/20 text-slate-100' : 'bg-slate-800/80 text-slate-200'
       )}>
-        {/* Tools used indicator */}
         {message.toolsUsed && message.toolsUsed.length > 0 && (
           <div className="flex items-center gap-1 mb-2 pb-2 border-b border-slate-700/50">
             <Wrench size={10} className="text-violet-400" />
@@ -80,7 +67,6 @@ function ChatMessage({ message, onSuggestionClick }: ChatMessageProps) {
           <FormattedMessage content={message.content} />
         </div>
         
-        {/* Suggestions */}
         {message.suggestions && message.suggestions.length > 0 && (
           <div className="mt-3 pt-3 border-t border-slate-700/50">
             <div className="text-xs text-slate-500 mb-2 flex items-center gap-1">
@@ -101,11 +87,7 @@ function ChatMessage({ message, onSuggestionClick }: ChatMessageProps) {
           </div>
         )}
         
-        {/* Timestamp */}
-        <div className={cn(
-          'text-[10px] mt-2',
-          isUser ? 'text-blue-400/50' : 'text-slate-500'
-        )}>
+        <div className={cn('text-[10px] mt-2', isUser ? 'text-blue-400/50' : 'text-slate-500')}>
           {message.timestamp.toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
@@ -123,10 +105,8 @@ function FormattedMessage({ content }: { content: string }) {
   return (
     <>
       {lines.map((line, i) => {
-        // Bold **text**
         let processed = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
         
-        // Lists
         if (line.startsWith('• ') || line.startsWith('- ') || line.startsWith('* ')) {
           return (
             <div key={i} className="flex gap-2 my-0.5">
@@ -136,10 +116,7 @@ function FormattedMessage({ content }: { content: string }) {
           );
         }
         
-        // Empty line
-        if (line.trim() === '') {
-          return <div key={i} className="h-2" />;
-        }
+        if (line.trim() === '') return <div key={i} className="h-2" />;
         
         return <div key={i} dangerouslySetInnerHTML={{ __html: processed }} />;
       })}
@@ -161,23 +138,20 @@ export function ChatbotWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Focus input when chat opens
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
       
-      // Add welcome message if no messages
       if (messages.length === 0) {
         const nombre = user?.nombre?.split(' ')[0] || '';
         setMessages([{
           id: 'welcome',
           role: 'assistant',
-          content: `¡Hola${nombre ? ` ${nombre}` : ''}! 👋 Soy el asistente de Vanguard, potenciado por IA.\n\nPuedo ayudarte a:\n• 📦 Consultar stock y productos\n• 📊 Analizar ventas y métricas\n• 🔮 Predecir demanda\n• ⚡ Crear órdenes y movimientos\n\n¿En qué puedo ayudarte?`,
+          content: `¡Hola${nombre ? ` ${nombre}` : ''}! 👋 Soy el asistente de Vanguard.\n\nPuedo ayudarte a:\n• 📦 Consultar stock y productos\n• 📊 Analizar ventas y métricas\n• 🔮 Ver tendencias y recomendaciones\n• ⚡ Crear órdenes y movimientos\n\n¿En qué puedo ayudarte?`,
           timestamp: new Date(),
           suggestions: [
             '¿Qué productos tienen stock bajo?',
@@ -204,24 +178,12 @@ export function ChatbotWidget() {
     setIsLoading(true);
     setError(null);
 
-    // Crear mensaje del asistente vacío para streaming
-    const assistantId = (Date.now() + 1).toString();
-    setMessages(prev => [...prev, {
-      id: assistantId,
-      role: 'assistant',
-      content: '',
-      timestamp: new Date(),
-      toolsUsed: [],
-    }]);
-
     try {
-      // Preparar historial (últimos 10 mensajes, sin el welcome)
       const historial = messages
         .filter(m => m.id !== 'welcome')
         .slice(-10)
         .map(m => ({ rol: m.role, contenido: m.content }));
 
-      // Llamar a la API con streaming
       const response = await fetch('/api/asistente/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -240,71 +202,20 @@ export function ChatbotWidget() {
         throw new Error(errorData.error || 'Error al comunicarse con el asistente');
       }
 
-      // Leer el stream
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      
-      let accumulatedContent = '';
-      let toolsUsed: string[] = [];
-      let suggestions: string[] = [];
+      const data = await response.json();
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.respuesta,
+        timestamp: new Date(),
+        suggestions: data.sugerencias,
+        toolsUsed: data.tool_calls?.map((tc: any) => tc.nombre),
+      };
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                
-                if (data.type === 'text') {
-                  accumulatedContent += data.content;
-                  // Actualizar mensaje en tiempo real
-                  setMessages(prev => prev.map(m => 
-                    m.id === assistantId 
-                      ? { ...m, content: accumulatedContent }
-                      : m
-                  ));
-                }
-                
-                if (data.type === 'tool') {
-                  toolsUsed.push(data.name);
-                  // Actualizar herramientas usadas
-                  setMessages(prev => prev.map(m => 
-                    m.id === assistantId 
-                      ? { ...m, toolsUsed: [...toolsUsed] }
-                      : m
-                  ));
-                }
-                
-                if (data.type === 'done') {
-                  suggestions = data.sugerencias || [];
-                  // Actualizar mensaje final con sugerencias
-                  setMessages(prev => prev.map(m => 
-                    m.id === assistantId 
-                      ? { ...m, suggestions, toolsUsed: data.toolsUsed || toolsUsed }
-                      : m
-                  ));
-                }
-                
-                if (data.type === 'error') {
-                  throw new Error(data.message);
-                }
-              } catch (parseError) {
-                // Ignorar líneas que no son JSON válido
-              }
-            }
-          }
-        }
-      }
+      setMessages(prev => [...prev, assistantMessage]);
     } catch (err: any) {
       setError(err.message || 'No se pudo conectar con el asistente');
-      // Remover mensaje vacío del asistente si hay error
-      setMessages(prev => prev.filter(m => m.id !== assistantId));
       console.error('Chat error:', err);
     } finally {
       setIsLoading(false);
@@ -314,10 +225,6 @@ export function ChatbotWidget() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendMessage(input);
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    sendMessage(suggestion);
   };
 
   return (
@@ -350,7 +257,7 @@ export function ChatbotWidget() {
               <div className="font-semibold text-sm flex items-center gap-2">
                 Vanguard AI
                 <span className="px-1.5 py-0.5 text-[9px] font-medium bg-violet-500/20 text-violet-300 rounded">
-                  LangChain
+                  Gemini
                 </span>
               </div>
               <div className="text-xs text-slate-400 flex items-center gap-1">
@@ -373,11 +280,10 @@ export function ChatbotWidget() {
             <ChatMessage 
               key={message.id} 
               message={message} 
-              onSuggestionClick={handleSuggestionClick}
+              onSuggestionClick={sendMessage}
             />
           ))}
           
-          {/* Loading indicator */}
           {isLoading && (
             <div className="flex gap-3 mb-4">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-violet-500/20 flex items-center justify-center">
@@ -387,17 +293,11 @@ export function ChatbotWidget() {
                 <div className="flex items-center gap-2 text-sm text-slate-400">
                   <Loader2 size={14} className="animate-spin text-violet-400" />
                   Analizando...
-                  <div className="flex gap-1 ml-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Error message */}
           {error && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/20 text-red-400 text-sm">
               <AlertCircle size={16} />
@@ -427,19 +327,18 @@ export function ChatbotWidget() {
                 'px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center',
                 'bg-gradient-to-r from-blue-500 to-violet-500 text-white',
                 'hover:shadow-lg hover:shadow-violet-500/30',
-                'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none'
+                'disabled:opacity-50 disabled:cursor-not-allowed'
               )}
             >
               <Send size={18} />
             </button>
           </div>
           <div className="text-[10px] text-slate-500 text-center mt-2">
-            Powered by LangChain + Google Gemini
+            Powered by Google Gemini AI
           </div>
         </form>
       </div>
 
-      {/* Scroll to bottom button */}
       {isOpen && messages.length > 5 && (
         <button
           onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
