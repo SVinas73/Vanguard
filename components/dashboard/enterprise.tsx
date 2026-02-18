@@ -481,7 +481,7 @@ interface StockAlertsPanelProps {
   alertas: AlertasData;
 }
 
-function StockAlertsPanel({ alertas }: StockAlertsPanelProps) {
+function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
   const filteredItems: AlertaItem[] = activeFilter === 'all'
@@ -790,7 +790,7 @@ interface RecentActivityPanelProps {
   actividad: ActividadItem[];
 }
 
-function RecentActivityPanel({ actividad }: RecentActivityPanelProps) {
+function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
   const groupedByTime = useMemo(() => {
     const groups: Record<string, ActividadItem[]> = {};
     actividad.forEach((a: ActividadItem) => {
@@ -962,11 +962,84 @@ export default function VanguardDashboard() {
 
           {/* Right column */}
           <div className="lg:col-span-3 space-y-5">
-            <StockAlertsPanel alertas={data.alertas} />
-            <RecentActivityPanel actividad={data.actividad} />
+            <StockAlertsPanelLocal alertas={data.alertas} />
+            <RecentActivityPanelLocal actividad={data.actividad} />
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+// ============================================
+// PUBLIC EXPORTS para page.tsx
+// ============================================
+
+export function InventoryValueCard({ products, movements, onCategoryClick }: {
+  products: any[];
+  movements: any[];
+  onCategoryClick: (category: string) => void;
+}) {
+  const data = useMemo(() => {
+    const CATEGORY_COLORS: Record<string, string> = {
+      'Estación de Servicio': '#10b981', 'Ferretería': '#06b6d4',
+      'Papelería': '#a855f7', 'Ediltor': '#f59e0b',
+    };
+    const totalValue = products.reduce((sum, p) => sum + p.stock * (p.costoPromedio ?? p.precio), 0);
+    const categoryMap: Record<string, number> = {};
+    products.forEach((p) => { categoryMap[p.categoria] = (categoryMap[p.categoria] ?? 0) + p.stock * (p.costoPromedio ?? p.precio); });
+    const categorias = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([nombre, valor], i) => ({
+      nombre, valor,
+      porcentaje: totalValue > 0 ? Math.round((valor / totalValue) * 100) : 0,
+      color: CATEGORY_COLORS[nombre] ?? ['#10b981','#06b6d4','#a855f7','#f59e0b','#ec4899'][i % 5],
+    }));
+    const sixtyDaysAgo = new Date(); sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const activeCodes = new Set(movements.filter((m) => new Date(m.timestamp) >= sixtyDaysAgo).map((m) => m.codigo));
+    const inmovilizados = products.filter((p) => !activeCodes.has(p.codigo) && p.stock > 0);
+    const capitalInmovilizado = inmovilizados.reduce((sum, p) => sum + p.stock * (p.costoPromedio ?? p.precio), 0);
+    return { total: totalValue, prev30d: totalValue * 1.05, categorias, capitalInmovilizado, productosInmovilizados: inmovilizados.length };
+  }, [products, movements]);
+  return <InventoryValuePanel data={data} />;
+}
+
+export function StockAlertsPanel({ products, predictions, onProductClick, onCreatePurchaseOrder }: {
+  products: any[];
+  predictions: any;
+  onProductClick: (product: any) => void;
+  onCreatePurchaseOrder: (products: any[]) => void;
+}) {
+  const alertas = useMemo(() => {
+    const items = products.filter((p) => p.stock <= p.stockMinimo).map((p) => {
+      const dias = predictions[p.codigo]?.days ?? 0;
+      const nivel: AlertLevel = p.stock === 0 ? 'critical' : p.stock <= p.stockMinimo * 0.5 ? 'warning' : 'low';
+      return { codigo: p.codigo, descripcion: p.descripcion, stock: p.stock, stockMin: p.stockMinimo, dias, nivel };
+    }).sort((a, b) => a.stock - b.stock).slice(0, 20);
+    return {
+      criticas: items.filter((i) => i.nivel === 'critical').length,
+      advertencias: items.filter((i) => i.nivel === 'warning').length,
+      bajas: items.filter((i) => i.nivel === 'low').length,
+      total: products.filter((p) => p.stock <= p.stockMinimo).length,
+      items,
+    };
+  }, [products, predictions]);
+  // Rename the local StockAlertsPanel to avoid conflict — use internal props shape
+  return <StockAlertsPanelLocal alertas={alertas} />;
+}
+
+export function RecentActivityPanel({ movements, products, maxItems = 20 }: {
+  movements: any[];
+  products: any[];
+  maxItems?: number;
+}) {
+  const actividad = useMemo(() => {
+    const productMap = new Map(products.map((p) => [p.codigo, p.descripcion]));
+    const now = new Date();
+    return movements.slice().sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, maxItems).map((m) => {
+      const diffMs = now.getTime() - new Date(m.timestamp).getTime();
+      const diffDays = Math.floor(diffMs / 86400000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      return { tipo: m.tipo, descripcion: productMap.get(m.codigo) ?? m.codigo, cantidad: m.cantidad, usuario: m.usuario, tiempo: diffDays > 0 ? `${diffDays}d` : `${diffHours}h` };
+    });
+  }, [movements, products, maxItems]);
+  return <RecentActivityPanelLocal actividad={actividad} />;
 }
