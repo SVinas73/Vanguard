@@ -448,7 +448,7 @@ export default function HomePage() {
               <InventoryValueCard 
                 products={products}
                 movements={movements}
-                onCategoryClick={(category) => {
+                onCategoryClick={(category: string) => {
                   setSelectedCategory(category);
                   setActiveTab('stock');
                 }}
@@ -456,8 +456,8 @@ export default function HomePage() {
               <StockAlertsPanel 
                 products={products}
                 predictions={predictions}
-                onProductClick={(product) => handleOpenEdit(product)}
-                onCreatePurchaseOrder={(productsAtRisk) => {
+                onProductClick={(product: Product) => handleOpenEdit(product)}
+                onCreatePurchaseOrder={(productsAtRisk: Product[]) => {
                   setActiveTab('compras');
                 }}
               />
