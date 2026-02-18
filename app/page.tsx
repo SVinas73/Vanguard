@@ -470,9 +470,15 @@ export default function HomePage() {
             {/* Activity + Chart Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2">
-                <Card>
+                <div 
+                  className="rounded-2xl p-5"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(28,31,38,0.95), rgba(22,25,33,0.9))',
+                    border: '1px solid rgba(46,50,61,0.6)',
+                  }}
+                >
                   <ConsumptionChart movements={movements} products={products} />
-                </Card>
+                </div>
               </div>
               <RecentActivityPanel 
                 movements={movements}
