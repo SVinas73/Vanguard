@@ -1,7 +1,7 @@
 'use client';
 
 import { ComercialDashboard, ComprasEnterprisePanel, VentasEnterprisePanel } from '@/components/comercial';
-import { AsistenteModule } from '@/components/asistente';
+
 import { ChatModule } from '@/components/chat';
 import { DemandPlanningModule } from '@/components/demand-planning';
 import { WMSModule } from '@/components/wms';
@@ -559,11 +559,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {activeTab === 'asistente' && (
-          <div className="w-full">
-            <AsistenteModule />
-          </div>
-        )}
+        
 
         {/* ==================== ANALYTICS ==================== */}
         {activeTab === 'analytics' && (
