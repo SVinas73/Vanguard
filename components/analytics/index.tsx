@@ -10,7 +10,13 @@ import {
   TrendingDown, 
   Minus,
   Filter,
-  BarChart3
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+  Package,
+  Clock,
+  DollarSign,
+  X,
 } from 'lucide-react';
 
 // ============================================
@@ -180,7 +186,6 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
   const { t } = useTranslation();
   const [urgencyFilter, setUrgencyFilter] = useState<UrgencyFilter>('todas');
 
-  // Classify and filter products with alerts
   const alertProducts = useMemo(() => {
     const classified = products
       .map((p) => {
@@ -188,7 +193,6 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
         const ratio = p.stock / p.stockMinimo;
         const daysLeft = pred?.days;
         
-        // Determine urgency level
         let urgency: 'critica' | 'media' | 'baja';
         if (p.stock === 0 || (daysLeft !== null && daysLeft !== Infinity && daysLeft < 3)) {
           urgency = 'critica';
@@ -205,11 +209,9 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
         return product.stock <= product.stockMinimo || (pred && pred.days !== null && pred.days < 14);
       });
 
-    // Sort by urgency (critica first, then media, then baja)
     const urgencyOrder = { critica: 0, media: 1, baja: 2 };
     classified.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
 
-    // Filter by selected urgency
     if (urgencyFilter !== 'todas') {
       return classified.filter((item) => item.urgency === urgencyFilter);
     }
@@ -260,7 +262,6 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
 
   return (
     <div className="space-y-3">
-      {/* Filter buttons */}
       <div className="flex items-center gap-2 flex-wrap">
         <Filter size={16} className="text-slate-400" />
         <button
@@ -277,39 +278,41 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
         <button
           onClick={() => setUrgencyFilter('critica')}
           className={cn(
-            'px-3 py-1 rounded-lg text-xs font-medium transition-all',
+            'px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
             urgencyFilter === 'critica'
               ? 'bg-red-500/30 text-red-300'
               : 'bg-slate-800/50 text-slate-400 hover:bg-red-500/20'
           )}
         >
-          🔴 {t('alerts.critical')} ({urgencyCounts.critica})
+          <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+          {t('alerts.critical')} ({urgencyCounts.critica})
         </button>
         <button
           onClick={() => setUrgencyFilter('media')}
           className={cn(
-            'px-3 py-1 rounded-lg text-xs font-medium transition-all',
+            'px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
             urgencyFilter === 'media'
               ? 'bg-amber-500/30 text-amber-300'
               : 'bg-slate-800/50 text-slate-400 hover:bg-amber-500/20'
           )}
         >
-          🟠 {t('alerts.medium')} ({urgencyCounts.media})
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+          {t('alerts.medium')} ({urgencyCounts.media})
         </button>
         <button
           onClick={() => setUrgencyFilter('baja')}
           className={cn(
-            'px-3 py-1 rounded-lg text-xs font-medium transition-all',
+            'px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
             urgencyFilter === 'baja'
               ? 'bg-yellow-500/30 text-yellow-300'
               : 'bg-slate-800/50 text-slate-400 hover:bg-yellow-500/20'
           )}
         >
-          🟡 {t('alerts.low')} ({urgencyCounts.baja})
+          <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
+          {t('alerts.low')} ({urgencyCounts.baja})
         </button>
       </div>
 
-      {/* Scrollable alert list */}
       <div className="max-h-[400px] overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800/50">
         {alertProducts.length === 0 ? (
           <div className="p-4 text-center text-slate-500">
@@ -361,7 +364,7 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
 }
 
 // ============================================
-// CONSUMPTION CHART (Interactive - Click to see details)
+// CONSUMPTION CHART — PREMIUM REDESIGN
 // ============================================
 
 type PeriodFilter = 'semana' | 'mes' | 'semestre' | 'año';
@@ -384,110 +387,99 @@ interface ConsumptionChartProps {
   products: Product[];
 }
 
+// Category color mapping
+const CATEGORY_COLORS: Record<string, string> = {
+  'Estación de Servicio': '#10b981',
+  'Ferretería': '#06b6d4',
+  'Papelería': '#a855f7',
+  'Ediltor': '#f59e0b',
+  'Otros': '#ec4899',
+};
+
+const FALLBACK_COLORS = ['#10b981', '#06b6d4', '#a855f7', '#f59e0b', '#ec4899', '#6366f1', '#14b8a6'];
+
+function getCatColor(categoria: string): string {
+  return CATEGORY_COLORS[categoria] || FALLBACK_COLORS[Math.abs(categoria.split('').reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0)) % FALLBACK_COLORS.length];
+}
+
 export function ConsumptionChart({ movements, products }: ConsumptionChartProps) {
   const { t } = useTranslation();
   const [period, setPeriod] = useState<PeriodFilter>('mes');
   const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null);
-  const [hoveredBar, setHoveredBar] = useState<string | null>(null);
 
-  const periodLabels: Record<PeriodFilter, string> = {
-    semana: t('periods.week'),
-    mes: t('periods.month'),
-    semestre: t('periods.semester'),
-    año: t('periods.year'),
+  const periodConfig: Record<PeriodFilter, { label: string; fullLabel: string; days: number }> = {
+    semana: { label: '7d', fullLabel: t('periods.lastWeek', 'Última semana'), days: 7 },
+    mes: { label: '30d', fullLabel: t('periods.lastMonth', 'Último mes'), days: 30 },
+    semestre: { label: '6m', fullLabel: t('periods.lastSemester', 'Último semestre'), days: 180 },
+    año: { label: '1a', fullLabel: t('periods.lastYear', 'Último año'), days: 365 },
   };
 
-  const periodFullLabels: Record<PeriodFilter, string> = {
-    semana: t('periods.lastWeek'),
-    mes: t('periods.lastMonth'),
-    semestre: t('periods.lastSemester'),
-    año: t('periods.lastYear'),
-  };
-
-  const { chartData, trendLine, maxValue, startDate } = useMemo(() => {
+  const { chartData, maxValue, startDate, prevStartDate } = useMemo(() => {
     const now = new Date();
-    let start: Date;
-    
-    switch (period) {
-      case 'semana':
-        start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case 'mes':
-        start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case 'semestre':
-        start = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
-        break;
-      case 'año':
-        start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        break;
-    }
+    const days = periodConfig[period].days;
+    const start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    const prevStart = new Date(start.getTime() - days * 24 * 60 * 60 * 1000);
 
-    const filteredMovements = movements.filter((m) => {
-      const movDate = new Date(m.timestamp);
-      return movDate >= start && m.tipo === 'salida';
+    // Current period
+    const currentMovements = movements.filter((m: Movement) => {
+      const d = new Date(m.timestamp);
+      return d >= start && m.tipo === 'salida';
     });
 
-    const productConsumption: Record<string, number> = {};
-    filteredMovements.forEach((m) => {
-      productConsumption[m.codigo] = (productConsumption[m.codigo] || 0) + m.cantidad;
+    // Previous period (for comparison)
+    const prevMovements = movements.filter((m: Movement) => {
+      const d = new Date(m.timestamp);
+      return d >= prevStart && d < start && m.tipo === 'salida';
     });
 
-    const sorted = Object.entries(productConsumption)
+    // Aggregate current
+    const currentMap: Record<string, number> = {};
+    currentMovements.forEach((m: Movement) => {
+      currentMap[m.codigo] = (currentMap[m.codigo] || 0) + m.cantidad;
+    });
+
+    // Aggregate previous
+    const prevMap: Record<string, number> = {};
+    prevMovements.forEach((m: Movement) => {
+      prevMap[m.codigo] = (prevMap[m.codigo] || 0) + m.cantidad;
+    });
+
+    const sorted = Object.entries(currentMap)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 10);
 
-    const data = sorted.map(([codigo, cantidad], index) => {
-      const product = products.find((p) => p.codigo === codigo);
+    const data = sorted.map(([codigo, cantidad]) => {
+      const product = products.find((p: Product) => p.codigo === codigo);
+      const prevCantidad = prevMap[codigo] || 0;
       return {
         codigo,
         descripcion: product?.descripcion || codigo,
-        categoria: product?.categoria || t('common.noCategory'),
+        categoria: product?.categoria || t('common.noCategory', 'Sin categoría'),
         cantidad,
-        index,
+        prevCantidad,
       };
     });
 
     const max = Math.max(...data.map((d) => d.cantidad), 1);
 
-    const n = data.length;
-    if (n < 2) {
-      return { chartData: data, trendLine: null, maxValue: max, startDate: start };
-    }
+    return { chartData: data, maxValue: max, startDate: start, prevStartDate: prevStart };
+  }, [movements, products, period, t, periodConfig]);
 
-    const sumX = data.reduce((sum, _, i) => sum + i, 0);
-    const sumY = data.reduce((sum, d) => sum + d.cantidad, 0);
-    const sumXY = data.reduce((sum, d, i) => sum + i * d.cantidad, 0);
-    const sumX2 = data.reduce((sum, _, i) => sum + i * i, 0);
-
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-
-    const trend = {
-      start: intercept,
-      end: slope * (n - 1) + intercept,
-    };
-
-    return { chartData: data, trendLine: trend, maxValue: max, startDate: start };
-  }, [movements, products, period, t]);
-
-  // Handle bar click - show product details
+  // Handle bar click
   const handleBarClick = (codigo: string) => {
-    const product = products.find((p) => p.codigo === codigo);
+    const product = products.find((p: Product) => p.codigo === codigo);
     if (!product) return;
 
-    // Get movements for this product in the period
-    const productMovements = movements.filter((m) => {
+    const productMovements = movements.filter((m: Movement) => {
       const movDate = new Date(m.timestamp);
       return m.codigo === codigo && movDate >= startDate;
     });
 
-    const salidas = productMovements.filter((m) => m.tipo === 'salida');
-    const consumoTotal = salidas.reduce((sum, m) => sum + m.cantidad, 0);
+    const salidas = productMovements.filter((m: Movement) => m.tipo === 'salida');
+    const consumoTotal = salidas.reduce((sum: number, m: Movement) => sum + m.cantidad, 0);
     
-    // Calculate days in period
     const daysInPeriod = Math.ceil((new Date().getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
-    const consumoDiario = consumoTotal / daysInPeriod;
+    const consumoDiario = daysInPeriod > 0 ? consumoTotal / daysInPeriod : 0;
     const diasRestantes = consumoDiario > 0 ? Math.round(product.stock / consumoDiario) : null;
 
     setSelectedProduct({
@@ -500,32 +492,43 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
       consumoTotal,
       consumoDiario: Math.round(consumoDiario * 100) / 100,
       diasRestantes,
-      movimientos: productMovements.slice(0, 10),
+      movimientos: productMovements
+        .sort((a: Movement, b: Movement) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 10),
     });
   };
 
   return (
     <div className="space-y-4">
-      {/* Header with period selector */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <BarChart3 size={20} className="text-cyan-400" />
-          <h3 className="font-semibold">{t('analytics.topConsumed')}</h3>
-          <span className="text-xs text-slate-500">({periodFullLabels[period]})</span>
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl" style={{ background: 'rgba(6,182,212,0.12)' }}>
+            <BarChart3 size={18} className="text-cyan-400" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-200 text-sm">
+              {t('analytics.topConsumed', 'Productos Más Consumidos')}
+            </h3>
+            <p className="text-[11px] text-slate-500">
+              {t('analytics.rankByUnitsOut', 'Ranking por unidades salidas')} · {periodConfig[period].fullLabel}
+            </p>
+          </div>
         </div>
-        <div className="flex gap-1">
-          {(['semana', 'mes', 'semestre', 'año'] as PeriodFilter[]).map((p) => (
+
+        {/* Period selector */}
+        <div className="flex gap-0.5 p-0.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          {(Object.keys(periodConfig) as PeriodFilter[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={cn(
-                'px-3 py-1 rounded-lg text-xs font-medium transition-all',
-                period === p
-                  ? 'bg-cyan-500/20 text-cyan-300'
-                  : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-              )}
+              className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
+              style={{
+                background: period === p ? 'rgba(6,182,212,0.15)' : 'transparent',
+                color: period === p ? '#22d3ee' : 'rgba(148,163,184,0.5)',
+              }}
             >
-              {periodLabels[p]}
+              {periodConfig[p].label}
             </button>
           ))}
         </div>
@@ -533,201 +536,215 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
 
       {/* Chart */}
       {chartData.length === 0 ? (
-        <div className="p-8 text-center text-slate-500 rounded-xl border border-slate-800/50">
-          <BarChart3 size={32} className="mx-auto mb-2 opacity-50" />
-          {t('analytics.noConsumptionData')}
+        <div className="py-12 text-center rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(51,65,85,0.2)' }}>
+          <Package size={32} className="mx-auto mb-2 text-slate-600" />
+          <p className="text-sm text-slate-500">{t('analytics.noConsumptionData', 'Sin datos de consumo en este período')}</p>
         </div>
       ) : (
-        <div className="relative">
-          {/* Instruction */}
-          <p className="text-xs text-slate-500 mb-3">
-            💡 {t('analytics.clickBarDetails')}
-          </p>
+        <div className="space-y-2.5">
+          {chartData.map((item, i: number) => {
+            const pct = (item.cantidad / maxValue) * 100;
+            const delta = item.prevCantidad > 0
+              ? ((item.cantidad - item.prevCantidad) / item.prevCantidad * 100).toFixed(0)
+              : null;
+            const isUp = delta !== null && parseFloat(delta) >= 0;
+            const barColor = getCatColor(item.categoria);
 
-          {/* Bars */}
-          <div className="space-y-2">
-            {chartData.map((item, index) => {
-              const percentage = (item.cantidad / maxValue) * 100;
-              const trendPercentage = trendLine
-                ? ((trendLine.start + (trendLine.end - trendLine.start) * (index / (chartData.length - 1))) / maxValue) * 100
-                : 0;
-              const isHovered = hoveredBar === item.codigo;
+            return (
+              <div
+                key={item.codigo}
+                className="group cursor-pointer"
+                onClick={() => handleBarClick(item.codigo)}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Rank number */}
+                  <div className="w-5 text-center flex-shrink-0">
+                    <span
+                      className="text-[11px] font-bold"
+                      style={{ color: i < 3 ? '#22d3ee' : 'rgba(148,163,184,0.3)' }}
+                    >
+                      {i + 1}
+                    </span>
+                  </div>
 
-              return (
-                <div 
-                  key={item.codigo} 
-                  className="group cursor-pointer"
-                  onClick={() => handleBarClick(item.codigo)}
-                  onMouseEnter={() => setHoveredBar(item.codigo)}
-                  onMouseLeave={() => setHoveredBar(null)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-24 text-xs text-slate-400 truncate" title={item.descripcion}>
-                      {item.codigo}
-                    </div>
-                    <div className="flex-1 relative h-8">
-                      {/* Background */}
-                      <div className={cn(
-                        "absolute inset-0 rounded-lg transition-all",
-                        isHovered ? "bg-slate-700/70" : "bg-slate-800/50"
-                      )} />
-                      
-                      {/* Bar */}
-                      <div
-                        className={cn(
-                          "absolute inset-y-0 left-0 rounded-lg transition-all duration-300 flex items-center justify-end pr-2",
-                          isHovered 
-                            ? "bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-lg shadow-cyan-500/20" 
-                            : "bg-gradient-to-r from-cyan-500 to-emerald-500"
-                        )}
-                        style={{ width: `${Math.max(percentage, 5)}%` }}
-                      >
-                        <span className="text-xs font-mono font-semibold text-slate-950">
-                          {item.cantidad}
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm text-slate-200 font-medium truncate group-hover:text-white transition-colors">
+                          {item.descripcion}
+                        </span>
+                        <span
+                          className="text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0"
+                          style={{
+                            background: `${barColor}15`,
+                            color: `${barColor}cc`,
+                          }}
+                        >
+                          {item.categoria}
                         </span>
                       </div>
+                      <div className="flex items-center gap-2.5 flex-shrink-0 ml-3">
+                        <span className="text-sm font-bold text-white font-mono">{item.cantidad}</span>
+                        {delta !== null && (
+                          <span
+                            className="text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5"
+                            style={{
+                              background: isUp ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
+                              color: isUp ? '#34d399' : '#fb7185',
+                            }}
+                          >
+                            {isUp ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                            {isUp ? '+' : ''}{delta}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-                      {/* Trend line marker */}
-                      {trendLine && (
-                        <div
-                          className="absolute top-0 bottom-0 w-0.5 bg-amber-400/60"
-                          style={{ left: `${Math.min(Math.max(trendPercentage, 0), 100)}%` }}
-                        />
-                      )}
-
-                      {/* Hover tooltip */}
-                      {isHovered && (
-                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800 rounded-lg shadow-xl border border-slate-700 z-10 whitespace-nowrap">
-                          <span className="text-xs text-slate-200">{item.descripcion}</span>
-                          <span className="text-xs text-cyan-400 ml-2">({item.categoria})</span>
-                        </div>
-                      )}
+                    {/* Bar */}
+                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-700 group-hover:opacity-90"
+                        style={{
+                          width: `${Math.max(pct, 3)}%`,
+                          background: `linear-gradient(90deg, ${barColor}cc, ${barColor}44)`,
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Legend */}
-          {trendLine && (
-            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-800/50">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-3 bg-gradient-to-r from-cyan-500 to-emerald-500 rounded" />
-                <span className="text-xs text-slate-400">{t('analytics.realConsumption')}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-0.5 bg-amber-400/60" />
-                <span className="text-xs text-slate-400">{t('analytics.trendLine')}</span>
-              </div>
-              <div className="ml-auto text-xs text-slate-500">
-                {t('analytics.trend')}: {trendLine.end > trendLine.start ? (
-                  <span className="text-red-400">↗ {t('analytics.consumptionIncreasing')}</span>
-                ) : trendLine.end < trendLine.start ? (
-                  <span className="text-emerald-400">↘ {t('analytics.consumptionDecreasing')}</span>
-                ) : (
-                  <span className="text-slate-400">→ {t('trends.stable')}</span>
-                )}
-              </div>
-            </div>
-          )}
+            );
+          })}
         </div>
       )}
 
       {/* Product Detail Modal */}
       {selectedProduct && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
           onClick={() => setSelectedProduct(null)}
         >
-          <div 
-            className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-lg w-full mx-4 shadow-2xl"
+          <div
+            className="rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl"
+            style={{
+              background: 'linear-gradient(135deg, rgba(15,23,42,0.98), rgba(15,23,42,0.95))',
+              border: '1px solid rgba(51,65,85,0.4)',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between mb-5">
               <div>
                 <h3 className="text-lg font-bold text-slate-100">{selectedProduct.descripcion}</h3>
-                <p className="text-sm text-slate-500">{selectedProduct.codigo} • {selectedProduct.categoria}</p>
+                <p className="text-sm text-slate-500">
+                  {selectedProduct.codigo} ·{' '}
+                  <span style={{ color: getCatColor(selectedProduct.categoria) }}>
+                    {selectedProduct.categoria}
+                  </span>
+                </p>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedProduct(null)}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-2 rounded-lg transition-colors"
+                style={{ background: 'rgba(255,255,255,0.04)' }}
               >
-                <span className="text-slate-400 text-xl">×</span>
+                <X size={16} className="text-slate-400" />
               </button>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                <div className="text-xs text-slate-500 mb-1">{t('analytics.currentStock')}</div>
-                <div className={cn(
-                  "text-xl font-bold font-mono",
-                  selectedProduct.stock <= selectedProduct.stockMinimo ? "text-red-400" : "text-emerald-400"
-                )}>
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Package size={12} className="text-slate-500" />
+                  <span className="text-[11px] text-slate-500">{t('analytics.currentStock', 'Stock actual')}</span>
+                </div>
+                <div
+                  className="text-xl font-bold font-mono"
+                  style={{ color: selectedProduct.stock <= selectedProduct.stockMinimo ? '#fb7185' : '#34d399' }}
+                >
                   {selectedProduct.stock}
                 </div>
-                <div className="text-xs text-slate-500">{t('stock.minStock')}: {selectedProduct.stockMinimo}</div>
+                <div className="text-[10px] text-slate-600">{t('stock.minStock', 'Mín')}: {selectedProduct.stockMinimo}</div>
               </div>
-              
-              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                <div className="text-xs text-slate-500 mb-1">{t('analytics.consumption')} ({periodFullLabels[period]})</div>
+
+              <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <BarChart3 size={12} className="text-slate-500" />
+                  <span className="text-[11px] text-slate-500">{t('analytics.consumption', 'Consumo')}</span>
+                </div>
                 <div className="text-xl font-bold font-mono text-cyan-400">
                   {selectedProduct.consumoTotal}
                 </div>
-                <div className="text-xs text-slate-500">{selectedProduct.consumoDiario}/{t('analytics.dayAvg')}</div>
+                <div className="text-[10px] text-slate-600">{selectedProduct.consumoDiario}/{t('analytics.dayAvg', 'día prom.')}</div>
               </div>
-              
-              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                <div className="text-xs text-slate-500 mb-1">{t('analytics.daysLeft')}</div>
-                <div className={cn(
-                  "text-xl font-bold font-mono",
-                  selectedProduct.diasRestantes === null ? "text-slate-400" :
-                  selectedProduct.diasRestantes < 7 ? "text-red-400" :
-                  selectedProduct.diasRestantes < 14 ? "text-amber-400" : "text-emerald-400"
-                )}>
+
+              <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Clock size={12} className="text-slate-500" />
+                  <span className="text-[11px] text-slate-500">{t('analytics.daysLeft', 'Días restantes')}</span>
+                </div>
+                <div
+                  className="text-xl font-bold font-mono"
+                  style={{
+                    color:
+                      selectedProduct.diasRestantes === null ? 'rgba(148,163,184,0.5)' :
+                      selectedProduct.diasRestantes < 7 ? '#fb7185' :
+                      selectedProduct.diasRestantes < 14 ? '#fbbf24' : '#34d399',
+                  }}
+                >
                   {selectedProduct.diasRestantes ?? '∞'}
                 </div>
-                <div className="text-xs text-slate-500">{t('analytics.estimatedCurrentRate')}</div>
+                <div className="text-[10px] text-slate-600">{t('analytics.estimatedCurrentRate', 'al ritmo actual')}</div>
               </div>
-              
-              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                <div className="text-xs text-slate-500 mb-1">{t('stock.salePrice')}</div>
-                <div className="text-xl font-bold font-mono text-purple-400">
+
+              <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <DollarSign size={12} className="text-slate-500" />
+                  <span className="text-[11px] text-slate-500">{t('stock.salePrice', 'Precio')}</span>
+                </div>
+                <div className="text-xl font-bold font-mono text-violet-400">
                   ${selectedProduct.precio.toLocaleString('es-UY')}
                 </div>
-                <div className="text-xs text-slate-500">{t('common.perUnit')}</div>
+                <div className="text-[10px] text-slate-600">{t('common.perUnit', 'por unidad')}</div>
               </div>
             </div>
 
             {/* Recent movements */}
             <div>
-              <h4 className="text-sm font-semibold text-slate-400 mb-2">{t('analytics.recentMovements')}</h4>
-              <div className="max-h-40 overflow-y-auto space-y-1">
+              <h4 className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                {t('analytics.recentMovements', 'Movimientos recientes')}
+              </h4>
+              <div
+                className="max-h-40 overflow-y-auto space-y-1.5 pr-1"
+                style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(51,65,85,0.5) transparent' }}
+              >
                 {selectedProduct.movimientos.length === 0 ? (
-                  <p className="text-xs text-slate-500 text-center py-4">{t('analytics.noMovementsPeriod')}</p>
+                  <p className="text-xs text-slate-500 text-center py-4">{t('analytics.noMovementsPeriod', 'Sin movimientos')}</p>
                 ) : (
-                  selectedProduct.movimientos.map((mov, i) => (
-                    <div 
-                      key={i}
-                      className="flex items-center justify-between p-2 rounded-lg bg-slate-800/30 text-xs"
+                  selectedProduct.movimientos.map((mov: Movement, i: number) => (
+                    <div
+                      key={`${mov.codigo}-${i}`}
+                      className="flex items-center justify-between p-2.5 rounded-lg"
+                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(51,65,85,0.15)' }}
                     >
                       <div className="flex items-center gap-2">
-                        <span className={cn(
-                          "px-2 py-0.5 rounded font-medium",
-                          mov.tipo === 'entrada' 
-                            ? "bg-emerald-500/20 text-emerald-400" 
-                            : "bg-orange-500/20 text-orange-400"
-                        )}>
-                          {mov.tipo === 'entrada' ? `↓ ${t('movements.entry')}` : `↑ ${t('movements.exit')}`}
+                        <span
+                          className="text-[10px] px-2 py-0.5 rounded font-medium"
+                          style={{
+                            background: mov.tipo === 'entrada' ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
+                            color: mov.tipo === 'entrada' ? '#34d399' : '#fb7185',
+                          }}
+                        >
+                          {mov.tipo === 'entrada' ? t('movements.entry', 'Entrada') : t('movements.exit', 'Salida')}
                         </span>
-                        <span className="text-slate-400">
+                        <span className="text-xs text-slate-500">
                           {new Date(mov.timestamp).toLocaleDateString('es-UY')}
                         </span>
                       </div>
-                      <span className="font-mono font-semibold text-slate-200">
-                        {mov.tipo === 'entrada' ? '+' : '-'}{mov.cantidad}
+                      <span className="font-mono font-semibold text-sm text-slate-200">
+                        {mov.tipo === 'entrada' ? '+' : '\u2212'}{mov.cantidad}
                       </span>
                     </div>
                   ))
@@ -738,9 +755,14 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
             {/* Close button */}
             <button
               onClick={() => setSelectedProduct(null)}
-              className="w-full mt-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
+              className="w-full mt-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:scale-[1.01]"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(51,65,85,0.3)',
+                color: 'rgba(148,163,184,0.7)',
+              }}
             >
-              {t('common.close')}
+              {t('common.close', 'Cerrar')}
             </button>
           </div>
         </div>
