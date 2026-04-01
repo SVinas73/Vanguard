@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Thermometer, Search, Plus, Filter, Download, RefreshCw,
   CheckCircle, XCircle, Clock, Eye, Edit, Trash2,
@@ -224,6 +225,7 @@ const formatearCodigoInstrumento = (tipo: TipoInstrumento, secuencia: number): s
 // ============================================
 
 export default function Instrumentos() {
+  const { user } = useAuth();
   // Estado principal
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('lista');
@@ -458,7 +460,7 @@ export default function Instrumentos() {
             ...formData,
             codigo,
             estado: 'activo',
-            creado_por: 'Usuario Actual',
+            creado_por: user?.email || 'Sistema',
           });
         
         if (error) throw error;
@@ -469,7 +471,7 @@ export default function Instrumentos() {
           .update({
             ...formData,
             actualizado_at: new Date().toISOString(),
-            actualizado_por: 'Usuario Actual',
+            actualizado_por: user?.email || 'Sistema',
           })
           .eq('id', instrumentoSeleccionado?.id);
         
@@ -505,7 +507,7 @@ export default function Instrumentos() {
           instrumento_id: instrumentoSeleccionado.id,
           ...calibracionForm,
           fecha_vencimiento: proximaCalibracion.toISOString(),
-          calibrado_por: 'Usuario Actual',
+          calibrado_por: user?.email || 'Sistema',
         });
       
       if (errorCal) throw errorCal;

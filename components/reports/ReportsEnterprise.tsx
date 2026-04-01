@@ -849,8 +849,8 @@ export default function ReportsEnterprise() {
     const { data: movimientos } = await supabase
       .from('movimientos')
       .select('codigo')
-      .gte('timestamp', filtros.fechaInicio)
-      .lte('timestamp', filtros.fechaFin);
+      .gte('created_at', filtros.fechaInicio)
+      .lte('created_at', filtros.fechaFin);
 
     const codigosConMov = new Set(movimientos?.map(m => m.codigo) || []);
     
@@ -889,13 +889,13 @@ export default function ReportsEnterprise() {
     let query = supabase
       .from('movimientos')
       .select('*, producto:productos(descripcion)')
-      .gte('timestamp', filtros.fechaInicio)
-      .lte('timestamp', `${filtros.fechaFin}T23:59:59`);
+      .gte('created_at', filtros.fechaInicio)
+      .lte('created_at', `${filtros.fechaFin}T23:59:59`);
 
-    const { data } = await query.order('timestamp', { ascending: false });
+    const { data } = await query.order('created_at', { ascending: false });
 
     const filas = (data || []).map((m: any) => ({
-      fecha: m.timestamp,
+      fecha: m.created_at,
       tipo: m.tipo,
       codigo: m.codigo,
       descripcion: m.producto?.descripcion || m.codigo,
@@ -952,12 +952,12 @@ export default function ReportsEnterprise() {
       .from('movimientos')
       .select('*, producto:productos(descripcion)')
       .eq('tipo', 'ajuste')
-      .gte('timestamp', filtros.fechaInicio)
-      .lte('timestamp', `${filtros.fechaFin}T23:59:59`)
-      .order('timestamp', { ascending: false });
+      .gte('created_at', filtros.fechaInicio)
+      .lte('created_at', `${filtros.fechaFin}T23:59:59`)
+      .order('created_at', { ascending: false });
 
     const filas = (data || []).map((m: any) => ({
-      fecha: m.timestamp,
+      fecha: m.created_at,
       codigo: m.codigo,
       descripcion: m.producto?.descripcion || m.codigo,
       cantidad: m.cantidad,

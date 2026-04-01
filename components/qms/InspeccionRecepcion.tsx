@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardCheck, Package, Search, Plus, Filter, Download,
   CheckCircle, XCircle, Clock, AlertTriangle, Eye, Edit,
@@ -61,6 +62,7 @@ type VistaActiva = 'lista' | 'nueva' | 'detalle' | 'ejecutar';
 // ============================================
 
 export default function InspeccionRecepcion() {
+  const { user } = useAuth();
   // Estado principal
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('lista');
@@ -465,7 +467,7 @@ export default function InspeccionRecepcion() {
           estado,
           decision,
           fecha_decision: new Date().toISOString(),
-          supervisor_calidad: 'Usuario Actual', // TODO: usar usuario real
+          supervisor_calidad: user?.email || 'Sistema',
         })
         .eq('id', inspeccionId);
       
@@ -473,7 +475,35 @@ export default function InspeccionRecepcion() {
       
       // Si es rechazado, crear NCR automáticamente
       if (estado === 'rechazado') {
-        // TODO: Crear NCR automática
+        const inspeccion = inspecciones.find(i => i.id === inspeccionId);
+        if (inspeccion) {
+          try {
+            const { data: lastNCR } = await supabase
+              .from('qms_no_conformidades')
+              .select('numero')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
+
+            const lastSeq = lastNCR?.numero ? parseInt(lastNCR.numero.split('-').pop() || '0') : 0;
+            const nuevoNumero = `NCR-${new Date().getFullYear()}-${String(lastSeq + 1).padStart(4, '0')}`;
+
+            await supabase.from('qms_no_conformidades').insert({
+              numero: nuevoNumero,
+              tipo: 'proveedor',
+              origen: 'inspeccion_recepcion',
+              severidad: 'mayor',
+              titulo: `Rechazo inspección ${inspeccion.numero || inspeccionId}`,
+              descripcion: `NCR generada automáticamente por rechazo en inspección de recepción. Producto: ${inspeccion.producto_codigo || 'N/A'}. Decisión: ${decision}.`,
+              estado: 'abierta',
+              fecha_deteccion: new Date().toISOString(),
+              detectado_por: user?.email || 'Sistema',
+              inspeccion_id: inspeccionId,
+            });
+          } catch (ncrError) {
+            console.error('Error creando NCR automática:', ncrError);
+          }
+        }
       }
       
       await loadInspecciones();

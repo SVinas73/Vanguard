@@ -535,10 +535,11 @@ export default function HomePage() {
 
         {/* ==================== COMERCIAL ==================== */}
         {activeTab === 'comercial' && (
-          <ComercialDashboard 
+          <ComercialDashboard
             onNavigate={(view) => {
               if (view === 'compras') setActiveTab('compras');
               if (view === 'ventas') setActiveTab('ventas');
+              if (view === 'cotizaciones') setActiveTab('ventas');
             }}
           />
         )}
@@ -955,7 +956,7 @@ export default function HomePage() {
       {/* Scanner de código de barras */}
       <QuickScanner
         products={products}
-        onProductFound={(product) => console.log('Producto encontrado:', product)}
+        onProductFound={(product) => handleOpenEdit(product)}
         onOpenMovement={(product, tipo) => {
           setNewMovement({ ...newMovement, codigo: product.codigo, tipo });
           setShowNewMovement(true);

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import {
   FileCheck, Search, Plus, Filter, Download, RefreshCw, Printer,
   CheckCircle, XCircle, Clock, Eye, Edit, Trash2, Copy,
@@ -236,6 +237,7 @@ const generarCodigoVerificacion = (): string => {
 // ============================================
 
 export default function Certificados() {
+  const { user } = useAuth();
   // Estado principal
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('lista');
@@ -429,7 +431,7 @@ export default function Certificados() {
             estado: emitir ? 'emitido' : 'borrador',
             fecha_emision: new Date().toISOString(),
             codigo_verificacion: codigoVerificacion,
-            creado_por: 'Usuario Actual',
+            creado_por: user?.email || 'Sistema',
           });
         
         if (error) throw error;
@@ -439,7 +441,7 @@ export default function Certificados() {
           ...formData,
           resultados: formData.tipo === 'coa' ? resultados : certificadoSeleccionado?.resultados,
           actualizado_at: new Date().toISOString(),
-          actualizado_por: 'Usuario Actual',
+          actualizado_por: user?.email || 'Sistema',
         };
         
         if (emitir && certificadoSeleccionado?.estado === 'borrador') {
@@ -531,13 +533,89 @@ export default function Certificados() {
   };
 
   const handleDescargarPDF = async (cert: Certificado) => {
-    // TODO: Implementar generación de PDF
-    alert(`Descargando PDF de ${cert.numero}... (Funcionalidad próximamente)`);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
+
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      // Header
+      doc.setFontSize(18);
+      doc.setTextColor(0, 128, 128);
+      doc.text('CERTIFICADO', pageWidth / 2, 20, { align: 'center' });
+
+      doc.setFontSize(12);
+      doc.setTextColor(60, 60, 60);
+      doc.text(cert.numero, pageWidth / 2, 28, { align: 'center' });
+
+      // Info del certificado
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      let y = 40;
+      const addField = (label: string, value: string) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${label}:`, 20, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(value || '-', 70, y);
+        y += 7;
+      };
+
+      addField('Tipo', cert.tipo.toUpperCase());
+      addField('Estado', cert.estado);
+      addField('Producto', `${cert.producto_codigo} - ${cert.producto_descripcion}`);
+      addField('Lote', cert.lote_numero);
+      addField('Cantidad', `${cert.cantidad} ${cert.unidad_medida}`);
+      addField('Emisión', cert.fecha_emision ? new Date(cert.fecha_emision).toLocaleDateString('es-AR') : '-');
+      if (cert.cliente_nombre) addField('Cliente', cert.cliente_nombre);
+      if (cert.proveedor_nombre) addField('Proveedor', cert.proveedor_nombre);
+      if (cert.origen_pais) addField('País Origen', cert.origen_pais);
+
+      // Resultados de análisis
+      if (cert.resultados && cert.resultados.length > 0) {
+        y += 5;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Resultados de Análisis', 20, y);
+        y += 5;
+
+        autoTable(doc, {
+          startY: y,
+          head: [['Parámetro', 'Especificación', 'Resultado', 'Unidad', 'Cumple']],
+          body: cert.resultados.map((r: any) => [
+            r.parametro || '-',
+            r.especificacion || '-',
+            r.resultado || '-',
+            r.unidad || '-',
+            r.cumple ? 'SÍ' : 'NO',
+          ]),
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [0, 128, 128] },
+        });
+      }
+
+      // Footer
+      const finalY = (doc as any).lastAutoTable?.finalY || y + 20;
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Emitido por: ${cert.emitido_por || user?.email || 'Sistema'}`, 20, finalY + 15);
+      doc.text(`Fecha de generación: ${new Date().toLocaleDateString('es-AR')}`, 20, finalY + 20);
+      doc.text('Vanguard - Sistema de Gestión de Calidad', pageWidth / 2, finalY + 30, { align: 'center' });
+
+      doc.save(`${cert.numero}.pdf`);
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      alert('Error al generar el PDF. Verificá que las dependencias estén instaladas.');
+    }
   };
 
   const handleEnviarEmail = async (cert: Certificado) => {
-    // TODO: Implementar envío por email
-    alert(`Enviando ${cert.numero} por email... (Funcionalidad próximamente)`);
+    const subject = encodeURIComponent(`Certificado ${cert.numero} - ${cert.producto_descripcion}`);
+    const body = encodeURIComponent(
+      `Estimado/a,\n\nAdjunto el certificado ${cert.numero} correspondiente al producto ${cert.producto_codigo} - ${cert.producto_descripcion}, lote ${cert.lote_numero}.\n\nTipo: ${cert.tipo.toUpperCase()}\nCantidad: ${cert.cantidad} ${cert.unidad_medida}\nFecha de emisión: ${cert.fecha_emision ? new Date(cert.fecha_emision).toLocaleDateString('es-AR') : '-'}\n\nSaludos cordiales,\n${user?.email || 'Equipo de Calidad'}\nVanguard - Sistema de Gestión`
+    );
+    const to = cert.cliente_nombre ? '' : '';
+    window.open(`mailto:${to}?subject=${subject}&body=${body}`, '_blank');
   };
 
   // ============================================

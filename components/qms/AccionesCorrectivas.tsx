@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Target, Search, Plus, Filter, Download, RefreshCw,
   CheckCircle, XCircle, Clock, Eye, Edit, Trash2,
@@ -206,6 +207,7 @@ const calcularProgreso = (capa: AccionCorrectiva): number => {
 // ============================================
 
 export default function AccionesCorrectivas() {
+  const { user } = useAuth();
   // Estado principal
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('lista');
@@ -393,7 +395,7 @@ export default function AccionesCorrectivas() {
             estado: 'abierta',
             porcentaje_avance: 0,
             fecha_inicio: new Date().toISOString(),
-            creado_por: 'Usuario Actual',
+            creado_por: user?.email || 'Sistema',
           });
         
         if (error) throw error;
@@ -404,7 +406,7 @@ export default function AccionesCorrectivas() {
           .update({
             ...formData,
             actualizado_at: new Date().toISOString(),
-            actualizado_por: 'Usuario Actual',
+            actualizado_por: user?.email || 'Sistema',
           })
           .eq('id', capaSeleccionada?.id);
         
@@ -490,7 +492,7 @@ export default function AccionesCorrectivas() {
           verificacion_efectiva: efectiva,
           verificacion_resultado: resultado,
           verificacion_fecha: new Date().toISOString(),
-          verificado_por: 'Usuario Actual',
+          verificado_por: user?.email || 'Sistema',
           estado: efectiva ? 'cerrada' : 'en_implementacion',
           fecha_cierre: efectiva ? new Date().toISOString() : null,
           actualizado_at: new Date().toISOString(),

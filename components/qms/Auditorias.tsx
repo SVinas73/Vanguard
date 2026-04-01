@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Search, Plus, Filter, Download, RefreshCw,
   CheckCircle, XCircle, Clock, Eye, Edit, Trash2,
@@ -237,6 +238,7 @@ const formatearNumeroAuditoria = (tipo: TipoAuditoria, secuencia: number): strin
 // ============================================
 
 export default function Auditorias() {
+  const { user } = useAuth();
   // Estado principal
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('lista');
@@ -454,7 +456,7 @@ export default function Auditorias() {
             numero,
             ...formData,
             estado: 'planificada',
-            creado_por: 'Usuario Actual',
+            creado_por: user?.email || 'Sistema',
           });
         
         if (error) throw error;
@@ -465,7 +467,7 @@ export default function Auditorias() {
           .update({
             ...formData,
             actualizado_at: new Date().toISOString(),
-            actualizado_por: 'Usuario Actual',
+            actualizado_por: user?.email || 'Sistema',
           })
           .eq('id', auditoriaSeleccionada?.id);
         

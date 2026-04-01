@@ -250,17 +250,17 @@ export default function Movimientos() {
       const { data: movData } = await supabase
         .from('movimientos')
         .select('*')
-        .order('timestamp', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(100);
-      
+
       if (movData) {
         setMovimientosOriginales(movData.map(m => ({
           id: m.id,
           codigo: m.codigo,
           tipo: m.tipo,
           cantidad: m.cantidad,
-          usuario: m.usuario,
-          timestamp: new Date(m.timestamp),
+          usuario: m.usuario_email || m.usuario,
+          timestamp: new Date(m.created_at),
           notas: m.notas,
           costoCompra: m.costo_compra,
         })));
@@ -275,11 +275,11 @@ export default function Movimientos() {
           cantidad: m.cantidad,
           notas: m.notas,
           movement_id: m.id,
-          solicitado_por: m.usuario,
-          ejecutado_por: m.usuario,
-          fecha_solicitud: m.timestamp,
-          fecha_ejecucion: m.timestamp,
-          created_at: m.timestamp,
+          solicitado_por: m.usuario_email || m.usuario,
+          ejecutado_por: m.usuario_email || m.usuario,
+          fecha_solicitud: m.created_at,
+          fecha_ejecucion: m.created_at,
+          created_at: m.created_at,
         }));
         
         setMovimientosWMS(movWMS);
