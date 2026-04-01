@@ -213,7 +213,7 @@ export function KanbanBoard({
       }}>
         {activeTarea && (
           <div className="rotate-2 scale-105">
-            <TareaCard tarea={activeTarea} onClick={() => {}} isDragging />
+            <TareaCard tarea={activeTarea} onClick={() => onTareaClick(activeTarea)} isDragging />
           </div>
         )}
       </DragOverlay>

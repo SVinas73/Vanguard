@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import {
   AlertTriangle, Search, Plus, Filter, Download, RefreshCw,
   CheckCircle, XCircle, Clock, Eye, Edit, Trash2,
@@ -201,6 +202,7 @@ const formatearNumeroNCR = (secuencia: number): string => {
 // ============================================
 
 export default function NoConformidades() {
+  const { user } = useAuth();
   // Estado principal
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('lista');
@@ -450,7 +452,7 @@ export default function NoConformidades() {
             ...formData,
             estado: 'abierta',
             fecha_deteccion: new Date().toISOString(),
-            detectado_por: 'Usuario Actual', // TODO: usar usuario real
+            detectado_por: user?.email || 'Sistema',
           });
         
         if (error) throw error;
@@ -461,7 +463,7 @@ export default function NoConformidades() {
           .update({
             ...formData,
             actualizado_at: new Date().toISOString(),
-            actualizado_por: 'Usuario Actual',
+            actualizado_por: user?.email || 'Sistema',
           })
           .eq('id', ncrSeleccionada?.id);
         
@@ -521,7 +523,7 @@ export default function NoConformidades() {
           disposicion,
           disposicion_detalle: detalle,
           disposicion_fecha: new Date().toISOString(),
-          disposicion_por: 'Usuario Actual',
+          disposicion_por: user?.email || 'Sistema',
           estado: 'en_implementacion',
           actualizado_at: new Date().toISOString(),
         })
@@ -539,8 +541,55 @@ export default function NoConformidades() {
   };
 
   const handleCrearCAPA = async (ncr: NoConformidad) => {
-    // TODO: Navegar a crear CAPA vinculada a esta NCR
-    alert(`Crear CAPA vinculada a ${ncr.numero} - Funcionalidad próximamente`);
+    try {
+      setSaving(true);
+
+      // Generar número CAPA
+      const { data: lastCAPA } = await supabase
+        .from('qms_acciones_correctivas')
+        .select('numero')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      const lastSeq = lastCAPA?.numero ? parseInt(lastCAPA.numero.split('-').pop() || '0') : 0;
+      const nuevoNumero = `CAPA-${new Date().getFullYear()}-${String(lastSeq + 1).padStart(4, '0')}`;
+
+      const { error } = await supabase.from('qms_acciones_correctivas').insert({
+        numero: nuevoNumero,
+        tipo: 'correctiva',
+        titulo: `Acción correctiva para ${ncr.numero}`,
+        descripcion: `CAPA generada desde NCR ${ncr.numero}: ${ncr.titulo || ''}`,
+        ncr_id: ncr.id,
+        ncr_numero: ncr.numero,
+        estado: 'abierta',
+        prioridad: ncr.severidad === 'critica' ? 'critica' : ncr.severidad === 'mayor' ? 'alta' : 'media',
+        fecha_apertura: new Date().toISOString(),
+        responsable: user?.email || 'Sistema',
+        creado_por: user?.email || 'Sistema',
+      });
+
+      if (error) throw error;
+
+      // Actualizar la NCR para vincular la CAPA
+      await supabase
+        .from('qms_no_conformidades')
+        .update({
+          tiene_capa: true,
+          capa_numero: nuevoNumero,
+          estado: ncr.estado === 'abierta' ? 'en_analisis' : ncr.estado,
+          actualizado_at: new Date().toISOString(),
+        })
+        .eq('id', ncr.id);
+
+      await loadNCRs();
+      alert(`CAPA ${nuevoNumero} creada exitosamente y vinculada a ${ncr.numero}`);
+    } catch (error) {
+      console.error('Error creando CAPA:', error);
+      alert('Error al crear la CAPA');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAgregarComentario = async () => {
@@ -550,7 +599,7 @@ export default function NoConformidades() {
       const comentarios = ncrSeleccionada.comentarios || [];
       comentarios.push({
         id: Date.now().toString(),
-        usuario: 'Usuario Actual',
+        usuario: user?.email || 'Sistema',
         contenido: nuevoComentario,
         fecha: new Date().toISOString(),
       });

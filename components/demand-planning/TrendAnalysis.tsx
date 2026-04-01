@@ -96,17 +96,17 @@ export default function TrendAnalysis() {
       const { data: movData } = await supabase
         .from('movimientos')
         .select('*')
-        .gte('timestamp', hace90d)
-        .order('timestamp', { ascending: false });
-      
+        .gte('created_at', hace90d)
+        .order('created_at', { ascending: false });
+
       if (movData) {
         const movs: Movement[] = movData.map(m => ({
           id: m.id,
           codigo: m.codigo,
           tipo: m.tipo,
           cantidad: m.cantidad,
-          usuario: m.usuario,
-          timestamp: new Date(m.timestamp),
+          usuario: m.usuario_email || m.usuario,
+          timestamp: new Date(m.created_at),
         }));
         setMovimientos(movs);
         

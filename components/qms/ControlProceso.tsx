@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Activity, Search, Plus, Filter, Download, RefreshCw,
   CheckCircle, XCircle, Clock, Eye, Edit, Trash2,
@@ -288,6 +289,7 @@ const formatearCodigoPunto = (proceso: string, secuencia: number): string => {
 // ============================================
 
 export default function ControlProceso() {
+  const { user } = useAuth();
   // Estado principal
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('monitoreo');
@@ -550,7 +552,7 @@ export default function ControlProceso() {
             ? formData.valor_nominal - formData.tolerancia_inferior 
             : undefined,
           estado: 'activo',
-          creado_por: 'Usuario Actual',
+          creado_por: user?.email || 'Sistema',
         });
       
       if (error) throw error;
@@ -620,10 +622,39 @@ export default function ControlProceso() {
       await loadMedicionesRecientes();
       setShowMedicionModal(false);
       
-      // Si es no conforme, preguntar si generar NCR
+      // Si es no conforme, crear NCR automáticamente
       if (resultado === 'no_conforme') {
-        // TODO: Integrar con NoConformidades
-        alert('⚠️ Medición NO CONFORME registrada. Considere generar un NCR.');
+        const confirmar = confirm('⚠️ Medición NO CONFORME registrada. ¿Desea generar un NCR automáticamente?');
+        if (confirmar) {
+          try {
+            const { data: lastNCR } = await supabase
+              .from('qms_no_conformidades')
+              .select('numero')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
+
+            const lastSeq = lastNCR?.numero ? parseInt(lastNCR.numero.split('-').pop() || '0') : 0;
+            const nuevoNumero = `NCR-${new Date().getFullYear()}-${String(lastSeq + 1).padStart(4, '0')}`;
+
+            await supabase.from('qms_no_conformidades').insert({
+              numero: nuevoNumero,
+              tipo: 'proceso',
+              origen: 'inspeccion_proceso',
+              severidad: 'mayor',
+              titulo: `No conformidad en control de proceso - ${puntoSeleccionado?.nombre || 'N/A'}`,
+              descripcion: `NCR generada automáticamente por medición no conforme en punto de control "${puntoSeleccionado?.nombre || 'N/A'}". ${medicionForm.notas || ''}`,
+              estado: 'abierta',
+              fecha_deteccion: new Date().toISOString(),
+              detectado_por: user?.email || 'Sistema',
+            });
+
+            alert(`NCR ${nuevoNumero} creada exitosamente.`);
+          } catch (ncrError) {
+            console.error('Error creando NCR:', ncrError);
+            alert('Error al crear el NCR automático.');
+          }
+        }
       }
       
     } catch (error) {

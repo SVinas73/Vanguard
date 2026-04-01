@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import {
   AlertOctagon, Search, Plus, Filter, Download, RefreshCw,
   CheckCircle, XCircle, Clock, Eye, Edit, Trash2,
@@ -294,6 +295,7 @@ const calcularPorcentajeRecuperacion = (recall: Recall): number => {
 // ============================================
 
 export default function RecallManagement() {
+  const { user } = useAuth();
   // Estado principal
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('lista');
@@ -523,7 +525,7 @@ export default function RecallManagement() {
             unidades_reparadas: 0,
             porcentaje_recuperacion: 0,
             fecha_inicio: new Date().toISOString(),
-            creado_por: 'Usuario Actual',
+            creado_por: user?.email || 'Sistema',
           });
         
         if (error) throw error;
@@ -534,7 +536,7 @@ export default function RecallManagement() {
           .update({
             ...formData,
             actualizado_at: new Date().toISOString(),
-            actualizado_por: 'Usuario Actual',
+            actualizado_por: user?.email || 'Sistema',
           })
           .eq('id', recallSeleccionado?.id);
         
@@ -625,8 +627,66 @@ export default function RecallManagement() {
   };
 
   const handleCrearSeguimientosAutomaticos = async (recallId: string) => {
-    // TODO: Buscar todas las ventas de los lotes afectados y crear seguimientos
-    alert('Funcionalidad de creación automática de seguimientos próximamente');
+    try {
+      const recall = recalls.find(r => r.id === recallId);
+      if (!recall) return;
+
+      // Buscar lotes afectados del recall
+      const { data: lotesAfectados } = await supabase
+        .from('qms_recall_lotes')
+        .select('lote_numero, producto_codigo')
+        .eq('recall_id', recallId);
+
+      if (!lotesAfectados || lotesAfectados.length === 0) {
+        alert('No se encontraron lotes afectados para este recall.');
+        return;
+      }
+
+      const codigos = [...new Set(lotesAfectados.map(l => l.producto_codigo))];
+
+      // Buscar ventas que contengan estos productos
+      const { data: ventas } = await supabase
+        .from('ordenes_venta')
+        .select('id, numero, cliente:clientes(id, nombre, email, telefono)')
+        .in('estado', ['entregada', 'enviada', 'confirmada']);
+
+      const { data: detallesVenta } = await supabase
+        .from('ordenes_venta_detalle')
+        .select('orden_venta_id, producto_codigo, cantidad')
+        .in('producto_codigo', codigos);
+
+      if (!detallesVenta || detallesVenta.length === 0) {
+        alert('No se encontraron ventas asociadas a los productos afectados.');
+        return;
+      }
+
+      // Crear seguimientos por cada cliente afectado
+      const ordenIds = [...new Set(detallesVenta.map(d => d.orden_venta_id))];
+      const ventasAfectadas = (ventas || []).filter(v => ordenIds.includes(v.id));
+
+      let creados = 0;
+      for (const venta of ventasAfectadas) {
+        const cliente = venta.cliente as any;
+        if (!cliente) continue;
+
+        await supabase.from('qms_recall_seguimientos').insert({
+          recall_id: recallId,
+          cliente_id: cliente.id,
+          cliente_nombre: cliente.nombre,
+          contacto: cliente.email || cliente.telefono || '-',
+          orden_venta_numero: venta.numero,
+          estado: 'pendiente',
+          creado_por: user?.email || 'Sistema',
+        });
+        creados++;
+      }
+
+      await loadRecalls();
+      alert(`Se crearon ${creados} seguimientos automáticos para clientes afectados.`);
+    } catch (error) {
+      console.error('Error creando seguimientos automáticos:', error);
+      alert('Error al crear seguimientos automáticos.');
+    }
   };
 
   // ============================================

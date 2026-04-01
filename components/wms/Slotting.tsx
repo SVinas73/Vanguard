@@ -242,8 +242,8 @@ export default function Slotting() {
       const { data: movimientosData } = await supabase
         .from('movimientos')
         .select('*')
-        .gte('timestamp', new Date(Date.now() - 90 * 86400000).toISOString())
-        .order('timestamp', { ascending: false });
+        .gte('created_at', new Date(Date.now() - 90 * 86400000).toISOString())
+        .order('created_at', { ascending: false });
 
       // Realizar análisis ABC/XYZ
       if (productosData) {
@@ -279,8 +279,8 @@ export default function Slotting() {
       const hace30d = ahora - 30 * 86400000;
       const hace90d = ahora - 90 * 86400000;
       
-      const movs30d = movs.filter(m => new Date(m.timestamp).getTime() > hace30d);
-      const movs90d = movs.filter(m => new Date(m.timestamp).getTime() > hace90d);
+      const movs30d = movs.filter(m => new Date(m.created_at).getTime() > hace30d);
+      const movs90d = movs.filter(m => new Date(m.created_at).getTime() > hace90d);
       
       const salidas30d = movs30d.filter(m => m.tipo === 'salida');
       const salidas90d = movs90d.filter(m => m.tipo === 'salida');

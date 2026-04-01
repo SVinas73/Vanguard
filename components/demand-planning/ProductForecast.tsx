@@ -88,17 +88,17 @@ export default function ProductForecast() {
       const { data: movData } = await supabase
         .from('movimientos')
         .select('*')
-        .order('timestamp', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(500);
-      
+
       if (movData) {
         setMovimientos(movData.map(m => ({
           id: m.id,
           codigo: m.codigo,
           tipo: m.tipo,
           cantidad: m.cantidad,
-          usuario: m.usuario,
-          timestamp: new Date(m.timestamp),
+          usuario: m.usuario_email || m.usuario,
+          timestamp: new Date(m.created_at),
           notas: m.notas,
         })));
       }
