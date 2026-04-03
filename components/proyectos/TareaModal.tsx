@@ -349,7 +349,7 @@ export function TareaModal({
             url: urlData.publicUrl,
             tipo_mime: file.type,
             tamano_bytes: file.size,
-            subido_por: user?.email || 'usuario@ejemplo.com',
+            subido_por: user?.email || 'Sistema',
           })
           .select()
           .single();
@@ -377,7 +377,7 @@ export function TareaModal({
         await supabase.from('proyecto_actividades').insert({
           proyecto_id: proyectoId,
           tarea_id: tarea.id,
-          usuario_email: user?.email || 'usuario@ejemplo.com',
+          usuario_email: user?.email || 'Sistema',
           tipo: 'adjunto_agregado',
           descripcion: `Adjuntó archivo: ${file.name}`,
         });
@@ -414,7 +414,7 @@ export function TareaModal({
         await supabase.from('proyecto_actividades').insert({
           proyecto_id: proyectoId,
           tarea_id: tarea.id,
-          usuario_email: user?.email || 'usuario@ejemplo.com',
+          usuario_email: user?.email || 'Sistema',
           tipo: 'adjunto_eliminado',
           descripcion: `Eliminó archivo: ${adjunto.nombreArchivo}`,
         });
@@ -470,7 +470,7 @@ export function TareaModal({
         rma_id: formData.rmaId || null,
         ensamblaje_id: formData.ensamblajeId || null,
         orden: tarea?.orden || 0,
-        creado_por: user?.email || 'usuario@ejemplo.com',
+        creado_por: user?.email || 'Sistema',
       };
 
       let tareaId = tarea?.id;
@@ -642,7 +642,7 @@ export function TareaModal({
       .from('proyecto_comentarios')
       .insert({
         tarea_id: tarea.id,
-        usuario_email: user?.email || 'usuario@ejemplo.com',
+        usuario_email: user?.email || 'Sistema',
         contenido: nuevoComentario,
       })
       .select()
@@ -687,7 +687,7 @@ export function TareaModal({
       await supabase.from('proyecto_actividades').insert({
         proyecto_id: proyectoId,
         tarea_id: tarea.id,
-        usuario_email: user?.email || 'usuario@ejemplo.com',
+        usuario_email: user?.email || 'Sistema',
         tipo: 'comentario',
         descripcion: `Comentó: "${nuevoComentario.substring(0, 50)}${nuevoComentario.length > 50 ? '...' : ''}"`,
       });

@@ -50,7 +50,11 @@ import {
 
 // Components
 import { Sidebar } from '@/components/layout';
-import { Button, Input, Select, Modal, Card, AIAlert } from '@/components/ui';
+import { Breadcrumbs } from '@/components/layout/breadcrumbs';
+import { Button, Input, Select, SearchableSelect, Modal, Card, AIAlert } from '@/components/ui';
+import { NotificationBell } from '@/components/ui/notifications';
+import { ShortcutsHelp } from '@/components/ui/shortcuts-help';
+import { OnboardingTour } from '@/components/ui/onboarding-tour';
 import { ProductTable } from '@/components/productos';
 import { MovementList, MovementTypeSelector } from '@/components/movimientos';
 import { AlertList, PredictionCard, ConsumptionChart, AnalyticsDashboard } from '@/components/analytics';
@@ -87,6 +91,22 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Persistent filters
+  useEffect(() => {
+    const saved = localStorage.getItem('vanguard-filters');
+    if (saved) {
+      try {
+        const { searchQuery: sq, selectedCategory: sc } = JSON.parse(saved);
+        if (sq) setSearchQuery(sq);
+        if (sc) setSelectedCategory(sc);
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('vanguard-filters', JSON.stringify({ searchQuery, selectedCategory }));
+  }, [searchQuery, selectedCategory]);
 
   // Modal State
   const [showNewProduct, setShowNewProduct] = useState(false);
@@ -428,11 +448,28 @@ export default function HomePage() {
           canViewCosts: hasPermission('canViewCosts'),
           canViewAudit: hasPermission('canViewAudit'),
           canViewReports: hasPermission('canViewReports'),
+          canViewFinanzas: hasPermission('canViewFinanzas'),
+          canViewTaller: hasPermission('canViewTaller'),
+          canViewWMS: hasPermission('canViewWMS'),
+          canViewProyectos: hasPermission('canViewProyectos'),
+          canViewComercial: hasPermission('canViewComercial'),
+          canViewDemand: hasPermission('canViewDemand'),
+          canViewSeriales: hasPermission('canViewSeriales'),
+          canViewRMA: hasPermission('canViewRMA'),
+          canViewBOM: hasPermission('canViewBOM'),
+          canViewQMS: hasPermission('canViewQMS'),
+          canExportData: hasPermission('canExportData'),
         }}
       />
 
-      <main className="ml-[260px] transition-all duration-300 min-h-screen">
+      <main className="ml-0 lg:ml-[260px] transition-all duration-300 min-h-screen">
         <div className="w-full px-6 py-6">
+
+        {/* Breadcrumbs + Notifications */}
+        <div className="flex items-center justify-between mb-2">
+          <Breadcrumbs activeTab={activeTab} onNavigate={setActiveTab} />
+          <NotificationBell />
+        </div>
 
         {/* ==================== DASHBOARD ==================== */}
         {activeTab === 'dashboard' && (
@@ -882,7 +919,7 @@ export default function HomePage() {
       {/* ==================== MODAL: NUEVO MOVIMIENTO ==================== */}
       <Modal isOpen={showNewMovement} onClose={() => setShowNewMovement(false)} title={t('movements.register')}>
         <div className="space-y-4">
-          <Select
+          <SearchableSelect
             label={t('movements.product')}
             value={newMovement.codigo}
             onChange={(e) => setNewMovement({ ...newMovement, codigo: e.target.value })}
@@ -970,11 +1007,17 @@ export default function HomePage() {
       <OfflineIndicator />
 
       {/* Buscador Global - Ctrl+K */}
-      <GlobalSearch 
+      <GlobalSearch
         onNavigate={(tab) => setActiveTab(tab as TabType)}
         onSelectProduct={(product) => handleOpenEdit(product)}
       />
-      
+
+      {/* Atajos de teclado */}
+      <ShortcutsHelp />
+
+      {/* Tour de onboarding */}
+      <OnboardingTour />
+
     </div>
   );
 }

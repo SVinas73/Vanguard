@@ -31,6 +31,7 @@ interface TareaCardProps {
   onMoveTarea?: (tareaId: string, columnaId: string) => void;
   onDuplicateTarea?: (tarea: ProyectoTarea) => void;
   onDeleteTarea?: (tareaId: string) => void;
+  onToggleCompletado?: (tareaId: string, completado: boolean) => void;
 }
 
 export function TareaCard({ 
@@ -40,7 +41,8 @@ export function TareaCard({
   columnas,
   onMoveTarea,
   onDuplicateTarea,
-  onDeleteTarea
+  onDeleteTarea,
+  onToggleCompletado
 }: TareaCardProps) {
   const {
     attributes,
@@ -209,7 +211,9 @@ export function TareaCard({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Esto se manejará desde el padre
+                          if (onToggleCompletado) {
+                            onToggleCompletado(tarea.id, !tarea.completado);
+                          }
                           setShowMenu(false);
                         }}
                         className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-700/50 transition-colors"

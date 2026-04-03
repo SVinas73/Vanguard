@@ -27,6 +27,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
   const [loading, setLoading] = useState(true);
   const [loadingMensajes, setLoadingMensajes] = useState(false);
   const [totalNoLeidos, setTotalNoLeidos] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   
   const channelRef = useRef<RealtimeChannel | null>(null);
   const mensajesChannelRef = useRef<RealtimeChannel | null>(null);
@@ -70,8 +71,16 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
 
       setConversaciones(convsConNoLeidos);
       setTotalNoLeidos(convsConNoLeidos.reduce((sum, c) => sum + c.no_leidos, 0));
-    } catch (error) {
-      console.error('Error fetching conversaciones:', error);
+    } catch (err: any) {
+      console.error('Error fetching conversaciones:', err);
+      const message = err?.message || String(err);
+      if (message.includes('relation') && message.includes('does not exist')) {
+        setError(
+          'Las tablas del chat no existen en la base de datos. Ejecuta la migración 002_chat_system.sql para crearlas.'
+        );
+      } else {
+        setError(`Error al cargar conversaciones: ${message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -202,8 +211,10 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
         creado_at: new Date(conv.creado_at),
         actualizado_at: new Date(conv.actualizado_at),
       } : null;
-    } catch (error) {
-      console.error('Error creando conversación:', error);
+    } catch (err: any) {
+      console.error('Error creando conversación:', err);
+      const message = err?.message || String(err);
+      setError(`Error al crear conversación: ${message}`);
       return null;
     }
   }, [userEmail, fetchConversaciones]);
@@ -247,8 +258,10 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
         menciones: mensaje.menciones || [],
         leido_por: mensaje.leido_por || [],
       } : null;
-    } catch (error) {
-      console.error('Error enviando mensaje:', error);
+    } catch (err: any) {
+      console.error('Error enviando mensaje:', err);
+      const message = err?.message || String(err);
+      setError(`Error al enviar mensaje: ${message}`);
       return null;
     }
   }, [userEmail, userName]);
@@ -440,6 +453,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
     loading,
     loadingMensajes,
     totalNoLeidos,
+    error,
     
     // Acciones
     fetchConversaciones,
@@ -452,6 +466,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
     buscarConversaciones,
     
     // Helpers
+    clearError: () => setError(null),
     cerrarConversacion: () => {
       setConversacionActiva(null);
       setMensajes([]);

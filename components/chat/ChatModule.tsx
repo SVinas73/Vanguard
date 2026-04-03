@@ -49,6 +49,8 @@ export default function ChatModule() {
     cerrarConversacion,
     buscarConversaciones,
     archivarConversacion,
+    error,
+    clearError,
   } = useChat({
     userEmail: user?.email || '',
     userName: user?.nombre || user?.email?.split('@')[0],
@@ -105,7 +107,21 @@ export default function ChatModule() {
   }
 
   return (
-    <div className="h-[calc(100vh-100px)] flex bg-[#0f1117]">
+    <div className="h-[calc(100vh-100px)] flex flex-col bg-[#0f1117]">
+      {/* ==================== ERROR BANNER ==================== */}
+      {error && (
+        <div className="flex items-center justify-between px-4 py-3 bg-red-500/10 border-b border-red-500/30 text-red-400 text-sm">
+          <span>{error}</span>
+          <button
+            onClick={clearError}
+            className="ml-4 p-1 rounded hover:bg-red-500/20 flex-shrink-0"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      <div className="flex-1 flex min-h-0">
       {/* ==================== LISTA DE CONVERSACIONES ==================== */}
       <div className={cn(
         'w-80 border-r border-[#1e2028] flex flex-col',
@@ -316,6 +332,7 @@ export default function ChatModule() {
           userEmail={user?.email || ''}
         />
       )}
+      </div>
     </div>
   );
 }

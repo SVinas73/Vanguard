@@ -634,12 +634,13 @@ export default function TallerEnterprise() {
   };
 
   const loadClientes = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('clientes')
       .select('id, nombre, rut, telefono, email, direccion')
       .eq('activo', true)
       .order('nombre');
 
+    if (error) throw error;
     if (data) {
       setClientes(data.map((c: any) => ({
         id: c.id,
@@ -654,22 +655,24 @@ export default function TallerEnterprise() {
   };
 
   const loadProductos = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('productos')
-      .select('id, nombre, codigo, precio_venta, stock_actual')
+      .select('id, nombre, codigo, precio_venta, stock_actual, stock_reservado')
       .eq('activo', true)
       .order('nombre');
 
+    if (error) throw error;
     if (data) setProductos(data);
   };
 
   const loadTecnicos = async () => {
     // Cargar usuarios que son técnicos
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('usuarios')
       .select('id, nombre')
       .or('rol.eq.tecnico,rol.eq.admin');
 
+    if (error) throw error;
     if (data) {
       setTecnicos(data);
     } else {
@@ -1210,46 +1213,50 @@ export default function TallerEnterprise() {
 
   const reservarStock = async (productoId: string, cantidad: number, ordenId: string) => {
     // Crear reserva de stock
-    await supabase.from('reservas_stock').insert({
+    const { error: insertError } = await supabase.from('reservas_stock').insert({
       producto_id: productoId,
       cantidad,
       orden_taller_id: ordenId,
       estado: 'reservado',
     });
+    if (insertError) throw insertError;
 
     // Actualizar stock disponible (no el actual)
     const producto = productos.find(p => p.id === productoId);
     if (producto) {
-      await supabase
+      const { error: updateError } = await supabase
         .from('productos')
         .update({ stock_reservado: (producto.stock_reservado || 0) + cantidad })
         .eq('id', productoId);
+      if (updateError) throw updateError;
     }
   };
 
   const liberarStock = async (productoId: string, cantidad: number) => {
     const producto = productos.find(p => p.id === productoId);
     if (producto) {
-      await supabase
+      const { error } = await supabase
         .from('productos')
         .update({ stock_reservado: Math.max(0, (producto.stock_reservado || 0) - cantidad) })
         .eq('id', productoId);
+      if (error) throw error;
     }
   };
 
   const darBajaStock = async (productoId: string, cantidad: number, ordenId: string) => {
     const producto = productos.find(p => p.id === productoId);
     if (producto) {
-      await supabase
+      const { error: updateError } = await supabase
         .from('productos')
-        .update({ 
+        .update({
           stock_actual: Math.max(0, producto.stock_actual - cantidad),
           stock_reservado: Math.max(0, (producto.stock_reservado || 0) - cantidad),
         })
         .eq('id', productoId);
+      if (updateError) throw updateError;
 
       // Registrar movimiento
-      await supabase.from('movimientos_inventario').insert({
+      const { error: insertError } = await supabase.from('movimientos_inventario').insert({
         producto_id: productoId,
         tipo: 'salida',
         cantidad,
@@ -1258,6 +1265,7 @@ export default function TallerEnterprise() {
         referencia_id: ordenId,
         realizado_por: user?.email,
       });
+      if (insertError) throw insertError;
     }
   };
 
@@ -1266,18 +1274,19 @@ export default function TallerEnterprise() {
   // ============================================
 
   const registrarHistorial = async (
-    ordenId: string, 
-    estadoAnterior: EstadoOrden | undefined, 
+    ordenId: string,
+    estadoAnterior: EstadoOrden | undefined,
     estadoNuevo: EstadoOrden,
     descripcion: string
   ) => {
-    await supabase.from('historial_ordenes_taller').insert({
+    const { error } = await supabase.from('historial_ordenes_taller').insert({
       orden_id: ordenId,
       estado_anterior: estadoAnterior || null,
       estado_nuevo: estadoNuevo,
       accion: descripcion,
       realizado_por: user?.email,
     });
+    if (error) throw error;
   };
 
   // ============================================

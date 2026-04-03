@@ -28,7 +28,7 @@ type CategoriaReporte =
 
 type TipoReporte =
   // Inventario
-  | 'inv_valorizacion' | 'inv_abc' | 'inv_por_almacen' | 'inv_antiguedad' | 'inv_sin_movimiento' | 'inv_stock_minimo'
+  | 'inv_valorizacion' | 'inv_abc' | 'inv_por_almacen' | 'inv_antiguedad' | 'inv_sin_movimiento' | 'inv_stock_minimo' | 'inv_inversion_mensual'
   // Movimientos
   | 'mov_periodo' | 'mov_por_almacen' | 'mov_transferencias' | 'mov_ajustes'
   // Compras
@@ -133,6 +133,15 @@ const REPORTES_CONFIG: ConfigReporte[] = [
     icono: <AlertTriangle className="h-5 w-5" />,
     categoria: 'inventario',
     filtrosDisponibles: ['almacen', 'categoria'],
+    tieneGrafico: true,
+  },
+  {
+    id: 'inv_inversion_mensual',
+    nombre: 'Inversión Mensual',
+    descripcion: 'Inversión acumulada por almacén y período',
+    icono: <Calculator className="h-5 w-5" />,
+    categoria: 'inventario',
+    filtrosDisponibles: ['fechas', 'almacen'],
     tieneGrafico: true,
   },
 
@@ -562,10 +571,22 @@ export default function ReportsEnterprise() {
         case 'inv_sin_movimiento':
           datos = await generarReporteSinMovimiento();
           break;
+        case 'inv_antiguedad':
+          datos = await generarReporteAntiguedad();
+          break;
+        case 'inv_inversion_mensual':
+          datos = await generarReporteInversionMensual();
+          break;
 
         // MOVIMIENTOS
         case 'mov_periodo':
           datos = await generarReporteMovimientos();
+          break;
+        case 'mov_por_almacen':
+          datos = await generarReporteMovPorAlmacen();
+          break;
+        case 'mov_transferencias':
+          datos = await generarReporteTransferencias();
           break;
         case 'mov_ajustes':
           datos = await generarReporteAjustes();
@@ -574,6 +595,15 @@ export default function ReportsEnterprise() {
         // COMPRAS
         case 'com_por_proveedor':
           datos = await generarReporteComprasProveedor();
+          break;
+        case 'com_costos':
+          datos = await generarReporteCostos();
+          break;
+        case 'com_lead_times':
+          datos = await generarReporteLeadTimes();
+          break;
+        case 'com_recepciones':
+          datos = await generarReporteRecepciones();
           break;
         case 'com_ordenes_pendientes':
           datos = await generarReporteOrdenesPendientes();
@@ -586,6 +616,12 @@ export default function ReportsEnterprise() {
         case 'ven_por_producto':
           datos = await generarReporteVentasProducto();
           break;
+        case 'ven_rentabilidad':
+          datos = await generarReporteRentabilidad();
+          break;
+        case 'ven_cotizaciones':
+          datos = await generarReporteCotizaciones();
+          break;
         case 'ven_cuentas_cobrar':
           datos = await generarReporteCuentasCobrar();
           break;
@@ -597,6 +633,12 @@ export default function ReportsEnterprise() {
         case 'pro_eficiencia':
           datos = await generarReporteEficiencia();
           break;
+        case 'pro_consumo_materiales':
+          datos = await generarReporteConsumoMateriales();
+          break;
+        case 'pro_qc':
+          datos = await generarReporteQC();
+          break;
 
         // RMA
         case 'rma_periodo':
@@ -604,6 +646,23 @@ export default function ReportsEnterprise() {
           break;
         case 'rma_motivos':
           datos = await generarReporteRMAMotivos();
+          break;
+        case 'rma_costos':
+          datos = await generarReporteRMACostos();
+          break;
+        case 'rma_tiempo_resolucion':
+          datos = await generarReporteTiempoResolucion();
+          break;
+
+        // FINANCIERO
+        case 'fin_cuentas_cobrar':
+          datos = await generarReporteFinCuentasCobrar();
+          break;
+        case 'fin_cuentas_pagar':
+          datos = await generarReporteFinCuentasPagar();
+          break;
+        case 'fin_flujo_caja':
+          datos = await generarReporteFlujoCaja();
           break;
 
         default:
@@ -1429,8 +1488,592 @@ export default function ReportsEnterprise() {
   };
 
   // ============================================
-  // CONTINÚA EN PARTE 3 (RENDER)
+  // GENERADORES NUEVOS
   // ============================================
+
+  // ANTIGÜEDAD DE INVENTARIO
+  const generarReporteAntiguedad = async (): Promise<DatosReporte> => {
+    const { data: lotes } = await supabase
+      .from('lotes')
+      .select('codigo, cantidad_disponible, costo_unitario, fecha_compra')
+      .gt('cantidad_disponible', 0);
+
+    const { data: productos } = await supabase.from('productos').select('codigo, descripcion, categoria');
+    const prodMap = new Map((productos || []).map(p => [p.codigo, p]));
+    const ahora = Date.now();
+
+    const buckets = { '0-30 días': 0, '31-60 días': 0, '61-90 días': 0, '90+ días': 0 };
+    const filas = (lotes || []).map(l => {
+      const dias = Math.floor((ahora - new Date(l.fecha_compra).getTime()) / 86400000);
+      const prod = prodMap.get(l.codigo);
+      const valor = l.cantidad_disponible * (l.costo_unitario || 0);
+      const bucket = dias <= 30 ? '0-30 días' : dias <= 60 ? '31-60 días' : dias <= 90 ? '61-90 días' : '90+ días';
+      buckets[bucket as keyof typeof buckets] += valor;
+      return { codigo: l.codigo, descripcion: prod?.descripcion || l.codigo, categoria: prod?.categoria || '-', cantidad: l.cantidad_disponible, dias, valor, bucket };
+    }).sort((a, b) => b.dias - a.dias);
+
+    const graficoData = Object.entries(buckets).map(([name, value]) => ({ name, value }));
+
+    return {
+      titulo: 'Antigüedad de Inventario',
+      columnas: [
+        { key: 'codigo', label: 'Código' }, { key: 'descripcion', label: 'Descripción' },
+        { key: 'cantidad', label: 'Cantidad', tipo: 'numero' }, { key: 'dias', label: 'Días', tipo: 'numero' },
+        { key: 'valor', label: 'Valor', tipo: 'moneda' }, { key: 'bucket', label: 'Rango' },
+      ],
+      filas,
+      graficoData, graficoTipo: 'bar',
+      kpis: [
+        { label: 'Lotes Activos', valor: filas.length, color: 'purple' },
+        { label: 'Valor 90+ días', valor: formatCurrency(buckets['90+ días']), color: 'red' },
+        { label: 'Valor Total', valor: formatCurrency(filas.reduce((s, f) => s + f.valor, 0)), color: 'emerald' },
+      ],
+    };
+  };
+
+  // INVERSIÓN MENSUAL POR ALMACÉN
+  const generarReporteInversionMensual = async (): Promise<DatosReporte> => {
+    let query = supabase.from('movimientos').select('codigo, tipo, cantidad, costo_compra, created_at, producto:productos(almacen_id, almacen:almacenes(nombre))')
+      .eq('tipo', 'entrada')
+      .gte('created_at', filtros.fechaInicio)
+      .lte('created_at', `${filtros.fechaFin}T23:59:59`);
+
+    const { data } = await query.order('created_at', { ascending: true });
+
+    const porMes: Record<string, { mes: string; inversion: number; entradas: number; almacen: string }> = {};
+    (data || []).forEach((m: any) => {
+      const almNombre = m.producto?.almacen?.nombre || 'Sin almacén';
+      if (filtros.almacenId && m.producto?.almacen_id !== filtros.almacenId) return;
+      const mes = m.created_at.substring(0, 7);
+      const key = `${mes}-${almNombre}`;
+      if (!porMes[key]) porMes[key] = { mes, inversion: 0, entradas: 0, almacen: almNombre };
+      porMes[key].inversion += (m.cantidad || 0) * (parseFloat(m.costo_compra) || 0);
+      porMes[key].entradas += m.cantidad || 0;
+    });
+
+    const filas = Object.values(porMes).sort((a, b) => a.mes.localeCompare(b.mes));
+    const totalInversion = filas.reduce((s, f) => s + f.inversion, 0);
+
+    const porMesGrafico: Record<string, number> = {};
+    filas.forEach(f => { porMesGrafico[f.mes] = (porMesGrafico[f.mes] || 0) + f.inversion; });
+    const graficoData = Object.entries(porMesGrafico).map(([name, value]) => ({ name, value }));
+
+    return {
+      titulo: 'Inversión Mensual por Almacén',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'mes', label: 'Mes' }, { key: 'almacen', label: 'Almacén' },
+        { key: 'entradas', label: 'Unidades', tipo: 'numero' }, { key: 'inversion', label: 'Inversión', tipo: 'moneda' },
+      ],
+      filas,
+      graficoData, graficoTipo: 'bar',
+      kpis: [
+        { label: 'Inversión Total', valor: formatCurrency(totalInversion), color: 'emerald' },
+        { label: 'Meses', valor: Object.keys(porMesGrafico).length, color: 'cyan' },
+        { label: 'Unidades Ingresadas', valor: formatNumber(filas.reduce((s, f) => s + f.entradas, 0)), color: 'purple' },
+      ],
+    };
+  };
+
+  // MOVIMIENTOS POR ALMACÉN
+  const generarReporteMovPorAlmacen = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('movimientos').select('tipo, cantidad, created_at, producto:productos(almacen:almacenes(nombre))')
+      .gte('created_at', filtros.fechaInicio).lte('created_at', `${filtros.fechaFin}T23:59:59`);
+
+    const porAlmacen: Record<string, { entradas: number; salidas: number; movimientos: number }> = {};
+    (data || []).forEach((m: any) => {
+      const alm = m.producto?.almacen?.nombre || 'Sin almacén';
+      if (!porAlmacen[alm]) porAlmacen[alm] = { entradas: 0, salidas: 0, movimientos: 0 };
+      porAlmacen[alm].movimientos++;
+      if (m.tipo === 'entrada') porAlmacen[alm].entradas += m.cantidad;
+      else porAlmacen[alm].salidas += m.cantidad;
+    });
+
+    const filas = Object.entries(porAlmacen).map(([almacen, d]) => ({ almacen, ...d })).sort((a, b) => b.movimientos - a.movimientos);
+    const graficoData = filas.map(f => ({ name: f.almacen, entradas: f.entradas, salidas: f.salidas }));
+
+    return {
+      titulo: 'Movimientos por Almacén',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'almacen', label: 'Almacén' }, { key: 'movimientos', label: 'Movimientos', tipo: 'numero' },
+        { key: 'entradas', label: 'Entradas', tipo: 'numero' }, { key: 'salidas', label: 'Salidas', tipo: 'numero' },
+      ],
+      filas, graficoData, graficoTipo: 'bar',
+      kpis: [
+        { label: 'Almacenes', valor: filas.length, color: 'purple' },
+        { label: 'Total Movimientos', valor: filas.reduce((s, f) => s + f.movimientos, 0), color: 'cyan' },
+      ],
+    };
+  };
+
+  // TRANSFERENCIAS
+  const generarReporteTransferencias = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('movimientos').select('*, producto:productos(descripcion)')
+      .eq('tipo', 'transferencia').gte('created_at', filtros.fechaInicio).lte('created_at', `${filtros.fechaFin}T23:59:59`)
+      .order('created_at', { ascending: false });
+
+    const filas = (data || []).map((m: any) => ({
+      fecha: m.created_at, codigo: m.codigo, descripcion: m.producto?.descripcion || m.codigo,
+      cantidad: m.cantidad, usuario: m.usuario_email || '-', notas: m.notas || '-',
+    }));
+
+    return {
+      titulo: 'Transferencias entre Almacenes',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'fecha', label: 'Fecha', tipo: 'fecha' }, { key: 'codigo', label: 'Código' },
+        { key: 'descripcion', label: 'Descripción' }, { key: 'cantidad', label: 'Cantidad', tipo: 'numero' },
+        { key: 'usuario', label: 'Usuario' }, { key: 'notas', label: 'Notas' },
+      ],
+      filas,
+      kpis: [{ label: 'Total Transferencias', valor: filas.length, color: 'blue' }],
+    };
+  };
+
+  // ANÁLISIS DE COSTOS
+  const generarReporteCostos = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('movimientos').select('codigo, costo_compra, cantidad, created_at, producto:productos(descripcion, costo_promedio)')
+      .eq('tipo', 'entrada').not('costo_compra', 'is', null)
+      .gte('created_at', filtros.fechaInicio).lte('created_at', `${filtros.fechaFin}T23:59:59`)
+      .order('created_at', { ascending: false });
+
+    const filas = (data || []).map((m: any) => ({
+      fecha: m.created_at, codigo: m.codigo, descripcion: m.producto?.descripcion || m.codigo,
+      cantidad: m.cantidad, costoUnitario: parseFloat(m.costo_compra) || 0,
+      costoTotal: (parseFloat(m.costo_compra) || 0) * m.cantidad,
+      costoPromActual: m.producto?.costo_promedio || 0,
+    }));
+
+    const totalCompras = filas.reduce((s, f) => s + f.costoTotal, 0);
+    const graficoData = filas.slice(0, 20).map(f => ({ name: f.codigo, value: f.costoTotal }));
+
+    return {
+      titulo: 'Análisis de Costos de Compra',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'fecha', label: 'Fecha', tipo: 'fecha' }, { key: 'codigo', label: 'Código' },
+        { key: 'descripcion', label: 'Descripción' }, { key: 'cantidad', label: 'Cant.', tipo: 'numero' },
+        { key: 'costoUnitario', label: 'Costo Unit.', tipo: 'moneda' }, { key: 'costoTotal', label: 'Total', tipo: 'moneda' },
+      ],
+      filas, graficoData, graficoTipo: 'bar',
+      kpis: [
+        { label: 'Total Compras', valor: formatCurrency(totalCompras), color: 'emerald' },
+        { label: 'Entradas', valor: filas.length, color: 'cyan' },
+      ],
+    };
+  };
+
+  // LEAD TIMES
+  const generarReporteLeadTimes = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('ordenes_compra').select('*, proveedor:proveedores(nombre)')
+      .not('fecha_recepcion', 'is', null).gte('fecha_orden', filtros.fechaInicio).lte('fecha_orden', filtros.fechaFin);
+
+    const porProv: Record<string, { dias: number[]; ordenes: number }> = {};
+    (data || []).forEach((oc: any) => {
+      const prov = oc.proveedor?.nombre || 'Sin proveedor';
+      const dias = Math.max(0, Math.floor((new Date(oc.fecha_recepcion).getTime() - new Date(oc.fecha_orden).getTime()) / 86400000));
+      if (!porProv[prov]) porProv[prov] = { dias: [], ordenes: 0 };
+      porProv[prov].dias.push(dias);
+      porProv[prov].ordenes++;
+    });
+
+    const filas = Object.entries(porProv).map(([proveedor, d]) => ({
+      proveedor, ordenes: d.ordenes,
+      leadTimePromedio: Math.round(d.dias.reduce((s, v) => s + v, 0) / d.dias.length),
+      leadTimeMin: Math.min(...d.dias), leadTimeMax: Math.max(...d.dias),
+    })).sort((a, b) => a.leadTimePromedio - b.leadTimePromedio);
+
+    const graficoData = filas.map(f => ({ name: f.proveedor, value: f.leadTimePromedio }));
+
+    return {
+      titulo: 'Lead Times por Proveedor',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'proveedor', label: 'Proveedor' }, { key: 'ordenes', label: 'Órdenes', tipo: 'numero' },
+        { key: 'leadTimePromedio', label: 'Promedio (días)', tipo: 'numero' },
+        { key: 'leadTimeMin', label: 'Mínimo', tipo: 'numero' }, { key: 'leadTimeMax', label: 'Máximo', tipo: 'numero' },
+      ],
+      filas, graficoData, graficoTipo: 'bar',
+      kpis: [
+        { label: 'Proveedores', valor: filas.length, color: 'purple' },
+        { label: 'Promedio Global', valor: `${filas.length > 0 ? Math.round(filas.reduce((s, f) => s + f.leadTimePromedio, 0) / filas.length) : 0}d`, color: 'cyan' },
+      ],
+    };
+  };
+
+  // RECEPCIONES
+  const generarReporteRecepciones = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('ordenes_compra').select('*, proveedor:proveedores(nombre)')
+      .in('estado', ['recibida', 'parcial']).gte('fecha_orden', filtros.fechaInicio).lte('fecha_orden', filtros.fechaFin)
+      .order('fecha_recepcion', { ascending: false });
+
+    const filas = (data || []).map((oc: any) => ({
+      numero: oc.numero, proveedor: oc.proveedor?.nombre || '-', estado: oc.estado,
+      fechaOrden: oc.fecha_orden, fechaRecepcion: oc.fecha_recepcion || '-',
+      total: parseFloat(oc.total) || 0,
+    }));
+
+    return {
+      titulo: 'Recepciones de Mercadería',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'numero', label: 'N° Orden' }, { key: 'proveedor', label: 'Proveedor' },
+        { key: 'estado', label: 'Estado' }, { key: 'fechaOrden', label: 'Fecha Orden', tipo: 'fecha' },
+        { key: 'fechaRecepcion', label: 'Recepción', tipo: 'fecha' }, { key: 'total', label: 'Total', tipo: 'moneda' },
+      ],
+      filas,
+      kpis: [
+        { label: 'Recepciones', valor: filas.length, color: 'emerald' },
+        { label: 'Monto Total', valor: formatCurrency(filas.reduce((s, f) => s + f.total, 0)), color: 'cyan' },
+      ],
+    };
+  };
+
+  // RENTABILIDAD
+  const generarReporteRentabilidad = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('ordenes_venta_detalle').select('producto_codigo, cantidad, precio_unitario, subtotal, orden:ordenes_venta(fecha_orden, estado)')
+      .gte('orden.fecha_orden', filtros.fechaInicio).lte('orden.fecha_orden', filtros.fechaFin);
+
+    const { data: productos } = await supabase.from('productos').select('codigo, descripcion, costo_promedio');
+    const costoMap = new Map((productos || []).map(p => [p.codigo, { desc: p.descripcion, costo: p.costo_promedio || 0 }]));
+
+    const porProd: Record<string, { ingresos: number; costos: number; unidades: number }> = {};
+    (data || []).filter((d: any) => d.orden).forEach((d: any) => {
+      const prod = costoMap.get(d.producto_codigo);
+      const key = d.producto_codigo;
+      if (!porProd[key]) porProd[key] = { ingresos: 0, costos: 0, unidades: 0 };
+      porProd[key].ingresos += parseFloat(d.subtotal) || 0;
+      porProd[key].costos += (prod?.costo || 0) * d.cantidad;
+      porProd[key].unidades += d.cantidad;
+    });
+
+    const filas = Object.entries(porProd).map(([codigo, d]) => ({
+      codigo, descripcion: costoMap.get(codigo)?.desc || codigo,
+      unidades: d.unidades, ingresos: d.ingresos, costos: d.costos,
+      margen: d.ingresos - d.costos, margenPct: d.ingresos > 0 ? ((d.ingresos - d.costos) / d.ingresos) * 100 : 0,
+    })).sort((a, b) => b.margen - a.margen);
+
+    const totalIngresos = filas.reduce((s, f) => s + f.ingresos, 0);
+    const totalCostos = filas.reduce((s, f) => s + f.costos, 0);
+    const graficoData = filas.slice(0, 10).map(f => ({ name: f.codigo, value: f.margen }));
+
+    return {
+      titulo: 'Rentabilidad por Producto',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'codigo', label: 'Código' }, { key: 'descripcion', label: 'Producto' },
+        { key: 'unidades', label: 'Uds.', tipo: 'numero' }, { key: 'ingresos', label: 'Ingresos', tipo: 'moneda' },
+        { key: 'costos', label: 'Costos', tipo: 'moneda' }, { key: 'margen', label: 'Margen', tipo: 'moneda' },
+        { key: 'margenPct', label: 'Margen %', tipo: 'porcentaje' },
+      ],
+      filas, graficoData, graficoTipo: 'bar',
+      kpis: [
+        { label: 'Ingreso Total', valor: formatCurrency(totalIngresos), color: 'emerald' },
+        { label: 'Margen Total', valor: formatCurrency(totalIngresos - totalCostos), color: 'cyan' },
+        { label: 'Margen %', valor: `${totalIngresos > 0 ? ((totalIngresos - totalCostos) / totalIngresos * 100).toFixed(1) : 0}%`, color: 'purple' },
+      ],
+    };
+  };
+
+  // COTIZACIONES
+  const generarReporteCotizaciones = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('ordenes_venta').select('*, cliente:clientes(nombre)')
+      .gte('fecha_orden', filtros.fechaInicio).lte('fecha_orden', filtros.fechaFin);
+
+    const cotizaciones = (data || []).filter((ov: any) => ov.estado === 'borrador' || ov.estado === 'cotizacion');
+    const confirmadas = (data || []).filter((ov: any) => ov.estado !== 'borrador' && ov.estado !== 'cotizacion' && ov.estado !== 'cancelada');
+    const canceladas = (data || []).filter((ov: any) => ov.estado === 'cancelada');
+
+    const filas = (data || []).map((ov: any) => ({
+      numero: ov.numero, cliente: ov.cliente?.nombre || '-', estado: ov.estado,
+      fecha: ov.fecha_orden, total: parseFloat(ov.total) || 0,
+    })).sort((a: any, b: any) => b.total - a.total);
+
+    const totalCotizado = cotizaciones.reduce((s: number, ov: any) => s + (parseFloat(ov.total) || 0), 0);
+    const totalConfirmado = confirmadas.reduce((s: number, ov: any) => s + (parseFloat(ov.total) || 0), 0);
+    const tasaConversion = (data || []).length > 0 ? (confirmadas.length / (data || []).length * 100) : 0;
+
+    const graficoData = [
+      { name: 'Cotizaciones', value: cotizaciones.length },
+      { name: 'Confirmadas', value: confirmadas.length },
+      { name: 'Canceladas', value: canceladas.length },
+    ];
+
+    return {
+      titulo: 'Cotizaciones y Conversión',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'numero', label: 'Número' }, { key: 'cliente', label: 'Cliente' },
+        { key: 'estado', label: 'Estado' }, { key: 'fecha', label: 'Fecha', tipo: 'fecha' },
+        { key: 'total', label: 'Monto', tipo: 'moneda' },
+      ],
+      filas, graficoData, graficoTipo: 'pie',
+      kpis: [
+        { label: 'Cotizado', valor: formatCurrency(totalCotizado), color: 'amber' },
+        { label: 'Confirmado', valor: formatCurrency(totalConfirmado), color: 'emerald' },
+        { label: 'Tasa Conversión', valor: `${tasaConversion.toFixed(1)}%`, color: 'cyan' },
+      ],
+    };
+  };
+
+  // CONSUMO DE MATERIALES
+  const generarReporteConsumoMateriales = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('ensamblaje_componentes').select('producto_codigo, cantidad_usada, costo_unitario, ensamblaje:ensamblajes(fecha_inicio, estado)')
+      .gte('ensamblaje.fecha_inicio', filtros.fechaInicio).lte('ensamblaje.fecha_inicio', filtros.fechaFin);
+
+    const { data: productos } = await supabase.from('productos').select('codigo, descripcion');
+    const prodMap = new Map((productos || []).map(p => [p.codigo, p.descripcion]));
+
+    const porMaterial: Record<string, { cantidad: number; costo: number }> = {};
+    (data || []).filter((c: any) => c.ensamblaje).forEach((c: any) => {
+      const key = c.producto_codigo;
+      if (!porMaterial[key]) porMaterial[key] = { cantidad: 0, costo: 0 };
+      porMaterial[key].cantidad += c.cantidad_usada || 0;
+      porMaterial[key].costo += (c.cantidad_usada || 0) * (parseFloat(c.costo_unitario) || 0);
+    });
+
+    const filas = Object.entries(porMaterial).map(([codigo, d]) => ({
+      codigo, descripcion: prodMap.get(codigo) || codigo, ...d,
+    })).sort((a, b) => b.costo - a.costo);
+
+    const graficoData = filas.slice(0, 10).map(f => ({ name: f.codigo, value: f.costo }));
+
+    return {
+      titulo: 'Consumo de Materiales en Producción',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'codigo', label: 'Código' }, { key: 'descripcion', label: 'Material' },
+        { key: 'cantidad', label: 'Consumido', tipo: 'numero' }, { key: 'costo', label: 'Costo Total', tipo: 'moneda' },
+      ],
+      filas, graficoData, graficoTipo: 'bar',
+      kpis: [
+        { label: 'Materiales', valor: filas.length, color: 'amber' },
+        { label: 'Costo Total', valor: formatCurrency(filas.reduce((s, f) => s + f.costo, 0)), color: 'red' },
+      ],
+    };
+  };
+
+  // CONTROL DE CALIDAD
+  const generarReporteQC = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('qms_inspecciones').select('*')
+      .gte('created_at', filtros.fechaInicio).lte('created_at', `${filtros.fechaFin}T23:59:59`);
+
+    const inspecciones = data || [];
+    const aprobadas = inspecciones.filter((i: any) => i.estado === 'aprobado');
+    const rechazadas = inspecciones.filter((i: any) => i.estado === 'rechazado');
+    const pendientes = inspecciones.filter((i: any) => i.estado === 'pendiente' || i.estado === 'en_proceso');
+
+    const filas = inspecciones.map((i: any) => ({
+      numero: i.numero || i.id, producto: i.producto_codigo || '-', tipo: i.tipo_inspeccion || '-',
+      estado: i.estado, fecha: i.created_at, decision: i.decision || '-',
+    }));
+
+    const graficoData = [
+      { name: 'Aprobadas', value: aprobadas.length },
+      { name: 'Rechazadas', value: rechazadas.length },
+      { name: 'Pendientes', value: pendientes.length },
+    ];
+
+    return {
+      titulo: 'Control de Calidad - Inspecciones',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'numero', label: 'N°' }, { key: 'producto', label: 'Producto' },
+        { key: 'tipo', label: 'Tipo' }, { key: 'estado', label: 'Estado' },
+        { key: 'fecha', label: 'Fecha', tipo: 'fecha' }, { key: 'decision', label: 'Decisión' },
+      ],
+      filas, graficoData, graficoTipo: 'pie',
+      kpis: [
+        { label: 'Total', valor: inspecciones.length, color: 'purple' },
+        { label: 'Aprobadas', valor: aprobadas.length, color: 'emerald' },
+        { label: 'Tasa Aprobación', valor: `${inspecciones.length > 0 ? (aprobadas.length / inspecciones.length * 100).toFixed(1) : 0}%`, color: 'cyan' },
+      ],
+    };
+  };
+
+  // COSTOS DE DEVOLUCIONES
+  const generarReporteRMACostos = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('rma').select('*, cliente:clientes(nombre)')
+      .gte('fecha_solicitud', filtros.fechaInicio).lte('fecha_solicitud', `${filtros.fechaFin}T23:59:59`);
+
+    const filas = (data || []).map((r: any) => ({
+      numero: r.numero || r.id, cliente: r.cliente?.nombre || '-', tipo: r.tipo || '-',
+      estado: r.estado, fecha: r.fecha_solicitud,
+      valorProductos: parseFloat(r.valor_productos) || 0, costoEnvio: parseFloat(r.costo_envio) || 0,
+      costoTotal: (parseFloat(r.valor_productos) || 0) + (parseFloat(r.costo_envio) || 0),
+    })).sort((a: any, b: any) => b.costoTotal - a.costoTotal);
+
+    const totalValor = filas.reduce((s, f) => s + f.valorProductos, 0);
+    const totalEnvio = filas.reduce((s, f) => s + f.costoEnvio, 0);
+
+    return {
+      titulo: 'Costos de Devoluciones (RMA)',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'numero', label: 'N° RMA' }, { key: 'cliente', label: 'Cliente' },
+        { key: 'tipo', label: 'Tipo' }, { key: 'fecha', label: 'Fecha', tipo: 'fecha' },
+        { key: 'valorProductos', label: 'Valor Prod.', tipo: 'moneda' },
+        { key: 'costoEnvio', label: 'Envío', tipo: 'moneda' }, { key: 'costoTotal', label: 'Total', tipo: 'moneda' },
+      ],
+      filas,
+      kpis: [
+        { label: 'Impacto Total', valor: formatCurrency(totalValor + totalEnvio), color: 'red' },
+        { label: 'Valor Productos', valor: formatCurrency(totalValor), color: 'amber' },
+        { label: 'Costos Envío', valor: formatCurrency(totalEnvio), color: 'purple' },
+      ],
+    };
+  };
+
+  // TIEMPO DE RESOLUCIÓN RMA
+  const generarReporteTiempoResolucion = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('rma').select('*')
+      .not('fecha_resolucion', 'is', null)
+      .gte('fecha_solicitud', filtros.fechaInicio).lte('fecha_solicitud', `${filtros.fechaFin}T23:59:59`);
+
+    const filas = (data || []).map((r: any) => {
+      const dias = Math.max(0, Math.floor((new Date(r.fecha_resolucion).getTime() - new Date(r.fecha_solicitud).getTime()) / 86400000));
+      return { numero: r.numero || r.id, tipo: r.tipo || '-', estado: r.estado, fecha: r.fecha_solicitud, resolucion: r.fecha_resolucion, diasResolucion: dias };
+    }).sort((a: any, b: any) => b.diasResolucion - a.diasResolucion);
+
+    const promedio = filas.length > 0 ? Math.round(filas.reduce((s, f) => s + f.diasResolucion, 0) / filas.length) : 0;
+    const graficoData = [
+      { name: '0-3 días', value: filas.filter(f => f.diasResolucion <= 3).length },
+      { name: '4-7 días', value: filas.filter(f => f.diasResolucion > 3 && f.diasResolucion <= 7).length },
+      { name: '8-15 días', value: filas.filter(f => f.diasResolucion > 7 && f.diasResolucion <= 15).length },
+      { name: '15+ días', value: filas.filter(f => f.diasResolucion > 15).length },
+    ];
+
+    return {
+      titulo: 'Tiempo de Resolución RMA',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'numero', label: 'N° RMA' }, { key: 'tipo', label: 'Tipo' },
+        { key: 'fecha', label: 'Solicitud', tipo: 'fecha' }, { key: 'resolucion', label: 'Resolución', tipo: 'fecha' },
+        { key: 'diasResolucion', label: 'Días', tipo: 'numero' },
+      ],
+      filas, graficoData, graficoTipo: 'bar',
+      kpis: [
+        { label: 'Resueltos', valor: filas.length, color: 'emerald' },
+        { label: 'Promedio', valor: `${promedio} días`, color: 'cyan' },
+        { label: 'Máximo', valor: `${filas[0]?.diasResolucion || 0} días`, color: 'red' },
+      ],
+    };
+  };
+
+  // AGING CUENTAS POR COBRAR (financiero)
+  const generarReporteFinCuentasCobrar = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('ordenes_venta').select('*, cliente:clientes(nombre)')
+      .gt('saldo_pendiente', 0).in('estado', ['confirmada', 'en_proceso', 'enviada', 'entregada']);
+
+    const ahora = Date.now();
+    const filas = (data || []).map((ov: any) => {
+      const dias = Math.floor((ahora - new Date(ov.fecha_orden).getTime()) / 86400000);
+      return {
+        numero: ov.numero, cliente: ov.cliente?.nombre || '-', fecha: ov.fecha_orden,
+        total: parseFloat(ov.total) || 0, saldo: parseFloat(ov.saldo_pendiente) || 0,
+        dias, rango: dias <= 30 ? '0-30' : dias <= 60 ? '31-60' : dias <= 90 ? '61-90' : '90+',
+      };
+    }).sort((a: any, b: any) => b.dias - a.dias);
+
+    const rangos: Record<string, number> = { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 };
+    filas.forEach(f => { rangos[f.rango] += f.saldo; });
+    const graficoData = Object.entries(rangos).map(([name, value]) => ({ name: `${name} días`, value }));
+
+    return {
+      titulo: 'Aging - Cuentas por Cobrar',
+      columnas: [
+        { key: 'numero', label: 'N° Orden' }, { key: 'cliente', label: 'Cliente' },
+        { key: 'fecha', label: 'Fecha', tipo: 'fecha' }, { key: 'total', label: 'Total', tipo: 'moneda' },
+        { key: 'saldo', label: 'Saldo', tipo: 'moneda' }, { key: 'dias', label: 'Días', tipo: 'numero' },
+        { key: 'rango', label: 'Rango' },
+      ],
+      filas, graficoData, graficoTipo: 'bar',
+      kpis: [
+        { label: 'Total por Cobrar', valor: formatCurrency(filas.reduce((s, f) => s + f.saldo, 0)), color: 'amber' },
+        { label: 'Facturas', valor: filas.length, color: 'purple' },
+        { label: 'Vencido 90+', valor: formatCurrency(rangos['90+']), color: 'red' },
+      ],
+    };
+  };
+
+  // AGING CUENTAS POR PAGAR
+  const generarReporteFinCuentasPagar = async (): Promise<DatosReporte> => {
+    const { data } = await supabase.from('ordenes_compra').select('*, proveedor:proveedores(nombre)')
+      .gt('saldo_pendiente', 0).in('estado', ['enviada', 'parcial', 'recibida']);
+
+    const ahora = Date.now();
+    const filas = (data || []).map((oc: any) => {
+      const dias = Math.floor((ahora - new Date(oc.fecha_orden).getTime()) / 86400000);
+      return {
+        numero: oc.numero, proveedor: oc.proveedor?.nombre || '-', fecha: oc.fecha_orden,
+        total: parseFloat(oc.total) || 0, saldo: parseFloat(oc.saldo_pendiente) || 0,
+        dias, rango: dias <= 30 ? '0-30' : dias <= 60 ? '31-60' : dias <= 90 ? '61-90' : '90+',
+      };
+    }).sort((a: any, b: any) => b.dias - a.dias);
+
+    const rangos: Record<string, number> = { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 };
+    filas.forEach(f => { rangos[f.rango] += f.saldo; });
+    const graficoData = Object.entries(rangos).map(([name, value]) => ({ name: `${name} días`, value }));
+
+    return {
+      titulo: 'Aging - Cuentas por Pagar',
+      columnas: [
+        { key: 'numero', label: 'N° Orden' }, { key: 'proveedor', label: 'Proveedor' },
+        { key: 'fecha', label: 'Fecha', tipo: 'fecha' }, { key: 'total', label: 'Total', tipo: 'moneda' },
+        { key: 'saldo', label: 'Saldo', tipo: 'moneda' }, { key: 'dias', label: 'Días', tipo: 'numero' },
+        { key: 'rango', label: 'Rango' },
+      ],
+      filas, graficoData, graficoTipo: 'bar',
+      kpis: [
+        { label: 'Total por Pagar', valor: formatCurrency(filas.reduce((s, f) => s + f.saldo, 0)), color: 'red' },
+        { label: 'Facturas', valor: filas.length, color: 'purple' },
+        { label: 'Vencido 90+', valor: formatCurrency(rangos['90+']), color: 'amber' },
+      ],
+    };
+  };
+
+  // FLUJO DE CAJA PROYECTADO
+  const generarReporteFlujoCaja = async (): Promise<DatosReporte> => {
+    const [ventasRes, comprasRes] = await Promise.all([
+      supabase.from('ordenes_venta').select('total, saldo_pendiente, fecha_vencimiento, estado')
+        .gt('saldo_pendiente', 0).in('estado', ['confirmada', 'en_proceso', 'enviada', 'entregada']),
+      supabase.from('ordenes_compra').select('total, saldo_pendiente, fecha_esperada, estado')
+        .gt('saldo_pendiente', 0).in('estado', ['enviada', 'parcial', 'recibida']),
+    ]);
+
+    const meses: Record<string, { cobros: number; pagos: number }> = {};
+    const addToMonth = (fecha: string | null, monto: number, tipo: 'cobros' | 'pagos') => {
+      const mes = (fecha || new Date().toISOString()).substring(0, 7);
+      if (!meses[mes]) meses[mes] = { cobros: 0, pagos: 0 };
+      meses[mes][tipo] += monto;
+    };
+
+    (ventasRes.data || []).forEach((v: any) => addToMonth(v.fecha_vencimiento, parseFloat(v.saldo_pendiente) || 0, 'cobros'));
+    (comprasRes.data || []).forEach((c: any) => addToMonth(c.fecha_esperada, parseFloat(c.saldo_pendiente) || 0, 'pagos'));
+
+    const filas = Object.entries(meses).sort(([a], [b]) => a.localeCompare(b))
+      .map(([mes, d]) => ({ mes, cobros: d.cobros, pagos: d.pagos, neto: d.cobros - d.pagos }));
+
+    const totalCobros = filas.reduce((s, f) => s + f.cobros, 0);
+    const totalPagos = filas.reduce((s, f) => s + f.pagos, 0);
+    const graficoData = filas.map(f => ({ name: f.mes, cobros: f.cobros, pagos: f.pagos }));
+
+    return {
+      titulo: 'Flujo de Caja Proyectado',
+      columnas: [
+        { key: 'mes', label: 'Mes' }, { key: 'cobros', label: 'Cobros', tipo: 'moneda' },
+        { key: 'pagos', label: 'Pagos', tipo: 'moneda' }, { key: 'neto', label: 'Neto', tipo: 'moneda' },
+      ],
+      filas, graficoData, graficoTipo: 'bar',
+      kpis: [
+        { label: 'Total Cobros', valor: formatCurrency(totalCobros), color: 'emerald' },
+        { label: 'Total Pagos', valor: formatCurrency(totalPagos), color: 'red' },
+        { label: 'Flujo Neto', valor: formatCurrency(totalCobros - totalPagos), color: totalCobros >= totalPagos ? 'cyan' : 'amber' },
+      ],
+    };
+  };
+
   // ============================================
   // EXPORTAR
   // ============================================

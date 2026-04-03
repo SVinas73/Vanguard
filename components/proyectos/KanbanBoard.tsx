@@ -30,6 +30,7 @@ interface KanbanBoardProps {
   onMoveColumna?: (columnaId: string, direction: 'left' | 'right') => void;
   onDuplicateTarea?: (tarea: ProyectoTarea) => void;
   onDeleteTarea?: (tareaId: string) => void;
+  onToggleCompletado?: (tareaId: string, completado: boolean) => void;
   onAddColumna?: () => void;
 }
 
@@ -44,6 +45,7 @@ export function KanbanBoard({
   onMoveColumna,
   onDuplicateTarea,
   onDeleteTarea,
+  onToggleCompletado,
   onAddColumna
 }: KanbanBoardProps) {
   const [activeTarea, setActiveTarea] = useState<ProyectoTarea | null>(null);
@@ -191,6 +193,7 @@ export function KanbanBoard({
               onMoveTarea={handleMoveTarea}
               onDuplicateTarea={onDuplicateTarea}
               onDeleteTarea={onDeleteTarea}
+              onToggleCompletado={onToggleCompletado}
             />
           );
         })}

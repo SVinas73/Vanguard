@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Modal, Button, Input, Select } from '@/components/ui';
+import { useAuth } from '@/hooks/useAuth';
 import type { Proyecto, EstadoProyecto } from '@/types';
 
 interface ProyectoModalProps {
@@ -12,6 +13,7 @@ interface ProyectoModalProps {
 }
 
 export function ProyectoModal({ isOpen, onClose, onSave, proyecto }: ProyectoModalProps) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     nombre: proyecto?.nombre || '',
     descripcion: proyecto?.descripcion || '',
@@ -45,7 +47,7 @@ export function ProyectoModal({ isOpen, onClose, onSave, proyecto }: ProyectoMod
       estado: formData.estado,
       fechaInicio: formData.fechaInicio ? new Date(formData.fechaInicio) : undefined,
       fechaFin: formData.fechaFin ? new Date(formData.fechaFin) : undefined,
-      creadoPor: 'usuario@ejemplo.com', // Reemplazar con usuario actual
+      creadoPor: user?.email || 'Sistema',
     });
   };
 
