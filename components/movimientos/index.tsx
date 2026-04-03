@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/utils';
@@ -89,20 +90,27 @@ interface MovementListProps {
   showAnomalies?: boolean;
 }
 
+const PAGE_SIZE = 50;
+
 export function MovementList({
   movements,
   products,
   showAnomalies = true,
 }: MovementListProps) {
   const { t } = useTranslation();
-  // Ordenar por fecha descendente
-  const sortedMovements = [...movements].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  const [page, setPage] = useState(0);
+
+  const sortedMovements = useMemo(() =>
+    [...movements].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    [movements]
   );
+
+  const totalPages = Math.ceil(sortedMovements.length / PAGE_SIZE);
+  const paginatedMovements = sortedMovements.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <div className="space-y-3">
-      {sortedMovements.map((mov) => {
+      {paginatedMovements.map((mov) => {
         const product = products.find((p) => p.codigo === mov.codigo);
         let anomaly: AnomalyResult | undefined;
 
@@ -127,6 +135,33 @@ export function MovementList({
       {movements.length === 0 && (
         <div className="p-8 text-center text-slate-500 rounded-xl border border-slate-800/50">
           {t('movements.noMovements')}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4 border-t border-slate-800/50">
+          <span className="text-sm text-slate-500">
+            {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, sortedMovements.length)} de {sortedMovements.length}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="p-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-sm text-slate-400 min-w-[80px] text-center">
+              Pág. {page + 1} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+              className="p-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
       )}
     </div>

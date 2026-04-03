@@ -44,12 +44,14 @@ export function AuditLogPanel() {
   const { t } = useTranslation();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filtroTabla, setFiltroTabla] = useState<string>('todas');
   const [filtroAccion, setFiltroAccion] = useState<string>('todas');
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
 
   const fetchLogs = async () => {
     setLoading(true);
+    setError(null);
     try {
       let query = supabase
         .from('auditoria')
@@ -66,10 +68,15 @@ export function AuditLogPanel() {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        setError(t('audit.fetchError', 'No se pudieron cargar los registros de auditoría. Por favor, intente nuevamente.'));
+        console.error('Error fetching audit logs:', error);
+        return;
+      }
       setLogs(data || []);
-    } catch (error) {
-      console.error('Error fetching audit logs:', error);
+    } catch (err) {
+      setError(t('audit.fetchError', 'No se pudieron cargar los registros de auditoría. Por favor, intente nuevamente.'));
+      console.error('Error fetching audit logs:', err);
     } finally {
       setLoading(false);
     }
@@ -231,6 +238,15 @@ export function AuditLogPanel() {
           <div className="text-center py-8">
             <RefreshCw size={24} className="animate-spin mx-auto text-purple-400" />
             <p className="text-slate-500 mt-2">{t('audit.loading')}</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8">
+            <Trash2 size={32} className="mx-auto mb-2 text-red-400 opacity-70" />
+            <p className="text-red-400 mb-4">{error}</p>
+            <Button onClick={fetchLogs}>
+              <RefreshCw size={16} className="mr-2" />
+              {t('audit.retry', 'Reintentar')}
+            </Button>
           </div>
         ) : logs.length === 0 ? (
           <div className="text-center py-8 text-slate-500">

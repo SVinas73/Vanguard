@@ -297,6 +297,176 @@ export function Select({
 }
 
 // ============================================
+// SEARCHABLE SELECT (Filterable Dropdown)
+// ============================================
+
+interface SearchableSelectProps {
+  label?: string;
+  options: Array<{ value: string; label: string }>;
+  placeholder?: string;
+  value?: string;
+  onChange?: (e: { target: { value: string } }) => void;
+  className?: string;
+  disabled?: boolean;
+  error?: string;
+}
+
+export function SearchableSelect({
+  className,
+  label,
+  options,
+  placeholder,
+  value,
+  onChange,
+  disabled,
+  error,
+}: SearchableSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState(value || '');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (value !== undefined) {
+      setSelected(value);
+    }
+  }, [value]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedLabel = options.find((o) => o.value === selected)?.label || '';
+
+  const filteredOptions = options.filter((opt) =>
+    opt.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleSelect = (optValue: string) => {
+    setSelected(optValue);
+    setIsOpen(false);
+    setSearch('');
+    if (onChange) {
+      onChange({ target: { value: optValue } });
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (!disabled) {
+      setIsOpen(true);
+      setSearch('');
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    if (!isOpen) setIsOpen(true);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setIsOpen(false);
+      setSearch('');
+      inputRef.current?.blur();
+    }
+  };
+
+  const displayValue = isOpen ? search : selectedLabel;
+
+  return (
+    <div className={cn('space-y-1.5 relative', className)} ref={containerRef}>
+      {label && (
+        <label className="block text-sm font-medium text-[#f8fafc]">
+          {label}
+        </label>
+      )}
+
+      <div className="relative">
+        <input
+          ref={inputRef}
+          type="text"
+          value={displayValue}
+          placeholder={selected ? selectedLabel : (placeholder || 'Seleccionar...')}
+          onFocus={handleInputFocus}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          disabled={disabled}
+          className={cn(
+            'w-full px-3 py-2 rounded-lg text-sm pr-8',
+            'bg-[#1c1f26] border border-[#2e323d]',
+            'text-[#f8fafc] placeholder:text-[#475569]',
+            'transition-colors duration-150',
+            !disabled && 'hover:border-[#475569]',
+            isOpen && 'border-blue-500 ring-1 ring-blue-500/30',
+            error && 'border-red-500/50',
+            disabled && 'opacity-50 cursor-not-allowed'
+          )}
+        />
+        <ChevronDown
+          size={16}
+          className={cn(
+            'absolute right-3 top-1/2 -translate-y-1/2 text-[#64748b] transition-transform duration-150 pointer-events-none',
+            isOpen && 'rotate-180'
+          )}
+        />
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 py-1 rounded-lg bg-[#1c1f26] border border-[#2e323d] shadow-lg shadow-black/30 max-h-60 overflow-y-auto">
+          {placeholder && !search && (
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => handleSelect('')}
+              className={cn(
+                'w-full px-3 py-2 text-sm text-left transition-colors',
+                selected === ''
+                  ? 'bg-blue-500/10 text-blue-400'
+                  : 'text-[#64748b] hover:bg-[#242830]'
+              )}
+            >
+              {placeholder}
+            </button>
+          )}
+          {filteredOptions.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-[#64748b]">
+              Sin resultados
+            </div>
+          ) : (
+            filteredOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => handleSelect(opt.value)}
+                className={cn(
+                  'w-full px-3 py-2 text-sm text-left transition-colors',
+                  selected === opt.value
+                    ? 'bg-blue-500/10 text-blue-400'
+                    : 'text-[#f8fafc] hover:bg-[#242830]'
+                )}
+              >
+                {opt.label}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
+      {error && <p className="text-xs text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+// ============================================
 // CARD
 // ============================================
 

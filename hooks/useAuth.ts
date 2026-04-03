@@ -13,7 +13,7 @@ interface AuthUser {
   rol: UserRole;
 }
 
-type PermissionKey = 
+type PermissionKey =
   | 'canCreateProducts'
   | 'canEditProducts'
   | 'canDeleteProducts'
@@ -23,7 +23,19 @@ type PermissionKey =
   | 'canViewCosts'
   | 'canViewAudit'
   | 'canViewReports'
-  | 'canManageUsers';
+  | 'canManageUsers'
+  | 'canViewQMS'
+  | 'canManageQMS'
+  | 'canViewFinanzas'
+  | 'canViewTaller'
+  | 'canViewWMS'
+  | 'canViewProyectos'
+  | 'canViewComercial'
+  | 'canViewDemand'
+  | 'canViewSeriales'
+  | 'canViewRMA'
+  | 'canViewBOM'
+  | 'canExportData';
 
 export function useAuth(redirectIfNotAuth: boolean = true) {
   const { data: session, status } = useSession();

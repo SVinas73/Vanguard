@@ -32,6 +32,7 @@ interface KanbanColumnProps {
   onMoveTarea?: (tareaId: string, columnaId: string) => void;
   onDuplicateTarea?: (tarea: ProyectoTarea) => void;
   onDeleteTarea?: (tareaId: string) => void;
+  onToggleCompletado?: (tareaId: string, completado: boolean) => void;
 }
 
 export function KanbanColumn({ 
@@ -48,7 +49,8 @@ export function KanbanColumn({
   columnas,
   onMoveTarea,
   onDuplicateTarea,
-  onDeleteTarea
+  onDeleteTarea,
+  onToggleCompletado
 }: KanbanColumnProps) {
   const { setNodeRef, isOver: isDroppableOver } = useDroppable({
     id: columna.id,
@@ -321,6 +323,7 @@ export function KanbanColumn({
                 onMoveTarea={onMoveTarea}
                 onDuplicateTarea={onDuplicateTarea}
                 onDeleteTarea={onDeleteTarea}
+                onToggleCompletado={onToggleCompletado}
               />
             ))
           )}

@@ -18,6 +18,7 @@ import {
   X,
   Edit2,
   Check,
+  AlertCircle,
 } from 'lucide-react';
 
 interface TiempoRegistro {
@@ -40,6 +41,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
   const { user } = useAuth();
   const [registros, setRegistros] = useState<TiempoRegistro[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Form para nuevo registro
   const [showForm, setShowForm] = useState(false);
@@ -89,11 +91,19 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
 
   const fetchRegistros = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    setError(null);
+    const { data, error: queryError } = await supabase
       .from('proyecto_tiempo_trabajado')
       .select('*')
       .eq('tarea_id', tareaId)
       .order('fecha', { ascending: false });
+
+    if (queryError) {
+      console.error('Error fetching registros:', queryError);
+      setError('Error al cargar los registros de tiempo. Intentá de nuevo.');
+      setLoading(false);
+      return;
+    }
 
     if (data) {
       setRegistros(data.map(r => ({
@@ -460,7 +470,18 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
           Registros ({registros.length})
         </h4>
 
-        {loading ? (
+        {error ? (
+          <div className="text-center py-8">
+            <AlertCircle size={32} className="mx-auto mb-2 text-red-400 opacity-70" />
+            <p className="text-sm text-red-400">{error}</p>
+            <button
+              onClick={fetchRegistros}
+              className="mt-2 text-xs text-emerald-400 hover:text-emerald-300 underline"
+            >
+              Reintentar
+            </button>
+          </div>
+        ) : loading ? (
           <div className="text-center py-8 text-slate-500">
             Cargando...
           </div>

@@ -32,8 +32,13 @@ import {
   Wrench,
   Zap,
   ChevronDown,
-  MessageCircle
+  MessageCircle,
+  Menu,
+  X,
+  Sun,
+  Moon
 } from 'lucide-react';
+import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
 import { NotificacionesBell } from '@/components/proyectos/NotificacionesBell';
 import { ChatBadge } from '@/components/chat';
@@ -42,21 +47,36 @@ import { ChatBadge } from '@/components/chat';
 // TIPOS
 // ============================================
 
+interface SidebarPermissions {
+  canViewCosts: boolean;
+  canViewAudit: boolean;
+  canViewReports: boolean;
+  canViewFinanzas: boolean;
+  canViewTaller: boolean;
+  canViewWMS: boolean;
+  canViewProyectos: boolean;
+  canViewComercial: boolean;
+  canViewDemand: boolean;
+  canViewSeriales: boolean;
+  canViewRMA: boolean;
+  canViewBOM: boolean;
+  canViewQMS: boolean;
+  canExportData: boolean;
+}
+
 interface SidebarProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
-  permissions: {
-    canViewCosts: boolean;
-    canViewAudit: boolean;
-    canViewReports: boolean;
-  };
+  permissions: SidebarPermissions;
 }
+
+type PermissionName = keyof SidebarPermissions;
 
 interface NavItem {
   id: TabType;
   label: string;
   icon: LucideIcon;
-  permission?: 'canViewCosts' | 'canViewAudit' | 'canViewReports';
+  permission?: PermissionName;
   badge?: string;
 }
 
@@ -73,7 +93,9 @@ interface NavSection {
 export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
   const { t } = useTranslation();
   const { user, signOut, rol } = useAuth(false);
+  const { theme, toggleTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'Principal': true,
     'Operaciones': true,
@@ -109,14 +131,14 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       title: t('nav.operations') || 'Operaciones',
       defaultOpen: true,
       items: [
-        { id: 'comercial', label: 'Comercial', icon: DollarSign },
-        { id: 'compras', label: t('nav.purchases'), icon: ShoppingCart },
-        { id: 'ventas', label: t('nav.sales'), icon: TrendingUp },
-        { id: 'finanzas', label: 'Finanzas', icon: Landmark },
-        { id: 'proyectos', label: 'Proyectos', icon: Kanban },
-        { id: 'taller', label: 'Taller', icon: Wrench },
-        { id: 'wms', label: 'WMS', icon: Warehouse },
-        { id: 'costos', label: 'Costos', icon: CircleDollarSign },
+        { id: 'comercial', label: 'Comercial', icon: DollarSign, permission: 'canViewComercial' },
+        { id: 'compras', label: t('nav.purchases'), icon: ShoppingCart, permission: 'canViewComercial' },
+        { id: 'ventas', label: t('nav.sales'), icon: TrendingUp, permission: 'canViewComercial' },
+        { id: 'finanzas', label: 'Finanzas', icon: Landmark, permission: 'canViewFinanzas' },
+        { id: 'proyectos', label: 'Proyectos', icon: Kanban, permission: 'canViewProyectos' },
+        { id: 'taller', label: 'Taller', icon: Wrench, permission: 'canViewTaller' },
+        { id: 'wms', label: 'WMS', icon: Warehouse, permission: 'canViewWMS' },
+        { id: 'costos', label: 'Costos', icon: CircleDollarSign, permission: 'canViewCosts' },
       ]
     },
     {
@@ -124,20 +146,20 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       defaultOpen: true,
       items: [
         { id: 'analytics', label: t('nav.analytics'), icon: Brain, badge: 'AI' },
-        { id: 'demand', label: 'Demand Planning', icon: Zap, badge: 'AI' },
+        { id: 'demand', label: 'Demand Planning', icon: Zap, badge: 'AI', permission: 'canViewDemand' },
         { id: 'reportes', label: t('nav.reports'), icon: FileText, permission: 'canViewReports' },
-        { id: 'qms', label: 'Calidad (QMS)', icon: Shield },
+        { id: 'qms', label: 'Calidad (QMS)', icon: Shield, permission: 'canViewQMS' },
       ]
     },
     {
       title: t('nav.controlTracking', 'Control & Seguimiento'),
       defaultOpen: false,
       items: [
-        { id: 'seriales', label: 'Seriales', icon: QrCode },
-        { id: 'trazabilidad', label: 'Trazabilidad', icon: GitBranch },
-        { id: 'rma', label: 'Devoluciones', icon: RotateCcw },
-        { id: 'bom', label: 'BOM', icon: Boxes },
-        { id: 'ensamblajes', label: 'Ensamblajes', icon: Wrench },
+        { id: 'seriales', label: 'Seriales', icon: QrCode, permission: 'canViewSeriales' },
+        { id: 'trazabilidad', label: 'Trazabilidad', icon: GitBranch, permission: 'canViewSeriales' },
+        { id: 'rma', label: 'Devoluciones', icon: RotateCcw, permission: 'canViewRMA' },
+        { id: 'bom', label: 'BOM', icon: Boxes, permission: 'canViewBOM' },
+        { id: 'ensamblajes', label: 'Ensamblajes', icon: Wrench, permission: 'canViewBOM' },
       ]
     },
     {
@@ -160,11 +182,32 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
   };
 
   return (
-    <aside 
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-[#1c1f26] border border-[#2e323d] text-[#94a3b8] hover:text-white hover:bg-[#242830] transition-colors"
+        aria-label="Open menu"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* Mobile overlay backdrop */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/60 z-[55] transition-opacity duration-300"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+    <aside
       className={cn(
-        'fixed left-0 top-0 h-screen flex flex-col transition-all duration-200 z-50',
+        'fixed left-0 top-0 h-screen flex flex-col transition-transform duration-300 lg:transition-all lg:duration-200 z-[60]',
         'bg-[#0f1117] border-r border-[#1e2028]',
-        collapsed ? 'w-[68px]' : 'w-[240px]'
+        collapsed ? 'w-[68px]' : 'w-[240px]',
+        // Mobile: off-screen by default, slide in when open
+        mobileOpen ? 'translate-x-0' : '-translate-x-full',
+        'lg:translate-x-0'
       )}
     >
       {/* Logo */}
@@ -182,6 +225,14 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
             </h1>
           </div>
         )}
+        {/* Mobile close button */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="lg:hidden p-1.5 rounded-md hover:bg-[#1c1f26] text-[#64748b] hover:text-white transition-colors"
+          aria-label="Close menu"
+        >
+          <X size={18} />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -221,7 +272,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => hasPermission && onTabChange(item.id)}
+                      onClick={() => { if (hasPermission) { onTabChange(item.id); setMobileOpen(false); } }}
                       disabled={!hasPermission}
                       title={collapsed ? item.label : undefined}
                       className={cn(
@@ -290,6 +341,23 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         'border-t border-[#1e2028] p-3 space-y-2',
         collapsed && 'px-2'
       )}>
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className={cn(
+            'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[#94a3b8] hover:text-white hover:bg-[#1c1f26] transition-colors',
+            collapsed && 'justify-center px-2'
+          )}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
+          {!collapsed && (
+            <span className="text-[13px] font-medium">
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </span>
+          )}
+        </button>
+
         {/* Notificaciones */}
         <NotificacionesBell collapsed={collapsed} />
         
@@ -344,6 +412,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
     </aside>
+    </>
   );
 }
 
@@ -379,11 +448,7 @@ interface AppLayoutProps {
   children: React.ReactNode;
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
-  permissions: {
-    canViewCosts: boolean;
-    canViewAudit: boolean;
-    canViewReports: boolean;
-  };
+  permissions: SidebarPermissions;
 }
 
 export function AppLayout({ children, activeTab, onTabChange, permissions }: AppLayoutProps) {
@@ -398,7 +463,7 @@ export function AppLayout({ children, activeTab, onTabChange, permissions }: App
       />
       <main className={cn(
         'transition-all duration-200',
-        sidebarCollapsed ? 'ml-[68px]' : 'ml-[240px]'
+        sidebarCollapsed ? 'ml-0 lg:ml-[68px]' : 'ml-0 lg:ml-[240px]'
       )}>
         {children}
       </main>
