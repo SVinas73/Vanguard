@@ -123,7 +123,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
         { id: 'stock', label: t('nav.stock'), icon: Package },
         { id: 'movimientos', label: t('nav.movements'), icon: ArrowLeftRight },
-        { id: 'chat', label: 'Mensajes', icon: MessageCircle },
+        { id: 'chat', label: t('modules.messages'), icon: MessageCircle },
         
       ]
     },
@@ -131,14 +131,14 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       title: t('nav.operations') || 'Operaciones',
       defaultOpen: true,
       items: [
-        { id: 'comercial', label: 'Comercial', icon: DollarSign, permission: 'canViewComercial' },
+        { id: 'comercial', label: t('modules.comercial'), icon: DollarSign, permission: 'canViewComercial' },
         { id: 'compras', label: t('nav.purchases'), icon: ShoppingCart, permission: 'canViewComercial' },
         { id: 'ventas', label: t('nav.sales'), icon: TrendingUp, permission: 'canViewComercial' },
-        { id: 'finanzas', label: 'Finanzas', icon: Landmark, permission: 'canViewFinanzas' },
-        { id: 'proyectos', label: 'Proyectos', icon: Kanban, permission: 'canViewProyectos' },
-        { id: 'taller', label: 'Taller', icon: Wrench, permission: 'canViewTaller' },
-        { id: 'wms', label: 'WMS', icon: Warehouse, permission: 'canViewWMS' },
-        { id: 'costos', label: 'Costos', icon: CircleDollarSign, permission: 'canViewCosts' },
+        { id: 'finanzas', label: t('modules.finance'), icon: Landmark, permission: 'canViewFinanzas' },
+        { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
+        { id: 'taller', label: t('modules.workshop'), icon: Wrench, permission: 'canViewTaller' },
+        { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
+        { id: 'costos', label: t('nav.costs'), icon: CircleDollarSign, permission: 'canViewCosts' },
       ]
     },
     {
@@ -146,20 +146,20 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       defaultOpen: true,
       items: [
         { id: 'analytics', label: t('nav.analytics'), icon: Brain, badge: 'AI' },
-        { id: 'demand', label: 'Demand Planning', icon: Zap, badge: 'AI', permission: 'canViewDemand' },
+        { id: 'demand', label: t('modules.demandPlanning'), icon: Zap, badge: 'AI', permission: 'canViewDemand' },
         { id: 'reportes', label: t('nav.reports'), icon: FileText, permission: 'canViewReports' },
-        { id: 'qms', label: 'Calidad (QMS)', icon: Shield, permission: 'canViewQMS' },
+        { id: 'qms', label: t('modules.quality'), icon: Shield, permission: 'canViewQMS' },
       ]
     },
     {
       title: t('nav.controlTracking', 'Control & Seguimiento'),
       defaultOpen: false,
       items: [
-        { id: 'seriales', label: 'Seriales', icon: QrCode, permission: 'canViewSeriales' },
-        { id: 'trazabilidad', label: 'Trazabilidad', icon: GitBranch, permission: 'canViewSeriales' },
-        { id: 'rma', label: 'Devoluciones', icon: RotateCcw, permission: 'canViewRMA' },
-        { id: 'bom', label: 'BOM', icon: Boxes, permission: 'canViewBOM' },
-        { id: 'ensamblajes', label: 'Ensamblajes', icon: Wrench, permission: 'canViewBOM' },
+        { id: 'seriales', label: t('modules.serials'), icon: QrCode, permission: 'canViewSeriales' },
+        { id: 'trazabilidad', label: t('modules.traceability'), icon: GitBranch, permission: 'canViewSeriales' },
+        { id: 'rma', label: t('modules.returns'), icon: RotateCcw, permission: 'canViewRMA' },
+        { id: 'bom', label: t('modules.bom'), icon: Boxes, permission: 'canViewBOM' },
+        { id: 'ensamblajes', label: t('modules.assemblies'), icon: Wrench, permission: 'canViewBOM' },
       ]
     },
     {
@@ -186,7 +186,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       {/* Mobile hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-[#1c1f26] border border-[#2e323d] text-[#94a3b8] hover:text-white hover:bg-[#242830] transition-colors"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-100 hover:bg-slate-700 transition-colors"
         aria-label="Open menu"
       >
         <Menu size={20} />
@@ -195,7 +195,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       {/* Mobile overlay backdrop */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/60 z-[55] transition-opacity duration-300"
+          className="lg:hidden fixed inset-0 bg-black/50 z-[55] transition-opacity duration-300"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -203,7 +203,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
     <aside
       className={cn(
         'fixed left-0 top-0 h-screen flex flex-col transition-transform duration-300 lg:transition-all lg:duration-200 z-[60]',
-        'bg-[#0f1117] border-r border-[#1e2028]',
+        'bg-slate-900 border-r border-slate-800',
         collapsed ? 'w-[68px]' : 'w-[240px]',
         // Mobile: off-screen by default, slide in when open
         mobileOpen ? 'translate-x-0' : '-translate-x-full',
@@ -212,7 +212,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
     >
       {/* Logo */}
       <div className={cn(
-        'flex items-center gap-3 h-16 px-4 border-b border-[#1e2028]',
+        'flex items-center gap-3 h-16 px-4 border-b border-slate-800',
         collapsed && 'justify-center px-2'
       )}>
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
@@ -228,7 +228,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         {/* Mobile close button */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="lg:hidden p-1.5 rounded-md hover:bg-[#1c1f26] text-[#64748b] hover:text-white transition-colors"
+          className="lg:hidden p-1.5 rounded-md hover:bg-slate-800 text-slate-500 hover:text-white transition-colors"
           aria-label="Close menu"
         >
           <X size={18} />
@@ -246,7 +246,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
               {!collapsed && (
                 <button
                   onClick={() => toggleSection(section.title)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-medium text-[#64748b] uppercase tracking-wider hover:text-[#94a3b8] transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-medium text-slate-500 uppercase tracking-wider hover:text-slate-400 transition-colors"
                 >
                   <span>{section.title}</span>
                   <ChevronDown 
@@ -280,8 +280,8 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                         isActive 
                           ? 'bg-blue-500/10 text-blue-400' 
                           : hasPermission
-                            ? 'text-[#94a3b8] hover:text-white hover:bg-[#1c1f26]'
-                            : 'text-[#475569] cursor-not-allowed',
+                            ? 'text-slate-400 hover:text-white hover:bg-slate-800'
+                            : 'text-slate-600 cursor-not-allowed',
                         collapsed && 'justify-center px-2'
                       )}
                     >
@@ -313,14 +313,14 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                           )}
                           
                           {!hasPermission && (
-                            <Lock size={12} className="text-[#475569]" />
+                            <Lock size={12} className="text-slate-600" />
                           )}
                         </>
                       )}
 
                       {/* Tooltip for collapsed state */}
                       {collapsed && (
-                        <div className="absolute left-full ml-2 px-2 py-1.5 bg-[#1c1f26] border border-[#2e323d] text-white text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
+                        <div className="absolute left-full ml-2 px-2 py-1.5 bg-slate-800 border border-slate-700 text-white text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
                           {item.label}
                           {item.badge && (
                             <span className="ml-1.5 text-blue-400">{item.badge}</span>
@@ -338,14 +338,14 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
 
       {/* Footer section */}
       <div className={cn(
-        'border-t border-[#1e2028] p-3 space-y-2',
+        'border-t border-slate-800 p-3 space-y-2',
         collapsed && 'px-2'
       )}>
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
           className={cn(
-            'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[#94a3b8] hover:text-white hover:bg-[#1c1f26] transition-colors',
+            'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors',
             collapsed && 'justify-center px-2'
           )}
           title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -353,7 +353,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
           {theme === 'dark' ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
           {!collapsed && (
             <span className="text-[13px] font-medium">
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              {theme === 'dark' ? t('theme.lightMode') : t('theme.darkMode')}
             </span>
           )}
         </button>
@@ -390,7 +390,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                 
                 <button
                   onClick={signOut}
-                  className="p-1.5 rounded-md hover:bg-[#1c1f26] text-[#64748b] hover:text-red-400 transition-colors"
+                  className="p-1.5 rounded-md hover:bg-slate-800 text-slate-500 hover:text-red-400 transition-colors"
                   title={t('header.logout') || 'Cerrar sesión'}
                 >
                   <LogOut size={16} />
@@ -405,8 +405,8 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       <button
         onClick={() => setCollapsed(!collapsed)}
         className={cn(
-          'absolute -right-3 top-[72px] w-6 h-6 bg-[#1c1f26] border border-[#2e323d] rounded-full',
-          'flex items-center justify-center text-[#64748b] hover:text-white hover:bg-[#242830] transition-colors'
+          'absolute -right-3 top-[72px] w-6 h-6 bg-slate-800 border border-slate-700 rounded-full',
+          'flex items-center justify-center text-slate-500 hover:text-white hover:bg-slate-700 transition-colors'
         )}
       >
         {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
@@ -427,7 +427,7 @@ interface TopBarProps {
 
 export function TopBar({ title, children }: TopBarProps) {
   return (
-    <header className="h-14 border-b border-[#1e2028] bg-[#0f1117]/80 backdrop-blur-sm flex items-center justify-between px-6">
+    <header className="h-14 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm flex items-center justify-between px-6">
       <div>
         {title && (
           <h1 className="text-base font-semibold text-white">{title}</h1>
@@ -455,7 +455,7 @@ export function AppLayout({ children, activeTab, onTabChange, permissions }: App
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#0f1117]">
+    <div className="min-h-screen bg-slate-900">
       <Sidebar 
         activeTab={activeTab} 
         onTabChange={onTabChange}
