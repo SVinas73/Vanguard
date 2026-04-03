@@ -167,7 +167,9 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
       .select()
       .single();
 
-    if (!error && data) {
+    if (error) {
+      alert('Error al guardar tiempo: ' + error.message);
+    } else if (data) {
       setRegistros([{
         id: data.id,
         tareaId: data.tarea_id,
@@ -222,7 +224,13 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
       .select()
       .single();
 
-    if (!error && data) {
+    if (error) {
+      alert('Error al guardar tiempo: ' + error.message);
+      setSaving(false);
+      return;
+    }
+
+    if (data) {
       setRegistros([{
         id: data.id,
         tareaId: data.tarea_id,

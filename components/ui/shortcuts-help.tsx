@@ -1,17 +1,19 @@
 'use client';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HelpCircle, X } from 'lucide-react';
 
-const SHORTCUTS = [
-  { keys: 'Ctrl + K', description: 'Búsqueda global' },
-  { keys: 'Ctrl + B', description: 'Escanear código de barras' },
-  { keys: 'Ctrl + N', description: 'Nuevo producto' },
-  { keys: 'Ctrl + M', description: 'Nuevo movimiento' },
-  { keys: 'Esc', description: 'Cerrar modal' },
-];
-
 export function ShortcutsHelp() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+
+  const SHORTCUTS = [
+    { keys: 'Ctrl + K', description: t('shortcuts.globalSearch') },
+    { keys: 'Ctrl + B', description: t('shortcuts.scanBarcode') },
+    { keys: 'Ctrl + N', description: t('shortcuts.newProduct') },
+    { keys: 'Ctrl + M', description: t('shortcuts.newMovement') },
+    { keys: 'Esc', description: t('shortcuts.closeModal') },
+  ];
 
   return (
     <>
@@ -21,7 +23,7 @@ export function ShortcutsHelp() {
         className="fixed bottom-24 left-6 z-50 w-10 h-10 rounded-full bg-slate-800 border border-slate-700
                    flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-slate-700
                    transition-colors shadow-lg"
-        title="Atajos de teclado"
+        title={t('shortcuts.title')}
       >
         <HelpCircle size={18} />
       </button>
@@ -37,7 +39,7 @@ export function ShortcutsHelp() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-slate-200">Atajos de Teclado</h2>
+              <h2 className="text-lg font-semibold text-slate-200">{t('shortcuts.title')}</h2>
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
@@ -61,7 +63,7 @@ export function ShortcutsHelp() {
             </div>
 
             <p className="mt-4 text-xs text-slate-500 text-center">
-              Presiona <kbd className="px-1.5 py-0.5 text-xs font-mono rounded bg-slate-800 border border-slate-700">Esc</kbd> para cerrar
+              {t('shortcuts.pressEscToClose')}
             </p>
           </div>
         </div>

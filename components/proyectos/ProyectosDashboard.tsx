@@ -930,6 +930,7 @@ export function ProyectosDashboard() {
               onDuplicateTarea={handleDuplicateTarea}
               onDeleteTarea={handleDeleteTarea}
               onAddColumna={() => setShowColumnaModal(true)}
+              onToggleCompletado={(tareaId, completado) => handleUpdateTarea(tareaId, { completado })}
             />
           </div>
         );

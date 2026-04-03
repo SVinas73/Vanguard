@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, ArrowRight, Sparkles } from 'lucide-react';
 
 const STORAGE_KEY = 'vanguard-onboarding-done';
@@ -11,36 +12,37 @@ interface TourStep {
   arrowDirection: 'left' | 'right' | 'top' | 'bottom';
 }
 
-const STEPS: TourStep[] = [
-  {
-    title: 'Bienvenido a Vanguard',
-    description: 'Tu sistema integral de gestión de inventarios. Te guiaremos por las funciones principales.',
-    position: { top: '50%', left: '50%' },
-    arrowDirection: 'bottom',
-  },
-  {
-    title: 'Navegación lateral',
-    description: 'Usa la barra lateral para acceder a todos los módulos: Stock, Ventas, Compras, Reportes y más.',
-    position: { top: '40%', left: '300px' },
-    arrowDirection: 'left',
-  },
-  {
-    title: 'Búsqueda rápida',
-    description: 'Presiona Ctrl+K en cualquier momento para buscar productos, módulos o acciones rápidamente.',
-    position: { top: '30%', left: '50%' },
-    arrowDirection: 'top',
-  },
-  {
-    title: 'Chatbot con IA',
-    description: 'Usa el asistente de IA en la esquina inferior derecha para obtener ayuda, consultar datos o ejecutar acciones.',
-    position: { top: '60%', left: '70%' },
-    arrowDirection: 'right',
-  },
-];
-
 export function OnboardingTour() {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+
+  const STEPS: TourStep[] = [
+    {
+      title: t('onboarding.welcome'),
+      description: t('onboarding.welcomeDesc'),
+      position: { top: '50%', left: '50%' },
+      arrowDirection: 'bottom',
+    },
+    {
+      title: t('onboarding.sideNav'),
+      description: t('onboarding.sideNavDesc'),
+      position: { top: '40%', left: '300px' },
+      arrowDirection: 'left',
+    },
+    {
+      title: t('onboarding.quickSearch'),
+      description: t('onboarding.quickSearchDesc'),
+      position: { top: '30%', left: '50%' },
+      arrowDirection: 'top',
+    },
+    {
+      title: t('onboarding.aiChatbot'),
+      description: t('onboarding.aiChatbotDesc'),
+      position: { top: '60%', left: '70%' },
+      arrowDirection: 'right',
+    },
+  ];
 
   useEffect(() => {
     const done = localStorage.getItem(STORAGE_KEY);
@@ -92,7 +94,7 @@ export function OnboardingTour() {
             <button
               onClick={handleComplete}
               className="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-colors"
-              title="Saltar tour"
+              title={t('onboarding.skipTour')}
             >
               <X size={14} />
             </button>
@@ -116,14 +118,14 @@ export function OnboardingTour() {
               onClick={handleComplete}
               className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
             >
-              Saltar
+              {t('onboarding.skip')}
             </button>
             <button
               onClick={handleNext}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500
                          text-white text-sm font-medium transition-colors"
             >
-              {isLastStep ? 'Comenzar' : 'Siguiente'}
+              {isLastStep ? t('onboarding.start') : t('onboarding.next')}
               <ArrowRight size={14} />
             </button>
           </div>

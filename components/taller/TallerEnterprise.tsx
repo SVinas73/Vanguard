@@ -526,7 +526,7 @@ export default function TallerEnterprise() {
 
   const loadOrdenes = async () => {
     // Cargar órdenes activas (no entregadas ni canceladas) + las últimas 100 históricas
-    const { data: activas } = await supabase
+    const { data: activas, error: errorActivas } = await supabase
       .from('ordenes_taller')
       .select(`
         *,
@@ -539,7 +539,12 @@ export default function TallerEnterprise() {
       .not('estado', 'in', '("entregado","cancelado")')
       .order('created_at', { ascending: false });
 
-    const { data: historicas } = await supabase
+    if (errorActivas) {
+      console.error('Error loading active orders:', errorActivas);
+      alert('Error al cargar órdenes activas: ' + errorActivas.message);
+    }
+
+    const { data: historicas, error: errorHistoricas } = await supabase
       .from('ordenes_taller')
       .select(`
         *,
@@ -552,6 +557,10 @@ export default function TallerEnterprise() {
       .in('estado', ['entregado', 'cancelado'])
       .order('created_at', { ascending: false })
       .limit(100);
+
+    if (errorHistoricas) {
+      console.error('Error loading historical orders:', errorHistoricas);
+    }
 
     const data = [...(activas || []), ...(historicas || [])];
 
@@ -644,7 +653,7 @@ export default function TallerEnterprise() {
     if (data) {
       setClientes(data.map((c: any) => ({
         id: c.id,
-        tipo: c.rut?.length > 12 ? 'empresa' : 'persona',
+        tipo: (c.rut && c.rut.length > 12) ? 'empresa' : 'persona',
         nombre: c.nombre,
         rut: c.rut,
         telefono: c.telefono,

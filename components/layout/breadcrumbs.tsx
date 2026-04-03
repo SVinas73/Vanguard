@@ -1,33 +1,8 @@
 'use client';
 import React from 'react';
 import { ChevronRight, Home } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { TabType } from '@/types';
-
-const TAB_LABELS: Record<string, { label: string; parent?: string }> = {
-  dashboard: { label: 'Dashboard' },
-  stock: { label: 'Stock', parent: 'Inventario' },
-  movimientos: { label: 'Movimientos', parent: 'Inventario' },
-  comercial: { label: 'Comercial', parent: 'Operaciones' },
-  compras: { label: 'Compras', parent: 'Operaciones' },
-  ventas: { label: 'Ventas', parent: 'Operaciones' },
-  finanzas: { label: 'Finanzas', parent: 'Operaciones' },
-  proyectos: { label: 'Proyectos', parent: 'Operaciones' },
-  taller: { label: 'Taller', parent: 'Operaciones' },
-  wms: { label: 'WMS', parent: 'Operaciones' },
-  costos: { label: 'Costos', parent: 'Operaciones' },
-  analytics: { label: 'Analytics', parent: 'Análisis' },
-  demand: { label: 'Demand Planning', parent: 'Análisis' },
-  reportes: { label: 'Reportes', parent: 'Análisis' },
-  qms: { label: 'QMS', parent: 'Análisis' },
-  seriales: { label: 'Seriales', parent: 'Control' },
-  trazabilidad: { label: 'Trazabilidad', parent: 'Control' },
-  rma: { label: 'RMA', parent: 'Control' },
-  bom: { label: 'BOM', parent: 'Control' },
-  ensamblajes: { label: 'Ensamblajes', parent: 'Control' },
-  integraciones: { label: 'Integraciones', parent: 'Config' },
-  auditoria: { label: 'Auditoría', parent: 'Config' },
-  chat: { label: 'Chat' },
-};
 
 interface BreadcrumbsProps {
   activeTab: TabType;
@@ -35,6 +10,34 @@ interface BreadcrumbsProps {
 }
 
 export function Breadcrumbs({ activeTab, onNavigate }: BreadcrumbsProps) {
+  const { t } = useTranslation();
+
+  const TAB_LABELS: Record<string, { label: string; parent?: string }> = {
+    dashboard: { label: t('nav.dashboard') },
+    stock: { label: t('nav.stock'), parent: t('modules.inventory') },
+    movimientos: { label: t('nav.movements'), parent: t('modules.inventory') },
+    comercial: { label: t('modules.comercial'), parent: t('modules.operations') },
+    compras: { label: t('nav.purchases'), parent: t('modules.operations') },
+    ventas: { label: t('nav.sales'), parent: t('modules.operations') },
+    finanzas: { label: t('modules.finance'), parent: t('modules.operations') },
+    proyectos: { label: t('modules.projects'), parent: t('modules.operations') },
+    taller: { label: t('modules.workshop'), parent: t('modules.operations') },
+    wms: { label: t('modules.wms'), parent: t('modules.operations') },
+    costos: { label: t('nav.costs'), parent: t('modules.operations') },
+    analytics: { label: t('nav.analytics'), parent: t('modules.analysis') },
+    demand: { label: t('modules.demandPlanning'), parent: t('modules.analysis') },
+    reportes: { label: t('nav.reports'), parent: t('modules.analysis') },
+    qms: { label: t('modules.quality'), parent: t('modules.analysis') },
+    seriales: { label: t('modules.serials'), parent: t('modules.control') },
+    trazabilidad: { label: t('modules.traceability'), parent: t('modules.control') },
+    rma: { label: t('modules.returns'), parent: t('modules.control') },
+    bom: { label: t('modules.bom'), parent: t('modules.control') },
+    ensamblajes: { label: t('modules.assemblies'), parent: t('modules.control') },
+    integraciones: { label: t('nav.integrations'), parent: t('modules.config') },
+    auditoria: { label: t('nav.audit'), parent: t('modules.config') },
+    chat: { label: t('modules.chat') },
+  };
+
   const tabInfo = TAB_LABELS[activeTab] || { label: activeTab };
 
   return (
@@ -44,7 +47,7 @@ export function Breadcrumbs({ activeTab, onNavigate }: BreadcrumbsProps) {
         className="flex items-center gap-1 hover:text-slate-300 transition-colors"
       >
         <Home size={14} />
-        <span>Inicio</span>
+        <span>{t('modules.home')}</span>
       </button>
       {tabInfo.parent && (
         <>

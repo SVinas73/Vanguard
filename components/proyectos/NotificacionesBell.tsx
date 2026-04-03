@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { cn, formatDate } from '@/lib/utils';
@@ -46,10 +48,13 @@ const TIPO_CONFIG = {
 
 export function NotificacionesBell({ collapsed = false, onNotificacionClick }: NotificacionesBellProps) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
 
   const noLeidas = notificaciones.filter(n => !n.leido).length;
 
@@ -82,10 +87,40 @@ export function NotificacionesBell({ collapsed = false, onNotificacionClick }: N
     }
   }, [user?.email]);
 
+  // Calculate dropdown position (open above the button since it's in sidebar footer)
+  const updatePosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const dropdownWidth = 320;
+      const dropdownMaxHeight = 460;
+
+      let top = rect.top - dropdownMaxHeight - 8;
+      let left = rect.right + 8;
+
+      // If dropdown would go off left, show to the right
+      if (left + dropdownWidth > window.innerWidth - 16) {
+        left = rect.left;
+      }
+      // If would go off top, show below
+      if (top < 16) {
+        top = rect.bottom + 8;
+      }
+
+      setDropdownPos({ top: Math.max(8, top), left: Math.max(8, left) });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showDropdown) updatePosition();
+  }, [showDropdown, updatePosition]);
+
   // Cerrar dropdown al hacer clic afuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current && !buttonRef.current.contains(event.target as Node)
+      ) {
         setShowDropdown(false);
       }
     };
@@ -174,7 +209,7 @@ export function NotificacionesBell({ collapsed = false, onNotificacionClick }: N
     const horas = Math.floor(diff / 3600000);
     const dias = Math.floor(diff / 86400000);
 
-    if (minutos < 1) return 'Ahora';
+    if (minutos < 1) return t('notifications.now');
     if (minutos < 60) return `${minutos}m`;
     if (horas < 24) return `${horas}h`;
     if (dias < 7) return `${dias}d`;
@@ -182,9 +217,10 @@ export function NotificacionesBell({ collapsed = false, onNotificacionClick }: N
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative">
       {/* Botón de campanita */}
       <button
+        ref={buttonRef}
         onClick={() => setShowDropdown(!showDropdown)}
         className={cn(
           'relative p-2 rounded-xl transition-colors',
@@ -192,7 +228,7 @@ export function NotificacionesBell({ collapsed = false, onNotificacionClick }: N
             ? 'bg-emerald-500/20 text-emerald-400'
             : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
         )}
-        title="Notificaciones"
+        title={t('notifications.title')}
       >
         <Bell size={20} />
         
@@ -207,26 +243,30 @@ export function NotificacionesBell({ collapsed = false, onNotificacionClick }: N
       {/* Tooltip cuando está colapsado */}
       {collapsed && (
         <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
-          Notificaciones
+          {t('notifications.title')}
           {noLeidas > 0 && (
             <span className="ml-2 text-red-400 text-xs">({noLeidas})</span>
           )}
         </div>
       )}
 
-      {/* Dropdown */}
-      {showDropdown && (
-        <div className="absolute bottom-full left-0 mb-2 w-80 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50">
+      {/* Dropdown via portal */}
+      {showDropdown && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={dropdownRef}
+          style={{ position: 'fixed', top: dropdownPos.top, left: dropdownPos.left, zIndex: 9999 }}
+          className="w-80 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden"
+        >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
-            <h3 className="font-semibold text-sm">Notificaciones</h3>
+            <h3 className="font-semibold text-sm">{t('notifications.title')}</h3>
             {noLeidas > 0 && (
               <button
                 onClick={marcarTodasComoLeidas}
                 className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
               >
                 <CheckCheck size={14} />
-                Marcar todas
+                {t('notifications.markAll')}
               </button>
             )}
           </div>
@@ -235,12 +275,12 @@ export function NotificacionesBell({ collapsed = false, onNotificacionClick }: N
           <div className="max-h-[400px] overflow-y-auto">
             {loading ? (
               <div className="p-8 text-center text-slate-500 text-sm">
-                Cargando...
+                {t('notifications.loading')}
               </div>
             ) : notificaciones.length === 0 ? (
               <div className="p-8 text-center text-slate-500">
                 <Bell size={32} className="mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No hay notificaciones</p>
+                <p className="text-sm">{t('notifications.noNotificationsProject')}</p>
               </div>
             ) : (
               notificaciones.map(notificacion => {
@@ -290,7 +330,7 @@ export function NotificacionesBell({ collapsed = false, onNotificacionClick }: N
                             marcarComoLeida(notificacion.id);
                           }}
                           className="p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-emerald-400"
-                          title="Marcar como leída"
+                          title={t('notifications.markRead')}
                         >
                           <Check size={14} />
                         </button>
@@ -301,7 +341,7 @@ export function NotificacionesBell({ collapsed = false, onNotificacionClick }: N
                           eliminarNotificacion(notificacion.id);
                         }}
                         className="p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-red-400"
-                        title="Eliminar"
+                        title={t('notifications.deleteNotif')}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -316,11 +356,12 @@ export function NotificacionesBell({ collapsed = false, onNotificacionClick }: N
           {notificaciones.length > 0 && (
             <div className="px-4 py-2 border-t border-slate-700/50 text-center">
               <button className="text-xs text-slate-400 hover:text-slate-300">
-                Ver todas las notificaciones
+                {t('notifications.viewAll')}
               </button>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
