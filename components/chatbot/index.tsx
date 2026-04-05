@@ -43,8 +43,8 @@ function ChatMessage({ message, onSuggestionClick }: { message: Message; onSugge
       <div className={cn(
         'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
         isUser 
-          ? 'bg-blue-500/20 text-blue-400' 
-          : 'bg-gradient-to-br from-blue-500/20 to-violet-500/20 text-violet-400'
+          ? 'bg-blue-500/20 text-blue-400'
+          : 'bg-slate-800 text-violet-400'
       )}>
         {isUser ? <User size={16} /> : <Bot size={16} />}
       </div>
@@ -234,7 +234,7 @@ export function ChatbotWidget() {
         onClick={() => setIsOpen(true)}
         className={cn(
           'fixed bottom-24 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all z-40',
-          'bg-gradient-to-r from-blue-500 to-violet-500 hover:scale-110 hover:shadow-violet-500/30',
+          'bg-slate-900 border border-slate-800 hover:scale-110 hover:shadow-xl',
           isOpen && 'scale-0 opacity-0'
         )}
       >
@@ -248,9 +248,9 @@ export function ChatbotWidget() {
         isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'
       )}>
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-500/20 to-violet-500/20 border-b border-slate-800">
+        <div className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-violet-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center">
               <Sparkles size={20} className="text-white" />
             </div>
             <div>
@@ -261,7 +261,7 @@ export function ChatbotWidget() {
                 </span>
               </div>
               <div className="text-xs text-slate-400 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 Asistente inteligente
               </div>
             </div>
@@ -286,7 +286,7 @@ export function ChatbotWidget() {
           
           {isLoading && (
             <div className="flex gap-3 mb-4">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-violet-500/20 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center">
                 <Bot size={16} className="text-violet-400" />
               </div>
               <div className="bg-slate-800/80 rounded-2xl px-4 py-3">
@@ -325,8 +325,8 @@ export function ChatbotWidget() {
               disabled={isLoading || !input.trim()}
               className={cn(
                 'px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center',
-                'bg-gradient-to-r from-blue-500 to-violet-500 text-white',
-                'hover:shadow-lg hover:shadow-violet-500/30',
+                'bg-slate-900 border border-slate-800 text-white',
+                'hover:shadow-lg',
                 'disabled:opacity-50 disabled:cursor-not-allowed'
               )}
             >

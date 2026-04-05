@@ -393,7 +393,7 @@ const CATEGORIAS_CONFIG: Record<CategoriaReporte, { nombre: string; icono: React
   financiero: { nombre: 'Financiero', icono: <DollarSign className="h-5 w-5" />, color: 'indigo' },
 };
 
-const COLORS_CHART = ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6'];
+const COLORS_CHART = ['#3d9a5f', '#4a7fb5', '#6b5488', '#c8872e', '#c94444', '#b5547a', '#6366f1', '#3d8f82'];
 
 // ============================================
 // HELPERS
@@ -2406,8 +2406,8 @@ export default function ReportsEnterprise() {
                               <YAxis yAxisId="right" orientation="right" tick={{ fill: '#94a3b8', fontSize: 11 }} />
                               <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
                               <Legend />
-                              <Bar yAxisId="left" dataKey="valor" fill="#10b981" name="Valor" />
-                              <Line yAxisId="right" type="monotone" dataKey="acumulado" stroke="#f59e0b" name="% Acumulado" />
+                              <Bar yAxisId="left" dataKey="valor" fill="#3d9a5f" name="Valor" />
+                              <Line yAxisId="right" type="monotone" dataKey="acumulado" stroke="#c8872e" name="% Acumulado" />
                             </ComposedChart>
                           ) : datosReporte.graficoTipo === 'line' ? (
                             <LineChart data={datosReporte.graficoData}>
@@ -2416,7 +2416,7 @@ export default function ReportsEnterprise() {
                               <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
                               <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
                               <Legend />
-                              <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} />
+                              <Line type="monotone" dataKey="value" stroke="#3d9a5f" strokeWidth={2} />
                             </LineChart>
                           ) : datosReporte.graficoTipo === 'area' ? (
                             <AreaChart data={datosReporte.graficoData}>
@@ -2424,7 +2424,7 @@ export default function ReportsEnterprise() {
                               <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} />
                               <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
                               <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
-                              <Area type="monotone" dataKey="value" stroke="#10b981" fill="#10b98133" />
+                              <Area type="monotone" dataKey="value" stroke="#3d9a5f" fill="#3d9a5f33" />
                             </AreaChart>
                           ) : (
                             <BarChart data={datosReporte.graficoData}>
@@ -2435,16 +2435,16 @@ export default function ReportsEnterprise() {
                               <Legend />
                               {datosReporte.graficoData[0]?.entradas !== undefined ? (
                                 <>
-                                  <Bar dataKey="entradas" fill="#10b981" name="Entradas" />
+                                  <Bar dataKey="entradas" fill="#3d9a5f" name="Entradas" />
                                   <Bar dataKey="salidas" fill="#ef4444" name="Salidas" />
                                 </>
                               ) : datosReporte.graficoData[0]?.planificado !== undefined ? (
                                 <>
-                                  <Bar dataKey="planificado" fill="#8b5cf6" name="Planificado" />
-                                  <Bar dataKey="real" fill="#10b981" name="Real" />
+                                  <Bar dataKey="planificado" fill="#6b5488" name="Planificado" />
+                                  <Bar dataKey="real" fill="#3d9a5f" name="Real" />
                                 </>
                               ) : (
-                                <Bar dataKey="value" fill="#06b6d4" name="Valor" />
+                                <Bar dataKey="value" fill="#4a7fb5" name="Valor" />
                               )}
                             </BarChart>
                           )}

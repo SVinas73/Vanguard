@@ -88,20 +88,20 @@ interface Insight {
 // ============================================
 
 const COLORS = {
-  primary: '#10b981',
-  secondary: '#06b6d4',
-  accent: '#8b5cf6',
-  warning: '#f59e0b',
-  danger: '#ef4444',
-  success: '#22c55e',
-  muted: '#64748b',
-  chart: ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6'],
+  primary: '#3d9a5f',
+  secondary: '#4a7fb5',
+  accent: '#6b5488',
+  warning: '#c8872e',
+  danger: '#c94444',
+  success: '#3d9a5f',
+  muted: '#636d7e',
+  chart: ['#3d9a5f', '#4a7fb5', '#6b5488', '#c8872e', '#c94444', '#986080', '#3a9280'],
 };
 
 const ABC_COLORS = {
-  A: '#10b981',
-  B: '#f59e0b', 
-  C: '#64748b',
+  A: '#3d9a5f',
+  B: '#c8872e',
+  C: '#636d7e',
 };
 
 // ============================================
@@ -765,7 +765,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
                     yAxisId="right"
                     type="monotone"
                     dataKey="cumulativePercentage"
-                    stroke="#f59e0b"
+                    stroke="#c8872e"
                     strokeWidth={2}
                     dot={false}
                     name="% Acumulado"

@@ -249,7 +249,7 @@ export function ProyectosDashboard() {
     id: p.id,
     nombre: p.nombre,
     descripcion: p.descripcion,
-    color: p.color || '#10b981',
+    color: p.color || '#3d9a5f',
     estado: p.estado,
     fechaInicio: p.fecha_inicio ? new Date(p.fecha_inicio) : undefined,
     fechaFin: p.fecha_fin ? new Date(p.fecha_fin) : undefined,
@@ -800,7 +800,7 @@ export function ProyectosDashboard() {
           <div>
             <label className="block text-sm text-slate-400 mb-2">Color</label>
             <div className="flex gap-2 flex-wrap">
-              {['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'].map(color => (
+              {['#3d9a5f', '#3b82f6', '#c8872e', '#ef4444', '#6b5488', '#b5547a', '#3d8f82', '#cc7a33'].map(color => (
                 <button
                   key={color}
                   type="button"
@@ -849,7 +849,7 @@ export function ProyectosDashboard() {
                 
                 const colorSeleccionado = Array.from(document.querySelectorAll('[id^="color-"]'))
                   .find(btn => (btn as HTMLElement).style.borderColor === 'white')
-                  ?.id.replace('color-', '') || '#10b981';
+                  ?.id.replace('color-', '') || '#3d9a5f';
                 
                 if (!nombre?.trim()) {
                   alert('El nombre es obligatorio');

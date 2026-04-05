@@ -420,7 +420,7 @@ export function TareasListView({
                       >
                         {tarea.asignadoA ? (
                           <>
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-400">
+                            <div className="w-6 h-6 rounded-full bg-slate-700/50 border border-slate-600/50 flex items-center justify-center text-xs font-bold text-slate-300">
                               {tarea.asignadoA.charAt(0).toUpperCase()}
                             </div>
                             <span className="text-sm truncate max-w-[100px]">

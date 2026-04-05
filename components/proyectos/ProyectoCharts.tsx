@@ -234,7 +234,7 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
                     className="h-full rounded-full transition-all"
                     style={{
                       width: `${metricas.total > 0 ? (cantidad / metricas.total) * 100 : 0}%`,
-                      backgroundColor: columna.color || '#10b981',
+                      backgroundColor: columna.color || '#3d9a5f',
                     }}
                   />
                 </div>

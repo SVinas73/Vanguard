@@ -146,11 +146,11 @@ const MOCK_DATA: DashboardData = {
     total: 37011.53,
     prev30d: 39796.77,
     categorias: [
-      { nombre: 'Estación de Servicio', valor: 20356, porcentaje: 55, color: '#10b981' },
-      { nombre: 'Ferretería', valor: 11473, porcentaje: 31, color: '#06b6d4' },
-      { nombre: 'Papelería', valor: 2221, porcentaje: 6, color: '#a855f7' },
-      { nombre: 'Ediltor', valor: 1481, porcentaje: 4, color: '#f59e0b' },
-      { nombre: 'Otros', valor: 1481, porcentaje: 4, color: '#ec4899' },
+      { nombre: 'Estación de Servicio', valor: 20356, porcentaje: 55, color: '#3d9a5f' },
+      { nombre: 'Ferretería', valor: 11473, porcentaje: 31, color: '#4a7fb5' },
+      { nombre: 'Papelería', valor: 2221, porcentaje: 6, color: '#7b5ba8' },
+      { nombre: 'Ediltor', valor: 1481, porcentaje: 4, color: '#c8872e' },
+      { nombre: 'Otros', valor: 1481, porcentaje: 4, color: '#b05580' },
     ],
     capitalInmovilizado: 12270.95,
     productosInmovilizados: 39,
@@ -220,7 +220,7 @@ interface SparkLineProps {
   width?: number;
 }
 
-function SparkLine({ data, color = '#10b981', height = 32, width = 80 }: SparkLineProps) {
+function SparkLine({ data, color = '#3d9a5f', height = 32, width = 80 }: SparkLineProps) {
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
@@ -313,23 +313,19 @@ function KPICard({ label, value, prevValue, suffix, icon, color, sparkData, desc
   const isPositive = delta !== null && parseFloat(delta) >= 0;
 
   const colorMap: Record<KPIColor, ColorConfig> = {
-    emerald: { bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.15)', text: '#10b981', accent: '#34d399' },
-    cyan: { bg: 'rgba(6,182,212,0.08)', border: 'rgba(6,182,212,0.15)', text: '#06b6d4', accent: '#22d3ee' },
-    rose: { bg: 'rgba(244,63,94,0.08)', border: 'rgba(244,63,94,0.15)', text: '#f43f5e', accent: '#fb7185' },
-    violet: { bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.15)', text: '#8b5cf6', accent: '#a78bfa' },
+    emerald: { bg: 'rgba(61,154,95,0.08)', border: 'rgba(61,154,95,0.15)', text: '#3d9a5f', accent: '#4aaa73' },
+    cyan: { bg: 'rgba(74,127,181,0.08)', border: 'rgba(74,127,181,0.15)', text: '#4a7fb5', accent: '#6b8baa' },
+    rose: { bg: 'rgba(201,68,68,0.08)', border: 'rgba(201,68,68,0.15)', text: '#c94444', accent: '#cc5555' },
+    violet: { bg: 'rgba(107,84,136,0.08)', border: 'rgba(107,84,136,0.15)', text: '#6b5488', accent: '#836ba0' },
   };
 
   const c = colorMap[color];
 
   return (
     <div
-      className="relative group rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02]"
-      style={{
-        background: `linear-gradient(135deg, ${c.bg}, rgba(15,23,42,0.6))`,
-        border: `1px solid ${c.border}`,
-      }}
+      className="relative group rounded-xl overflow-hidden transition-all duration-300 bg-slate-900 border border-slate-800 hover:border-slate-700"
     >
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: `radial-gradient(circle at 50% 0%, ${c.bg}, transparent 70%)` }} />
+      <div className="hidden" />
 
       <div className="relative p-5">
         <div className="flex items-start justify-between mb-3">
@@ -353,8 +349,8 @@ function KPICard({ label, value, prevValue, suffix, icon, color, sparkData, desc
 
           {delta !== null && (
             <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold" style={{
-              background: isPositive ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)',
-              color: isPositive ? '#34d399' : '#fb7185',
+              background: isPositive ? 'rgba(61,154,95,0.12)' : 'rgba(201,68,68,0.12)',
+              color: isPositive ? '#4aaa73' : '#cc5555',
             }}>
               <span>{isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}</span>
               <span>{Math.abs(parseFloat(delta))}%</span>
@@ -379,15 +375,15 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
   const isUp = parseFloat(trend) >= 0;
 
   return (
-    <div className="relative rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.8))', border: '1px solid rgba(51,65,85,0.3)' }}>
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 20% 20%, rgba(16,185,129,0.06), transparent 60%)' }} />
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.04), transparent 60%)' }} />
+    <div className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-800">
+      <div className="hidden" />
+      <div className="hidden" />
 
       <div className="relative p-6">
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl" style={{ background: 'rgba(16,185,129,0.12)' }}>
-              <DollarSign size={18} className="text-emerald-400" />
+            <div className="p-2.5 rounded-xl" style={{ background: 'rgba(61,154,95,0.12)' }}>
+              <DollarSign size={18} style={{ color: '#3d9a5f' }} />
             </div>
             <div>
               <h3 className="font-semibold text-slate-200 text-sm">Valor del Inventario</h3>
@@ -395,8 +391,8 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
             </div>
           </div>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold" style={{
-            background: isUp ? 'rgba(244,63,94,0.1)' : 'rgba(16,185,129,0.1)',
-            color: isUp ? '#fb7185' : '#34d399',
+            background: isUp ? 'rgba(201,68,68,0.1)' : 'rgba(61,154,95,0.1)',
+            color: isUp ? '#cc5555' : '#4aaa73',
           }}>
             <span>{isUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}</span>
             <span>{trend}%</span>
@@ -453,7 +449,7 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
         </div>
 
         {/* Inmovilizado */}
-        <div className="p-3.5 rounded-xl" style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.12)' }}>
+        <div className="p-3.5 rounded-xl" style={{ background: 'rgba(200,135,46,0.06)', border: '1px solid rgba(200,135,46,0.12)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Hourglass size={14} className="text-amber-400" />
@@ -489,35 +485,35 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
     : alertas.items.filter((item: AlertaItem) => item.nivel === activeFilter);
 
   const levelConfig: Record<AlertLevel, LevelConfig> = {
-    critical: { color: '#f43f5e', bg: 'rgba(244,63,94,0.08)', border: 'rgba(244,63,94,0.2)', label: 'Sin stock', Icon: XCircle },
-    warning: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)', label: 'Stock bajo', Icon: AlertCircle },
-    low: { color: '#eab308', bg: 'rgba(234,179,8,0.08)', border: 'rgba(234,179,8,0.2)', label: 'Atención', Icon: AlertTriangle },
+    critical: { color: '#c94444', bg: 'rgba(201,68,68,0.08)', border: 'rgba(201,68,68,0.2)', label: 'Sin stock', Icon: XCircle },
+    warning: { color: '#c8872e', bg: 'rgba(200,135,46,0.08)', border: 'rgba(200,135,46,0.2)', label: 'Stock bajo', Icon: AlertCircle },
+    low: { color: '#b89a2e', bg: 'rgba(184,154,46,0.08)', border: 'rgba(184,154,46,0.2)', label: 'Atención', Icon: AlertTriangle },
   };
 
   const filters: FilterOption[] = [
     { key: 'all', label: 'Todas', count: alertas.total },
-    { key: 'critical', label: 'Críticas', count: alertas.criticas, color: '#f43f5e' },
-    { key: 'warning', label: 'Alerta', count: alertas.advertencias, color: '#f59e0b' },
-    { key: 'low', label: 'Bajas', count: alertas.bajas, color: '#eab308' },
+    { key: 'critical', label: 'Críticas', count: alertas.criticas, color: '#c94444' },
+    { key: 'warning', label: 'Alerta', count: alertas.advertencias, color: '#c8872e' },
+    { key: 'low', label: 'Bajas', count: alertas.bajas, color: '#b89a2e' },
   ];
 
   return (
-    <div className="relative rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.8))', border: '1px solid rgba(51,65,85,0.3)' }}>
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 80% 10%, rgba(244,63,94,0.05), transparent 60%)' }} />
+    <div className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-800">
+      <div className="hidden" />
 
       <div className="relative p-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl" style={{ background: 'rgba(244,63,94,0.12)' }}>
-              <ShieldAlert size={18} className="text-rose-400" />
+            <div className="p-2.5 rounded-xl" style={{ background: 'rgba(201,68,68,0.12)' }}>
+              <ShieldAlert size={18} style={{ color: '#c94444' }} />
             </div>
             <div>
               <h3 className="font-semibold text-slate-200 text-sm">Alertas de Stock</h3>
               <p className="text-[11px]" style={{ color: 'rgba(148,163,184,0.5)' }}>Productos que requieren atención</p>
             </div>
           </div>
-          <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold" style={{ background: 'rgba(244,63,94,0.1)', color: '#fb7185' }}>
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold" style={{ background: 'rgba(201,68,68,0.1)', color: '#cc5555' }}>
             {alertas.total}
           </div>
         </div>
@@ -549,7 +545,7 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
             return (
               <div
                 key={item.codigo}
-                className="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all hover:scale-[1.01]"
+                className="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all hover:border-slate-700"
                 style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -583,9 +579,9 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
 
         {/* CTA */}
         <button className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-[1.01]" style={{
-          background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.15))',
-          border: '1px solid rgba(16,185,129,0.2)',
-          color: '#34d399',
+          background: 'linear-gradient(135deg, rgba(61,154,95,0.15), rgba(6,182,212,0.15))',
+          border: '1px solid rgba(61,154,95,0.2)',
+          color: '#4aaa73',
         }}>
           <PackagePlus size={16} />
           <span>Crear orden de compra</span>
@@ -616,9 +612,9 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
   ];
 
   const catColors: Record<string, string> = {
-    'Estación': '#10b981',
-    'Ferretería': '#06b6d4',
-    'Papelería': '#a855f7',
+    'Estación': '#3d9a5f',
+    'Ferretería': '#4a7fb5',
+    'Papelería': '#836ba0',
   };
 
   return (
@@ -647,7 +643,7 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
                 className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
                 style={{
                   background: period === p.key ? 'rgba(6,182,212,0.15)' : 'transparent',
-                  color: period === p.key ? '#22d3ee' : 'rgba(148,163,184,0.5)',
+                  color: period === p.key ? '#6b8baa' : 'rgba(148,163,184,0.5)',
                 }}
               >
                 {p.label}
@@ -669,7 +665,7 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
                 <div className="flex items-center gap-3">
                   {/* Rank */}
                   <div className="w-5 text-center">
-                    <span className="text-[11px] font-bold" style={{ color: i < 3 ? '#22d3ee' : 'rgba(148,163,184,0.3)' }}>
+                    <span className="text-[11px] font-bold" style={{ color: i < 3 ? '#6b8baa' : 'rgba(148,163,184,0.3)' }}>
                       {i + 1}
                     </span>
                   </div>
@@ -691,8 +687,8 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
                       <div className="flex items-center gap-2.5 flex-shrink-0 ml-3">
                         <span className="text-sm font-bold text-white font-mono">{item.cantidad}</span>
                         <span className="text-[10px] font-medium px-1.5 py-0.5 rounded" style={{
-                          background: isUp ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
-                          color: isUp ? '#34d399' : '#fb7185',
+                          background: isUp ? 'rgba(61,154,95,0.1)' : 'rgba(201,68,68,0.1)',
+                          color: isUp ? '#4aaa73' : '#cc5555',
                         }}>
                           {isUp ? '+' : ''}{delta}%
                         </span>
@@ -730,24 +726,24 @@ interface InsightsPanelProps {
 
 function InsightsPanel({ insights }: InsightsPanelProps) {
   const typeConfig: Record<InsightTipo, InsightConfig> = {
-    urgente: { color: '#f43f5e', bg: 'rgba(244,63,94,0.06)', border: 'rgba(244,63,94,0.15)', Icon: Flame },
-    tendencia: { color: '#10b981', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.15)', Icon: TrendingUp },
-    alerta: { color: '#f59e0b', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.15)', Icon: AlertCircle },
+    urgente: { color: '#c94444', bg: 'rgba(201,68,68,0.06)', border: 'rgba(201,68,68,0.15)', Icon: Flame },
+    tendencia: { color: '#3d9a5f', bg: 'rgba(61,154,95,0.06)', border: 'rgba(61,154,95,0.15)', Icon: TrendingUp },
+    alerta: { color: '#c8872e', bg: 'rgba(200,135,46,0.06)', border: 'rgba(200,135,46,0.15)', Icon: AlertCircle },
   };
 
   return (
     <div className="relative rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.8))', border: '1px solid rgba(51,65,85,0.3)' }}>
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.05), transparent 60%)' }} />
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(107,84,136,0.05), transparent 60%)' }} />
 
       <div className="relative p-6">
         <div className="flex items-center gap-3 mb-5">
-          <div className="p-2.5 rounded-xl" style={{ background: 'rgba(139,92,246,0.12)' }}>
+          <div className="p-2.5 rounded-xl" style={{ background: 'rgba(107,84,136,0.12)' }}>
             <Brain size={18} className="text-violet-400" />
           </div>
           <div>
             <h3 className="font-semibold text-slate-200 text-sm flex items-center gap-2">
               Insights
-              <span className="px-1.5 py-0.5 text-[9px] font-bold rounded" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>AI</span>
+              <span className="px-1.5 py-0.5 text-[9px] font-bold rounded" style={{ background: 'rgba(107,84,136,0.15)', color: '#836ba0' }}>AI</span>
             </h3>
             <p className="text-[11px]" style={{ color: 'rgba(148,163,184,0.5)' }}>Lo que necesitás saber ahora</p>
           </div>
@@ -805,7 +801,7 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
     <div className="relative rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.8))', border: '1px solid rgba(51,65,85,0.3)' }}>
       <div className="relative p-6">
         <div className="flex items-center gap-3 mb-5">
-          <div className="p-2.5 rounded-xl" style={{ background: 'rgba(139,92,246,0.12)' }}>
+          <div className="p-2.5 rounded-xl" style={{ background: 'rgba(107,84,136,0.12)' }}>
             <Activity size={18} className="text-violet-400" />
           </div>
           <div>
@@ -836,8 +832,8 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0" style={{
-                        background: item.tipo === 'entrada' ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)',
-                        color: item.tipo === 'entrada' ? '#34d399' : '#fb7185',
+                        background: item.tipo === 'entrada' ? 'rgba(61,154,95,0.12)' : 'rgba(201,68,68,0.12)',
+                        color: item.tipo === 'entrada' ? '#4aaa73' : '#cc5555',
                       }}>
                         {item.tipo === 'entrada' ? '+' : '\u2212'}{item.cantidad}
                       </div>
@@ -847,8 +843,8 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
                       </div>
                     </div>
                     <span className="text-[10px] flex-shrink-0 ml-2 px-2 py-0.5 rounded" style={{
-                      background: item.tipo === 'entrada' ? 'rgba(16,185,129,0.08)' : 'rgba(244,63,94,0.08)',
-                      color: item.tipo === 'entrada' ? 'rgba(52,211,153,0.6)' : 'rgba(251,113,133,0.6)',
+                      background: item.tipo === 'entrada' ? 'rgba(61,154,95,0.08)' : 'rgba(201,68,68,0.08)',
+                      color: item.tipo === 'entrada' ? 'rgba(74,170,115,0.6)' : 'rgba(204,85,85,0.6)',
                     }}>
                       {item.tipo}
                     </span>
@@ -880,9 +876,9 @@ export default function VanguardDashboard() {
 
       {/* Ambient background */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(16,185,129,0.03)' }} />
+        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(61,154,95,0.03)' }} />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(6,182,212,0.03)' }} />
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(139,92,246,0.02)' }} />
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(107,84,136,0.02)' }} />
       </div>
 
       <div className="relative max-w-[1600px] mx-auto p-6 lg:p-8">
@@ -898,7 +894,7 @@ export default function VanguardDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs" style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.15)', color: '#fb7185' }}>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs" style={{ background: 'rgba(201,68,68,0.08)', border: '1px solid rgba(201,68,68,0.15)', color: '#cc5555' }}>
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
                 {data.alertas.criticas} críticas
               </div>
@@ -982,8 +978,8 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
 }) {
   const data = useMemo(() => {
     const CATEGORY_COLORS: Record<string, string> = {
-      'Estación de Servicio': '#10b981', 'Ferretería': '#06b6d4',
-      'Papelería': '#a855f7', 'Ediltor': '#f59e0b',
+      'Estación de Servicio': '#3d9a5f', 'Ferretería': '#4a7fb5',
+      'Papelería': '#836ba0', 'Ediltor': '#c8872e',
     };
     const totalValue = products.reduce((sum, p) => sum + p.stock * (p.costoPromedio ?? p.precio), 0);
     const categoryMap: Record<string, number> = {};
@@ -991,7 +987,7 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
     const categorias = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([nombre, valor], i) => ({
       nombre, valor,
       porcentaje: totalValue > 0 ? Math.round((valor / totalValue) * 100) : 0,
-      color: CATEGORY_COLORS[nombre] ?? ['#10b981','#06b6d4','#a855f7','#f59e0b','#ec4899'][i % 5],
+      color: CATEGORY_COLORS[nombre] ?? ['#3d9a5f','#4a7fb5','#836ba0','#c8872e','#b5547a'][i % 5],
     }));
     const sixtyDaysAgo = new Date(); sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
     const activeCodes = new Set(movements.filter((m) => new Date(m.timestamp) >= sixtyDaysAgo).map((m) => m.codigo));

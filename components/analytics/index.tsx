@@ -389,14 +389,14 @@ interface ConsumptionChartProps {
 
 // Category color mapping
 const CATEGORY_COLORS: Record<string, string> = {
-  'Estación de Servicio': '#10b981',
-  'Ferretería': '#06b6d4',
-  'Papelería': '#a855f7',
-  'Ediltor': '#f59e0b',
-  'Otros': '#ec4899',
+  'Estación de Servicio': '#3d9a5f',
+  'Ferretería': '#4a7fb5',
+  'Papelería': '#6b5488',
+  'Ediltor': '#c8872e',
+  'Otros': '#986080',
 };
 
-const FALLBACK_COLORS = ['#10b981', '#06b6d4', '#a855f7', '#f59e0b', '#ec4899', '#6366f1', '#14b8a6'];
+const FALLBACK_COLORS = ['#3d9a5f', '#4a7fb5', '#6b5488', '#c8872e', '#986080', '#546280', '#3a9280'];
 
 function getCatColor(categoria: string): string {
   return CATEGORY_COLORS[categoria] || FALLBACK_COLORS[Math.abs(categoria.split('').reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0)) % FALLBACK_COLORS.length];
@@ -525,7 +525,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
               className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
               style={{
                 background: period === p ? 'rgba(6,182,212,0.15)' : 'transparent',
-                color: period === p ? '#22d3ee' : 'rgba(148,163,184,0.5)',
+                color: period === p ? '#6b8baa' : 'rgba(148,163,184,0.5)',
               }}
             >
               {periodConfig[p].label}
@@ -561,7 +561,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                   <div className="w-5 text-center flex-shrink-0">
                     <span
                       className="text-[11px] font-bold"
-                      style={{ color: i < 3 ? '#22d3ee' : 'rgba(148,163,184,0.3)' }}
+                      style={{ color: i < 3 ? '#6b8baa' : 'rgba(148,163,184,0.3)' }}
                     >
                       {i + 1}
                     </span>
@@ -591,7 +591,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                             className="text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5"
                             style={{
                               background: isUp ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
-                              color: isUp ? '#34d399' : '#fb7185',
+                              color: isUp ? '#4aaa73' : '#cc5555',
                             }}
                           >
                             {isUp ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
@@ -662,7 +662,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                 </div>
                 <div
                   className="text-xl font-bold font-mono"
-                  style={{ color: selectedProduct.stock <= selectedProduct.stockMinimo ? '#fb7185' : '#34d399' }}
+                  style={{ color: selectedProduct.stock <= selectedProduct.stockMinimo ? '#cc5555' : '#4aaa73' }}
                 >
                   {selectedProduct.stock}
                 </div>
@@ -690,8 +690,8 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                   style={{
                     color:
                       selectedProduct.diasRestantes === null ? 'rgba(148,163,184,0.5)' :
-                      selectedProduct.diasRestantes < 7 ? '#fb7185' :
-                      selectedProduct.diasRestantes < 14 ? '#fbbf24' : '#34d399',
+                      selectedProduct.diasRestantes < 7 ? '#cc5555' :
+                      selectedProduct.diasRestantes < 14 ? '#cc9a40' : '#4aaa73',
                   }}
                 >
                   {selectedProduct.diasRestantes ?? '∞'}
@@ -734,7 +734,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                           className="text-[10px] px-2 py-0.5 rounded font-medium"
                           style={{
                             background: mov.tipo === 'entrada' ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
-                            color: mov.tipo === 'entrada' ? '#34d399' : '#fb7185',
+                            color: mov.tipo === 'entrada' ? '#4aaa73' : '#cc5555',
                           }}
                         >
                           {mov.tipo === 'entrada' ? t('movements.entry', 'Entrada') : t('movements.exit', 'Salida')}

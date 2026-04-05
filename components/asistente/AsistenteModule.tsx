@@ -176,13 +176,13 @@ Puedo ayudarte a:
       <div className="flex-shrink-0 px-6 py-4 border-b border-[#1e2028]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 via-violet-500 to-purple-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+            <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm">
               <Brain size={24} className="text-white" />
             </div>
             <div>
               <h1 className="text-lg font-semibold text-white flex items-center gap-2">
                 Asistente Vanguard
-                <span className="px-2 py-0.5 text-[10px] font-semibold bg-gradient-to-r from-blue-500/20 to-violet-500/20 text-violet-400 rounded-full border border-violet-500/30">
+                <span className="px-2 py-0.5 text-[10px] font-semibold bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20">
                   LangChain AI
                 </span>
               </h1>
@@ -269,8 +269,8 @@ Puedo ayudarte a:
             disabled={!input.trim() || loading}
             className={cn(
               "p-3 rounded-xl transition-all",
-              "bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500",
-              "text-white shadow-lg shadow-violet-500/20",
+              "bg-blue-600 hover:bg-blue-500",
+              "text-white shadow-sm",
               "disabled:from-[#1c1f26] disabled:to-[#1c1f26] disabled:text-[#475569] disabled:shadow-none"
             )}
           >
@@ -316,7 +316,7 @@ function MessageBubble({ mensaje }: { mensaje: MensajeAgente }) {
           ? 'bg-blue-500/20 text-blue-400'
           : isError
             ? 'bg-red-500/20 text-red-400'
-            : 'bg-gradient-to-br from-blue-500/20 to-violet-500/20 text-violet-400'
+            : 'bg-blue-500/10 text-blue-400'
       )}>
         {isUser ? <User size={16} /> : <Bot size={16} />}
       </div>
