@@ -427,7 +427,7 @@ export function TareaCard({
               {/* Asignado */}
               {tarea.asignadoA && (
                 <div 
-                  className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold border border-emerald-500/30"
+                  className="w-7 h-7 rounded-full bg-slate-700/50 text-slate-300 flex items-center justify-center text-xs font-bold border border-slate-600/50"
                   title={tarea.asignadoA}
                 >
                   {tarea.asignadoA.charAt(0).toUpperCase()}

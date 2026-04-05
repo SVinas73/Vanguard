@@ -163,7 +163,7 @@ export default function DemandPlanningModule() {
                 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
                 transition-all duration-200 whitespace-nowrap
                 ${isActive
-                  ? `bg-gradient-to-r from-indigo-500/20 to-purple-500/20 ${item.color} border border-indigo-500/30`
+                  ? `bg-slate-900 ${item.color} border border-slate-800`
                   : item.disponible
                     ? 'bg-slate-800/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-transparent'
                     : 'bg-slate-900/30 text-slate-600 cursor-not-allowed border border-transparent'

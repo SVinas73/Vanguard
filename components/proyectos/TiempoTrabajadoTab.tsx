@@ -362,7 +362,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
       )}
 
       {/* Timer */}
-      <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/30">
+      <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
         <div className="flex items-center justify-between">
           <div>
             <h4 className="text-sm font-medium flex items-center gap-2">

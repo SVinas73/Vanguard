@@ -52,10 +52,10 @@ function AlmacenCard({ almacen, productCount, onClick, onEdit, onDelete }: Almac
     <div
       onClick={onClick}
       className={cn(
-        'p-5 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-emerald-500/10',
-        almacen.esPrincipal 
-          ? 'bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/30 hover:border-amber-400/50' 
-          : 'bg-slate-900/50 border-slate-800/50 hover:border-slate-700/50'
+        'p-5 rounded-xl border cursor-pointer transition-all hover:scale-[1.02] hover:shadow-sm',
+        almacen.esPrincipal
+          ? 'bg-slate-900 border-amber-500/30 hover:border-amber-400/50'
+          : 'bg-slate-900 border-slate-800 hover:border-slate-700/50'
       )}
     >
       {/* Header */}
@@ -98,7 +98,7 @@ function AlmacenCard({ almacen, productCount, onClick, onEdit, onDelete }: Almac
       {/* Stats */}
       <div className="flex items-center justify-between pt-4 border-t border-slate-800/50">
         <div className="flex items-center gap-2">
-          <Package size={16} className="text-emerald-400" />
+          <Package size={16} className="text-slate-400" />
           <span className="text-2xl font-bold text-white">{productCount}</span>
           <span className="text-sm text-slate-500">{t('stock.products')}</span>
         </div>
@@ -146,7 +146,7 @@ function SinAlmacenCard({ productCount, onClick }: SinAlmacenCardProps) {
   return (
     <div
       onClick={onClick}
-      className="p-5 rounded-2xl border border-dashed border-slate-700 bg-slate-900/30 cursor-pointer transition-all hover:border-slate-600 hover:bg-slate-900/50"
+      className="p-5 rounded-xl border border-dashed border-slate-700 bg-slate-900 cursor-pointer transition-all hover:border-slate-600 hover:bg-slate-800/50"
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -383,8 +383,8 @@ export function StockDashboard({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-emerald-500/10">
-              <Warehouse size={24} className="text-emerald-400" />
+            <div className="p-2 rounded-xl bg-slate-800">
+              <Warehouse size={24} className="text-slate-400" />
             </div>
             <div>
               <h2 className="text-xl font-bold">{t('stock.title')}</h2>
@@ -403,7 +403,7 @@ export function StockDashboard({
         {/* Almacenes Grid */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="inline-flex h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent" />
+            <div className="inline-flex h-8 w-8 animate-spin rounded-full border-4 border-solid border-slate-500 border-r-transparent" />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -427,10 +427,10 @@ export function StockDashboard({
         )}
 
         {/* Summary */}
-        <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800/50">
+        <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-slate-400">{t('stock.totalProducts')}</span>
-            <span className="text-2xl font-bold text-emerald-400">{products.length}</span>
+            <span className="text-2xl font-bold text-slate-200">{products.length}</span>
           </div>
         </div>
 
@@ -551,7 +551,7 @@ export function StockDashboard({
             placeholder={t('stock.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-3 pl-10 rounded-xl bg-slate-900/50 border border-slate-800/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+            className="w-full px-4 py-3 pl-10 rounded-xl bg-slate-900 border border-slate-800 focus:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500/20 text-sm"
           />
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
         </div>

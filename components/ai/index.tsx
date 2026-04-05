@@ -25,7 +25,7 @@ import {
 // ============================================
 
 const panelBase = {
-  background: 'linear-gradient(135deg, rgba(28,31,38,0.95), rgba(22,25,33,0.9))',
+  background: 'linear-gradient(135deg, rgba(30,33,40,0.95), rgba(24,27,35,0.9))',
   border: '1px solid rgba(46,50,61,0.6)',
 } as const;
 
@@ -192,23 +192,23 @@ function getUrgencyStyle(urgencia: string, t: (key: string) => string): Severity
     case 'critica':
     case 'alta':
       return {
-        color: '#f43f5e',
-        bg: 'rgba(244,63,94,0.08)',
-        border: 'rgba(244,63,94,0.15)',
+        color: '#c94444',
+        bg: 'rgba(201,68,68,0.08)',
+        border: 'rgba(201,68,68,0.15)',
         label: t('alerts.critical'),
       };
     case 'media':
       return {
-        color: '#f59e0b',
-        bg: 'rgba(245,158,11,0.08)',
-        border: 'rgba(245,158,11,0.15)',
+        color: '#c8872e',
+        bg: 'rgba(200,135,46,0.08)',
+        border: 'rgba(200,135,46,0.15)',
         label: t('alerts.medium'),
       };
     case 'baja':
       return {
-        color: '#fbbf24',
-        bg: 'rgba(251,191,36,0.08)',
-        border: 'rgba(251,191,36,0.15)',
+        color: '#cc9a40',
+        bg: 'rgba(204,154,64,0.08)',
+        border: 'rgba(204,154,64,0.15)',
         label: t('alerts.low'),
       };
     default:
@@ -263,7 +263,7 @@ export function AIPredictionsPanel() {
     fetchData();
   }, []);
 
-  const accentColor = '#a78bfa'; // violet
+  const accentColor = '#836ba0'; // violet
 
   return (
     <PanelShell
@@ -288,8 +288,8 @@ export function AIPredictionsPanel() {
         <div
           className="p-3 rounded-lg text-sm mb-3"
           style={{
-            background: 'rgba(244,63,94,0.08)',
-            color: '#fb7185',
+            background: 'rgba(201,68,68,0.08)',
+            color: '#cc5555',
           }}
         >
           {error}
@@ -419,7 +419,7 @@ export function AIAnomaliesPanel() {
     fetchData();
   }, []);
 
-  const accentColor = '#f43f5e'; // rose
+  const accentColor = '#c94444'; // rose
 
   return (
     <PanelShell
@@ -444,8 +444,8 @@ export function AIAnomaliesPanel() {
         <div
           className="p-3 rounded-lg text-sm mb-3"
           style={{
-            background: 'rgba(244,63,94,0.08)',
-            color: '#fb7185',
+            background: 'rgba(201,68,68,0.08)',
+            color: '#cc5555',
           }}
         >
           {error}
@@ -574,7 +574,7 @@ export function AIAssociationsPanel() {
     fetchData();
   }, []);
 
-  const accentColor = '#06b6d4'; // cyan
+  const accentColor = '#4a7fb5'; // cyan
 
   return (
     <PanelShell
@@ -597,8 +597,8 @@ export function AIAssociationsPanel() {
         <div
           className="p-3 rounded-lg text-sm mb-3"
           style={{
-            background: 'rgba(244,63,94,0.08)',
-            color: '#fb7185',
+            background: 'rgba(201,68,68,0.08)',
+            color: '#cc5555',
           }}
         >
           {error}
@@ -659,13 +659,13 @@ export function AIAssociationsPanel() {
                       className="h-full rounded-full"
                       style={{
                         width: `${confidenceWidth}%`,
-                        background: 'linear-gradient(90deg, #06b6d4, #10b981)',
+                        background: 'linear-gradient(90deg, #4a7fb5, #3d9a5f)',
                       }}
                     />
                   </div>
                   <span
                     className="text-[10px] font-mono font-semibold"
-                    style={{ color: '#22d3ee' }}
+                    style={{ color: '#6b8baa' }}
                   >
                     {confidenceWidth}%
                   </span>

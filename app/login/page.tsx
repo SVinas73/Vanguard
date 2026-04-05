@@ -107,7 +107,7 @@ export default function LoginPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-600/20 text-sm"
                   placeholder="Tu nombre"
                   required={!isLogin}
                   disabled={loading}
@@ -124,7 +124,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-600/20 text-sm"
                   placeholder="tu@email.com"
                   required
                   disabled={loading}
@@ -141,7 +141,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 focus:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-600/20 text-sm"
                   placeholder="••••••••"
                   required
                   minLength={6}
@@ -167,7 +167,7 @@ export default function LoginPage() {
 
             {/* Success message */}
             {message && (
-              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm">
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm">
                 {message}
               </div>
             )}
@@ -176,7 +176,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Cargando...' : isLogin ? 'Ingresar' : 'Crear Cuenta'}
             </button>

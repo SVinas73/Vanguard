@@ -444,7 +444,7 @@ const CATEGORIAS_INGRESO = [
   'Ventas', 'Servicios', 'Intereses', 'Comisiones', 'Alquileres', 'Otros'
 ];
 
-const COLORS_CHART = ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#6366f1'];
+const COLORS_CHART = ['#3d9a5f', '#4a7fb5', '#6b5488', '#c8872e', '#c94444', '#986080', '#546280'];
 
 // ============================================
 // HELPERS
@@ -2050,7 +2050,7 @@ export default function FinanzasEnterprise() {
       <head>
         <style>
           body { font-family: Arial, sans-serif; padding: 40px; }
-          h1 { color: #1e293b; border-bottom: 2px solid #10b981; padding-bottom: 10px; }
+          h1 { color: #1e293b; border-bottom: 2px solid #3d9a5f; padding-bottom: 10px; }
           .cliente-info { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
           th { background: #1e293b; color: white; padding: 12px; text-align: left; }
@@ -2140,7 +2140,7 @@ export default function FinanzasEnterprise() {
       <head>
         <style>
           body { font-family: Arial, sans-serif; padding: 40px; }
-          h1 { color: #1e293b; border-bottom: 2px solid #f59e0b; padding-bottom: 10px; }
+          h1 { color: #1e293b; border-bottom: 2px solid #c8872e; padding-bottom: 10px; }
           .proveedor-info { background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
           th { background: #1e293b; color: white; padding: 12px; text-align: left; }
@@ -2581,7 +2581,7 @@ export default function FinanzasEnterprise() {
                       contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
                       formatter={(value: number) => formatCurrency(value, monedaActiva)}
                     />
-                    <Bar dataKey="monto" fill="#06b6d4" name="Monto" />
+                    <Bar dataKey="monto" fill="#4a7fb5" name="Monto" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -2598,7 +2598,7 @@ export default function FinanzasEnterprise() {
                       contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
                       formatter={(value: number) => formatCurrency(value, monedaActiva)}
                     />
-                    <Bar dataKey="monto" fill="#f59e0b" name="Monto" />
+                    <Bar dataKey="monto" fill="#c8872e" name="Monto" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -2620,7 +2620,7 @@ export default function FinanzasEnterprise() {
                     labelFormatter={(v) => formatDate(v)}
                   />
                   <Legend />
-                  <Area type="monotone" dataKey="saldoProyectado" stroke="#10b981" fill="#10b98133" name="Saldo Proyectado" />
+                  <Area type="monotone" dataKey="saldoProyectado" stroke="#3d9a5f" fill="#3d9a5f33" name="Saldo Proyectado" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -3042,9 +3042,9 @@ export default function FinanzasEnterprise() {
                     labelFormatter={(v) => formatDate(v)}
                   />
                   <Legend />
-                  <Bar dataKey="ingresos" fill="#06b6d4" name="Ingresos" />
-                  <Bar dataKey="egresos" fill="#f59e0b" name="Egresos" />
-                  <Line type="monotone" dataKey="saldoProyectado" stroke="#10b981" strokeWidth={2} name="Saldo" />
+                  <Bar dataKey="ingresos" fill="#4a7fb5" name="Ingresos" />
+                  <Bar dataKey="egresos" fill="#c8872e" name="Egresos" />
+                  <Line type="monotone" dataKey="saldoProyectado" stroke="#3d9a5f" strokeWidth={2} name="Saldo" />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>

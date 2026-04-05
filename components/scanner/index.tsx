@@ -166,7 +166,7 @@ export function QuickScanner({ products, onProductFound, onOpenMovement }: Quick
       {/* Botón flotante */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full shadow-lg shadow-emerald-500/30 flex items-center justify-center text-slate-950 hover:scale-110 transition-transform z-40"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-slate-900 border border-slate-800 rounded-full shadow-lg flex items-center justify-center text-slate-200 hover:scale-110 transition-transform z-40"
       >
         <Barcode size={24} />
       </button>

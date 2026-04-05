@@ -448,8 +448,8 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
       {/* KPIs principales */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Ventas del mes */}
-        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-slate-900/80 p-5">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent" />
+        <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-5">
+          <div className="absolute inset-0" />
           <div className="relative">
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-xl bg-emerald-500/20">
@@ -471,8 +471,8 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
         </div>
 
         {/* Compras del mes */}
-        <div className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-slate-900/80 p-5">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-transparent" />
+        <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-5">
+          <div className="absolute inset-0" />
           <div className="relative">
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-xl bg-cyan-500/20">
@@ -494,8 +494,8 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
         </div>
 
         {/* Margen */}
-        <div className="relative overflow-hidden rounded-2xl border border-purple-500/20 bg-slate-900/80 p-5">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent" />
+        <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-5">
+          <div className="absolute inset-0" />
           <div className="relative">
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-xl bg-purple-500/20">
@@ -519,8 +519,8 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
         </div>
 
         {/* Cuentas por cobrar */}
-        <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-slate-900/80 p-5">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent" />
+        <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-5">
+          <div className="absolute inset-0" />
           <div className="relative">
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-xl bg-amber-500/20">

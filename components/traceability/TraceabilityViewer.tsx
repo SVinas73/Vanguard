@@ -1029,7 +1029,7 @@ export default function TraceabilityEnterprise({
         </div>
         <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all"
+            className="h-full bg-emerald-500 transition-all"
             style={{ width: `${(flujoEtapas.filter(e => e.completado).length / flujoEtapas.length) * 100}%` }}
           />
         </div>

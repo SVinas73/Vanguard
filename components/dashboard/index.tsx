@@ -36,7 +36,7 @@ interface SparkLineProps {
   width?: number;
 }
 
-function SparkLine({ data, color = '#10b981', height = 28, width = 64 }: SparkLineProps) {
+function SparkLine({ data, color = '#6b8baa', height = 28, width = 64 }: SparkLineProps) {
   if (data.length < 2) return null;
   const max = Math.max(...data);
   const min = Math.min(...data);
@@ -92,7 +92,7 @@ function HealthRing({ score, size = 52, strokeWidth = 5 }: HealthRingProps) {
   const dashLength = (Math.min(score, 100) / 100) * circumference;
 
   const color =
-    score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#f43f5e';
+    score >= 70 ? '#3d9a5f' : score >= 40 ? '#c8872e' : '#c94444';
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -141,34 +141,34 @@ interface ColorConfig {
 
 const COLOR_MAP: Record<KPIColor, ColorConfig> = {
   emerald: {
-    bg: 'rgba(16,185,129,0.08)',
-    border: 'rgba(16,185,129,0.15)',
-    text: '#10b981',
-    accent: '#34d399',
+    bg: 'rgba(61,154,95,0.06)',
+    border: 'rgba(61,154,95,0.12)',
+    text: '#3d9a5f',
+    accent: '#4aaa73',
   },
   cyan: {
-    bg: 'rgba(6,182,212,0.08)',
-    border: 'rgba(6,182,212,0.15)',
-    text: '#06b6d4',
-    accent: '#22d3ee',
+    bg: 'rgba(74,127,181,0.06)',
+    border: 'rgba(74,127,181,0.12)',
+    text: '#4a7fb5',
+    accent: '#6b8baa',
   },
   rose: {
-    bg: 'rgba(244,63,94,0.08)',
-    border: 'rgba(244,63,94,0.15)',
-    text: '#f43f5e',
-    accent: '#fb7185',
+    bg: 'rgba(201,68,68,0.06)',
+    border: 'rgba(201,68,68,0.12)',
+    text: '#c94444',
+    accent: '#cc5555',
   },
   violet: {
-    bg: 'rgba(139,92,246,0.08)',
-    border: 'rgba(139,92,246,0.15)',
-    text: '#8b5cf6',
-    accent: '#a78bfa',
+    bg: 'rgba(107,86,160,0.06)',
+    border: 'rgba(107,86,160,0.12)',
+    text: '#6b5488',
+    accent: '#836ba0',
   },
   amber: {
-    bg: 'rgba(245,158,11,0.08)',
-    border: 'rgba(245,158,11,0.15)',
-    text: '#f59e0b',
-    accent: '#fbbf24',
+    bg: 'rgba(200,135,46,0.06)',
+    border: 'rgba(200,135,46,0.12)',
+    text: '#c8872e',
+    accent: '#cc9a40',
   },
 };
 
@@ -271,10 +271,10 @@ export function WelcomeHeader({ userName, products, predictions }: WelcomeHeader
                   style={{
                     color:
                       healthScore >= 70
-                        ? '#34d399'
+                        ? '#3d9a5f'
                         : healthScore >= 40
-                        ? '#fbbf24'
-                        : '#fb7185',
+                        ? '#c8872e'
+                        : '#c94444',
                   }}
                 >
                   {healthLabel}
@@ -288,12 +288,12 @@ export function WelcomeHeader({ userName, products, predictions }: WelcomeHeader
             <div
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
               style={{
-                background: 'rgba(244,63,94,0.08)',
-                border: '1px solid rgba(244,63,94,0.15)',
-                color: '#fb7185',
+                background: 'rgba(201,68,68,0.06)',
+                border: '1px solid rgba(201,68,68,0.12)',
+                color: '#c94444',
               }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
               {criticalCount} {t('dashboard.needAttention', 'requieren atención')}
             </div>
           )}
@@ -394,19 +394,8 @@ export function StatsGrid({ stats, products, movements }: StatsGridProps) {
         return (
           <div
             key={i}
-            className="relative group rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02]"
-            style={{
-              background: `linear-gradient(135deg, ${c.bg}, rgba(15,23,42,0.6))`,
-              border: `1px solid ${c.border}`,
-            }}
+            className="relative group rounded-xl overflow-hidden transition-all duration-200 bg-slate-900 border border-slate-800 hover:border-slate-700"
           >
-            {/* Hover glow */}
-            <div
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              style={{
-                background: `radial-gradient(circle at 50% 0%, ${c.bg}, transparent 70%)`,
-              }}
-            />
 
             <div className="relative p-5">
               <div className="flex items-start justify-between mb-3">
@@ -449,10 +438,10 @@ export function StatsGrid({ stats, products, movements }: StatsGridProps) {
                     style={{
                       background:
                         stat.trend.value >= 0
-                          ? 'rgba(16,185,129,0.12)'
-                          : 'rgba(244,63,94,0.12)',
+                          ? 'rgba(61,154,95,0.08)'
+                          : 'rgba(201,68,68,0.08)',
                       color:
-                        stat.trend.value >= 0 ? '#34d399' : '#fb7185',
+                        stat.trend.value >= 0 ? '#3d9a5f' : '#c94444',
                     }}
                   >
                     {stat.trend.value >= 0 ? (
@@ -653,27 +642,27 @@ export function InsightsPanel({
 
   const typeConfig: Record<InsightType, InsightConfig> = {
     urgente: {
-      color: '#f43f5e',
-      bg: 'rgba(244,63,94,0.06)',
-      border: 'rgba(244,63,94,0.15)',
+      color: '#c94444',
+      bg: 'rgba(201,68,68,0.04)',
+      border: 'rgba(201,68,68,0.10)',
       Icon: Flame,
     },
     tendencia: {
-      color: '#10b981',
-      bg: 'rgba(16,185,129,0.06)',
-      border: 'rgba(16,185,129,0.15)',
+      color: '#3d9a5f',
+      bg: 'rgba(61,154,95,0.04)',
+      border: 'rgba(61,154,95,0.10)',
       Icon: TrendingUp,
     },
     alerta: {
-      color: '#f59e0b',
-      bg: 'rgba(245,158,11,0.06)',
-      border: 'rgba(245,158,11,0.15)',
+      color: '#c8872e',
+      bg: 'rgba(200,135,46,0.04)',
+      border: 'rgba(200,135,46,0.10)',
       Icon: AlertCircle,
     },
     oportunidad: {
-      color: '#8b5cf6',
-      bg: 'rgba(139,92,246,0.06)',
-      border: 'rgba(139,92,246,0.15)',
+      color: '#4a7fb5',
+      bg: 'rgba(74,127,181,0.04)',
+      border: 'rgba(74,127,181,0.10)',
       Icon: Zap,
     },
   };
@@ -682,38 +671,20 @@ export function InsightsPanel({
 
   return (
     <div
-      className="relative rounded-2xl overflow-hidden"
-      style={{
-        background:
-          'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.8))',
-        border: '1px solid rgba(51,65,85,0.3)',
-      }}
+      className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-800"
     >
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.05), transparent 60%)',
-        }}
-      />
-
-      <div className="relative p-6">
+      <div className="p-6">
         <div className="flex items-center gap-3 mb-5">
           <div
-            className="p-2.5 rounded-xl"
-            style={{ background: 'rgba(139,92,246,0.12)' }}
+            className="p-2.5 rounded-lg bg-slate-800"
           >
-            <Brain size={18} className="text-violet-400" />
+            <Brain size={18} className="text-slate-400" />
           </div>
           <div>
             <h3 className="font-semibold text-slate-200 text-sm flex items-center gap-2">
               {t('dashboard.insights', 'Insights')}
               <span
-                className="px-1.5 py-0.5 text-[9px] font-bold rounded"
-                style={{
-                  background: 'rgba(139,92,246,0.15)',
-                  color: '#a78bfa',
-                }}
+                className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-800 text-slate-400"
               >
                 AI
               </span>
@@ -734,7 +705,7 @@ export function InsightsPanel({
             return (
               <div
                 key={i}
-                className="p-4 rounded-xl cursor-pointer transition-all hover:scale-[1.01]"
+                className="p-4 rounded-lg cursor-pointer transition-all hover:brightness-110"
                 style={{
                   background: cfg.bg,
                   border: `1px solid ${cfg.border}`,
@@ -807,24 +778,24 @@ export function QuickActionCard({
 }: QuickActionProps) {
   const colors = {
     emerald: {
-      gradient: 'from-emerald-500/10 to-cyan-500/10',
-      border: 'border-emerald-500/20 hover:border-emerald-500/40',
-      text: 'text-emerald-400',
+      gradient: '',
+      border: 'border-slate-800 hover:border-slate-700',
+      text: 'text-emerald-500',
     },
     purple: {
-      gradient: 'from-purple-500/10 to-pink-500/10',
-      border: 'border-purple-500/20 hover:border-purple-500/40',
-      text: 'text-purple-400',
+      gradient: '',
+      border: 'border-slate-800 hover:border-slate-700',
+      text: 'text-purple-500',
     },
     cyan: {
-      gradient: 'from-cyan-500/10 to-blue-500/10',
-      border: 'border-cyan-500/20 hover:border-cyan-500/40',
-      text: 'text-cyan-400',
+      gradient: '',
+      border: 'border-slate-800 hover:border-slate-700',
+      text: 'text-blue-500',
     },
     amber: {
-      gradient: 'from-amber-500/10 to-orange-500/10',
-      border: 'border-amber-500/20 hover:border-amber-500/40',
-      text: 'text-amber-400',
+      gradient: '',
+      border: 'border-slate-800 hover:border-slate-700',
+      text: 'text-amber-500',
     },
   };
 
@@ -834,8 +805,7 @@ export function QuickActionCard({
     <button
       onClick={onClick}
       className={cn(
-        'p-5 rounded-2xl bg-gradient-to-br border transition-all text-left group hover:scale-[1.02]',
-        config.gradient,
+        'p-5 rounded-xl bg-slate-900 border transition-all text-left group hover:bg-slate-800/80',
         config.border
       )}
     >
@@ -895,19 +865,19 @@ export function InventoryHealth({
       <div className="h-3 rounded-full bg-slate-800 overflow-hidden flex mb-3">
         {criticalPercent > 0 && (
           <div
-            className="h-full bg-gradient-to-r from-red-500 to-red-400 transition-all"
+            className="h-full bg-red-500 transition-all"
             style={{ width: `${criticalPercent}%` }}
           />
         )}
         {warningPercent > 0 && (
           <div
-            className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all"
+            className="h-full bg-amber-500 transition-all"
             style={{ width: `${warningPercent}%` }}
           />
         )}
         {healthyPercent > 0 && (
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all"
+            className="h-full bg-emerald-500 transition-all"
             style={{ width: `${healthyPercent}%` }}
           />
         )}
@@ -978,33 +948,23 @@ export function StatCard({ label, value, icon, color, trend, subtitle }: StatCar
 
   return (
     <div
-      className="relative group rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02]"
-      style={{
-        background: `linear-gradient(135deg, ${c.bg}, rgba(15,23,42,0.6))`,
-        border: `1px solid ${c.border}`,
-      }}
+      className="relative group rounded-xl overflow-hidden transition-all duration-200 bg-slate-900 border border-slate-800 hover:border-slate-700"
     >
-      <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-        style={{
-          background: `radial-gradient(circle at 50% 0%, ${c.bg}, transparent 70%)`,
-        }}
-      />
-      <div className="relative p-5">
-        <div className="p-1.5 rounded-lg inline-block mb-3" style={{ background: c.bg }}>
+      <div className="p-5">
+        <div className="p-1.5 rounded-lg inline-block mb-3 bg-slate-800">
           <span style={{ color: c.text }}>{icon}</span>
         </div>
         <div className="text-3xl font-bold tracking-tight text-white mb-1">
           {value}
         </div>
-        <div className="text-sm" style={{ color: 'rgba(148,163,184,0.6)' }}>
+        <div className="text-sm text-slate-500">
           {label}
         </div>
         {trend && (
           <div
             className="flex items-center gap-1 mt-2 text-xs font-semibold"
             style={{
-              color: trend.value >= 0 ? '#34d399' : '#fb7185',
+              color: trend.value >= 0 ? '#3d9a5f' : '#c94444',
             }}
           >
             {trend.value >= 0 ? (
@@ -1016,16 +976,13 @@ export function StatCard({ label, value, icon, color, trend, subtitle }: StatCar
               {trend.value >= 0 ? '+' : ''}
               {trend.value}%
             </span>
-            <span style={{ color: 'rgba(148,163,184,0.4)' }}>
+            <span className="text-slate-600">
               {trend.label}
             </span>
           </div>
         )}
         {subtitle && !trend && (
-          <div
-            className="text-xs mt-1"
-            style={{ color: 'rgba(148,163,184,0.5)' }}
-          >
+          <div className="text-xs mt-1 text-slate-500">
             {subtitle}
           </div>
         )}

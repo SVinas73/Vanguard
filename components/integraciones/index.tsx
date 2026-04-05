@@ -341,7 +341,7 @@ export function IntegracionesDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/20 to-pink-500/20">
+          <div className="p-2 rounded-xl bg-slate-800">
             <Link2 size={28} className="text-violet-400" />
           </div>
           <div>
