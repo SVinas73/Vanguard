@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { cn } from '@/lib/utils';
@@ -52,6 +53,7 @@ export function KanbanColumn({
   onDeleteTarea,
   onToggleCompletado
 }: KanbanColumnProps) {
+  const { t } = useTranslation();
   const { setNodeRef, isOver: isDroppableOver } = useDroppable({
     id: columna.id,
     data: {
@@ -161,7 +163,7 @@ export function KanbanColumn({
               <button 
                 onClick={() => onAddTarea(columna.id)}
                 className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-emerald-400"
-                title="Agregar tarea"
+                title={t('proyectos.addTask')}
               >
                 <Plus size={16} />
               </button>
@@ -188,7 +190,7 @@ export function KanbanColumn({
                   className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-700/50 transition-colors"
                 >
                   <Edit3 size={14} className="text-slate-400" />
-                  Renombrar
+                  {t('common.rename')}
                 </button>
 
                 <button
@@ -196,7 +198,7 @@ export function KanbanColumn({
                   className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-700/50 transition-colors"
                 >
                   <Palette size={14} className="text-slate-400" />
-                  Cambiar color
+                  {t('proyectos.changeColor')}
                 </button>
 
                 {showColorPicker && (
@@ -225,7 +227,7 @@ export function KanbanColumn({
                   className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-700/50 transition-colors"
                 >
                   <AlertCircle size={14} className="text-slate-400" />
-                  Límite WIP {columna.limiteWip && `(${columna.limiteWip})`}
+                  {t('proyectos.wipLimit')} {columna.limiteWip && `(${columna.limiteWip})`}
                 </button>
 
                 <div className="border-t border-slate-700/50 my-1" />
@@ -239,7 +241,7 @@ export function KanbanColumn({
                     className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-700/50 transition-colors"
                   >
                     <ArrowLeft size={14} className="text-slate-400" />
-                    Mover a la izquierda
+                    {t('proyectos.moveLeft')}
                   </button>
                 )}
 
@@ -252,7 +254,7 @@ export function KanbanColumn({
                     className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-700/50 transition-colors"
                   >
                     <ArrowRight size={14} className="text-slate-400" />
-                    Mover a la derecha
+                    {t('proyectos.moveRight')}
                   </button>
                 )}
 
@@ -263,7 +265,7 @@ export function KanbanColumn({
                   className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-red-500/10 text-red-400 transition-colors"
                 >
                   <Trash2 size={14} />
-                  Eliminar columna
+                  {t('proyectos.deleteColumn')}
                 </button>
               </div>
             )}
@@ -310,7 +312,7 @@ export function KanbanColumn({
               )}
             >
               <p className="text-sm">
-                {isHighlighted ? 'Soltar aquí' : 'Sin tareas'}
+                {isHighlighted ? t('proyectos.dropHere') : t('proyectos.noTasks')}
               </p>
             </div>
           ) : (
@@ -331,7 +333,7 @@ export function KanbanColumn({
 
         {tareas.length > 0 && isHighlighted && (
           <div className="h-16 rounded-xl border-2 border-dashed border-emerald-500/50 bg-emerald-500/5 flex items-center justify-center">
-            <p className="text-sm text-emerald-400">Soltar aquí</p>
+            <p className="text-sm text-emerald-400">{t('proyectos.dropHere')}</p>
           </div>
         )}
       </div>
@@ -340,7 +342,7 @@ export function KanbanColumn({
       {showRenameModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]" onClick={() => setShowRenameModal(false)}>
           <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 w-80" onClick={e => e.stopPropagation()}>
-            <h4 className="font-semibold mb-3">Renombrar columna</h4>
+            <h4 className="font-semibold mb-3">{t('proyectos.renameColumn')}</h4>
             <input
               type="text"
               value={nuevoNombre}
@@ -354,13 +356,13 @@ export function KanbanColumn({
                 onClick={() => setShowRenameModal(false)}
                 className="flex-1 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-colors"
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleRename}
                 className="flex-1 px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-medium text-sm transition-colors"
               >
-                Guardar
+                {t('common.save')}
               </button>
             </div>
           </div>
@@ -371,9 +373,9 @@ export function KanbanColumn({
       {showWipModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]" onClick={() => setShowWipModal(false)}>
           <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 w-80" onClick={e => e.stopPropagation()}>
-            <h4 className="font-semibold mb-2">Límite WIP</h4>
+            <h4 className="font-semibold mb-2">{t('proyectos.wipLimit')}</h4>
             <p className="text-xs text-slate-400 mb-3">
-              Cantidad máxima de tareas en esta columna. Dejá vacío para sin límite.
+              {t('proyectos.wipLimitDescription')}
             </p>
             <input
               type="number"
@@ -381,7 +383,7 @@ export function KanbanColumn({
               value={nuevoWip}
               onChange={e => setNuevoWip(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSetWip()}
-              placeholder="Sin límite"
+              placeholder={t('proyectos.noLimit')}
               className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:border-emerald-500 focus:outline-none text-sm mb-3"
               autoFocus
             />
@@ -390,13 +392,13 @@ export function KanbanColumn({
                 onClick={() => setShowWipModal(false)}
                 className="flex-1 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-colors"
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSetWip}
                 className="flex-1 px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-medium text-sm transition-colors"
               >
-                Guardar
+                {t('common.save')}
               </button>
             </div>
           </div>
@@ -407,12 +409,12 @@ export function KanbanColumn({
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]" onClick={() => setShowDeleteConfirm(false)}>
           <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 w-80" onClick={e => e.stopPropagation()}>
-            <h4 className="font-semibold mb-2 text-red-400">Eliminar columna</h4>
+            <h4 className="font-semibold mb-2 text-red-400">{t('proyectos.deleteColumn')}</h4>
             <p className="text-sm text-slate-400 mb-4">
-              ¿Estás seguro de eliminar la columna "{columna.nombre}"? 
+              {t('proyectos.confirmDeleteColumn', { name: columna.nombre })}
               {tareas.length > 0 && (
                 <span className="text-red-400 block mt-1">
-                  ⚠️ Tiene {tareas.length} tarea{tareas.length > 1 ? 's' : ''} que también se eliminarán.
+                  ⚠️ {t('proyectos.columnHasTasks', { count: tareas.length })}
                 </span>
               )}
             </p>
@@ -421,13 +423,13 @@ export function KanbanColumn({
                 onClick={() => setShowDeleteConfirm(false)}
                 className="flex-1 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-colors"
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleDelete}
                 className="flex-1 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-400 text-white font-medium text-sm transition-colors"
               >
-                Eliminar
+                {t('common.delete')}
               </button>
             </div>
           </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { useChat } from './useChat';
@@ -35,6 +36,7 @@ import {
 // ============================================
 
 export default function ChatModule() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const {
     conversaciones,
@@ -133,7 +135,7 @@ export default function ChatModule() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <MessageCircle size={20} />
-              Mensajes
+              {t('chat.title')}
               {totalNoLeidos > 0 && (
                 <span className="px-2 py-0.5 text-xs font-medium bg-blue-500 text-white rounded-full">
                   {totalNoLeidos}
@@ -153,7 +155,7 @@ export default function ChatModule() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748b]" />
             <input
               type="text"
-              placeholder="Buscar conversación..."
+              placeholder={t('chat.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-[#1c1f26] border border-[#2e323d] rounded-lg text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-blue-500"
@@ -166,12 +168,12 @@ export default function ChatModule() {
           {conversaciones.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-4 text-center">
               <MessageCircle size={48} className="text-[#2e323d] mb-3" />
-              <p className="text-[#64748b] text-sm">No hay conversaciones</p>
+              <p className="text-[#64748b] text-sm">{t('chat.noConversations')}</p>
               <button
                 onClick={() => setShowNuevaConversacion(true)}
                 className="mt-3 text-blue-400 text-sm hover:underline"
               >
-                Iniciar una conversación
+                {t('chat.startConversation')}
               </button>
             </div>
           ) : (
@@ -218,7 +220,7 @@ export default function ChatModule() {
                     {conversacionActiva.titulo || getConversacionTitulo(conversacionActiva, user?.email || '')}
                   </h3>
                   <p className="text-xs text-[#64748b]">
-                    {conversacionActiva.participantes.length} participantes
+                    {conversacionActiva.participantes.length} {t('chat.participants')}
                     {conversacionActiva.referencia_codigo && (
                       <span className="ml-2">• {conversacionActiva.referencia_codigo}</span>
                     )}
@@ -248,8 +250,8 @@ export default function ChatModule() {
               ) : mensajes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <MessageCircle size={48} className="text-[#2e323d] mb-3" />
-                  <p className="text-[#64748b]">No hay mensajes aún</p>
-                  <p className="text-[#475569] text-sm">Sé el primero en escribir</p>
+                  <p className="text-[#64748b]">{t('chat.noMessages')}</p>
+                  <p className="text-[#475569] text-sm">{t('chat.beFirst')}</p>
                 </div>
               ) : (
                 mensajes.map((mensaje, index) => {
@@ -278,7 +280,7 @@ export default function ChatModule() {
                     value={nuevoMensaje}
                     onChange={(e) => setNuevoMensaje(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Escribe un mensaje..."
+                    placeholder={t('chat.typeMessage')}
                     rows={1}
                     className="w-full px-4 py-3 bg-[#1c1f26] border border-[#2e323d] rounded-xl text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-blue-500 resize-none"
                     style={{ minHeight: '48px', maxHeight: '120px' }}
@@ -309,10 +311,10 @@ export default function ChatModule() {
               <MessageCircle size={40} className="text-[#2e323d]" />
             </div>
             <h3 className="text-lg font-medium text-white mb-2">
-              Selecciona una conversación
+              {t('chat.selectConversation')}
             </h3>
             <p className="text-[#64748b] text-sm max-w-sm">
-              Elige una conversación de la lista o inicia una nueva para comenzar a chatear
+              {t('chat.selectConversationHint')}
             </p>
           </div>
         )}
@@ -341,19 +343,20 @@ export default function ChatModule() {
 // SUB-COMPONENTES
 // ============================================
 
-function ConversacionItem({ 
-  conversacion, 
-  isActive, 
-  onClick, 
-  userEmail 
-}: { 
+function ConversacionItem({
+  conversacion,
+  isActive,
+  onClick,
+  userEmail
+}: {
   conversacion: ConversacionConNoLeidos;
   isActive: boolean;
   onClick: () => void;
   userEmail: string;
 }) {
+  const { t } = useTranslation();
   const config = TIPO_CONVERSACION_CONFIG[conversacion.tipo];
-  
+
   return (
     <button
       onClick={onClick}
@@ -381,7 +384,7 @@ function ConversacionItem({
           
           <div className="flex items-center justify-between">
             <p className="text-xs text-[#64748b] truncate pr-2">
-              {conversacion.ultimo_mensaje_preview || 'Sin mensajes'}
+              {conversacion.ultimo_mensaje_preview || t('chat.noMessages')}
             </p>
             {conversacion.no_leidos > 0 && (
               <span className="flex-shrink-0 px-1.5 py-0.5 text-xs font-medium bg-blue-500 text-white rounded-full">
@@ -489,6 +492,7 @@ function NuevaConversacionModal({
   onCrear: (data: any) => void;
   userEmail: string;
 }) {
+  const { t } = useTranslation();
   const [titulo, setTitulo] = useState('');
   const [tipo, setTipo] = useState<TipoConversacion>('general');
   const [participantesInput, setParticipantesInput] = useState('');

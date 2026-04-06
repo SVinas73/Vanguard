@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Button, Input } from '@/components/ui';
@@ -38,6 +39,7 @@ interface TiempoTrabajadoTabProps {
 }
 
 export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: TiempoTrabajadoTabProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [registros, setRegistros] = useState<TiempoRegistro[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,7 +150,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
 
   const handleStopAndSaveTimer = async () => {
     if (timerSeconds < 60) {
-      alert('El tiempo mínimo es 1 minuto');
+      alert(t('proyectosExt.time.minimumTime'));
       return;
     }
 
@@ -168,7 +170,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
       .single();
 
     if (error) {
-      alert('Error al guardar tiempo: ' + error.message);
+      alert(t('proyectosExt.time.saveError') + ': ' + error.message);
     } else if (data) {
       setRegistros([{
         id: data.id,
@@ -206,7 +208,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
     const totalHorasDecimal = horasNum + (minutosNum / 60);
 
     if (totalHorasDecimal <= 0) {
-      alert('Ingresá un tiempo válido');
+      alert(t('proyectosExt.time.invalidTime'));
       return;
     }
 
@@ -225,7 +227,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
       .single();
 
     if (error) {
-      alert('Error al guardar tiempo: ' + error.message);
+      alert(t('proyectosExt.time.saveError') + ': ' + error.message);
       setSaving(false);
       return;
     }
@@ -261,7 +263,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
   };
 
   const handleDeleteRegistro = async (id: string) => {
-    const confirmar = window.confirm('¿Eliminar este registro de tiempo?');
+    const confirmar = window.confirm(t('proyectosExt.time.confirmDelete'));
     if (!confirmar) return;
 
     const { error } = await supabase
@@ -283,7 +285,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
   const handleSaveEdit = async (id: string) => {
     const horasNum = parseFloat(editHoras);
     if (isNaN(horasNum) || horasNum <= 0) {
-      alert('Ingresá un tiempo válido');
+      alert(t('proyectosExt.time.invalidTime'));
       return;
     }
 
@@ -310,7 +312,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
         <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
           <div className="flex items-center gap-2 text-slate-400 mb-1">
             <Clock size={14} />
-            <span className="text-xs">Tiempo registrado</span>
+            <span className="text-xs">{t('proyectosExt.time.timeLogged')}</span>
           </div>
           <p className="text-xl font-bold text-emerald-400">{formatHoras(totalHoras)}</p>
         </div>
@@ -318,7 +320,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
         <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
           <div className="flex items-center gap-2 text-slate-400 mb-1">
             <Timer size={14} />
-            <span className="text-xs">Estimado</span>
+            <span className="text-xs">{t('proyectosExt.time.estimated')}</span>
           </div>
           <p className="text-xl font-bold">
             {tiempoEstimado ? formatHoras(tiempoEstimado) : '-'}
@@ -328,7 +330,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
         <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
           <div className="flex items-center gap-2 text-slate-400 mb-1">
             <BarChart3 size={14} />
-            <span className="text-xs">Progreso</span>
+            <span className="text-xs">{t('proyectosExt.time.progress')}</span>
           </div>
           <p className={cn(
             'text-xl font-bold',
@@ -355,7 +357,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
           </div>
           {porcentajeCompletado > 100 && (
             <p className="text-xs text-red-400">
-              ⚠️ Excedido por {formatHoras(totalHoras - tiempoEstimado)}
+              ⚠️ {t('proyectosExt.time.exceeded')} {formatHoras(totalHoras - tiempoEstimado)}
             </p>
           )}
         </div>
@@ -367,7 +369,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
           <div>
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Timer size={16} className="text-emerald-400" />
-              Timer en vivo
+              {t('proyectosExt.time.liveTimer')}
             </h4>
             <p className="text-3xl font-mono font-bold mt-2">
               {formatTime(timerSeconds)}
@@ -378,12 +380,12 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
             {!timerRunning ? (
               <Button onClick={handleStartTimer} size="sm">
                 <Play size={16} className="mr-1" />
-                {timerSeconds > 0 ? 'Continuar' : 'Iniciar'}
+                {timerSeconds > 0 ? t('proyectosExt.time.continue') : t('proyectosExt.time.start')}
               </Button>
             ) : (
               <Button onClick={handlePauseTimer} size="sm" variant="secondary">
                 <Pause size={16} className="mr-1" />
-                Pausar
+                {t('proyectosExt.time.pause')}
               </Button>
             )}
 
@@ -395,12 +397,12 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
                   className="bg-emerald-600 hover:bg-emerald-500"
                 >
                   <Check size={16} className="mr-1" />
-                  Guardar
+                  {t('common.save')}
                 </Button>
                 <button
                   onClick={handleResetTimer}
                   className="p-2 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-slate-200"
-                  title="Reiniciar"
+                  title={t('proyectosExt.time.reset')}
                 >
                   <X size={16} />
                 </button>
@@ -415,12 +417,12 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
         {!showForm ? (
           <Button onClick={() => setShowForm(true)} variant="secondary" className="w-full">
             <Plus size={16} className="mr-2" />
-            Agregar tiempo manualmente
+            {t('proyectosExt.time.addManually')}
           </Button>
         ) : (
           <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Registrar tiempo</h4>
+              <h4 className="text-sm font-medium">{t('proyectosExt.time.logTime')}</h4>
               <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-200">
                 <X size={16} />
               </button>
@@ -428,13 +430,13 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
 
             <div className="grid grid-cols-3 gap-3">
               <Input
-                label="Fecha"
+                label={t('proyectosExt.fields.date')}
                 type="date"
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
               />
               <Input
-                label="Horas"
+                label={t('proyectosExt.fields.hours')}
                 type="number"
                 min="0"
                 max="24"
@@ -443,7 +445,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
                 placeholder="0"
               />
               <Input
-                label="Minutos"
+                label={t('proyectosExt.fields.minutes')}
                 type="number"
                 min="0"
                 max="59"
@@ -454,18 +456,18 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
             </div>
 
             <Input
-              label="Descripción (opcional)"
+              label={t('proyectosExt.fields.descriptionOptional')}
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="¿En qué trabajaste?"
+              placeholder={t('proyectosExt.time.workDesc')}
             />
 
             <div className="flex gap-2">
               <Button onClick={() => setShowForm(false)} variant="secondary" className="flex-1">
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button onClick={handleAddManual} disabled={saving} className="flex-1">
-                {saving ? 'Guardando...' : 'Guardar'}
+                {saving ? t('commonExt.saving') : t('common.save')}
               </Button>
             </div>
           </div>
@@ -475,7 +477,7 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
       {/* Lista de registros */}
       <div className="space-y-2">
         <h4 className="text-sm font-medium text-slate-400">
-          Registros ({registros.length})
+          {t('proyectosExt.time.records')} ({registros.length})
         </h4>
 
         {error ? (
@@ -486,17 +488,17 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
               onClick={fetchRegistros}
               className="mt-2 text-xs text-emerald-400 hover:text-emerald-300 underline"
             >
-              Reintentar
+              {t('common.retry')}
             </button>
           </div>
         ) : loading ? (
           <div className="text-center py-8 text-slate-500">
-            Cargando...
+            {t('common.loading')}
           </div>
         ) : registros.length === 0 ? (
           <div className="text-center py-8 text-slate-500 text-sm">
             <Clock size={32} className="mx-auto mb-2 opacity-50" />
-            No hay tiempo registrado
+            {t('proyectosExt.time.noTimeLogged')}
           </div>
         ) : (
           <div className="space-y-2 max-h-[300px] overflow-y-auto">
@@ -516,12 +518,12 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
                         onChange={(e) => setEditHoras(e.target.value)}
                         className="w-20 px-2 py-1 rounded bg-slate-700 border border-slate-600 text-sm"
                       />
-                      <span className="text-sm text-slate-400">horas</span>
+                      <span className="text-sm text-slate-400">{t('proyectosExt.time.hoursLabel')}</span>
                       <input
                         type="text"
                         value={editDescripcion}
                         onChange={(e) => setEditDescripcion(e.target.value)}
-                        placeholder="Descripción"
+                        placeholder={t('proyectos.description')}
                         className="flex-1 px-2 py-1 rounded bg-slate-700 border border-slate-600 text-sm"
                       />
                     </div>
@@ -570,14 +572,14 @@ export function TiempoTrabajadoTab({ tareaId, proyectoId, tiempoEstimado }: Tiem
                           <button
                             onClick={() => handleStartEdit(registro)}
                             className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-slate-200"
-                            title="Editar"
+                            title={t('common.edit')}
                           >
                             <Edit2 size={14} />
                           </button>
                           <button
                             onClick={() => handleDeleteRegistro(registro.id)}
                             className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400"
-                            title="Eliminar"
+                            title={t('common.delete')}
                           >
                             <Trash2 size={14} />
                           </button>
