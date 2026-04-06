@@ -200,7 +200,7 @@ Puedo ayudarte a:
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[#1c1f26] text-[#64748b] hover:text-white transition-colors text-sm"
             >
               <Trash2 size={14} />
-              Limpiar
+              {t('asistente.clear')}
             </button>
           )}
         </div>
@@ -254,7 +254,7 @@ Puedo ayudarte a:
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Pregunta lo que quieras sobre tu inventario..."
+              placeholder={t('asistente.askAnything')}
               disabled={loading}
               rows={1}
               className={cn(
@@ -286,7 +286,7 @@ Puedo ayudarte a:
 
         <div className="flex items-center justify-between mt-2 px-1">
           <p className="text-[10px] text-[#475569]">
-            Shift + Enter para nueva línea
+            {t('asistente.shiftEnterHint')}
           </p>
           <p className="text-[10px] text-[#475569]">
             Powered by LangChain + Google Gemini
