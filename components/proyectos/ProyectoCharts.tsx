@@ -353,7 +353,7 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
         <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <TrendingDown size={18} className="text-purple-400" />
-            Burndown Chart
+            {t('proyectosExt.metrics.burndownChart')}
           </h3>
           
           <div className="h-64 flex items-end gap-1 relative">
@@ -400,11 +400,11 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
           <div className="flex justify-center gap-6 mt-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-slate-600 rounded" />
-              <span className="text-slate-400">Ideal</span>
+              <span className="text-slate-400">{t('proyectosExt.metrics.ideal')}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-emerald-500 rounded" />
-              <span className="text-slate-400">Real</span>
+              <span className="text-slate-400">{t('proyectosExt.metrics.actual')}</span>
             </div>
           </div>
         </div>
@@ -427,6 +427,7 @@ function MetricCard({
   total: number;
   color: 'emerald' | 'blue' | 'red' | 'amber';
 }) {
+  const { t } = useTranslation();
   const colorClasses = {
     emerald: 'text-emerald-400 bg-emerald-500/20',
     blue: 'text-blue-400 bg-blue-500/20',
@@ -442,7 +443,7 @@ function MetricCard({
       <div className="text-2xl font-bold">{value}</div>
       <div className="text-sm text-slate-500">{label}</div>
       <div className="text-xs text-slate-600 mt-1">
-        {total > 0 ? Math.round((value / total) * 100) : 0}% del total
+        {total > 0 ? Math.round((value / total) * 100) : 0}% {t('proyectosExt.metrics.ofTotal')}
       </div>
     </div>
   );

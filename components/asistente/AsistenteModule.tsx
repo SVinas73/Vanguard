@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { MensajeAgente, ToolCall, SUGERENCIAS_INICIALES, EJEMPLOS_AVANZADOS } from './types';
@@ -31,6 +32,7 @@ import {
 
 export default function AsistenteModule() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [mensajes, setMensajes] = useState<MensajeAgente[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -181,13 +183,13 @@ Puedo ayudarte a:
             </div>
             <div>
               <h1 className="text-lg font-semibold text-white flex items-center gap-2">
-                Asistente Vanguard
+                {t('asistente.title')}
                 <span className="px-2 py-0.5 text-[10px] font-semibold bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20">
                   LangChain AI
                 </span>
               </h1>
               <p className="text-xs text-[#64748b]">
-                Agente inteligente con acceso a tus datos • 12 herramientas disponibles
+                {t('asistente.subtitle')}
               </p>
             </div>
           </div>
