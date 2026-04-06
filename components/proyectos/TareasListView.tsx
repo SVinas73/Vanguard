@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn, formatDate } from '@/lib/utils';
 import type { ProyectoTarea, ProyectoColumna, ProyectoEtiqueta } from '@/types';
 import {
@@ -39,10 +40,10 @@ type SortOrder = 'asc' | 'desc';
 
 const prioridadOrden = { urgente: 0, alta: 1, media: 2, baja: 3 };
 const prioridadConfig = {
-  urgente: { color: 'text-red-400', bg: 'bg-red-500/20', label: 'Urgente' },
-  alta: { color: 'text-orange-400', bg: 'bg-orange-500/20', label: 'Alta' },
-  media: { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Media' },
-  baja: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Baja' },
+  urgente: { color: 'text-red-400', bg: 'bg-red-500/20', labelKey: 'proyectos.urgent' },
+  alta: { color: 'text-orange-400', bg: 'bg-orange-500/20', labelKey: 'proyectos.high' },
+  media: { color: 'text-blue-400', bg: 'bg-blue-500/20', labelKey: 'proyectos.medium' },
+  baja: { color: 'text-slate-400', bg: 'bg-slate-500/20', labelKey: 'proyectos.low' },
 };
 
 export function TareasListView({
@@ -55,6 +56,7 @@ export function TareasListView({
   onTareaDuplicate,
   onTareaMove,
 }: TareasListViewProps) {
+  const { t } = useTranslation();
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [editingCell, setEditingCell] = useState<{ tareaId: string; field: string } | null>(null);
@@ -215,7 +217,7 @@ export function TareasListView({
       {selectedTareas.size > 0 && (
         <div className="px-4 py-2 bg-emerald-500/10 border-b border-emerald-500/20 flex items-center gap-4">
           <span className="text-sm text-emerald-400">
-            {selectedTareas.size} tarea{selectedTareas.size > 1 ? 's' : ''} seleccionada{selectedTareas.size > 1 ? 's' : ''}
+            {selectedTareas.size} {t('proyectosExt.filters.tasks')}
           </span>
           <div className="flex gap-2">
             <button
@@ -225,13 +227,13 @@ export function TareasListView({
               }}
               className="px-3 py-1 text-xs rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
             >
-              Eliminar
+              {t('common.delete')}
             </button>
             <button
               onClick={() => setSelectedTareas(new Set())}
               className="px-3 py-1 text-xs rounded-lg bg-slate-700/50 text-slate-400 hover:bg-slate-700 transition-colors"
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
           </div>
         </div>
@@ -254,12 +256,12 @@ export function TareasListView({
               {/* Completado */}
               <th className="w-10 px-2 py-3" />
               
-              <SortHeader field="titulo" label="Título" className="min-w-[250px]" />
-              <SortHeader field="columna" label="Estado" className="w-32" />
-              <SortHeader field="prioridad" label="Prioridad" className="w-28" />
-              <SortHeader field="asignadoA" label="Asignado" className="w-36" />
-              <SortHeader field="fechaLimite" label="Fecha límite" className="w-32" />
-              <SortHeader field="progreso" label="Progreso" className="w-28" />
+              <SortHeader field="titulo" label={t('proyectosExt.fields.title')} className="min-w-[250px]" />
+              <SortHeader field="columna" label={t('proyectosExt.fields.status')} className="w-32" />
+              <SortHeader field="prioridad" label={t('proyectosExt.fields.priority')} className="w-28" />
+              <SortHeader field="asignadoA" label={t('proyectosExt.fields.assigned')} className="w-36" />
+              <SortHeader field="fechaLimite" label={t('proyectosExt.fields.dueDate')} className="w-32" />
+              <SortHeader field="progreso" label={t('proyectosExt.fields.progress')} className="w-28" />
               
               {/* Acciones */}
               <th className="w-16 px-4 py-3" />
@@ -393,10 +395,10 @@ export function TareasListView({
                         prioridad.color
                       )}
                     >
-                      <option value="urgente">🔴 Urgente</option>
-                      <option value="alta">🟠 Alta</option>
-                      <option value="media">🔵 Media</option>
-                      <option value="baja">⚪ Baja</option>
+                      <option value="urgente">🔴 {t('proyectos.urgent')}</option>
+                      <option value="alta">🟠 {t('proyectos.high')}</option>
+                      <option value="media">🔵 {t('proyectos.medium')}</option>
+                      <option value="baja">⚪ {t('proyectos.low')}</option>
                     </select>
                   </td>
 
@@ -428,7 +430,7 @@ export function TareasListView({
                             </span>
                           </>
                         ) : (
-                          <span className="text-slate-500 text-sm">Sin asignar</span>
+                          <span className="text-slate-500 text-sm">{t('proyectosExt.unassigned')}</span>
                         )}
                       </div>
                     )}
@@ -465,7 +467,7 @@ export function TareasListView({
                             {vencida && <AlertCircle size={14} className="text-red-400" />}
                           </>
                         ) : (
-                          <span className="text-slate-500">Sin fecha</span>
+                          <span className="text-slate-500">{t('proyectosExt.noDate')}</span>
                         )}
                       </div>
                     )}
@@ -515,7 +517,7 @@ export function TareasListView({
                             className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-700/50"
                           >
                             <Edit3 size={14} />
-                            Editar
+                            {t('common.edit')}
                           </button>
                           <button
                             onClick={() => {
@@ -525,7 +527,7 @@ export function TareasListView({
                             className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-700/50"
                           >
                             <Copy size={14} />
-                            Duplicar
+                            {t('commonExt.duplicate')}
                           </button>
                           <div className="border-t border-slate-700/50 my-1" />
                           <button
@@ -536,7 +538,7 @@ export function TareasListView({
                             className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-red-500/10 text-red-400"
                           >
                             <Trash2 size={14} />
-                            Eliminar
+                            {t('common.delete')}
                           </button>
                         </div>
                       )}
@@ -551,7 +553,7 @@ export function TareasListView({
 
       {tareas.length === 0 && (
         <div className="text-center py-12 text-slate-500">
-          No hay tareas para mostrar
+          {t('proyectosExt.noTasksToShow')}
         </div>
       )}
     </div>

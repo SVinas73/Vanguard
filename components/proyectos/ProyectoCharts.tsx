@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { ProyectoTarea, ProyectoColumna } from '@/types';
 import {
@@ -22,6 +23,7 @@ interface ProyectoChartsProps {
 }
 
 export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: ProyectoChartsProps) {
+  const { t } = useTranslation();
   // Calcular métricas
   const metricas = useMemo(() => {
     const total = tareas.length;
@@ -123,28 +125,28 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard
           icon={<Target size={20} />}
-          label="Completadas"
+          label={t('proyectosExt.metrics.completed')}
           value={metricas.completadas}
           total={metricas.total}
           color="emerald"
         />
         <MetricCard
           icon={<Clock size={20} />}
-          label="En Progreso"
+          label={t('proyectosExt.metrics.inProgress')}
           value={metricas.enProgreso}
           total={metricas.total}
           color="blue"
         />
         <MetricCard
           icon={<AlertCircle size={20} />}
-          label="Bloqueadas"
+          label={t('proyectosExt.metrics.blocked')}
           value={metricas.bloqueadas}
           total={metricas.total}
           color="red"
         />
         <MetricCard
           icon={<TrendingDown size={20} />}
-          label="Vencidas"
+          label={t('proyectosExt.metrics.overdue')}
           value={metricas.vencidas}
           total={metricas.total}
           color="amber"
@@ -156,7 +158,7 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
         <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <PieChart size={18} className="text-emerald-400" />
-            Progreso General
+            {t('proyectosExt.metrics.overallProgress')}
           </h3>
           
           <div className="flex items-center justify-center">
@@ -186,7 +188,7 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
                 <span className="text-3xl font-bold text-emerald-400">
                   {metricas.porcentajeCompletado}%
                 </span>
-                <span className="text-xs text-slate-500">completado</span>
+                <span className="text-xs text-slate-500">{t('proyectosExt.metrics.completedLabel')}</span>
               </div>
             </div>
           </div>
@@ -194,15 +196,15 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
           <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
             <div>
               <div className="text-lg font-semibold text-emerald-400">{metricas.completadas}</div>
-              <div className="text-xs text-slate-500">Completadas</div>
+              <div className="text-xs text-slate-500">{t('proyectosExt.metrics.completed')}</div>
             </div>
             <div>
               <div className="text-lg font-semibold text-blue-400">{metricas.enProgreso}</div>
-              <div className="text-xs text-slate-500">En progreso</div>
+              <div className="text-xs text-slate-500">{t('proyectosExt.metrics.inProgress')}</div>
             </div>
             <div>
               <div className="text-lg font-semibold text-slate-400">{metricas.total}</div>
-              <div className="text-xs text-slate-500">Total</div>
+              <div className="text-xs text-slate-500">{t('proyectosExt.metrics.total')}</div>
             </div>
           </div>
         </div>
@@ -211,7 +213,7 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
         <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <BarChart3 size={18} className="text-blue-400" />
-            Distribución por Estado
+            {t('proyectosExt.metrics.distributionByStatus')}
           </h3>
           
           <div className="space-y-3">
@@ -245,29 +247,29 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
 
         {/* Distribución por Prioridad */}
         <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-6">
-          <h3 className="font-semibold mb-4">Distribución por Prioridad</h3>
+          <h3 className="font-semibold mb-4">{t('proyectosExt.metrics.distributionByPriority')}</h3>
           
           <div className="space-y-3">
             <PrioridadBar 
-              label="Urgente" 
+              label={t('proyectos.urgent')}
               count={metricas.tareasPorPrioridad.urgente} 
               total={metricas.total}
               color="bg-red-500"
             />
             <PrioridadBar 
-              label="Alta" 
+              label={t('proyectos.high')}
               count={metricas.tareasPorPrioridad.alta} 
               total={metricas.total}
               color="bg-orange-500"
             />
             <PrioridadBar 
-              label="Media" 
+              label={t('proyectos.medium')}
               count={metricas.tareasPorPrioridad.media} 
               total={metricas.total}
               color="bg-blue-500"
             />
             <PrioridadBar 
-              label="Baja" 
+              label={t('proyectos.low')}
               count={metricas.tareasPorPrioridad.baja} 
               total={metricas.total}
               color="bg-slate-500"
@@ -279,13 +281,13 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
         <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Clock size={18} className="text-amber-400" />
-            Tiempo Estimado vs Real
+            {t('proyectosExt.metrics.estimatedVsReal')}
           </h3>
 
           <div className="space-y-4">
             <div>
               <div className="flex justify-between mb-1 text-sm">
-                <span className="text-slate-400">Estimado</span>
+                <span className="text-slate-400">{t('proyectosExt.metrics.estimated')}</span>
                 <span className="text-slate-200">{metricas.tiempoEstimadoTotal}h</span>
               </div>
               <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
@@ -300,7 +302,7 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
 
             <div>
               <div className="flex justify-between mb-1 text-sm">
-                <span className="text-slate-400">Real</span>
+                <span className="text-slate-400">{t('proyectosExt.metrics.actual')}</span>
                 <span className={cn(
                   metricas.tiempoRealTotal > metricas.tiempoEstimadoTotal 
                     ? 'text-red-400' 
@@ -335,9 +337,9 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
                     : 'text-emerald-400'
                 )}>
                   {metricas.tiempoRealTotal > metricas.tiempoEstimadoTotal ? (
-                    <>+{metricas.tiempoRealTotal - metricas.tiempoEstimadoTotal}h sobre el estimado</>
+                    <>+{metricas.tiempoRealTotal - metricas.tiempoEstimadoTotal}h {t('proyectosExt.metrics.overEstimate')}</>
                   ) : (
-                    <>{metricas.tiempoEstimadoTotal - metricas.tiempoRealTotal}h restantes</>
+                    <>{metricas.tiempoEstimadoTotal - metricas.tiempoRealTotal}h {t('proyectosExt.metrics.remaining')}</>
                   )}
                 </span>
               </div>
@@ -351,7 +353,7 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
         <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <TrendingDown size={18} className="text-purple-400" />
-            Burndown Chart
+            {t('proyectosExt.metrics.burndownChart')}
           </h3>
           
           <div className="h-64 flex items-end gap-1 relative">
@@ -398,11 +400,11 @@ export function ProyectoCharts({ tareas, columnas, fechaInicio, fechaFin }: Proy
           <div className="flex justify-center gap-6 mt-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-slate-600 rounded" />
-              <span className="text-slate-400">Ideal</span>
+              <span className="text-slate-400">{t('proyectosExt.metrics.ideal')}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-emerald-500 rounded" />
-              <span className="text-slate-400">Real</span>
+              <span className="text-slate-400">{t('proyectosExt.metrics.actual')}</span>
             </div>
           </div>
         </div>
@@ -425,6 +427,7 @@ function MetricCard({
   total: number;
   color: 'emerald' | 'blue' | 'red' | 'amber';
 }) {
+  const { t } = useTranslation();
   const colorClasses = {
     emerald: 'text-emerald-400 bg-emerald-500/20',
     blue: 'text-blue-400 bg-blue-500/20',
@@ -440,7 +443,7 @@ function MetricCard({
       <div className="text-2xl font-bold">{value}</div>
       <div className="text-sm text-slate-500">{label}</div>
       <div className="text-xs text-slate-600 mt-1">
-        {total > 0 ? Math.round((value / total) * 100) : 0}% del total
+        {total > 0 ? Math.round((value / total) * 100) : 0}% {t('proyectosExt.metrics.ofTotal')}
       </div>
     </div>
   );

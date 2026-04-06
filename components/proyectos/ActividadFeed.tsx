@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { cn, formatDate } from '@/lib/utils';
 import {
@@ -71,6 +72,7 @@ export function ActividadFeed({
   showFilters = true,
   compact = false 
 }: ActividadFeedProps) {
+  const { t } = useTranslation();
   const [actividades, setActividades] = useState<Actividad[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<string>('');
@@ -153,10 +155,10 @@ export function ActividadFeed({
     const horas = Math.floor(diff / 3600000);
     const dias = Math.floor(diff / 86400000);
 
-    if (minutos < 1) return 'ahora mismo';
-    if (minutos < 60) return `hace ${minutos} min`;
-    if (horas < 24) return `hace ${horas}h`;
-    if (dias < 7) return `hace ${dias}d`;
+    if (minutos < 1) return t('proyectosExt.activity.justNow');
+    if (minutos < 60) return `${minutos} min`;
+    if (horas < 24) return `${horas}h`;
+    if (dias < 7) return `${dias}d`;
     return fecha.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
   };
 
@@ -169,7 +171,7 @@ export function ActividadFeed({
     return (
       <div className="flex items-center justify-center py-8">
         <RefreshCw size={20} className="animate-spin text-emerald-400" />
-        <span className="ml-2 text-slate-400">Cargando actividad...</span>
+        <span className="ml-2 text-slate-400">{t('proyectosExt.activity.loading')}</span>
       </div>
     );
   }
@@ -178,7 +180,7 @@ export function ActividadFeed({
     return (
       <div className="text-center py-12">
         <Activity size={48} className="mx-auto mb-4 text-slate-600" />
-        <p className="text-slate-500">No hay actividad registrada</p>
+        <p className="text-slate-500">{t('proyectosExt.activity.noActivity')}</p>
       </div>
     );
   }
@@ -195,7 +197,7 @@ export function ActividadFeed({
             onChange={(e) => setFiltroTipo(e.target.value)}
             className="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-sm focus:outline-none focus:border-emerald-500/50"
           >
-            <option value="">Todas las acciones</option>
+            <option value="">{t('proyectosExt.activity.allActions')}</option>
             {tiposUnicos.map(tipo => (
               <option key={tipo} value={tipo}>
                 {tipo.replace(/_/g, ' ')}
@@ -208,7 +210,7 @@ export function ActividadFeed({
             onChange={(e) => setFiltroUsuario(e.target.value)}
             className="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-sm focus:outline-none focus:border-emerald-500/50"
           >
-            <option value="">Todos los usuarios</option>
+            <option value="">{t('proyectosExt.activity.allUsers')}</option>
             {usuariosUnicos.map(usuario => (
               <option key={usuario} value={usuario}>{usuario}</option>
             ))}
@@ -217,13 +219,13 @@ export function ActividadFeed({
           <button
             onClick={fetchActividades}
             className="p-1.5 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-slate-200 transition-colors"
-            title="Actualizar"
+            title={t('commonExt.refresh')}
           >
             <RefreshCw size={16} />
           </button>
 
           <span className="text-xs text-slate-500 ml-auto">
-            {actividadesFiltradas.length} actividades
+            {actividadesFiltradas.length} {t('proyectosExt.activity.activitiesCount')}
           </span>
         </div>
       )}
@@ -347,7 +349,7 @@ export function ActividadFeed({
           onClick={() => {/* Implementar paginación */}}
           className="w-full py-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
         >
-          Cargar más actividad...
+          {t('proyectosExt.activity.loadMore')}
         </button>
       )}
     </div>
@@ -356,11 +358,12 @@ export function ActividadFeed({
 
 // Componente helper para usar en otros lugares
 export function ActividadReciente({ proyectoId }: { proyectoId: string }) {
+  const { t } = useTranslation();
   return (
     <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-4">
       <h3 className="font-semibold mb-4 flex items-center gap-2">
         <Activity size={18} className="text-emerald-400" />
-        Actividad Reciente
+        {t('proyectosExt.activity.recentActivity')}
       </h3>
       <ActividadFeed 
         proyectoId={proyectoId} 

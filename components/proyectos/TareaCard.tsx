@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
@@ -44,6 +45,7 @@ export function TareaCard({
   onDeleteTarea,
   onToggleCompletado
 }: TareaCardProps) {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -204,7 +206,7 @@ export function TareaCard({
                         className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-700/50 transition-colors"
                       >
                         <Edit3 size={14} className="text-slate-400" />
-                        Editar
+                        {t('common.edit')}
                       </button>
 
                       {/* Marcar completado/pendiente */}
@@ -221,12 +223,12 @@ export function TareaCard({
                         {tarea.completado ? (
                           <>
                             <Square size={14} className="text-slate-400" />
-                            Marcar pendiente
+                            {t('proyectos.markPending')}
                           </>
                         ) : (
                           <>
                             <CheckSquare size={14} className="text-emerald-400" />
-                            Marcar completada
+                            {t('proyectos.markComplete')}
                           </>
                         )}
                       </button>
@@ -241,7 +243,7 @@ export function TareaCard({
                           className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-700/50 transition-colors"
                         >
                           <Copy size={14} className="text-slate-400" />
-                          Duplicar
+                          {t('proyectos.duplicateTask')}
                         </button>
                       )}
 
@@ -257,7 +259,7 @@ export function TareaCard({
                           >
                             <span className="flex items-center gap-2">
                               <ArrowRight size={14} className="text-slate-400" />
-                              Mover a...
+                              {t('proyectos.moveToColumn')}
                             </span>
                             <ArrowRight size={12} className="text-slate-500" />
                           </button>
@@ -302,7 +304,7 @@ export function TareaCard({
                           className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-red-500/10 text-red-400 transition-colors"
                         >
                           <Trash2 size={14} />
-                          Eliminar
+                          {t('common.delete')}
                         </button>
                       )}
                     </div>
@@ -448,22 +450,22 @@ export function TareaCard({
             className="bg-slate-900 border border-slate-700 rounded-xl p-4 w-80" 
             onClick={e => e.stopPropagation()}
           >
-            <h4 className="font-semibold mb-2 text-red-400">Eliminar tarea</h4>
+            <h4 className="font-semibold mb-2 text-red-400">{t('proyectos.deleteTask')}</h4>
             <p className="text-sm text-slate-400 mb-4">
-              ¿Estás seguro de eliminar la tarea "{tarea.titulo}"?
+              {t('proyectos.confirmDeleteTask', { name: tarea.titulo })}
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="flex-1 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm transition-colors"
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleDelete}
                 className="flex-1 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-400 text-white font-medium text-sm transition-colors"
               >
-                Eliminar
+                {t('common.delete')}
               </button>
             </div>
           </div>

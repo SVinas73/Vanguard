@@ -433,7 +433,7 @@ export function ProyectosDashboard() {
 
     if (proyectoError || !proyectoData) {
       console.error('Error creando proyecto:', proyectoError);
-      alert('Error creando proyecto');
+      alert(t('proyectos.errors.createProject'));
       return;
     }
 
@@ -504,15 +504,15 @@ export function ProyectosDashboard() {
 
     if (error) {
       console.error('Error creando proyecto:', error);
-      alert('Error creando proyecto: ' + error.message);
+      alert(t('proyectos.errors.createProject') + ': ' + error.message);
       return;
     }
 
     const columnasDefault = [
-      { nombre: 'Por hacer', orden: 0 },
-      { nombre: 'En proceso', orden: 1 },
-      { nombre: 'Revisión', orden: 2 },
-      { nombre: 'Completado', orden: 3 },
+      { nombre: t('proyectos.columns.todo'), orden: 0 },
+      { nombre: t('proyectos.columns.inProgress'), orden: 1 },
+      { nombre: t('proyectos.columns.review'), orden: 2 },
+      { nombre: t('proyectos.columns.completed'), orden: 3 },
     ];
 
     await supabase.from('proyecto_columnas').insert(
@@ -569,7 +569,7 @@ export function ProyectosDashboard() {
 
     if (error) {
       console.error('Error actualizando tarea:', error);
-      alert('Error al actualizar tarea');
+      alert(t('proyectos.errors.updateTask'));
     } else {
       fetchProyectoData(proyectoActual.id);
     }
@@ -596,7 +596,7 @@ export function ProyectosDashboard() {
 
     if (error) {
       console.error('Error duplicando tarea:', error);
-      alert('Error al duplicar tarea');
+      alert(t('proyectos.errors.duplicateTask'));
     } else {
       fetchProyectoData(proyectoActual.id);
     }
@@ -605,7 +605,7 @@ export function ProyectosDashboard() {
   const handleDeleteTarea = async (tareaId: string) => {
     if (!proyectoActual || !user?.email) return;
 
-    const confirmDelete = window.confirm('¿Estás seguro de eliminar esta tarea?');
+    const confirmDelete = window.confirm(t('proyectos.confirmDeleteTask'));
     if (!confirmDelete) return;
 
     // Obtener datos de la tarea antes de eliminar (para el log)
@@ -618,7 +618,7 @@ export function ProyectosDashboard() {
 
     if (error) {
       console.error('Error eliminando tarea:', error);
-      alert('Error al eliminar tarea');
+      alert(t('proyectos.errors.deleteTask'));
     } else {
       // Registrar actividad manualmente
       if (tareaAEliminar) {
@@ -671,7 +671,7 @@ export function ProyectosDashboard() {
 
     if (error) {
       console.error('Error actualizando columna:', error);
-      alert('Error al actualizar columna');
+      alert(t('proyectos.errors.updateColumn'));
     } else if (proyectoActual) {
       fetchProyectoData(proyectoActual.id);
     }
@@ -683,7 +683,7 @@ export function ProyectosDashboard() {
     const tareasEnColumna = tareas.filter(t => t.columnaId === columnaId);
     if (tareasEnColumna.length > 0) {
       const confirmar = window.confirm(
-        `Esta columna tiene ${tareasEnColumna.length} tareas. ¿Eliminar columna y todas sus tareas?`
+        t('proyectos.confirmDeleteColumn', { count: tareasEnColumna.length })
       );
       if (!confirmar) return;
     }
@@ -700,7 +700,7 @@ export function ProyectosDashboard() {
 
     if (error) {
       console.error('Error eliminando columna:', error);
-      alert('Error al eliminar columna');
+      alert(t('proyectos.errors.deleteColumn'));
     } else {
       fetchProyectoData(proyectoActual.id);
     }
@@ -744,7 +744,7 @@ export function ProyectosDashboard() {
 
     if (error) {
       console.error('Error creando columna:', error);
-      alert('Error al crear columna');
+      alert(t('proyectos.errors.createColumn'));
     } else {
       setNuevaColumnaNombre('');
       setShowColumnaModal(false);
@@ -773,11 +773,11 @@ export function ProyectosDashboard() {
         className="bg-slate-900 rounded-2xl border border-slate-700 p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-xl font-semibold mb-6">Nuevo Proyecto</h3>
-        
+        <h3 className="text-xl font-semibold mb-6">{t('proyectos.newProject')}</h3>
+
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Nombre del Proyecto *</label>
+            <label className="block text-sm text-slate-400 mb-2">{t('proyectos.fields.name')} *</label>
             <input
               id="proyecto-nombre"
               type="text"
@@ -788,7 +788,7 @@ export function ProyectosDashboard() {
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Descripción</label>
+            <label className="block text-sm text-slate-400 mb-2">{t('proyectos.description')}</label>
             <textarea
               id="proyecto-descripcion"
               placeholder="Detalles del proyecto..."
@@ -798,7 +798,7 @@ export function ProyectosDashboard() {
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Color</label>
+            <label className="block text-sm text-slate-400 mb-2">{t('proyectos.fields.color')}</label>
             <div className="flex gap-2 flex-wrap">
               {['#3d9a5f', '#3b82f6', '#c8872e', '#ef4444', '#6b5488', '#b5547a', '#3d8f82', '#cc7a33'].map(color => (
                 <button
@@ -819,7 +819,7 @@ export function ProyectosDashboard() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-slate-400 mb-2">Fecha Inicio</label>
+              <label className="block text-sm text-slate-400 mb-2">{t('proyectos.fields.startDate')}</label>
               <input
                 id="proyecto-fecha-inicio"
                 type="date"
@@ -827,7 +827,7 @@ export function ProyectosDashboard() {
               />
             </div>
             <div>
-              <label className="block text-sm text-slate-400 mb-2">Fecha Fin</label>
+              <label className="block text-sm text-slate-400 mb-2">{t('proyectos.fields.endDate')}</label>
               <input
                 id="proyecto-fecha-fin"
                 type="date"
@@ -838,7 +838,7 @@ export function ProyectosDashboard() {
 
           <div className="flex gap-3 pt-4 border-t border-slate-700/50">
             <Button variant="secondary" onClick={() => setShowProyectoModal(false)} className="flex-1">
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button 
               onClick={async () => {
@@ -852,7 +852,7 @@ export function ProyectosDashboard() {
                   ?.id.replace('color-', '') || '#3d9a5f';
                 
                 if (!nombre?.trim()) {
-                  alert('El nombre es obligatorio');
+                  alert(t('proyectos.errors.nameRequired'));
                   return;
                 }
 
@@ -868,7 +868,7 @@ export function ProyectosDashboard() {
               }}
               className="flex-1"
             >
-              Crear Proyecto
+              {t('proyectos.newProject')}
             </Button>
           </div>
         </div>
@@ -890,7 +890,7 @@ export function ProyectosDashboard() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold">Nuevo Proyecto</h3>
+          <h3 className="text-xl font-semibold">{t('proyectos.newProject')}</h3>
           <button 
             onClick={() => setShowPlantillasModal(false)}
             className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
@@ -982,7 +982,7 @@ export function ProyectosDashboard() {
     return (
       <div className="flex items-center justify-center h-96">
         <RefreshCw className="animate-spin text-emerald-400 mr-2" size={24} />
-        <span className="text-emerald-400">Cargando proyectos...</span>
+        <span className="text-emerald-400">{t('proyectos.loading')}</span>
       </div>
     );
   }
@@ -994,13 +994,13 @@ export function ProyectosDashboard() {
           <div className="w-20 h-20 bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <TrendingUp size={40} className="text-slate-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-3">No hay proyectos</h2>
+          <h2 className="text-2xl font-bold mb-3">{t('proyectos.empty.title')}</h2>
           <p className="text-slate-400 mb-6">
-            Creá tu primer proyecto para organizar tareas y gestionar el trabajo del equipo
+            {t('proyectos.empty.description')}
           </p>
           <Button onClick={() => setShowPlantillasModal(true)}>
             <Plus size={18} className="mr-2" />
-            Crear Primer Proyecto
+            {t('proyectos.empty.createFirst')}
           </Button>
         </div>
         
@@ -1052,7 +1052,7 @@ export function ProyectosDashboard() {
               onClick={handleRefresh}
               disabled={refreshing}
               className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
-              title="Actualizar"
+              title={t('common.refresh')}
             >
               <RefreshCw size={18} className={cn(refreshing && 'animate-spin')} />
             </button>
@@ -1069,7 +1069,7 @@ export function ProyectosDashboard() {
                     ? 'bg-emerald-500/20 text-emerald-400' 
                     : 'text-slate-400 hover:text-slate-200'
                 )}
-                title="Vista Kanban"
+                title={t('proyectos.views.kanban')}
               >
                 <LayoutGrid size={18} />
               </button>
@@ -1135,7 +1135,7 @@ export function ProyectosDashboard() {
                   ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' 
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               )}
-              title={showSidebar ? 'Ocultar panel (clic para cerrar)' : 'Mostrar panel de actividad'}
+              title={showSidebar ? t('proyectosExt.sidebar.hidePanel') : t('proyectosExt.sidebar.showPanel')}
             >
               {showSidebar ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
             </button>
@@ -1193,13 +1193,13 @@ export function ProyectosDashboard() {
             </div>
 
             <Select
-              placeholder="Prioridad"
+              placeholder={t('proyectosExt.fields.priority')}
               options={[
-                { value: '', label: 'Todas las prioridades' },
-                { value: 'urgente', label: '🔴 Urgente' },
-                { value: 'alta', label: '🟠 Alta' },
-                { value: 'media', label: '🔵 Media' },
-                { value: 'baja', label: '⚪ Baja' },
+                { value: '', label: t('proyectosExt.filters.allPriorities') },
+                { value: 'urgente', label: `🔴 ${t('proyectos.urgent')}` },
+                { value: 'alta', label: `🟠 ${t('proyectos.high')}` },
+                { value: 'media', label: `🔵 ${t('proyectos.medium')}` },
+                { value: 'baja', label: `⚪ ${t('proyectos.low')}` },
               ]}
               value={filtroPrioridad}
               onChange={(e) => setFiltroPrioridad(e.target.value)}
@@ -1207,14 +1207,14 @@ export function ProyectosDashboard() {
             />
 
             <Select
-              placeholder="Estado"
+              placeholder={t('proyectosExt.fields.status')}
               options={[
-                { value: '', label: 'Todos los estados' },
-                { value: 'pendiente', label: '⏳ Pendientes' },
-                { value: 'completado', label: '✅ Completadas' },
-                { value: 'bloqueado', label: '🔒 Bloqueadas' },
-                { value: 'vencido', label: '⚠️ Vencidas' },
-                { value: 'proximo', label: '📅 Próximas 7 días' },
+                { value: '', label: t('proyectosExt.filters.allStatuses') },
+                { value: 'pendiente', label: `⏳ ${t('proyectosExt.status.pending')}` },
+                { value: 'completado', label: `✅ ${t('proyectosExt.status.completed')}` },
+                { value: 'bloqueado', label: `🔒 ${t('proyectosExt.status.blocked')}` },
+                { value: 'vencido', label: `⚠️ ${t('proyectosExt.status.overdue')}` },
+                { value: 'proximo', label: `📅 ${t('proyectosExt.status.next7days')}` },
               ]}
               value={filtroEstado}
               onChange={(e) => setFiltroEstado(e.target.value)}
@@ -1248,10 +1248,10 @@ export function ProyectosDashboard() {
           {showFiltrosAvanzados && (
             <div className="mt-4 pt-4 border-t border-slate-700/50 grid grid-cols-4 gap-4">
               <Select
-                label="Columna"
-                placeholder="Todas las columnas"
+                label={t('proyectosExt.fields.column')}
+                placeholder={t('proyectosExt.filters.allColumns')}
                 options={[
-                  { value: '', label: 'Todas las columnas' },
+                  { value: '', label: t('proyectosExt.filters.allColumns') },
                   ...columnas.map(c => ({ value: c.id, label: c.nombre }))
                 ]}
                 value={filtroColumna}
@@ -1259,10 +1259,10 @@ export function ProyectosDashboard() {
               />
 
               <Select
-                label="Asignado a"
-                placeholder="Todos los usuarios"
+                label={t('proyectosExt.fields.assignedTo')}
+                placeholder={t('proyectosExt.filters.allUsers')}
                 options={[
-                  { value: '', label: 'Todos los usuarios' },
+                  { value: '', label: t('proyectosExt.filters.allUsers') },
                   ...usuariosUnicos.map(u => ({ value: u, label: u }))
                 ]}
                 value={filtroAsignado}
@@ -1270,10 +1270,10 @@ export function ProyectosDashboard() {
               />
 
               <Select
-                label="Etiqueta"
-                placeholder="Todas las etiquetas"
+                label={t('proyectosExt.fields.label')}
+                placeholder={t('proyectosExt.filters.allLabels')}
                 options={[
-                  { value: '', label: 'Todas las etiquetas' },
+                  { value: '', label: t('proyectosExt.filters.allLabels') },
                   ...etiquetas.map(e => ({ value: e.id, label: e.nombre }))
                 ]}
                 value={filtroEtiqueta}
@@ -1281,7 +1281,7 @@ export function ProyectosDashboard() {
               />
 
               <div className="space-y-1">
-                <label className="block text-sm text-slate-400">Rango de fechas</label>
+                <label className="block text-sm text-slate-400">{t('proyectosExt.filters.dateRange')}</label>
                 <div className="flex gap-2">
                   <input
                     type="date"
@@ -1495,18 +1495,18 @@ export function ProyectosDashboard() {
       {/* Modal de atajos de teclado */}
       <KeyboardShortcutsHelp
         shortcuts={[
-          { key: 'n', action: () => {}, description: 'Nueva tarea', category: 'Creación' },
-          { key: 'n', shift: true, action: () => {}, description: 'Nuevo proyecto', category: 'Creación' },
-          { key: 'f', ctrl: true, action: () => {}, description: 'Buscar', category: 'Navegación' },
-          { key: 'Escape', action: () => {}, description: 'Cerrar modal', category: 'General' },
-          { key: 's', ctrl: true, action: () => {}, description: 'Guardar', category: 'General' },
-          { key: 'v', action: () => {}, description: 'Cambiar vista', category: 'Vistas' },
-          { key: 'f', action: () => {}, description: 'Filtros', category: 'Vistas' },
-          { key: 'r', action: () => {}, description: 'Actualizar', category: 'General' },
-          { key: 'e', action: () => {}, description: 'Editar tarea seleccionada', category: 'Tareas' },
-          { key: 'd', action: () => {}, description: 'Duplicar tarea seleccionada', category: 'Tareas' },
-          { key: 'Delete', action: () => {}, description: 'Eliminar tarea seleccionada', category: 'Tareas' },
-          { key: 'x', action: () => {}, description: 'Completar/Reabrir tarea', category: 'Tareas' },
+          { key: 'n', action: () => {}, description: t('proyectosExt.shortcuts.newTask'), category: t('proyectosExt.shortcuts.creation') },
+          { key: 'n', shift: true, action: () => {}, description: t('proyectosExt.shortcuts.newProject'), category: t('proyectosExt.shortcuts.creation') },
+          { key: 'f', ctrl: true, action: () => {}, description: t('proyectosExt.shortcuts.search'), category: t('proyectosExt.shortcuts.navigation') },
+          { key: 'Escape', action: () => {}, description: t('proyectosExt.shortcuts.closeModal'), category: t('proyectosExt.shortcuts.general') },
+          { key: 's', ctrl: true, action: () => {}, description: t('proyectosExt.shortcuts.save'), category: t('proyectosExt.shortcuts.general') },
+          { key: 'v', action: () => {}, description: t('proyectosExt.shortcuts.changeView'), category: t('proyectosExt.shortcuts.views') },
+          { key: 'f', action: () => {}, description: t('proyectosExt.shortcuts.filters'), category: t('proyectosExt.shortcuts.views') },
+          { key: 'r', action: () => {}, description: t('proyectosExt.shortcuts.refresh'), category: t('proyectosExt.shortcuts.general') },
+          { key: 'e', action: () => {}, description: t('proyectosExt.shortcuts.editTask'), category: t('proyectosExt.shortcuts.tasksCat') },
+          { key: 'd', action: () => {}, description: t('proyectosExt.shortcuts.duplicateTask'), category: t('proyectosExt.shortcuts.tasksCat') },
+          { key: 'Delete', action: () => {}, description: t('proyectosExt.shortcuts.deleteTask'), category: t('proyectosExt.shortcuts.tasksCat') },
+          { key: 'x', action: () => {}, description: t('proyectosExt.shortcuts.toggleComplete'), category: t('proyectosExt.shortcuts.tasksCat') },
         ]}
         isOpen={showShortcutsHelp}
         onClose={() => {

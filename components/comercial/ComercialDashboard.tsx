@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, Truck, Users,
   Package, FileText, Clock, AlertTriangle, CheckCircle, ArrowRight,
@@ -73,6 +74,7 @@ interface ComercialDashboardProps {
 }
 
 export default function ComercialDashboard({ onNavigate }: ComercialDashboardProps) {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<ComercialStats | null>(null);
   const [ordenesRecientes, setOrdenesRecientes] = useState<OrdenReciente[]>([]);
   const [topClientes, setTopClientes] = useState<TopEntidad[]>([]);
@@ -394,9 +396,9 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
     const hoy = new Date();
     const diffDays = Math.floor((hoy.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) return 'Hoy';
-    if (diffDays === 1) return 'Ayer';
-    if (diffDays < 7) return `Hace ${diffDays} días`;
+    if (diffDays === 0) return t('common.today', 'Hoy');
+    if (diffDays === 1) return t('common.yesterday', 'Ayer');
+    if (diffDays < 7) return `${t('common.ago', 'Hace')} ${diffDays} ${t('common.days', 'días')}`;
     return date.toLocaleDateString('es-UY', { day: '2-digit', month: 'short' });
   };
 
@@ -422,9 +424,9 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
             <BarChart3 className="h-7 w-7 text-emerald-400" />
-            Dashboard Comercial
+            {t('comercial.dashboard', 'Dashboard Comercial')}
           </h2>
-          <p className="text-slate-400 text-sm mt-1">Resumen de compras, ventas y cotizaciones</p>
+          <p className="text-slate-400 text-sm mt-1">{t('comercial.dashboardSubtitle', 'Resumen de compras, ventas y cotizaciones')}</p>
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -432,9 +434,9 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
             onChange={(e) => setPeriodoFiltro(e.target.value as any)}
             className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-200"
           >
-            <option value="mes">Este mes</option>
-            <option value="trimestre">Trimestre</option>
-            <option value="año">Este año</option>
+            <option value="mes">{t('comercial.thisMonth', 'Este mes')}</option>
+            <option value="trimestre">{t('comercial.quarter', 'Trimestre')}</option>
+            <option value="año">{t('comercial.thisYear', 'Este año')}</option>
           </select>
           <button
             onClick={loadDashboardData}
@@ -466,7 +468,7 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
             <div className="text-2xl font-bold text-emerald-400 mb-1">
               {formatCurrency(stats?.ventasMes || 0)}
             </div>
-            <div className="text-sm text-slate-400">Ventas del mes</div>
+            <div className="text-sm text-slate-400">{t('comercial.monthlySales', 'Ventas del mes')}</div>
           </div>
         </div>
 
@@ -489,7 +491,7 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
             <div className="text-2xl font-bold text-cyan-400 mb-1">
               {formatCurrency(stats?.comprasMes || 0)}
             </div>
-            <div className="text-sm text-slate-400">Compras del mes</div>
+            <div className="text-sm text-slate-400">{t('comercial.monthlyPurchases', 'Compras del mes')}</div>
           </div>
         </div>
 
@@ -514,7 +516,7 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
             )}>
               {formatCurrency(stats?.margenBruto || 0)}
             </div>
-            <div className="text-sm text-slate-400">Margen bruto</div>
+            <div className="text-sm text-slate-400">{t('comercial.grossMargin', 'Margen bruto')}</div>
           </div>
         </div>
 
@@ -530,7 +532,7 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
             <div className="text-2xl font-bold text-amber-400 mb-1">
               {formatCurrency(stats?.cuentasPorCobrar || 0)}
             </div>
-            <div className="text-sm text-slate-400">Por cobrar</div>
+            <div className="text-sm text-slate-400">{t('comercial.receivables', 'Por cobrar')}</div>
           </div>
         </div>
       </div>
@@ -546,7 +548,7 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
             <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
           </div>
           <div className="text-xl font-bold text-slate-200">{stats?.ventasPendientesCount || 0}</div>
-          <div className="text-sm text-slate-500">Ventas pendientes</div>
+          <div className="text-sm text-slate-500">{t('comercial.pendingSales', 'Ventas pendientes')}</div>
           <div className="text-xs text-emerald-400 mt-1">{formatCurrency(stats?.ventasPendientes || 0)}</div>
         </button>
 
@@ -559,8 +561,8 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
             <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
           </div>
           <div className="text-xl font-bold text-slate-200">{stats?.comprasPendientesCount || 0}</div>
-          <div className="text-sm text-slate-500">Compras pendientes</div>
-          <div className="text-xs text-cyan-400 mt-1">{formatCurrency(stats?.comprasEnTransito || 0)} en tránsito</div>
+          <div className="text-sm text-slate-500">{t('comercial.pendingPurchases', 'Compras pendientes')}</div>
+          <div className="text-xs text-cyan-400 mt-1">{formatCurrency(stats?.comprasEnTransito || 0)} {t('comercial.inTransit', 'en tránsito')}</div>
         </button>
 
         <button
@@ -572,8 +574,8 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
             <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
           </div>
           <div className="text-xl font-bold text-slate-200">{stats?.cotizacionesActivas || 0}</div>
-          <div className="text-sm text-slate-500">Cotizaciones activas</div>
-          <div className="text-xs text-violet-400 mt-1">{formatCurrency(stats?.cotizacionesValor || 0)} potencial</div>
+          <div className="text-sm text-slate-500">{t('comercial.activeQuotes', 'Cotizaciones activas')}</div>
+          <div className="text-xs text-violet-400 mt-1">{formatCurrency(stats?.cotizacionesValor || 0)} {t('comercial.potential', 'potencial')}</div>
         </button>
 
         <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800/50">
@@ -596,14 +598,14 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-slate-200 flex items-center gap-2">
               <Clock className="h-5 w-5 text-slate-500" />
-              Actividad Reciente
+              {t('comercial.recentActivity', 'Actividad Reciente')}
             </h3>
           </div>
 
           <div className="space-y-2">
             {ordenesRecientes.length === 0 ? (
               <div className="text-center py-8 text-slate-500">
-                Sin actividad reciente
+                {t('comercial.noRecentActivity', 'Sin actividad reciente')}
               </div>
             ) : (
               ordenesRecientes.map((orden) => {
