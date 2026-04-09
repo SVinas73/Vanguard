@@ -13,10 +13,11 @@ import {
   UserCheck, Banknote, CreditCard, PackageCheck, Truck as TruckIcon,
   RotateCcw, Archive, Star, Flag, Timer, Zap, Box, Cog,
   ClipboardCheck, ShoppingCart, BadgeCheck, CircleDot, Circle,
-  GripVertical, Layers, LayoutGrid, List, Kanban
+  GripVertical, Layers, LayoutGrid, List, Kanban, Cpu
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import MantenimientoPredictivo from './MantenimientoPredictivo';
 
 // ============================================
 // TIPOS Y ESTADOS DEL FLUJO DE TRABAJO
@@ -38,7 +39,7 @@ type EstadoOrden =
 type TipoOrden = 'garantia' | 'presupuesto' | 'mantenimiento';
 type TipoEquipo = 'herramienta' | 'vehiculo' | 'maquinaria' | 'electronico' | 'electrodomestico' | 'otro';
 type Prioridad = 'baja' | 'normal' | 'alta' | 'urgente';
-type VistaActiva = 'kanban' | 'lista' | 'detalle';
+type VistaActiva = 'kanban' | 'lista' | 'detalle' | 'predictivo';
 
 // ============================================
 // INTERFACES
@@ -1617,6 +1618,15 @@ export default function TallerEnterprise() {
           >
             <List className="h-4 w-4" />
           </button>
+          <div className="w-px h-5 bg-slate-700" />
+          <button
+            onClick={() => setVistaActiva('predictivo')}
+            className={`px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 ${vistaActiva === 'predictivo' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
+            title="Mantenimiento Predictivo"
+          >
+            <Cpu className="h-4 w-4" />
+            <span className="hidden sm:inline">Predictivo</span>
+          </button>
         </div>
       </div>
 
@@ -1753,7 +1763,11 @@ export default function TallerEnterprise() {
         </div>
       )}
 
-      {/* Continúa con modales en parte 4... */}
+      {/* ==================== VISTA PREDICTIVO ==================== */}
+      {vistaActiva === 'predictivo' && (
+        <MantenimientoPredictivo />
+      )}
+
       {/* ==================== MODAL: NUEVA ORDEN ==================== */}
       {modalType === 'nueva_orden' && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
