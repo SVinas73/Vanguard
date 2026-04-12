@@ -2,14 +2,14 @@
 // CHAT INTERNO - TIPOS
 // ============================================
 
-export type TipoConversacion = 
-  | 'general' 
-  | 'producto' 
-  | 'orden_compra' 
-  | 'orden_venta' 
-  | 'rma' 
-  | 'proyecto' 
-  | 'ensamblaje' 
+export type TipoConversacion =
+  | 'general'
+  | 'producto'
+  | 'orden_compra'
+  | 'orden_venta'
+  | 'rma'
+  | 'proyecto'
+  | 'ensamblaje'
   | 'inspeccion';
 
 export type TipoMensaje = 'texto' | 'sistema' | 'archivo';
@@ -21,30 +21,30 @@ export type TipoMensaje = 'texto' | 'sistema' | 'archivo';
 export interface ChatConversacion {
   id: string;
   titulo?: string;
-  
+
   // Tipo y contexto
   tipo: TipoConversacion;
   referencia_id?: string;
   referencia_codigo?: string;
-  
+
   // Participantes
   participantes: string[];
-  
+
   // Estado
   activa: boolean;
   archivada: boolean;
-  
+
   // Último mensaje
-  ultimo_mensaje_at?: Date;
+  ultimo_mensaje_at?: string;
   ultimo_mensaje_preview?: string;
-  
+
   // Contadores
   total_mensajes: number;
-  
+
   // Auditoría
   creado_por: string;
-  creado_at: Date;
-  actualizado_at: Date;
+  created_at: string;
+  updated_at: string;
 }
 
 // ============================================
@@ -61,37 +61,38 @@ export interface ChatAdjunto {
 export interface ChatMensaje {
   id: string;
   conversacion_id: string;
-  
+
   // Autor
   autor_email: string;
   autor_nombre?: string;
-  
+
   // Contenido
   contenido: string;
-  contenido_html?: string;
-  
+
   // Menciones y lectura
   menciones: string[];
   leido_por: string[];
-  
+
   // Adjuntos
   adjuntos: ChatAdjunto[];
-  
+
   // Tipo
   tipo: TipoMensaje;
-  
+
   // Respuesta
   respuesta_a_id?: string;
-  respuesta_a?: ChatMensaje;
-  
+
+  // Reactions
+  reacciones?: Record<string, string[]>; // emoji -> [user emails]
+
   // Estado
   editado: boolean;
-  editado_at?: Date;
+  editado_at?: string;
   eliminado: boolean;
-  eliminado_at?: Date;
-  
+  eliminado_at?: string;
+
   // Timestamp
-  creado_at: Date;
+  created_at: string;
 }
 
 // ============================================
@@ -103,7 +104,7 @@ export interface ChatNoLeido {
   usuario_email: string;
   conversacion_id: string;
   cantidad: number;
-  ultimo_leido_at?: Date;
+  ultimo_leido_at?: string;
 }
 
 // ============================================
@@ -128,51 +129,51 @@ export const TIPO_CONVERSACION_CONFIG: Record<TipoConversacion, {
   bg: string;
   icon: string;
 }> = {
-  general: { 
-    label: 'General', 
-    color: 'text-slate-400', 
+  general: {
+    label: 'General',
+    color: 'text-slate-400',
     bg: 'bg-slate-500/15',
     icon: 'MessageCircle'
   },
-  producto: { 
-    label: 'Producto', 
-    color: 'text-blue-400', 
+  producto: {
+    label: 'Producto',
+    color: 'text-blue-400',
     bg: 'bg-blue-500/15',
     icon: 'Package'
   },
-  orden_compra: { 
-    label: 'Orden de Compra', 
-    color: 'text-amber-400', 
+  orden_compra: {
+    label: 'Orden de Compra',
+    color: 'text-amber-400',
     bg: 'bg-amber-500/15',
     icon: 'ShoppingCart'
   },
-  orden_venta: { 
-    label: 'Orden de Venta', 
-    color: 'text-emerald-400', 
+  orden_venta: {
+    label: 'Orden de Venta',
+    color: 'text-emerald-400',
     bg: 'bg-emerald-500/15',
     icon: 'TrendingUp'
   },
-  rma: { 
-    label: 'RMA', 
-    color: 'text-red-400', 
+  rma: {
+    label: 'RMA',
+    color: 'text-red-400',
     bg: 'bg-red-500/15',
     icon: 'RotateCcw'
   },
-  proyecto: { 
-    label: 'Proyecto', 
-    color: 'text-violet-400', 
+  proyecto: {
+    label: 'Proyecto',
+    color: 'text-violet-400',
     bg: 'bg-violet-500/15',
     icon: 'Kanban'
   },
-  ensamblaje: { 
-    label: 'Ensamblaje', 
-    color: 'text-cyan-400', 
+  ensamblaje: {
+    label: 'Ensamblaje',
+    color: 'text-cyan-400',
     bg: 'bg-cyan-500/15',
     icon: 'Wrench'
   },
-  inspeccion: { 
-    label: 'Inspección', 
-    color: 'text-orange-400', 
+  inspeccion: {
+    label: 'Inspección',
+    color: 'text-orange-400',
     bg: 'bg-orange-500/15',
     icon: 'ClipboardCheck'
   },
@@ -197,3 +198,32 @@ export interface NuevoMensajeData {
   menciones?: string[];
   respuesta_a_id?: string;
 }
+
+// ============================================
+// COMMON EMOJIS
+// ============================================
+
+export const EMOJI_CATEGORIES = [
+  {
+    name: 'Frecuentes',
+    emojis: ['👍', '❤️', '😂', '🔥', '👏', '🎉', '💯', '✅', '👀', '🙏', '😊', '🚀'],
+  },
+  {
+    name: 'Caras',
+    emojis: ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😍', '🥰', '😘', '😎', '🤔', '😐', '😑', '😶', '🙄', '😏', '😬', '😢', '😭', '😤', '😡', '🤯', '😱', '🤗', '🤫', '🤥', '😴'],
+  },
+  {
+    name: 'Gestos',
+    emojis: ['👍', '👎', '👌', '✌️', '🤞', '🤙', '👋', '🤚', '✋', '🖐️', '👏', '🙌', '🤝', '🙏', '💪', '🫡'],
+  },
+  {
+    name: 'Objetos',
+    emojis: ['⚙️', '🔧', '🔨', '🛠️', '📦', '📋', '📊', '💼', '🏭', '🚜', '🚗', '🔔', '⏰', '📌', '✏️', '📎', '💡', '🔑', '🏷️', '📁'],
+  },
+  {
+    name: 'Símbolos',
+    emojis: ['✅', '❌', '⚠️', '❓', '❗', '💯', '🔥', '⭐', '💎', '🎯', '🏆', '🎉', '🚀', '💰', '📈', '📉'],
+  },
+];
+
+export const QUICK_REACTIONS = ['👍', '❤️', '😂', '🔥', '👏', '✅'];
