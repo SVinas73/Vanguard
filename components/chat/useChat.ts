@@ -22,35 +22,38 @@ interface UseChatOptions {
 
 export function useChat({ userEmail, userName }: UseChatOptions) {
   const [conversaciones, setConversaciones] = useState<ConversacionConNoLeidos[]>([]);
+  const [conversacionesArchivadas, setConversacionesArchivadas] = useState<ConversacionConNoLeidos[]>([]);
   const [conversacionActiva, setConversacionActiva] = useState<ChatConversacion | null>(null);
   const [mensajes, setMensajes] = useState<ChatMensaje[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMensajes, setLoadingMensajes] = useState(false);
   const [totalNoLeidos, setTotalNoLeidos] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<ChatMensaje | null>(null);
+
   const channelRef = useRef<RealtimeChannel | null>(null);
   const mensajesChannelRef = useRef<RealtimeChannel | null>(null);
 
   // ============================================
   // CARGAR CONVERSACIONES
   // ============================================
-  
+
   const fetchConversaciones = useCallback(async () => {
     if (!userEmail) return;
-    
+
     try {
-      // Obtener conversaciones donde el usuario es participante
-      const { data: convs, error } = await supabase
+      // Active conversations
+      const { data: convs, error: convError } = await supabase
         .from('chat_conversaciones')
         .select('*')
         .contains('participantes', [userEmail])
         .eq('activa', true)
         .order('ultimo_mensaje_at', { ascending: false, nullsFirst: false });
 
-      if (error) throw error;
+      if (convError) throw convError;
 
-      // Obtener no leídos
+      // Unread counts
       const { data: noLeidos } = await supabase
         .from('chat_no_leidos')
         .select('conversacion_id, cantidad')
@@ -63,9 +66,6 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
 
       const convsConNoLeidos: ConversacionConNoLeidos[] = (convs || []).map(c => ({
         ...c,
-        creado_at: new Date(c.creado_at),
-        actualizado_at: new Date(c.actualizado_at),
-        ultimo_mensaje_at: c.ultimo_mensaje_at ? new Date(c.ultimo_mensaje_at) : undefined,
         no_leidos: noLeidosMap.get(c.id) || 0,
       }));
 
@@ -87,38 +87,57 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
   }, [userEmail]);
 
   // ============================================
+  // CARGAR CONVERSACIONES ARCHIVADAS
+  // ============================================
+
+  const fetchArchivadas = useCallback(async () => {
+    if (!userEmail) return;
+
+    try {
+      const { data, error: archError } = await supabase
+        .from('chat_conversaciones')
+        .select('*')
+        .contains('participantes', [userEmail])
+        .eq('archivada', true)
+        .order('updated_at', { ascending: false });
+
+      if (archError) throw archError;
+
+      setConversacionesArchivadas((data || []).map(c => ({ ...c, no_leidos: 0 })));
+    } catch (err) {
+      console.error('Error fetching archived:', err);
+    }
+  }, [userEmail]);
+
+  // ============================================
   // CARGAR MENSAJES DE UNA CONVERSACIÓN
   // ============================================
-  
+
   const fetchMensajes = useCallback(async (conversacionId: string) => {
     setLoadingMensajes(true);
-    
+
     try {
-      const { data, error } = await supabase
+      const { data, error: msgError } = await supabase
         .from('chat_mensajes')
         .select('*')
         .eq('conversacion_id', conversacionId)
         .eq('eliminado', false)
-        .order('creado_at', { ascending: true });
+        .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (msgError) throw msgError;
 
-      const mensajesData: ChatMensaje[] = (data || []).map(m => ({
+      setMensajes((data || []).map(m => ({
         ...m,
-        creado_at: new Date(m.creado_at),
-        editado_at: m.editado_at ? new Date(m.editado_at) : undefined,
-        eliminado_at: m.eliminado_at ? new Date(m.eliminado_at) : undefined,
         adjuntos: m.adjuntos || [],
         menciones: m.menciones || [],
         leido_por: m.leido_por || [],
-      }));
+        reacciones: m.reacciones || {},
+      })));
 
-      setMensajes(mensajesData);
-      
-      // Marcar como leídos
+      // Mark as read
       await marcarComoLeido(conversacionId);
-    } catch (error) {
-      console.error('Error fetching mensajes:', error);
+    } catch (err) {
+      console.error('Error fetching mensajes:', err);
     } finally {
       setLoadingMensajes(false);
     }
@@ -127,16 +146,18 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
   // ============================================
   // SELECCIONAR CONVERSACIÓN
   // ============================================
-  
+
   const seleccionarConversacion = useCallback(async (conv: ChatConversacion) => {
     setConversacionActiva(conv);
+    setReplyingTo(null);
+    setEditingMessageId(null);
     await fetchMensajes(conv.id);
-    
-    // Suscribirse a mensajes de esta conversación
+
+    // Subscribe to messages for this conversation
     if (mensajesChannelRef.current) {
       supabase.removeChannel(mensajesChannelRef.current);
     }
-    
+
     mensajesChannelRef.current = supabase
       .channel(`mensajes:${conv.id}`)
       .on(
@@ -148,24 +169,44 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
           filter: `conversacion_id=eq.${conv.id}`,
         },
         (payload) => {
-          const nuevoMensaje: ChatMensaje = {
+          const nuevoMsg: ChatMensaje = {
             ...payload.new as any,
-            creado_at: new Date(payload.new.creado_at),
-            adjuntos: payload.new.adjuntos || [],
-            menciones: payload.new.menciones || [],
-            leido_por: payload.new.leido_por || [],
+            adjuntos: (payload.new as any).adjuntos || [],
+            menciones: (payload.new as any).menciones || [],
+            leido_por: (payload.new as any).leido_por || [],
+            reacciones: (payload.new as any).reacciones || {},
           };
-          
+
           setMensajes(prev => {
-            // Evitar duplicados
-            if (prev.some(m => m.id === nuevoMensaje.id)) return prev;
-            return [...prev, nuevoMensaje];
+            if (prev.some(m => m.id === nuevoMsg.id)) return prev;
+            return [...prev, nuevoMsg];
           });
-          
-          // Marcar como leído si estamos en la conversación
-          if (nuevoMensaje.autor_email !== userEmail) {
+
+          if (nuevoMsg.autor_email !== userEmail) {
             marcarComoLeido(conv.id);
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_mensajes',
+          filter: `conversacion_id=eq.${conv.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          setMensajes(prev => prev.map(m =>
+            m.id === updated.id ? {
+              ...m,
+              ...updated,
+              adjuntos: updated.adjuntos || m.adjuntos,
+              menciones: updated.menciones || m.menciones,
+              leido_por: updated.leido_por || m.leido_por,
+              reacciones: updated.reacciones || m.reacciones || {},
+            } : m
+          ));
         }
       )
       .subscribe();
@@ -174,58 +215,73 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
   // ============================================
   // CREAR CONVERSACIÓN
   // ============================================
-  
+
   const crearConversacion = useCallback(async (data: NuevaConversacionData): Promise<ChatConversacion | null> => {
     try {
-      // Asegurar que el creador está en participantes
       const participantes = Array.from(new Set([...data.participantes, userEmail]));
-      
-      const { data: conv, error } = await supabase
+
+      const { data: conv, error: insertError } = await supabase
         .from('chat_conversaciones')
         .insert({
-          titulo: data.titulo,
+          titulo: data.titulo || null,
           tipo: data.tipo,
-          referencia_id: data.referencia_id,
-          referencia_codigo: data.referencia_codigo,
+          referencia_id: data.referencia_id || null,
+          referencia_codigo: data.referencia_codigo || null,
           participantes,
           creado_por: userEmail,
+          activa: true,
+          archivada: false,
+          total_mensajes: 0,
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
+      if (!conv) throw new Error('No se recibió respuesta al crear la conversación');
 
-      // Si hay mensaje inicial, enviarlo
-      if (data.mensaje_inicial && conv) {
-        await enviarMensaje({
-          conversacion_id: conv.id,
-          contenido: data.mensaje_inicial,
-        });
+      // Send initial message if provided
+      if (data.mensaje_inicial) {
+        await supabase
+          .from('chat_mensajes')
+          .insert({
+            conversacion_id: conv.id,
+            autor_email: userEmail,
+            autor_nombre: userName,
+            contenido: data.mensaje_inicial,
+            leido_por: [userEmail],
+            tipo: 'texto',
+          });
+
+        // Update conversation metadata
+        await supabase
+          .from('chat_conversaciones')
+          .update({
+            ultimo_mensaje_at: new Date().toISOString(),
+            ultimo_mensaje_preview: data.mensaje_inicial.substring(0, 100),
+            total_mensajes: 1,
+          })
+          .eq('id', conv.id);
       }
 
-      // Refrescar lista
+      // Refresh list
       await fetchConversaciones();
-      
-      return conv ? {
-        ...conv,
-        creado_at: new Date(conv.creado_at),
-        actualizado_at: new Date(conv.actualizado_at),
-      } : null;
+
+      return conv as ChatConversacion;
     } catch (err: any) {
       console.error('Error creando conversación:', err);
       const message = err?.message || String(err);
       setError(`Error al crear conversación: ${message}`);
       return null;
     }
-  }, [userEmail, fetchConversaciones]);
+  }, [userEmail, userName, fetchConversaciones]);
 
   // ============================================
   // ENVIAR MENSAJE
   // ============================================
-  
+
   const enviarMensaje = useCallback(async (data: NuevoMensajeData): Promise<ChatMensaje | null> => {
     try {
-      // Extraer menciones del contenido (@usuario)
+      // Extract mentions
       const mencionesRegex = /@([\w.-]+@[\w.-]+\.\w+)/g;
       const menciones = data.menciones || [];
       let match;
@@ -235,7 +291,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
         }
       }
 
-      const { data: mensaje, error } = await supabase
+      const { data: mensaje, error: sendError } = await supabase
         .from('chat_mensajes')
         .insert({
           conversacion_id: data.conversacion_id,
@@ -243,20 +299,76 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
           autor_nombre: userName,
           contenido: data.contenido,
           menciones,
-          respuesta_a_id: data.respuesta_a_id,
-          leido_por: [userEmail], // El autor ya lo "leyó"
+          respuesta_a_id: data.respuesta_a_id || null,
+          leido_por: [userEmail],
+          tipo: 'texto',
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (sendError) throw sendError;
+
+      // Update conversation metadata
+      await supabase
+        .from('chat_conversaciones')
+        .update({
+          ultimo_mensaje_at: new Date().toISOString(),
+          ultimo_mensaje_preview: data.contenido.substring(0, 100),
+          total_mensajes: (conversacionActiva?.total_mensajes || 0) + 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', data.conversacion_id);
+
+      // Increment unread for other participants
+      if (conversacionActiva) {
+        const otrosParticipantes = conversacionActiva.participantes.filter(p => p !== userEmail);
+        for (const email of otrosParticipantes) {
+          await supabase
+            .from('chat_no_leidos')
+            .upsert(
+              {
+                usuario_email: email,
+                conversacion_id: data.conversacion_id,
+                cantidad: 1,
+              },
+              { onConflict: 'usuario_email,conversacion_id' }
+            );
+
+          // Increment existing count
+          await supabase.rpc('incrementar_no_leidos', {
+            p_usuario_email: email,
+            p_conversacion_id: data.conversacion_id,
+          }).catch(() => {
+            // If RPC doesn't exist, manual update
+            supabase
+              .from('chat_no_leidos')
+              .select('cantidad')
+              .eq('usuario_email', email)
+              .eq('conversacion_id', data.conversacion_id)
+              .single()
+              .then(({ data: nl }) => {
+                if (nl) {
+                  supabase
+                    .from('chat_no_leidos')
+                    .update({ cantidad: (nl.cantidad || 0) + 1 })
+                    .eq('usuario_email', email)
+                    .eq('conversacion_id', data.conversacion_id)
+                    .then(() => {});
+                }
+              });
+          });
+        }
+      }
+
+      // Clear reply state
+      setReplyingTo(null);
 
       return mensaje ? {
         ...mensaje,
-        creado_at: new Date(mensaje.creado_at),
         adjuntos: mensaje.adjuntos || [],
         menciones: mensaje.menciones || [],
         leido_por: mensaje.leido_por || [],
+        reacciones: {},
       } : null;
     } catch (err: any) {
       console.error('Error enviando mensaje:', err);
@@ -264,53 +376,151 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
       setError(`Error al enviar mensaje: ${message}`);
       return null;
     }
-  }, [userEmail, userName]);
+  }, [userEmail, userName, conversacionActiva]);
+
+  // ============================================
+  // EDITAR MENSAJE
+  // ============================================
+
+  const editarMensaje = useCallback(async (mensajeId: string, nuevoContenido: string): Promise<boolean> => {
+    try {
+      const { error: editError } = await supabase
+        .from('chat_mensajes')
+        .update({
+          contenido: nuevoContenido,
+          editado: true,
+          editado_at: new Date().toISOString(),
+        })
+        .eq('id', mensajeId)
+        .eq('autor_email', userEmail);
+
+      if (editError) throw editError;
+
+      setMensajes(prev => prev.map(m =>
+        m.id === mensajeId
+          ? { ...m, contenido: nuevoContenido, editado: true, editado_at: new Date().toISOString() }
+          : m
+      ));
+
+      setEditingMessageId(null);
+      return true;
+    } catch (err: any) {
+      console.error('Error editando mensaje:', err);
+      setError('Error al editar el mensaje');
+      return false;
+    }
+  }, [userEmail]);
+
+  // ============================================
+  // ELIMINAR MENSAJE
+  // ============================================
+
+  const eliminarMensaje = useCallback(async (mensajeId: string): Promise<boolean> => {
+    try {
+      const { error: delError } = await supabase
+        .from('chat_mensajes')
+        .update({
+          eliminado: true,
+          eliminado_at: new Date().toISOString(),
+          contenido: '',
+        })
+        .eq('id', mensajeId)
+        .eq('autor_email', userEmail);
+
+      if (delError) throw delError;
+
+      setMensajes(prev => prev.filter(m => m.id !== mensajeId));
+      return true;
+    } catch (err: any) {
+      console.error('Error eliminando mensaje:', err);
+      setError('Error al eliminar el mensaje');
+      return false;
+    }
+  }, [userEmail]);
+
+  // ============================================
+  // REACCIONAR A MENSAJE
+  // ============================================
+
+  const reaccionarMensaje = useCallback(async (mensajeId: string, emoji: string): Promise<boolean> => {
+    try {
+      const mensaje = mensajes.find(m => m.id === mensajeId);
+      if (!mensaje) return false;
+
+      const reacciones = { ...(mensaje.reacciones || {}) };
+      const users = reacciones[emoji] || [];
+
+      if (users.includes(userEmail)) {
+        // Remove reaction
+        reacciones[emoji] = users.filter(u => u !== userEmail);
+        if (reacciones[emoji].length === 0) delete reacciones[emoji];
+      } else {
+        // Add reaction
+        reacciones[emoji] = [...users, userEmail];
+      }
+
+      const { error: reactError } = await supabase
+        .from('chat_mensajes')
+        .update({ reacciones })
+        .eq('id', mensajeId);
+
+      if (reactError) throw reactError;
+
+      setMensajes(prev => prev.map(m =>
+        m.id === mensajeId ? { ...m, reacciones } : m
+      ));
+
+      return true;
+    } catch (err) {
+      console.error('Error reacting:', err);
+      return false;
+    }
+  }, [mensajes, userEmail]);
 
   // ============================================
   // MARCAR COMO LEÍDO
   // ============================================
-  
+
   const marcarComoLeido = useCallback(async (conversacionId: string) => {
+    if (!userEmail) return;
     try {
-      // Llamar función de Supabase
       await supabase.rpc('marcar_mensajes_leidos', {
         p_conversacion_id: conversacionId,
         p_usuario_email: userEmail,
       });
 
-      // Actualizar estado local
-      setConversaciones(prev => prev.map(c => 
+      setConversaciones(prev => prev.map(c =>
         c.id === conversacionId ? { ...c, no_leidos: 0 } : c
       ));
-      
+
       setTotalNoLeidos(prev => {
         const conv = conversaciones.find(c => c.id === conversacionId);
         return Math.max(0, prev - (conv?.no_leidos || 0));
       });
-    } catch (error) {
-      console.error('Error marcando como leído:', error);
+    } catch (err) {
+      console.error('Error marcando como leído:', err);
     }
   }, [userEmail, conversaciones]);
 
   // ============================================
   // AGREGAR PARTICIPANTE
   // ============================================
-  
+
   const agregarParticipante = useCallback(async (conversacionId: string, email: string) => {
     try {
       const conv = conversaciones.find(c => c.id === conversacionId);
       if (!conv) return false;
 
       const nuevosParticipantes = [...conv.participantes, email];
-      
-      const { error } = await supabase
+
+      const { error: updateError } = await supabase
         .from('chat_conversaciones')
         .update({ participantes: nuevosParticipantes })
         .eq('id', conversacionId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      // Mensaje de sistema
+      // System message
       await supabase.from('chat_mensajes').insert({
         conversacion_id: conversacionId,
         autor_email: userEmail,
@@ -321,36 +531,101 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
       });
 
       await fetchConversaciones();
+      if (conversacionActiva?.id === conversacionId) {
+        await fetchMensajes(conversacionId);
+      }
       return true;
-    } catch (error) {
-      console.error('Error agregando participante:', error);
+    } catch (err) {
+      console.error('Error agregando participante:', err);
       return false;
     }
-  }, [conversaciones, userEmail, userName, fetchConversaciones]);
+  }, [conversaciones, conversacionActiva, userEmail, userName, fetchConversaciones, fetchMensajes]);
 
   // ============================================
   // ARCHIVAR CONVERSACIÓN
   // ============================================
-  
+
   const archivarConversacion = useCallback(async (conversacionId: string) => {
     try {
-      const { error } = await supabase
+      const { error: archError } = await supabase
         .from('chat_conversaciones')
-        .update({ archivada: true, activa: false })
+        .update({ archivada: true, activa: false, updated_at: new Date().toISOString() })
         .eq('id', conversacionId);
 
-      if (error) throw error;
+      if (archError) throw archError;
 
       setConversaciones(prev => prev.filter(c => c.id !== conversacionId));
-      
+
       if (conversacionActiva?.id === conversacionId) {
         setConversacionActiva(null);
         setMensajes([]);
       }
-      
+
       return true;
-    } catch (error) {
-      console.error('Error archivando conversación:', error);
+    } catch (err) {
+      console.error('Error archivando conversación:', err);
+      return false;
+    }
+  }, [conversacionActiva]);
+
+  // ============================================
+  // DESARCHIVAR CONVERSACIÓN
+  // ============================================
+
+  const desarchivarConversacion = useCallback(async (conversacionId: string) => {
+    try {
+      const { error: unarchError } = await supabase
+        .from('chat_conversaciones')
+        .update({ archivada: false, activa: true, updated_at: new Date().toISOString() })
+        .eq('id', conversacionId);
+
+      if (unarchError) throw unarchError;
+
+      await fetchConversaciones();
+      await fetchArchivadas();
+      return true;
+    } catch (err) {
+      console.error('Error desarchivando:', err);
+      return false;
+    }
+  }, [fetchConversaciones, fetchArchivadas]);
+
+  // ============================================
+  // ELIMINAR CONVERSACIÓN
+  // ============================================
+
+  const eliminarConversacion = useCallback(async (conversacionId: string) => {
+    try {
+      // Delete all messages first (cascade should handle this, but be explicit)
+      await supabase
+        .from('chat_mensajes')
+        .delete()
+        .eq('conversacion_id', conversacionId);
+
+      await supabase
+        .from('chat_no_leidos')
+        .delete()
+        .eq('conversacion_id', conversacionId);
+
+      const { error: delError } = await supabase
+        .from('chat_conversaciones')
+        .delete()
+        .eq('id', conversacionId);
+
+      if (delError) throw delError;
+
+      setConversaciones(prev => prev.filter(c => c.id !== conversacionId));
+      setConversacionesArchivadas(prev => prev.filter(c => c.id !== conversacionId));
+
+      if (conversacionActiva?.id === conversacionId) {
+        setConversacionActiva(null);
+        setMensajes([]);
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Error eliminando conversación:', err);
+      setError('Error al eliminar la conversación');
       return false;
     }
   }, [conversacionActiva]);
@@ -358,7 +633,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
   // ============================================
   // BUSCAR CONVERSACIONES
   // ============================================
-  
+
   const buscarConversaciones = useCallback(async (query: string) => {
     if (!query.trim()) {
       await fetchConversaciones();
@@ -366,41 +641,32 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
     }
 
     try {
-      const { data, error } = await supabase
+      const { data, error: searchError } = await supabase
         .from('chat_conversaciones')
         .select('*')
         .contains('participantes', [userEmail])
+        .eq('activa', true)
         .or(`titulo.ilike.%${query}%,referencia_codigo.ilike.%${query}%`)
         .order('ultimo_mensaje_at', { ascending: false });
 
-      if (error) throw error;
+      if (searchError) throw searchError;
 
-      const convsConNoLeidos: ConversacionConNoLeidos[] = (data || []).map(c => ({
-        ...c,
-        creado_at: new Date(c.creado_at),
-        actualizado_at: new Date(c.actualizado_at),
-        ultimo_mensaje_at: c.ultimo_mensaje_at ? new Date(c.ultimo_mensaje_at) : undefined,
-        no_leidos: 0,
-      }));
-
-      setConversaciones(convsConNoLeidos);
-    } catch (error) {
-      console.error('Error buscando conversaciones:', error);
+      setConversaciones((data || []).map(c => ({ ...c, no_leidos: 0 })));
+    } catch (err) {
+      console.error('Error buscando conversaciones:', err);
     }
   }, [userEmail, fetchConversaciones]);
 
   // ============================================
   // EFECTOS
   // ============================================
-  
-  // Cargar conversaciones al montar
+
   useEffect(() => {
     if (userEmail) {
       fetchConversaciones();
     }
   }, [userEmail, fetchConversaciones]);
 
-  // Suscribirse a cambios en conversaciones y no_leidos
   useEffect(() => {
     if (!userEmail) return;
 
@@ -444,32 +710,45 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
   // ============================================
   // RETURN
   // ============================================
-  
+
   return {
-    // Estado
+    // State
     conversaciones,
+    conversacionesArchivadas,
     conversacionActiva,
     mensajes,
     loading,
     loadingMensajes,
     totalNoLeidos,
     error,
-    
-    // Acciones
+    editingMessageId,
+    replyingTo,
+
+    // Actions
     fetchConversaciones,
+    fetchArchivadas,
     seleccionarConversacion,
     crearConversacion,
     enviarMensaje,
+    editarMensaje,
+    eliminarMensaje,
+    reaccionarMensaje,
     marcarComoLeido,
     agregarParticipante,
     archivarConversacion,
+    desarchivarConversacion,
+    eliminarConversacion,
     buscarConversaciones,
-    
+    setEditingMessageId,
+    setReplyingTo,
+
     // Helpers
     clearError: () => setError(null),
     cerrarConversacion: () => {
       setConversacionActiva(null);
       setMensajes([]);
+      setReplyingTo(null);
+      setEditingMessageId(null);
       if (mensajesChannelRef.current) {
         supabase.removeChannel(mensajesChannelRef.current);
       }
@@ -478,7 +757,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
 }
 
 // ============================================
-// HOOK: useUsuariosChat (para menciones y participantes)
+// HOOK: useUsuariosChat
 // ============================================
 
 export function useUsuariosChat() {
@@ -493,7 +772,6 @@ export function useUsuariosChat() {
 
     setLoading(true);
     try {
-      // Buscar en auth.users o en tu tabla de usuarios
       const { data, error } = await supabase
         .from('usuarios')
         .select('email, nombre')
@@ -501,15 +779,14 @@ export function useUsuariosChat() {
         .limit(10);
 
       if (error) {
-        // Si no existe tabla usuarios, intentar con otra estrategia
-        console.warn('Tabla usuarios no encontrada, usando fallback');
+        console.warn('Table usuarios not found, using fallback');
         setUsuarios([]);
         return;
       }
 
       setUsuarios(data || []);
-    } catch (error) {
-      console.error('Error buscando usuarios:', error);
+    } catch (err) {
+      console.error('Error buscando usuarios:', err);
     } finally {
       setLoading(false);
     }
