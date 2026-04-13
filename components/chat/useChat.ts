@@ -323,40 +323,29 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
       if (conversacionActiva) {
         const otrosParticipantes = conversacionActiva.participantes.filter(p => p !== userEmail);
         for (const email of otrosParticipantes) {
-          await supabase
+          // Check if unread record exists
+          const { data: existing } = await supabase
             .from('chat_no_leidos')
-            .upsert(
-              {
+            .select('cantidad')
+            .eq('usuario_email', email)
+            .eq('conversacion_id', data.conversacion_id)
+            .maybeSingle();
+
+          if (existing) {
+            await supabase
+              .from('chat_no_leidos')
+              .update({ cantidad: (existing.cantidad || 0) + 1 })
+              .eq('usuario_email', email)
+              .eq('conversacion_id', data.conversacion_id);
+          } else {
+            await supabase
+              .from('chat_no_leidos')
+              .insert({
                 usuario_email: email,
                 conversacion_id: data.conversacion_id,
                 cantidad: 1,
-              },
-              { onConflict: 'usuario_email,conversacion_id' }
-            );
-
-          // Increment existing count
-          await supabase.rpc('incrementar_no_leidos', {
-            p_usuario_email: email,
-            p_conversacion_id: data.conversacion_id,
-          }).catch(() => {
-            // If RPC doesn't exist, manual update
-            supabase
-              .from('chat_no_leidos')
-              .select('cantidad')
-              .eq('usuario_email', email)
-              .eq('conversacion_id', data.conversacion_id)
-              .single()
-              .then(({ data: nl }) => {
-                if (nl) {
-                  supabase
-                    .from('chat_no_leidos')
-                    .update({ cantidad: (nl.cantidad || 0) + 1 })
-                    .eq('usuario_email', email)
-                    .eq('conversacion_id', data.conversacion_id)
-                    .then(() => {});
-                }
               });
-          });
+          }
         }
       }
 
