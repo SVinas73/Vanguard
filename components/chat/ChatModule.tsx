@@ -22,6 +22,7 @@ import {
   MoreVertical,
   Users,
   Archive,
+  Trash2,
   ChevronLeft,
   Package,
   ShoppingCart,
@@ -287,7 +288,10 @@ export default function ChatModule() {
                         getConversacionTitulo(conversacionActiva, user?.email || '')}
                     </h3>
                     <p className="text-xs text-[#64748b]">
-                      {conversacionActiva.participantes.length} {t('chat.participants')}
+                      {conversacionActiva.participantes
+                        .filter((p) => p !== user?.email)
+                        .map((p) => p.split('@')[0])
+                        .join(', ') || 'Solo tú'}
                       {conversacionActiva.referencia_codigo && (
                         <span className="ml-2">• {conversacionActiva.referencia_codigo}</span>
                       )}
@@ -302,8 +306,20 @@ export default function ChatModule() {
                   <button
                     onClick={() => archivarConversacion(conversacionActiva.id)}
                     className="p-2 rounded-lg hover:bg-[#1c1f26] text-[#64748b]"
+                    title={t('chat.archive') || 'Archivar'}
                   >
                     <Archive size={18} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('¿Estás seguro de que deseas eliminar esta conversación?')) {
+                        eliminarConversacion(conversacionActiva.id);
+                      }
+                    }}
+                    className="p-2 rounded-lg hover:bg-red-500/10 text-[#64748b] hover:text-red-400 transition-colors"
+                    title={t('chat.deleteConversation') || 'Eliminar conversación'}
+                  >
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </div>
@@ -457,7 +473,7 @@ export default function ChatModule() {
               )}
 
               {/* Input de mensaje */}
-              <div className="p-4 border-t border-[#1e2028]">
+              <div className="p-4 border-t border-[#1e2028] relative z-50">
                 <div className="flex items-end gap-3">
                   <div className="flex-1 relative">
                     <textarea
