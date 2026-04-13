@@ -49,7 +49,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
         .select('*')
         .contains('participantes', [userEmail])
         .eq('activa', true)
-        .order('updated_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (convError) throw convError;
 
@@ -99,7 +99,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
         .select('*')
         .contains('participantes', [userEmail])
         .eq('archivada', true)
-        .order('updated_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (archError) throw archError;
 
@@ -325,7 +325,6 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
           ultimo_mensaje_at: new Date().toISOString(),
           ultimo_mensaje_preview: data.contenido.substring(0, 100),
           total_mensajes: (conversacionActiva?.total_mensajes || 0) + 1,
-          updated_at: new Date().toISOString(),
         })
         .eq('id', data.conversacion_id);
 
@@ -548,7 +547,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
     try {
       const { error: archError } = await supabase
         .from('chat_conversaciones')
-        .update({ archivada: true, activa: false, updated_at: new Date().toISOString() })
+        .update({ archivada: true, activa: false })
         .eq('id', conversacionId);
 
       if (archError) throw archError;
@@ -575,7 +574,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
     try {
       const { error: unarchError } = await supabase
         .from('chat_conversaciones')
-        .update({ archivada: false, activa: true, updated_at: new Date().toISOString() })
+        .update({ archivada: false, activa: true })
         .eq('id', conversacionId);
 
       if (unarchError) throw unarchError;
