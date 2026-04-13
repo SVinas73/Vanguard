@@ -49,7 +49,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
         .select('*')
         .contains('participantes', [userEmail])
         .eq('activa', true)
-        .order('ultimo_mensaje_at', { ascending: false, nullsFirst: false });
+        .order('updated_at', { ascending: false });
 
       if (convError) throw convError;
 
@@ -265,6 +265,16 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
 
       // Refresh list
       await fetchConversaciones();
+
+      // Also add to local state immediately in case fetch didn't pick it up
+      const convWithNoLeidos: ConversacionConNoLeidos = {
+        ...(conv as ChatConversacion),
+        no_leidos: 0,
+      };
+      setConversaciones(prev => {
+        if (prev.some(c => c.id === conv.id)) return prev;
+        return [convWithNoLeidos, ...prev];
+      });
 
       return conv as ChatConversacion;
     } catch (err: any) {
