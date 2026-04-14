@@ -149,6 +149,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
 
   const seleccionarConversacion = useCallback(async (conv: ChatConversacion) => {
     setConversacionActiva(conv);
+    setMensajes([]);
     setReplyingTo(null);
     setEditingMessageId(null);
     await fetchMensajes(conv.id);
