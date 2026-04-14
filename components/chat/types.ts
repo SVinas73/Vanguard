@@ -43,7 +43,7 @@ export interface ChatConversacion {
 
   // Auditoría
   creado_por: string;
-  created_at: string;
+  created_at?: string;
   updated_at?: string;
 }
 

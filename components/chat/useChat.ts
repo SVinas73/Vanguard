@@ -48,8 +48,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
         .from('chat_conversaciones')
         .select('*')
         .contains('participantes', [userEmail])
-        .eq('activa', true)
-        .order('created_at', { ascending: false });
+        .eq('activa', true);
 
       if (convError) throw convError;
 
@@ -98,8 +97,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
         .from('chat_conversaciones')
         .select('*')
         .contains('participantes', [userEmail])
-        .eq('archivada', true)
-        .order('created_at', { ascending: false });
+        .eq('archivada', true);
 
       if (archError) throw archError;
 
