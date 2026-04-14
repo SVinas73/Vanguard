@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import {
+  ChatAdjunto,
   ChatConversacion,
   ChatMensaje,
   ConversacionConNoLeidos,
@@ -314,9 +315,10 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
           autor_nombre: userName,
           contenido: data.contenido,
           menciones,
+          adjuntos: data.adjuntos || [],
           respuesta_a_id: data.respuesta_a_id || null,
           leido_por: [userEmail],
-          tipo: 'texto',
+          tipo: data.adjuntos && data.adjuntos.length > 0 ? 'archivo' : 'texto',
         })
         .select()
         .single();
@@ -494,6 +496,39 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
       return false;
     }
   }, [mensajes, userEmail]);
+
+  // ============================================
+  // SUBIR ARCHIVO
+  // ============================================
+
+  const subirArchivo = useCallback(async (file: File, conversacionId: string): Promise<ChatAdjunto | null> => {
+    try {
+      const timestamp = Date.now();
+      const ext = file.name.split('.').pop() || 'bin';
+      const filePath = `${conversacionId}/${timestamp}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('chat-adjuntos')
+        .upload(filePath, file, { cacheControl: '3600' });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('chat-adjuntos')
+        .getPublicUrl(filePath);
+
+      return {
+        nombre: file.name,
+        url: urlData.publicUrl,
+        tipo: file.type,
+        tamano: file.size,
+      };
+    } catch (err: any) {
+      console.error('Error subiendo archivo:', err);
+      setError(`Error al subir archivo: ${err?.message || String(err)}`);
+      return null;
+    }
+  }, []);
 
   // ============================================
   // MARCAR COMO LEÍDO
@@ -751,6 +786,7 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
     editarMensaje,
     eliminarMensaje,
     reaccionarMensaje,
+    subirArchivo,
     marcarComoLeido,
     agregarParticipante,
     archivarConversacion,

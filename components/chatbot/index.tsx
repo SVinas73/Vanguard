@@ -233,7 +233,7 @@ export function ChatbotWidget() {
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          'fixed bottom-24 left-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all z-40',
+          'fixed bottom-24 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all z-[70]',
           'bg-slate-900 border border-slate-800 hover:scale-110 hover:shadow-xl',
           isOpen && 'scale-0 opacity-0'
         )}
@@ -243,7 +243,7 @@ export function ChatbotWidget() {
 
       {/* Chat window */}
       <div className={cn(
-        'fixed bottom-6 left-6 w-[400px] h-[600px] rounded-2xl shadow-2xl shadow-black/40 z-50 flex flex-col overflow-hidden transition-all duration-300',
+        'fixed bottom-6 right-6 w-[400px] h-[600px] rounded-2xl shadow-2xl shadow-black/40 z-[70] flex flex-col overflow-hidden transition-all duration-300',
         'bg-slate-900 border border-slate-800',
         isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'
       )}>
@@ -342,7 +342,7 @@ export function ChatbotWidget() {
       {isOpen && messages.length > 5 && (
         <button
           onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          className="fixed bottom-[100px] left-10 w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center z-50 hover:bg-slate-700 transition-colors"
+          className="fixed bottom-[100px] right-10 w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center z-[70] hover:bg-slate-700 transition-colors"
         >
           <ChevronDown size={16} className="text-slate-400" />
         </button>

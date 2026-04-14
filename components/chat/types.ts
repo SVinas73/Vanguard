@@ -197,6 +197,7 @@ export interface NuevoMensajeData {
   contenido: string;
   menciones?: string[];
   respuesta_a_id?: string;
+  adjuntos?: ChatAdjunto[];
 }
 
 // ============================================

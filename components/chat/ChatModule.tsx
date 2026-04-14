@@ -39,7 +39,12 @@ import {
   Check,
   CheckCheck,
   X,
+  FileText,
+  Image as ImageIcon,
+  Film,
+  Download,
 } from 'lucide-react';
+import { ChatAdjunto } from './types';
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -64,6 +69,7 @@ export default function ChatModule() {
     editarMensaje,
     eliminarMensaje,
     reaccionarMensaje,
+    subirArchivo,
     cerrarConversacion,
     buscarConversaciones,
     archivarConversacion,
@@ -88,9 +94,12 @@ export default function ChatModule() {
   const [contextMenu, setContextMenu] = useState<{ msgId: string; x: number; y: number } | null>(null);
   const [editText, setEditText] = useState('');
   const [creando, setCreando] = useState(false);
+  const [archivosSeleccionados, setArchivosSeleccionados] = useState<File[]>([]);
+  const [subiendoArchivos, setSubiendoArchivos] = useState(false);
 
   const mensajesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll a nuevos mensajes
   useEffect(() => {
@@ -116,14 +125,30 @@ export default function ChatModule() {
 
   // Enviar mensaje
   const handleEnviarMensaje = async () => {
-    if (!nuevoMensaje.trim() || !conversacionActiva) return;
+    if ((!nuevoMensaje.trim() && archivosSeleccionados.length === 0) || !conversacionActiva) return;
+
+    let adjuntos: ChatAdjunto[] = [];
+
+    // Upload files if any
+    if (archivosSeleccionados.length > 0) {
+      setSubiendoArchivos(true);
+      for (const file of archivosSeleccionados) {
+        const adjunto = await subirArchivo(file, conversacionActiva.id);
+        if (adjunto) adjuntos.push(adjunto);
+      }
+      setSubiendoArchivos(false);
+    }
+
+    const contenido = nuevoMensaje.trim() || (adjuntos.length > 0 ? `📎 ${adjuntos.map(a => a.nombre).join(', ')}` : '');
 
     await enviarMensaje({
       conversacion_id: conversacionActiva.id,
-      contenido: nuevoMensaje.trim(),
+      contenido,
+      adjuntos: adjuntos.length > 0 ? adjuntos : undefined,
     });
 
     setNuevoMensaje('');
+    setArchivosSeleccionados([]);
     inputRef.current?.focus();
   };
 
@@ -473,8 +498,42 @@ export default function ChatModule() {
                 </div>
               )}
 
+              {/* File preview */}
+              {archivosSeleccionados.length > 0 && (
+                <div className="px-4 py-2 border-t border-[#1e2028] flex flex-wrap gap-2">
+                  {archivosSeleccionados.map((file, i) => (
+                    <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-[#1c1f26] border border-[#2e323d] rounded-lg text-xs">
+                      {file.type.startsWith('image/') ? <ImageIcon size={14} className="text-blue-400" /> :
+                       file.type.startsWith('video/') ? <Film size={14} className="text-purple-400" /> :
+                       <FileText size={14} className="text-[#64748b]" />}
+                      <span className="text-white max-w-[120px] truncate">{file.name}</span>
+                      <span className="text-[#475569]">{(file.size / 1024).toFixed(0)}KB</span>
+                      <button
+                        onClick={() => setArchivosSeleccionados(prev => prev.filter((_, idx) => idx !== i))}
+                        className="text-[#64748b] hover:text-red-400"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Input de mensaje */}
               <div className="p-4 border-t border-[#1e2028]">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length > 0) {
+                      setArchivosSeleccionados(prev => [...prev, ...files]);
+                    }
+                    e.target.value = '';
+                  }}
+                />
                 <div className="flex items-end gap-3">
                   <div className="flex-1 relative">
                     <textarea
@@ -491,7 +550,10 @@ export default function ChatModule() {
                       <button className="p-1.5 rounded-md hover:bg-[#242830] text-[#64748b]">
                         <AtSign size={16} />
                       </button>
-                      <button className="p-1.5 rounded-md hover:bg-[#242830] text-[#64748b]">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-1.5 rounded-md hover:bg-[#242830] text-[#64748b]"
+                      >
                         <Paperclip size={16} />
                       </button>
                       <button
@@ -529,10 +591,14 @@ export default function ChatModule() {
                   </div>
                   <button
                     onClick={handleEnviarMensaje}
-                    disabled={!nuevoMensaje.trim()}
+                    disabled={(!nuevoMensaje.trim() && archivosSeleccionados.length === 0) || subiendoArchivos}
                     className="p-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-[#1c1f26] disabled:text-[#475569] text-white transition-colors"
                   >
-                    <Send size={18} />
+                    {subiendoArchivos ? (
+                      <div className="w-[18px] h-[18px] border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Send size={18} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -711,7 +777,41 @@ function MensajeItem({
               ↩️ {mensaje.respuesta_a_preview || '...'}
             </div>
           )}
-          {mensaje.contenido}
+          {mensaje.contenido && <div>{mensaje.contenido}</div>}
+
+          {/* Adjuntos */}
+          {mensaje.adjuntos && mensaje.adjuntos.length > 0 && (
+            <div className="mt-2 space-y-1.5">
+              {mensaje.adjuntos.map((adj: ChatAdjunto, i: number) => (
+                <div key={i}>
+                  {adj.tipo?.startsWith('image/') ? (
+                    <a href={adj.url} target="_blank" rel="noopener noreferrer" className="block">
+                      <img
+                        src={adj.url}
+                        alt={adj.nombre}
+                        className="max-w-[240px] max-h-[180px] rounded-lg object-cover cursor-pointer hover:opacity-90"
+                      />
+                    </a>
+                  ) : (
+                    <a
+                      href={adj.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        'flex items-center gap-2 px-3 py-2 rounded-lg text-xs',
+                        isOwn ? 'bg-blue-700/50 hover:bg-blue-700/70' : 'bg-[#242830] hover:bg-[#2e323d]'
+                      )}
+                    >
+                      {adj.tipo?.startsWith('video/') ? <Film size={16} /> : <FileText size={16} />}
+                      <span className="flex-1 truncate">{adj.nombre}</span>
+                      <Download size={14} className="flex-shrink-0 opacity-60" />
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {mensaje.editado && (
             <span className="text-[10px] text-[#475569] ml-1">(editado)</span>
           )}
