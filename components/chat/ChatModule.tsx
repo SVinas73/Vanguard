@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 import { useChat } from './useChat';
 import {
   ChatConversacion,
@@ -473,7 +474,7 @@ export default function ChatModule() {
               )}
 
               {/* Input de mensaje */}
-              <div className="p-4 border-t border-[#1e2028] relative z-50">
+              <div className="p-4 border-t border-[#1e2028]">
                 <div className="flex items-end gap-3">
                   <div className="flex-1 relative">
                     <textarea
@@ -808,15 +809,44 @@ function NuevaConversacionModal({
   const [titulo, setTitulo] = useState('');
   const [tipo, setTipo] = useState<TipoConversacion>('general');
   const [participantesInput, setParticipantesInput] = useState('');
-  const [participantes, setParticipantes] = useState<string[]>([]);
+  const [participantes, setParticipantes] = useState<{ email: string; name: string }[]>([]);
   const [mensajeInicial, setMensajeInicial] = useState('');
+  const [userSuggestions, setUserSuggestions] = useState<{ email: string; name: string }[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const handleAgregarParticipante = () => {
-    const email = participantesInput.trim().toLowerCase();
-    if (email && email.includes('@') && !participantes.includes(email)) {
-      setParticipantes([...participantes, email]);
-      setParticipantesInput('');
+  // Search users from DB as they type
+  useEffect(() => {
+    const query = participantesInput.trim();
+    if (query.length < 2) {
+      setUserSuggestions([]);
+      setShowSuggestions(false);
+      return;
     }
+
+    const timeout = setTimeout(async () => {
+      const { data } = await supabase
+        .from('users')
+        .select('email, name')
+        .or(`email.ilike.%${query}%,name.ilike.%${query}%`)
+        .neq('email', userEmail)
+        .limit(6);
+
+      const filtered = (data || []).filter(
+        (u) => !participantes.some((p) => p.email === u.email)
+      );
+      setUserSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+    }, 250);
+
+    return () => clearTimeout(timeout);
+  }, [participantesInput, userEmail, participantes]);
+
+  const handleSelectUser = (user: { email: string; name: string }) => {
+    if (!participantes.some((p) => p.email === user.email)) {
+      setParticipantes([...participantes, user]);
+    }
+    setParticipantesInput('');
+    setShowSuggestions(false);
   };
 
   const handleCrear = () => {
@@ -828,7 +858,7 @@ function NuevaConversacionModal({
     onCrear({
       titulo: titulo || undefined,
       tipo,
-      participantes,
+      participantes: participantes.map((p) => p.email),
       mensaje_inicial: mensajeInicial || undefined,
     });
   };
@@ -881,35 +911,50 @@ function NuevaConversacionModal({
           {/* Participantes */}
           <div>
             <label className="block text-sm font-medium text-white mb-1.5">Participantes</label>
-            <div className="flex gap-2">
+            <div className="relative">
               <input
-                type="email"
+                type="text"
                 value={participantesInput}
                 onChange={(e) => setParticipantesInput(e.target.value)}
-                onKeyDown={(e) =>
-                  e.key === 'Enter' && (e.preventDefault(), handleAgregarParticipante())
-                }
-                placeholder="email@ejemplo.com"
-                className="flex-1 px-3 py-2 bg-[#1c1f26] border border-[#2e323d] rounded-lg text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-blue-500"
+                onFocus={() => userSuggestions.length > 0 && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                placeholder="Buscar usuario por nombre o email..."
+                className="w-full px-3 py-2 bg-[#1c1f26] border border-[#2e323d] rounded-lg text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-blue-500"
               />
-              <button
-                onClick={handleAgregarParticipante}
-                className="px-3 py-2 bg-[#242830] hover:bg-[#2e323d] text-white rounded-lg text-sm"
-              >
-                Agregar
-              </button>
+
+              {/* Autocomplete dropdown */}
+              {showSuggestions && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#1c1f26] border border-[#2e323d] rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
+                  {userSuggestions.map((u) => (
+                    <button
+                      key={u.email}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleSelectUser(u)}
+                      className="w-full px-3 py-2.5 text-left hover:bg-[#242830] flex items-center gap-3 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-semibold flex-shrink-0">
+                        {(u.name || u.email).charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm text-white truncate">{u.name || u.email.split('@')[0]}</div>
+                        <div className="text-xs text-[#64748b] truncate">{u.email}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {participantes.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {participantes.map((email) => (
+                {participantes.map((p) => (
                   <span
-                    key={email}
+                    key={p.email}
                     className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/15 text-blue-400 rounded-md text-xs"
                   >
-                    {email}
+                    {p.name || p.email.split('@')[0]}
                     <button
-                      onClick={() => setParticipantes(participantes.filter((p) => p !== email))}
+                      onClick={() => setParticipantes(participantes.filter((x) => x.email !== p.email))}
                       className="hover:text-blue-300"
                     >
                       <X size={12} />
