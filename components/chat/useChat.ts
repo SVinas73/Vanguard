@@ -118,13 +118,19 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
       const { data, error: msgError } = await supabase
         .from('chat_mensajes')
         .select('*')
-        .eq('conversacion_id', conversacionId)
-        .eq('eliminado', false)
-        .order('created_at', { ascending: true });
+        .eq('conversacion_id', conversacionId);
 
       if (msgError) throw msgError;
 
-      setMensajes((data || []).map(m => ({
+      const mensajesFiltrados = (data || [])
+        .filter(m => !m.eliminado)
+        .sort((a, b) => {
+          const dateA = a.created_at || a.creado_at || '';
+          const dateB = b.created_at || b.creado_at || '';
+          return dateA.localeCompare(dateB);
+        });
+
+      setMensajes(mensajesFiltrados.map(m => ({
         ...m,
         adjuntos: m.adjuntos || [],
         menciones: m.menciones || [],
@@ -359,6 +365,21 @@ export function useChat({ userEmail, userName }: UseChatOptions) {
 
       // Clear reply state
       setReplyingTo(null);
+
+      // Add message to local state immediately (don't rely solely on Realtime)
+      if (mensaje) {
+        const nuevoMsg: ChatMensaje = {
+          ...mensaje,
+          adjuntos: mensaje.adjuntos || [],
+          menciones: mensaje.menciones || [],
+          leido_por: mensaje.leido_por || [],
+          reacciones: mensaje.reacciones || {},
+        };
+        setMensajes(prev => {
+          if (prev.some(m => m.id === nuevoMsg.id)) return prev;
+          return [...prev, nuevoMsg];
+        });
+      }
 
       return mensaje ? {
         ...mensaje,
