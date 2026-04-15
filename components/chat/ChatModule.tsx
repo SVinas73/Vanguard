@@ -96,6 +96,10 @@ export default function ChatModule() {
   const [creando, setCreando] = useState(false);
   const [archivosSeleccionados, setArchivosSeleccionados] = useState<File[]>([]);
   const [subiendoArchivos, setSubiendoArchivos] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionSuggestions, setMentionSuggestions] = useState<{ email: string; name: string }[]>([]);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionCursorPos, setMentionCursorPos] = useState(0);
 
   const mensajesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -113,6 +117,62 @@ export default function ChatModule() {
     }, 300);
     return () => clearTimeout(timeout);
   }, [searchQuery, buscarConversaciones]);
+
+  // Buscar usuarios para @menciones
+  useEffect(() => {
+    if (!mentionQuery || mentionQuery.length < 1) {
+      setMentionSuggestions([]);
+      setShowMentions(false);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      const { data } = await supabase
+        .from('users')
+        .select('email, name')
+        .or(`email.ilike.%${mentionQuery}%,name.ilike.%${mentionQuery}%`)
+        .neq('email', user?.email || '')
+        .limit(5);
+      if (data && data.length > 0) {
+        setMentionSuggestions(data);
+        setShowMentions(true);
+      } else {
+        setShowMentions(false);
+      }
+    }, 200);
+    return () => clearTimeout(timeout);
+  }, [mentionQuery, user?.email]);
+
+  // Detectar @ en el input
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart || 0;
+    setNuevoMensaje(value);
+
+    // Check if user just typed @ or is typing after @
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const atIndex = textBeforeCursor.lastIndexOf('@');
+    if (atIndex !== -1 && (atIndex === 0 || textBeforeCursor[atIndex - 1] === ' ')) {
+      const query = textBeforeCursor.substring(atIndex + 1);
+      if (!query.includes(' ') && query.length <= 30) {
+        setMentionQuery(query);
+        setMentionCursorPos(atIndex);
+        return;
+      }
+    }
+    setMentionQuery('');
+    setShowMentions(false);
+  };
+
+  const handleSelectMention = (u: { email: string; name: string }) => {
+    const before = nuevoMensaje.substring(0, mentionCursorPos);
+    const afterAt = nuevoMensaje.substring(mentionCursorPos);
+    const afterMention = afterAt.indexOf(' ') >= 0 ? afterAt.substring(afterAt.indexOf(' ')) : '';
+    const newValue = `${before}@${u.name || u.email.split('@')[0]} ${afterMention}`;
+    setNuevoMensaje(newValue);
+    setShowMentions(false);
+    setMentionQuery('');
+    inputRef.current?.focus();
+  };
 
   // Cerrar context menu al hacer click fuera
   useEffect(() => {
@@ -146,6 +206,28 @@ export default function ChatModule() {
       contenido,
       adjuntos: adjuntos.length > 0 ? adjuntos : undefined,
     });
+
+    // Send notifications for @mentions
+    if (contenido && conversacionActiva.participantes) {
+      const { data: allUsers } = await supabase
+        .from('users')
+        .select('email, name')
+        .in('email', conversacionActiva.participantes.filter(p => p !== user?.email));
+
+      if (allUsers) {
+        for (const u of allUsers) {
+          const mentioned = contenido.includes(`@${u.name}`) || contenido.includes(`@${u.email?.split('@')[0]}`);
+          if (mentioned) {
+            await supabase.from('proyecto_notificaciones').insert({
+              usuario_email: u.email,
+              tipo: 'mencion',
+              titulo: `${user?.nombre || user?.email?.split('@')[0]} te mencionó en un chat`,
+              mensaje: contenido.substring(0, 100),
+            });
+          }
+        }
+      }
+    }
 
     setNuevoMensaje('');
     setArchivosSeleccionados([]);
@@ -498,29 +580,8 @@ export default function ChatModule() {
                 </div>
               )}
 
-              {/* File preview */}
-              {archivosSeleccionados.length > 0 && (
-                <div className="px-4 py-2 border-t border-[#1e2028] flex flex-wrap gap-2">
-                  {archivosSeleccionados.map((file, i) => (
-                    <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-[#1c1f26] border border-[#2e323d] rounded-lg text-xs">
-                      {file.type.startsWith('image/') ? <ImageIcon size={14} className="text-blue-400" /> :
-                       file.type.startsWith('video/') ? <Film size={14} className="text-purple-400" /> :
-                       <FileText size={14} className="text-[#64748b]" />}
-                      <span className="text-white max-w-[120px] truncate">{file.name}</span>
-                      <span className="text-[#475569]">{(file.size / 1024).toFixed(0)}KB</span>
-                      <button
-                        onClick={() => setArchivosSeleccionados(prev => prev.filter((_, idx) => idx !== i))}
-                        className="text-[#64748b] hover:text-red-400"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Input de mensaje */}
-              <div className="p-4 border-t border-[#1e2028]">
+              {/* Input area */}
+              <div className="border-t border-[#1e2028]">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -534,72 +595,139 @@ export default function ChatModule() {
                     e.target.value = '';
                   }}
                 />
-                <div className="flex items-end gap-3">
-                  <div className="flex-1 relative">
-                    <textarea
-                      ref={inputRef}
-                      value={nuevoMensaje}
-                      onChange={(e) => setNuevoMensaje(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder={t('chat.typeMessage')}
-                      rows={1}
-                      className="w-full px-4 py-3 bg-[#1c1f26] border border-[#2e323d] rounded-xl text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-blue-500 resize-none"
-                      style={{ minHeight: '48px', maxHeight: '120px' }}
-                    />
-                    <div className="absolute right-2 bottom-2 flex items-center gap-1">
-                      <button className="p-1.5 rounded-md hover:bg-[#242830] text-[#64748b]">
-                        <AtSign size={16} />
-                      </button>
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="p-1.5 rounded-md hover:bg-[#242830] text-[#64748b]"
-                      >
-                        <Paperclip size={16} />
-                      </button>
-                      <button
-                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className="p-1.5 rounded-md hover:bg-[#242830] text-[#64748b]"
-                      >
-                        <Smile size={16} />
-                      </button>
-                    </div>
 
-                    {/* Emoji Picker */}
-                    {showEmojiPicker && (
-                      <div className="absolute bottom-12 right-0 bg-[#1c1f26] border border-[#2e323d] rounded-xl p-3 w-72 max-h-60 overflow-y-auto z-50 shadow-xl">
-                        {EMOJI_CATEGORIES.map((cat) => (
-                          <div key={cat.name} className="mb-2">
-                            <div className="text-xs text-[#64748b] mb-1">{cat.name}</div>
-                            <div className="flex flex-wrap gap-1">
-                              {cat.emojis.map((e) => (
-                                <button
-                                  key={e}
-                                  onClick={() => {
-                                    setNuevoMensaje((prev) => prev + e);
-                                    setShowEmojiPicker(false);
-                                  }}
-                                  className="p-1 hover:bg-[#242830] rounded text-lg"
-                                >
-                                  {e}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                {/* Toolbar row: actions left, send button right */}
+                <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        const pos = inputRef.current?.selectionStart || nuevoMensaje.length;
+                        const before = nuevoMensaje.substring(0, pos);
+                        const after = nuevoMensaje.substring(pos);
+                        const needsSpace = before.length > 0 && !before.endsWith(' ');
+                        setNuevoMensaje(`${before}${needsSpace ? ' ' : ''}@${after}`);
+                        setTimeout(() => {
+                          inputRef.current?.focus();
+                          const newPos = pos + (needsSpace ? 2 : 1);
+                          inputRef.current?.setSelectionRange(newPos, newPos);
+                        }, 0);
+                      }}
+                      className="p-1.5 rounded-md hover:bg-[#242830] text-[#64748b]"
+                      title="Mencionar usuario"
+                    >
+                      <AtSign size={16} />
+                    </button>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="p-1.5 rounded-md hover:bg-[#242830] text-[#64748b]"
+                      title="Adjuntar archivo"
+                    >
+                      <Paperclip size={16} />
+                    </button>
+                    <button
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="p-1.5 rounded-md hover:bg-[#242830] text-[#64748b]"
+                      title="Emoji"
+                    >
+                      <Smile size={16} />
+                    </button>
                   </div>
                   <button
                     onClick={handleEnviarMensaje}
                     disabled={(!nuevoMensaje.trim() && archivosSeleccionados.length === 0) || subiendoArchivos}
-                    className="p-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-[#1c1f26] disabled:text-[#475569] text-white transition-colors"
+                    className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-[#1c1f26] disabled:text-[#475569] text-white text-sm font-medium transition-colors"
                   >
                     {subiendoArchivos ? (
-                      <div className="w-[18px] h-[18px] border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <Send size={18} />
+                      <>
+                        <Send size={14} />
+                        Enviar
+                      </>
                     )}
                   </button>
+                </div>
+
+                {/* File preview chips */}
+                {archivosSeleccionados.length > 0 && (
+                  <div className="px-4 py-1.5 flex flex-wrap gap-2">
+                    {archivosSeleccionados.map((file, i) => (
+                      <div key={i} className="flex items-center gap-2 px-2 py-1 bg-[#1c1f26] border border-[#2e323d] rounded-lg text-xs">
+                        {file.type.startsWith('image/') ? <ImageIcon size={14} className="text-blue-400" /> :
+                         file.type.startsWith('video/') ? <Film size={14} className="text-purple-400" /> :
+                         <FileText size={14} className="text-[#64748b]" />}
+                        <span className="text-white max-w-[120px] truncate">{file.name}</span>
+                        <span className="text-[#475569]">{(file.size / 1024).toFixed(0)}KB</span>
+                        <button
+                          onClick={() => setArchivosSeleccionados(prev => prev.filter((_, idx) => idx !== i))}
+                          className="text-[#64748b] hover:text-red-400"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Textarea */}
+                <div className="px-4 pb-3 relative">
+                  <textarea
+                    ref={inputRef}
+                    value={nuevoMensaje}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder={t('chat.typeMessage')}
+                    rows={1}
+                    className="w-full px-4 py-3 bg-[#1c1f26] border border-[#2e323d] rounded-xl text-sm text-white placeholder:text-[#475569] focus:outline-none focus:border-blue-500 resize-none"
+                    style={{ minHeight: '48px', maxHeight: '120px' }}
+                  />
+
+                  {/* @Mention suggestions */}
+                  {showMentions && mentionSuggestions.length > 0 && (
+                    <div className="absolute bottom-full left-4 right-4 mb-1 bg-[#1c1f26] border border-[#2e323d] rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
+                      {mentionSuggestions.map((u) => (
+                        <button
+                          key={u.email}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => handleSelectMention(u)}
+                          className="w-full px-3 py-2 text-left hover:bg-[#242830] flex items-center gap-3"
+                        >
+                          <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-semibold flex-shrink-0">
+                            {(u.name || u.email).charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-sm text-white truncate">{u.name || u.email.split('@')[0]}</div>
+                            <div className="text-xs text-[#64748b] truncate">{u.email}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Emoji Picker */}
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-full left-4 mb-1 bg-[#1c1f26] border border-[#2e323d] rounded-xl p-3 w-72 max-h-60 overflow-y-auto z-50 shadow-xl">
+                      {EMOJI_CATEGORIES.map((cat) => (
+                        <div key={cat.name} className="mb-2">
+                          <div className="text-xs text-[#64748b] mb-1">{cat.name}</div>
+                          <div className="flex flex-wrap gap-1">
+                            {cat.emojis.map((e) => (
+                              <button
+                                key={e}
+                                onClick={() => {
+                                  setNuevoMensaje((prev) => prev + e);
+                                  setShowEmojiPicker(false);
+                                }}
+                                className="p-1 hover:bg-[#242830] rounded text-lg"
+                              >
+                                {e}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </>
