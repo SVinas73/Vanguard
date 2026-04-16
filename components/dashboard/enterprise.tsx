@@ -391,8 +391,8 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
             </div>
           </div>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold" style={{
-            background: isUp ? 'rgba(201,68,68,0.1)' : 'rgba(61,154,95,0.1)',
-            color: isUp ? '#cc5555' : '#4aaa73',
+            background: isUp ? 'rgba(61,154,95,0.1)' : 'rgba(201,68,68,0.1)',
+            color: isUp ? '#4aaa73' : '#cc5555',
           }}>
             <span>{isUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}</span>
             <span>{trend}%</span>
@@ -993,7 +993,27 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
     const activeCodes = new Set(movements.filter((m) => new Date(m.timestamp) >= sixtyDaysAgo).map((m) => m.codigo));
     const inmovilizados = products.filter((p) => !activeCodes.has(p.codigo) && p.stock > 0);
     const capitalInmovilizado = inmovilizados.reduce((sum, p) => sum + p.stock * (p.costoPromedio ?? p.precio), 0);
-    return { total: totalValue, prev30d: totalValue * 1.05, categorias, capitalInmovilizado, productosInmovilizados: inmovilizados.length };
+
+    // Calculate real prev30d: current value + net of last 30 days movements
+    // If entries came in (value went up), the previous value was lower
+    // If exits went out (value went down), the previous value was higher
+    const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const productCostMap = new Map(products.map((p) => [p.codigo, p.costoPromedio ?? p.precio]));
+    let netValueChange = 0;
+    movements.forEach((m) => {
+      if (new Date(m.timestamp) >= thirtyDaysAgo) {
+        const cost = productCostMap.get(m.codigo) ?? 0;
+        if (m.tipo === 'entrada') {
+          netValueChange += m.cantidad * cost;
+        } else {
+          netValueChange -= m.cantidad * cost;
+        }
+      }
+    });
+    // prev30d = current value - net change from last 30 days
+    const prev30d = totalValue - netValueChange;
+
+    return { total: totalValue, prev30d: prev30d > 0 ? prev30d : 0, categorias, capitalInmovilizado, productosInmovilizados: inmovilizados.length };
   }, [products, movements]);
   return <InventoryValuePanel data={data} />;
 }

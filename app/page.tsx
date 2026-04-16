@@ -195,41 +195,68 @@ export default function HomePage() {
     // Calcular rotación promedio (días de inventario)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+
     const salesLast30Days = movements
       .filter(m => m.tipo === 'salida' && new Date(m.timestamp) >= thirtyDaysAgo)
       .reduce((sum, m) => sum + m.cantidad, 0);
-    
+
     const dailyAvgSales = salesLast30Days / 30;
     const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
     const avgRotation = dailyAvgSales > 0 ? Math.round(totalStock / dailyAvgSales) : 0;
 
+    // Trend: movements today vs yesterday
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayMovements = movements.filter(
+      (m) => new Date(m.timestamp).toDateString() === yesterday.toDateString()
+    ).length;
+
+    const movementTrend = yesterdayMovements > 0
+      ? { value: Math.round(((todayMovements - yesterdayMovements) / yesterdayMovements) * 100), label: 'vs ayer' }
+      : undefined;
+
+    // Trend: rotation current 30d vs previous 30d (lower = better for rotation days)
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const salesPrev30Days = movements
+      .filter(m => m.tipo === 'salida' && new Date(m.timestamp) >= sixtyDaysAgo && new Date(m.timestamp) < thirtyDaysAgo)
+      .reduce((sum, m) => sum + m.cantidad, 0);
+    const prevDailyAvg = salesPrev30Days / 30;
+    const prevRotation = prevDailyAvg > 0 ? Math.round(totalStock / prevDailyAvg) : 0;
+
+    // For rotation, lower days = faster turnover = good, so we invert the sign
+    const rotationTrend = (avgRotation > 0 && prevRotation > 0)
+      ? { value: Math.round(((prevRotation - avgRotation) / prevRotation) * 100), label: 'vs mes ant.' }
+      : undefined;
+
     return [
-      { 
-        label: t('dashboard.activeProducts', 'Productos Activos'), 
-        value: formatNumber(activeProducts), 
-        icon: <Package size={24} />, 
+      {
+        label: t('dashboard.activeProducts', 'Productos Activos'),
+        value: formatNumber(activeProducts),
+        icon: <Package size={24} />,
         color: 'emerald',
         subtitle: 'SKUs en catálogo'
       },
-      { 
-        label: t('dashboard.avgRotation', 'Rotación Promedio'), 
-        value: avgRotation > 0 ? `${avgRotation}d` : '—', 
-        icon: <TrendingUp size={24} />, 
+      {
+        label: t('dashboard.avgRotation', 'Rotación Promedio'),
+        value: avgRotation > 0 ? `${avgRotation}d` : '—',
+        icon: <TrendingUp size={24} />,
         color: 'cyan',
-        subtitle: t('dashboard.daysOfInventory', 'días de inventario')
+        subtitle: t('dashboard.daysOfInventory', 'días de inventario'),
+        trend: rotationTrend,
       },
-      { 
-        label: t('dashboard.lowStock', 'Stock Bajo'), 
-        value: lowStockCount.toString(), 
-        icon: <AlertTriangle size={24} />, 
-        color: lowStockCount > 0 ? 'amber' : 'slate' 
+      {
+        label: t('dashboard.lowStock', 'Stock Bajo'),
+        value: lowStockCount.toString(),
+        icon: <AlertTriangle size={24} />,
+        color: lowStockCount > 0 ? 'amber' : 'slate'
       },
-      { 
-        label: t('dashboard.movementsToday', 'Movimientos Hoy'), 
-        value: todayMovements.toString(), 
-        icon: <ArrowLeftRight size={24} />, 
-        color: 'purple' 
+      {
+        label: t('dashboard.movementsToday', 'Movimientos Hoy'),
+        value: todayMovements.toString(),
+        icon: <ArrowLeftRight size={24} />,
+        color: 'purple',
+        trend: movementTrend,
       },
     ];
   }, [products, movements, t]);
