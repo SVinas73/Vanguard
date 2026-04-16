@@ -9,7 +9,7 @@ import { AccionesCorrectivas } from '@/components/qms';
 import { Certificados } from '@/components/qms';
 import { QMSModule } from '@/components/qms';
 import { ProyectosDashboard } from '@/components/proyectos';
-import { WelcomeHeader, StatsGrid, InsightsPanel } from '@/components/dashboard';
+import { WelcomeHeader, StatsGrid, InsightsPanel, CrossModuleSummary, InventoryTrendChart, PeriodSelector } from '@/components/dashboard';
 import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
 import { StockDashboard } from '@/components/stock';
 import { ImportCSV } from '@/components/import';
@@ -35,8 +35,8 @@ import AssemblyDashboard from '@/components/assembly/AssemblyDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
-import { Bot, Search, ArrowLeftRight, Plus, Package, User, Clock, DollarSign, TrendingUp, Box, AlertTriangle } from 'lucide-react';
-import React, { useState, useMemo, useEffect } from 'react';
+import { Bot, Search, ArrowLeftRight, Plus, Package, User, Clock, DollarSign, TrendingUp, Box, AlertTriangle, RefreshCw, ShoppingCart, FileText, Wrench } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { TabType, CategorySuggestion, AnomalyResult, Product, Almacen } from '@/types';
 import { useInventoryStore } from '@/store';
 import { CATEGORIA_NOMBRES } from '@/lib/constants';
@@ -91,6 +91,8 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [dashboardPeriod, setDashboardPeriod] = useState('30d');
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   // Persistent filters
   useEffect(() => {
@@ -165,6 +167,27 @@ export default function HomePage() {
       fetchAlmacenes();
     }
   }, [user, isInitialized, fetchProducts, fetchMovements]);
+
+  // Auto-refresh every 5 minutes
+  useEffect(() => {
+    if (!user || !isInitialized) return;
+    const interval = setInterval(() => {
+      fetchProducts();
+      fetchMovements();
+      setLastRefresh(new Date());
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [user, isInitialized, fetchProducts, fetchMovements]);
+
+  const handleManualRefresh = useCallback(() => {
+    fetchProducts();
+    fetchMovements();
+    refreshPredictions();
+    setLastRefresh(new Date());
+  }, [fetchProducts, fetchMovements, refreshPredictions]);
+
+  // Period days mapping
+  const periodDays = dashboardPeriod === '7d' ? 7 : dashboardPeriod === '90d' ? 90 : 30;
 
   // Filtered products with semantic search
   const filteredProducts = useMemo(() => {
@@ -501,19 +524,36 @@ export default function HomePage() {
         {/* ==================== DASHBOARD ==================== */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            {/* Welcome Header */}
-            <WelcomeHeader 
-              userName={user?.nombre || user?.email?.split('@')[0]}
-              products={products}
-              predictions={predictions}
-            />
+            {/* Welcome Header + Period Selector + Refresh */}
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div className="flex-1 min-w-0">
+                <WelcomeHeader
+                  userName={user?.nombre || user?.email?.split('@')[0]}
+                  products={products}
+                  predictions={predictions}
+                />
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0 pt-1">
+                <PeriodSelector value={dashboardPeriod} onChange={setDashboardPeriod} />
+                <button
+                  onClick={handleManualRefresh}
+                  className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 transition-all group"
+                  title={`Última actualización: ${lastRefresh.toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' })}`}
+                >
+                  <RefreshCw size={14} className="text-slate-400 group-hover:text-slate-200 transition-colors" />
+                </button>
+              </div>
+            </div>
 
             {/* Stats */}
             <StatsGrid stats={stats} products={products} movements={movements} />
 
+            {/* Cross-Module Summary */}
+            <CrossModuleSummary onNavigate={(tab) => setActiveTab(tab as TabType)} />
+
             {/* Enterprise Panels Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <InventoryValueCard 
+              <InventoryValueCard
                 products={products}
                 movements={movements}
                 onCategoryClick={(category: string) => {
@@ -521,7 +561,7 @@ export default function HomePage() {
                   setActiveTab('stock');
                 }}
               />
-              <StockAlertsPanel 
+              <StockAlertsPanel
                 products={products}
                 predictions={predictions}
                 onProductClick={(product: Product) => handleOpenEdit(product)}
@@ -531,29 +571,70 @@ export default function HomePage() {
               />
             </div>
 
-            {/* Activity + Chart Row */}
+            {/* Inventory Trend Chart */}
+            <InventoryTrendChart
+              movements={movements}
+              products={products}
+              days={periodDays}
+            />
+
+            {/* Activity + Consumption Chart Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2">
-                <div
-                  className="rounded-xl p-5 bg-slate-900 border border-slate-800"
-                >
+                <div className="rounded-xl p-5 bg-slate-900 border border-slate-800">
                   <ConsumptionChart movements={movements} products={products} />
                 </div>
               </div>
-              <RecentActivityPanel 
+              <RecentActivityPanel
                 movements={movements}
                 products={products}
                 maxItems={8}
               />
             </div>
-            
+
             {/* AI Insights */}
-            <InsightsPanel 
+            <InsightsPanel
               products={products}
               movements={movements}
               predictions={predictions}
               onNavigate={(tab) => setActiveTab(tab as TabType)}
             />
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <button
+                onClick={() => setShowNewProduct(true)}
+                className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left group"
+              >
+                <Plus size={20} className="text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
+                <div className="text-sm font-semibold text-slate-200">Nuevo Producto</div>
+                <div className="text-xs text-slate-500">Agregar al catálogo</div>
+              </button>
+              <button
+                onClick={() => setShowNewMovement(true)}
+                className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left group"
+              >
+                <ArrowLeftRight size={20} className="text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
+                <div className="text-sm font-semibold text-slate-200">Registrar Movimiento</div>
+                <div className="text-xs text-slate-500">Entrada o salida</div>
+              </button>
+              <button
+                onClick={() => setActiveTab('compras')}
+                className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left group"
+              >
+                <ShoppingCart size={20} className="text-amber-400 mb-2 group-hover:scale-110 transition-transform" />
+                <div className="text-sm font-semibold text-slate-200">Orden de Compra</div>
+                <div className="text-xs text-slate-500">Crear nueva orden</div>
+              </button>
+              <button
+                onClick={() => setActiveTab('reportes')}
+                className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left group"
+              >
+                <FileText size={20} className="text-violet-400 mb-2 group-hover:scale-110 transition-transform" />
+                <div className="text-sm font-semibold text-slate-200">Reportes</div>
+                <div className="text-xs text-slate-500">Generar informes</div>
+              </button>
+            </div>
 
             {/* AI Panels */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

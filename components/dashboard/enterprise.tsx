@@ -127,87 +127,6 @@ interface PeriodOption {
   label: string;
 }
 
-// ============================================
-// MOCK DATA
-// ============================================
-
-const MOCK_DATA: DashboardData = {
-  kpis: {
-    productosActivos: 143,
-    productosActivosPrev: 138,
-    rotacionPromedio: 193,
-    rotacionPromedioPrev: 210,
-    stockBajo: 115,
-    stockBajoPrev: 98,
-    movimientosHoy: 12,
-    movimientosAyer: 8,
-  },
-  valorInventario: {
-    total: 37011.53,
-    prev30d: 39796.77,
-    categorias: [
-      { nombre: 'Estación de Servicio', valor: 20356, porcentaje: 55, color: '#3d9a5f' },
-      { nombre: 'Ferretería', valor: 11473, porcentaje: 31, color: '#4a7fb5' },
-      { nombre: 'Papelería', valor: 2221, porcentaje: 6, color: '#7b5ba8' },
-      { nombre: 'Ediltor', valor: 1481, porcentaje: 4, color: '#c8872e' },
-      { nombre: 'Otros', valor: 1481, porcentaje: 4, color: '#b05580' },
-    ],
-    capitalInmovilizado: 12270.95,
-    productosInmovilizados: 39,
-  },
-  alertas: {
-    criticas: 77,
-    advertencias: 36,
-    bajas: 6,
-    total: 119,
-    items: [
-      { codigo: 'AGEN', descripcion: 'AGENDA INGCO', stock: 0, stockMin: 5, dias: 0, nivel: 'critical' },
-      { codigo: 'AGUARR', descripcion: 'AGUARRAS', stock: 0, stockMin: 10, dias: 0, nivel: 'critical' },
-      { codigo: 'ARSD68301', descripcion: 'PUNTAS LLAVE DE IMPACTO', stock: 0, stockMin: 3, dias: 0, nivel: 'critical' },
-      { codigo: 'BOLBASU', descripcion: 'BOLSA BASURA', stock: 2, stockMin: 15, dias: 2, nivel: 'critical' },
-      { codigo: 'CLAV2', descripcion: 'CLAVOS 2 PULGADA', stock: 5, stockMin: 20, dias: 4, nivel: 'warning' },
-      { codigo: 'CINT3', descripcion: 'CINTERO WADFOW', stock: 3, stockMin: 8, dias: 5, nivel: 'warning' },
-    ],
-  },
-  topConsumo: [
-    { codigo: 'PRE40', descripcion: 'Preset 40L', cantidad: 58, prevCantidad: 42, categoria: 'Estación' },
-    { codigo: 'HCT2001', descripcion: 'Herramienta Corte 2001', cantidad: 34, prevCantidad: 30, categoria: 'Ferretería' },
-    { codigo: 'PRE20', descripcion: 'Preset 20L', cantidad: 20, prevCantidad: 25, categoria: 'Estación' },
-    { codigo: 'QUER', descripcion: 'Queroseno', cantidad: 17, prevCantidad: 14, categoria: 'Estación' },
-    { codigo: 'NYL', descripcion: 'Nylon Industrial', cantidad: 14, prevCantidad: 16, categoria: 'Ferretería' },
-    { codigo: 'BOLBASU', descripcion: 'Bolsa Basura', cantidad: 11, prevCantidad: 9, categoria: 'Papelería' },
-    { codigo: 'TCONTR3', descripcion: 'Tornillo Contr. 3mm', cantidad: 10, prevCantidad: 12, categoria: 'Ferretería' },
-    { codigo: 'LENPRO', descripcion: 'Lentes Protección', cantidad: 8, prevCantidad: 5, categoria: 'Ferretería' },
-  ],
-  actividad: [
-    { tipo: 'salida', descripcion: 'BOLSA BASURA', cantidad: 3, usuario: 'admin', tiempo: '4d' },
-    { tipo: 'salida', descripcion: 'CINTERO WADFOW', cantidad: 3, usuario: 'admin', tiempo: '4d' },
-    { tipo: 'salida', descripcion: 'MANILAS X1000', cantidad: 2, usuario: 'admin', tiempo: '5d' },
-    { tipo: 'salida', descripcion: 'MANILAS X1000', cantidad: 2, usuario: 'admin', tiempo: '5d' },
-    { tipo: 'entrada', descripcion: 'MARCADORES PERM.', cantidad: 10, usuario: 'sistema', tiempo: '6d' },
-    { tipo: 'entrada', descripcion: 'PRESET 40L', cantidad: 50, usuario: 'admin', tiempo: '7d' },
-  ],
-  insights: [
-    {
-      tipo: 'urgente',
-      titulo: '77 productos sin stock',
-      descripcion: 'Más de la mitad del catálogo necesita reposición urgente. Esto representa una pérdida potencial de ventas.',
-      accion: 'Crear orden de compra',
-    },
-    {
-      tipo: 'tendencia',
-      titulo: 'Preset 40L creció +38%',
-      descripcion: 'El producto más consumido aceleró su demanda vs. el mes anterior. Asegurar stock.',
-      accion: 'Ver detalle',
-    },
-    {
-      tipo: 'alerta',
-      titulo: '$12.270 inmovilizados',
-      descripcion: '39 productos sin movimiento en 60 días representan el 33% del valor total.',
-      accion: 'Ver productos',
-    },
-  ],
-};
 
 // ============================================
 // MICRO CHART COMPONENTS
@@ -798,11 +717,11 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
   }, [actividad]);
 
   return (
-    <div className="relative rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.8))', border: '1px solid rgba(51,65,85,0.3)' }}>
+    <div className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-800">
       <div className="relative p-6">
         <div className="flex items-center gap-3 mb-5">
-          <div className="p-2.5 rounded-xl" style={{ background: 'rgba(107,84,136,0.12)' }}>
-            <Activity size={18} className="text-violet-400" />
+          <div className="p-2.5 rounded-lg bg-slate-800">
+            <Activity size={18} className="text-slate-400" />
           </div>
           <div>
             <h3 className="font-semibold text-slate-200 text-sm">Actividad Reciente</h3>
@@ -859,113 +778,6 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
   );
 }
 
-// ============================================
-// MAIN DASHBOARD
-// ============================================
-
-export default function VanguardDashboard() {
-  const [mounted, setMounted] = useState<boolean>(false);
-  useEffect(() => setMounted(true), []);
-
-  const data = MOCK_DATA;
-
-  return (
-    <div className="min-h-screen text-white" style={{ background: '#0a0e1a', fontFamily: "'DM Sans', 'SF Pro Display', -apple-system, sans-serif" }}>
-      {/* Load font */}
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
-
-      {/* Ambient background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(61,154,95,0.03)' }} />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(6,182,212,0.03)' }} />
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(107,84,136,0.02)' }} />
-      </div>
-
-      <div className="relative max-w-[1600px] mx-auto p-6 lg:p-8">
-        {/* Page header */}
-        <div className={`mb-8 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="flex items-end justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white mb-1">
-                Bienvenido, Santiago
-              </h1>
-              <p className="text-sm" style={{ color: 'rgba(148,163,184,0.6)' }}>
-                Resumen de tu negocio · {new Date().toLocaleDateString('es-UY', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs" style={{ background: 'rgba(201,68,68,0.08)', border: '1px solid rgba(201,68,68,0.15)', color: '#cc5555' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
-                {data.alertas.criticas} críticas
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI Row */}
-        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <KPICard
-            label="Productos"
-            value={data.kpis.productosActivos}
-            prevValue={data.kpis.productosActivosPrev}
-            icon={<Package size={16} />}
-            color="emerald"
-            sparkData={[130, 132, 128, 135, 138, 140, 143]}
-            description="SKUs activos en catálogo"
-          />
-          <KPICard
-            label="Rotación"
-            value={data.kpis.rotacionPromedio}
-            prevValue={data.kpis.rotacionPromedioPrev}
-            suffix="días"
-            icon={<RefreshCw size={16} />}
-            color="cyan"
-            sparkData={[220, 215, 210, 205, 200, 195, 193]}
-            description="Promedio de días en inventario"
-          />
-          <KPICard
-            label="Stock Bajo"
-            value={data.kpis.stockBajo}
-            prevValue={data.kpis.stockBajoPrev}
-            icon={<AlertTriangle size={16} />}
-            color="rose"
-            sparkData={[85, 88, 92, 95, 98, 108, 115]}
-            description="Bajo mínimo requerido"
-          />
-          <KPICard
-            label="Movimientos"
-            value={data.kpis.movimientosHoy}
-            prevValue={data.kpis.movimientosAyer}
-            icon={<Zap size={16} />}
-            color="violet"
-            sparkData={[5, 8, 12, 6, 10, 8, 12]}
-            description="Operaciones hoy"
-          />
-        </div>
-
-        {/* Main content grid */}
-        <div className={`grid grid-cols-1 lg:grid-cols-12 gap-5 transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          {/* Left column */}
-          <div className="lg:col-span-5 space-y-5">
-            <InventoryValuePanel data={data.valorInventario} />
-            <InsightsPanel insights={data.insights} />
-          </div>
-
-          {/* Center column */}
-          <div className="lg:col-span-4 space-y-5">
-            <TopConsumptionPanel data={data.topConsumo} />
-          </div>
-
-          {/* Right column */}
-          <div className="lg:col-span-3 space-y-5">
-            <StockAlertsPanelLocal alertas={data.alertas} />
-            <RecentActivityPanelLocal actividad={data.actividad} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ============================================
 // PUBLIC EXPORTS para page.tsx

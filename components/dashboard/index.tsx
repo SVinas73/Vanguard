@@ -930,6 +930,10 @@ interface StatCardProps {
   subtitle?: string;
 }
 
+export { CrossModuleSummary } from './CrossModuleSummary';
+export { InventoryTrendChart } from './InventoryTrendChart';
+export { PeriodSelector } from './PeriodSelector';
+
 export function StatCard({ label, value, icon, color, trend, subtitle }: StatCardProps) {
   const kpiColor = (
     {
