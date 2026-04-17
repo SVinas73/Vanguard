@@ -745,9 +745,7 @@ export default function HomePage() {
 
         {/* ==================== AUDITORÍA ==================== */}
         {activeTab === 'auditoria' && (
-          <div className="max-w-5xl mx-auto">
-            <AuditLogPanel />
-          </div>
+          <AuditLogPanel />
         )}
 
         {/* ==================== INTEGRACIONES ==================== */}
