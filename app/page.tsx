@@ -441,16 +441,18 @@ export default function HomePage() {
 
   // Edit product handler
   const handleEditProduct = () => {
-    console.log('handleEditProduct called', editProduct);
     if (!editProduct) return;
-    updateProduct(editProduct.codigo, {
+    const updates: Partial<Product> = {
       descripcion: editProduct.descripcion,
       precio: editProduct.precio,
       categoria: editProduct.categoria,
       stockMinimo: editProduct.stockMinimo,
-      stock: editProduct.stock,
       almacenId: editProduct.almacenId,
-    }, user?.email || 'Sistema');
+    };
+    if (isAdmin) {
+      updates.stock = editProduct.stock;
+    }
+    updateProduct(editProduct.codigo, updates, user?.email || 'Sistema');
 
     setEditProduct(null);
     setShowEditProduct(false);
@@ -999,13 +1001,19 @@ export default function HomePage() {
                 placeholder={t('common.select')}
               />
 
-              <Input
-                label={t('stock.currentStock')}
-                type="number"
-                value={editProduct.stock.toString()}
-                onChange={(e) => setEditProduct({ ...editProduct, stock: parseInt(e.target.value) || 0 })}
-                placeholder="0"
-              />
+              <div>
+                <Input
+                  label={t('stock.currentStock')}
+                  type="number"
+                  value={editProduct.stock.toString()}
+                  onChange={(e) => setEditProduct({ ...editProduct, stock: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
+                  disabled={!isAdmin}
+                />
+                {!isAdmin && (
+                  <p className="text-xs text-slate-500 mt-1">Solo administradores pueden editar stock. Usa Movimientos para entradas/salidas.</p>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-3 mt-6">

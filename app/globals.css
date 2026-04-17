@@ -634,6 +634,48 @@ tr:hover td {
   background-clip: text;
 }
 
+/* ---- Additional light-mode text fixes ---- */
+/* Font-mono text (codes, prices) — ensure dark enough */
+.light-mode .font-mono { color: #253040; }
+/* Placeholder overrides for Tailwind placeholder classes */
+.light-mode .placeholder-slate-500::placeholder,
+.light-mode .placeholder-slate-600::placeholder { color: #8b95a5 !important; }
+/* text-xs / text-sm secondary info that uses opacity */
+.light-mode .text-slate-400\/50, .light-mode .text-slate-500\/50 { color: #7a8494 !important; }
+.light-mode .text-slate-400\/70, .light-mode .text-slate-500\/70 { color: #636d7e !important; }
+/* Strong/bold inside light text - make them pop */
+.light-mode .text-slate-400 strong, .light-mode .text-slate-500 strong,
+.light-mode .text-slate-400 b, .light-mode .text-slate-500 b { color: #1a2030 !important; }
+/* text-[10px] and text-[11px] tiny labels */
+.light-mode .text-\[10px\], .light-mode .text-\[11px\], .light-mode .text-\[9px\] { color: #5a6478; }
+/* Pink/orange/green category badge text — keep distinctive but readable */
+.light-mode .text-orange-400 { color: #b86e1a !important; }
+.light-mode .text-pink-400 { color: #a83d6f !important; }
+.light-mode .text-green-400 { color: #2a7a45 !important; }
+/* Additional divide opacity variants */
+.light-mode .divide-slate-800\/50 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(216,220,229,0.6) !important; }
+/* Tooltip content style overrides (recharts etc) */
+.light-mode [style*="background: rgba(15,23,42"],
+.light-mode [style*="background: rgba(15, 23, 42"] {
+  background: rgba(255,255,255,0.97) !important;
+  border-color: #d1d5de !important;
+}
+.light-mode [style*="background: rgba(15,23,42"] *,
+.light-mode [style*="background: rgba(15, 23, 42"] * {
+  color: #2e3a4d !important;
+}
+/* Inline style colors used in components — override via attribute selectors */
+.light-mode [style*="color: rgb(148, 163, 184)"],
+.light-mode [style*="color: rgba(148,163,184"] { color: #4a5468 !important; }
+/* Active tab / period selector green highlight */
+.light-mode [style*="color: '#4aaa73'"],
+.light-mode [style*="color: rgb(74, 170, 115)"] { color: #2a7a45 !important; }
+/* Ensure stat card text is dark enough */
+.light-mode .text-2xl.font-bold, .light-mode .text-3xl.font-bold,
+.light-mode .text-xl.font-bold { color: #1a2030; }
+/* Fix focus ring for light mode */
+.light-mode .focus\:ring-slate-500\/20:focus { --tw-ring-color: rgba(59,106,153,0.15) !important; }
+
 /* ============================================
    TAB TRANSITIONS
    ============================================ */
