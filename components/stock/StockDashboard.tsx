@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { Product, Almacen, StockPrediction } from '@/types';
 import { Button, Input, Select, Modal } from '@/components/ui';
 import { ProductTable } from '@/components/productos';
 import { ImportCSV } from '@/components/import';
-import { 
-  Package, Warehouse, Plus, Search, ArrowLeft, 
-  ChevronRight, MapPin, Phone, User, Edit, Trash2,
-  LayoutGrid, List, Settings
+import { QuickMovementModal } from './QuickMovementModal';
+import { useInventoryStore } from '@/store';
+import {
+  Package, Warehouse, Plus, Search, ArrowLeft,
+  ChevronRight, MapPin, User, Edit, Trash2,
+  Layers, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CATEGORIA_NOMBRES } from '@/lib/constants';
@@ -31,7 +33,7 @@ interface StockDashboardProps {
   hasDeletePermission: boolean;
 }
 
-type ViewMode = 'almacenes' | 'productos';
+type ViewMode = 'almacenes' | 'productos' | 'todos';
 
 // ============================================
 // ALMACEN CARD
@@ -215,6 +217,20 @@ export function StockDashboard({
     responsable: '',
   });
 
+  // Quick movement modal state
+  const [movementProduct, setMovementProduct] = useState<Product | null>(null);
+  const [movementTipo, setMovementTipo] = useState<'entrada' | 'salida'>('entrada');
+  const [showMovementModal, setShowMovementModal] = useState(false);
+
+  // Bulk action modal state
+  const [bulkActionType, setBulkActionType] = useState<string | null>(null);
+  const [bulkProducts, setBulkProducts] = useState<Product[]>([]);
+  const [bulkValue, setBulkValue] = useState('');
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
+
+  // Store access
+  const addMovement = useInventoryStore((s) => s.addMovement);
+
   // Load almacenes
   useEffect(() => {
     fetchAlmacenes();
@@ -260,33 +276,32 @@ export function StockDashboard({
     return { counts, sinAlmacen };
   }, [products]);
 
-  // Filtered products based on selected almacén
+  // Filtered products based on selected almacén or "todos" mode
   const filteredProducts = useMemo(() => {
     let result = products;
-    
-    // Filter by almacén
-    if (selectedAlmacen) {
-      result = result.filter(p => p.almacenId === selectedAlmacen.id);
-    } else if (showSinAlmacen) {
-      result = result.filter(p => !p.almacenId);
+
+    if (viewMode === 'productos') {
+      if (selectedAlmacen) {
+        result = result.filter(p => p.almacenId === selectedAlmacen.id);
+      } else if (showSinAlmacen) {
+        result = result.filter(p => !p.almacenId);
+      }
     }
-    
-    // Filter by search
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(p => 
+      result = result.filter(p =>
         p.codigo.toLowerCase().includes(query) ||
         p.descripcion.toLowerCase().includes(query)
       );
     }
-    
-    // Filter by category
+
     if (selectedCategory !== 'all') {
       result = result.filter(p => p.categoria === selectedCategory);
     }
-    
+
     return result;
-  }, [products, selectedAlmacen, showSinAlmacen, searchQuery, selectedCategory]);
+  }, [products, viewMode, selectedAlmacen, showSinAlmacen, searchQuery, selectedCategory]);
 
   // Category options
   const categoryOptions = useMemo(() => {
@@ -306,6 +321,14 @@ export function StockDashboard({
     setSelectedAlmacen(null);
     setShowSinAlmacen(true);
     setViewMode('productos');
+    setSearchQuery('');
+    setSelectedCategory('all');
+  };
+
+  const handleSelectTodos = () => {
+    setSelectedAlmacen(null);
+    setShowSinAlmacen(false);
+    setViewMode('todos');
     setSearchQuery('');
     setSelectedCategory('all');
   };
@@ -373,10 +396,172 @@ export function StockDashboard({
     fetchAlmacenes();
   };
 
+  // Quick movement handlers
+  const handleQuickMovement = useCallback((product: Product, tipo: 'entrada' | 'salida') => {
+    setMovementProduct(product);
+    setMovementTipo(tipo);
+    setShowMovementModal(true);
+  }, []);
+
+  const handleMovementSubmit = useCallback(async (data: {
+    codigo: string;
+    tipo: 'entrada' | 'salida';
+    cantidad: number;
+    notas: string;
+    costoCompra?: number;
+  }) => {
+    await addMovement(
+      { codigo: data.codigo, tipo: data.tipo, cantidad: data.cantidad, notas: data.notas, costoCompra: data.costoCompra },
+      userEmail
+    );
+    onRefreshProducts();
+  }, [addMovement, userEmail, onRefreshProducts]);
+
+  // Bulk action handlers
+  const handleBulkAction = useCallback((action: string, prods: Product[]) => {
+    setBulkActionType(action);
+    setBulkProducts(prods);
+    setBulkValue('');
+  }, []);
+
+  const handleBulkSubmit = useCallback(async () => {
+    if (!bulkActionType || bulkProducts.length === 0) return;
+    setBulkSubmitting(true);
+    try {
+      const codigos = bulkProducts.map(p => p.codigo);
+      if (bulkActionType === 'category' && bulkValue) {
+        await supabase.from('productos').update({ categoria: bulkValue }).in('codigo', codigos);
+      } else if (bulkActionType === 'minStock' && bulkValue) {
+        const val = parseInt(bulkValue);
+        if (!isNaN(val) && val >= 0) {
+          await supabase.from('productos').update({ stock_minimo: val }).in('codigo', codigos);
+        }
+      }
+      onRefreshProducts();
+    } finally {
+      setBulkSubmitting(false);
+      setBulkActionType(null);
+      setBulkProducts([]);
+      setBulkValue('');
+    }
+  }, [bulkActionType, bulkProducts, bulkValue, onRefreshProducts]);
+
   // ============================================
   // RENDER: ALMACENES VIEW
   // ============================================
   
+  // Shared modals rendered in all views
+  const renderModals = () => (
+    <>
+      {/* Quick Movement Modal */}
+      {showMovementModal && movementProduct && (
+        <QuickMovementModal
+          product={movementProduct}
+          tipo={movementTipo}
+          onSubmit={handleMovementSubmit}
+          onClose={() => { setShowMovementModal(false); setMovementProduct(null); }}
+        />
+      )}
+
+      {/* Bulk Action Modal */}
+      <Modal
+        isOpen={!!bulkActionType}
+        onClose={() => { setBulkActionType(null); setBulkProducts([]); setBulkValue(''); }}
+        title={bulkActionType === 'category' ? 'Cambiar Categoría' : 'Cambiar Stock Mínimo'}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">
+            Aplicar a <strong className="text-white">{bulkProducts.length}</strong> productos seleccionados
+          </p>
+          {bulkActionType === 'category' ? (
+            <Select
+              value={bulkValue}
+              onChange={(e) => setBulkValue(e.target.value)}
+              options={[{ value: '', label: 'Seleccionar categoría...' }, ...categoryOptions]}
+            />
+          ) : (
+            <Input
+              type="number"
+              label="Nuevo stock mínimo"
+              value={bulkValue}
+              onChange={(e) => setBulkValue(e.target.value)}
+              placeholder="0"
+              min={0}
+            />
+          )}
+        </div>
+        <div className="flex gap-3 mt-6">
+          <Button variant="secondary" onClick={() => { setBulkActionType(null); setBulkProducts([]); setBulkValue(''); }} className="flex-1">
+            {t('common.cancel')}
+          </Button>
+          <Button onClick={handleBulkSubmit} disabled={!bulkValue || bulkSubmitting} className="flex-1">
+            {bulkSubmitting ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+            Aplicar
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Almacén CRUD Modal */}
+      <Modal
+        isOpen={showAlmacenModal}
+        onClose={() => setShowAlmacenModal(false)}
+        title={editingAlmacen ? t('warehouses.editWarehouse') : t('warehouses.newWarehouse')}
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label={t('warehouses.code')}
+              value={almacenForm.codigo}
+              onChange={(e) => setAlmacenForm({ ...almacenForm, codigo: e.target.value.toUpperCase() })}
+              placeholder="ALM-01"
+              disabled={!!editingAlmacen}
+            />
+            <Input
+              label={t('warehouses.name')}
+              value={almacenForm.nombre}
+              onChange={(e) => setAlmacenForm({ ...almacenForm, nombre: e.target.value })}
+              placeholder="Almacén Principal"
+            />
+          </div>
+          <Input
+            label={t('warehouses.address')}
+            value={almacenForm.direccion}
+            onChange={(e) => setAlmacenForm({ ...almacenForm, direccion: e.target.value })}
+            placeholder="Calle 123"
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label={t('warehouses.city')}
+              value={almacenForm.ciudad}
+              onChange={(e) => setAlmacenForm({ ...almacenForm, ciudad: e.target.value })}
+              placeholder="Montevideo"
+            />
+            <Input
+              label={t('warehouses.phone')}
+              value={almacenForm.telefono}
+              onChange={(e) => setAlmacenForm({ ...almacenForm, telefono: e.target.value })}
+              placeholder="+598 99 123 456"
+            />
+          </div>
+          <Input
+            label={t('warehouses.manager')}
+            value={almacenForm.responsable}
+            onChange={(e) => setAlmacenForm({ ...almacenForm, responsable: e.target.value })}
+            placeholder="Nombre del encargado"
+          />
+        </div>
+        <div className="flex gap-3 mt-6">
+          <Button variant="secondary" onClick={() => setShowAlmacenModal(false)} className="flex-1">
+            {t('common.cancel')}
+          </Button>
+          <Button onClick={handleSaveAlmacen} className="flex-1">
+            {editingAlmacen ? t('common.save') : t('common.create')}
+          </Button>
+        </div>
+      </Modal>
+    </>
+  );
+
   if (viewMode === 'almacenes') {
     return (
       <div className="space-y-6">
@@ -391,8 +576,12 @@ export function StockDashboard({
               <p className="text-sm text-slate-500">{t('stock.selectWarehouse')}</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={handleSelectTodos}>
+              <Layers size={18} className="mr-2" />
+              Todos los productos
+            </Button>
             <Button variant="secondary" onClick={handleNewAlmacen}>
               <Plus size={18} className="mr-2" />
               {t('warehouses.newWarehouse')}
@@ -417,7 +606,7 @@ export function StockDashboard({
                 onDelete={(e) => handleDeleteAlmacen(e, almacen)}
               />
             ))}
-            
+
             {/* Sin Almacén card */}
             <SinAlmacenCard
               productCount={productCountByAlmacen.sinAlmacen}
@@ -434,72 +623,20 @@ export function StockDashboard({
           </div>
         </div>
 
-        {/* Almacén Modal */}
-        <Modal 
-          isOpen={showAlmacenModal} 
-          onClose={() => setShowAlmacenModal(false)} 
-          title={editingAlmacen ? t('warehouses.editWarehouse') : t('warehouses.newWarehouse')}
-        >
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label={t('warehouses.code')}
-                value={almacenForm.codigo}
-                onChange={(e) => setAlmacenForm({ ...almacenForm, codigo: e.target.value.toUpperCase() })}
-                placeholder="ALM-01"
-                disabled={!!editingAlmacen}
-              />
-              <Input
-                label={t('warehouses.name')}
-                value={almacenForm.nombre}
-                onChange={(e) => setAlmacenForm({ ...almacenForm, nombre: e.target.value })}
-                placeholder="Almacén Principal"
-              />
-            </div>
-            <Input
-              label={t('warehouses.address')}
-              value={almacenForm.direccion}
-              onChange={(e) => setAlmacenForm({ ...almacenForm, direccion: e.target.value })}
-              placeholder="Calle 123"
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label={t('warehouses.city')}
-                value={almacenForm.ciudad}
-                onChange={(e) => setAlmacenForm({ ...almacenForm, ciudad: e.target.value })}
-                placeholder="Montevideo"
-              />
-              <Input
-                label={t('warehouses.phone')}
-                value={almacenForm.telefono}
-                onChange={(e) => setAlmacenForm({ ...almacenForm, telefono: e.target.value })}
-                placeholder="+598 99 123 456"
-              />
-            </div>
-            <Input
-              label={t('warehouses.manager')}
-              value={almacenForm.responsable}
-              onChange={(e) => setAlmacenForm({ ...almacenForm, responsable: e.target.value })}
-              placeholder="Nombre del encargado"
-            />
-          </div>
-          <div className="flex gap-3 mt-6">
-            <Button variant="secondary" onClick={() => setShowAlmacenModal(false)} className="flex-1">
-              {t('common.cancel')}
-            </Button>
-            <Button onClick={handleSaveAlmacen} className="flex-1">
-              {editingAlmacen ? t('common.save') : t('common.create')}
-            </Button>
-          </div>
-        </Modal>
+        {renderModals()}
       </div>
     );
   }
 
   // ============================================
-  // RENDER: PRODUCTOS VIEW
+  // RENDER: PRODUCTOS / TODOS VIEW
   // ============================================
-  
+
+  const isTodos = viewMode === 'todos';
+  const viewTitle = isTodos
+    ? 'Todos los productos'
+    : (selectedAlmacen?.nombre || t('stock.noWarehouse'));
+
   return (
     <div className="space-y-4">
       {/* Header with Back button */}
@@ -514,19 +651,17 @@ export function StockDashboard({
           <div className="flex items-center gap-3">
             <div className={cn(
               'p-2 rounded-xl',
-              selectedAlmacen?.esPrincipal ? 'bg-amber-500/20' : 'bg-slate-800'
+              isTodos ? 'bg-blue-500/20' : selectedAlmacen?.esPrincipal ? 'bg-amber-500/20' : 'bg-slate-800'
             )}>
-              <Warehouse 
-                size={24} 
-                className={selectedAlmacen?.esPrincipal ? 'text-amber-400' : 'text-slate-400'} 
-              />
+              {isTodos
+                ? <Layers size={24} className="text-blue-400" />
+                : <Warehouse size={24} className={selectedAlmacen?.esPrincipal ? 'text-amber-400' : 'text-slate-400'} />}
             </div>
             <div>
-              <h2 className="text-xl font-bold">
-                {selectedAlmacen?.nombre || t('stock.noWarehouse')}
-              </h2>
+              <h2 className="text-xl font-bold">{viewTitle}</h2>
               <p className="text-sm text-slate-500">
                 {filteredProducts.length} {t('stock.products')}
+                {isTodos && almacenes.length > 0 && ` · ${almacenes.length} almacenes`}
               </p>
             </div>
           </div>
@@ -564,12 +699,17 @@ export function StockDashboard({
       </div>
 
       {/* Products Table */}
-      <ProductTable 
-        products={filteredProducts} 
-        predictions={predictions} 
+      <ProductTable
+        products={filteredProducts}
+        predictions={predictions}
         onDelete={hasDeletePermission ? onDeleteProduct : undefined}
         onEdit={onEditProduct}
+        onQuickMovement={handleQuickMovement}
+        onBulkAction={handleBulkAction}
+        showAlmacen={isTodos}
       />
+
+      {renderModals()}
     </div>
   );
 }
