@@ -1,20 +1,30 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, ArrowDownLeft, ArrowUpRight, Loader2 } from 'lucide-react';
+import { X, Plus, Minus, ArrowDownLeft, ArrowUpRight, Loader2, FileText, User, Clock } from 'lucide-react';
 import { Product } from '@/types';
+import { formatDate } from '@/lib/utils';
 
 interface QuickMovementModalProps {
   product: Product;
   tipo: 'entrada' | 'salida';
-  onSubmit: (data: { codigo: string; tipo: 'entrada' | 'salida'; cantidad: number; notas: string; costoCompra?: number }) => Promise<void>;
+  userEmail: string;
+  onSubmit: (data: {
+    codigo: string;
+    tipo: 'entrada' | 'salida';
+    cantidad: number;
+    notas: string;
+    costoCompra?: number;
+    factura?: string;
+  }) => Promise<void>;
   onClose: () => void;
 }
 
-export function QuickMovementModal({ product, tipo, onSubmit, onClose }: QuickMovementModalProps) {
+export function QuickMovementModal({ product, tipo, userEmail, onSubmit, onClose }: QuickMovementModalProps) {
   const [cantidad, setCantidad] = useState(1);
   const [notas, setNotas] = useState('');
   const [costoCompra, setCostoCompra] = useState('');
+  const [factura, setFactura] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const cantidadRef = useRef<HTMLInputElement>(null);
 
@@ -32,12 +42,18 @@ export function QuickMovementModal({ product, tipo, onSubmit, onClose }: QuickMo
     if (!isValid || submitting) return;
     setSubmitting(true);
     try {
+      const notasFinal = [
+        notas,
+        factura ? `Factura: ${factura}` : '',
+      ].filter(Boolean).join(' | ');
+
       await onSubmit({
         codigo: product.codigo,
         tipo,
         cantidad,
-        notas,
+        notas: notasFinal,
         costoCompra: isEntrada && costoCompra ? parseFloat(costoCompra) : undefined,
+        factura: factura || undefined,
       });
       onClose();
     } catch {
@@ -92,7 +108,7 @@ export function QuickMovementModal({ product, tipo, onSubmit, onClose }: QuickMo
         </div>
 
         {/* Form */}
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-3">
           {/* Quantity */}
           <div>
             <label className="text-xs font-medium text-slate-400 mb-2 block">Cantidad</label>
@@ -139,16 +155,49 @@ export function QuickMovementModal({ product, tipo, onSubmit, onClose }: QuickMo
             </div>
           )}
 
-          {/* Notes */}
+          {/* Factura for entrada */}
+          {isEntrada && (
+            <div>
+              <label className="text-xs font-medium text-slate-400 mb-2 block">
+                <span className="flex items-center gap-1.5">
+                  <FileText size={12} />
+                  Nro. de Factura (opcional)
+                </span>
+              </label>
+              <input
+                type="text"
+                value={factura}
+                onChange={(e) => setFactura(e.target.value)}
+                placeholder="Ej: FAC-001234"
+                className="w-full px-3 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
+              />
+            </div>
+          )}
+
+          {/* Notes / Comments */}
           <div>
-            <label className="text-xs font-medium text-slate-400 mb-2 block">Notas (opcional)</label>
-            <input
-              type="text"
+            <label className="text-xs font-medium text-slate-400 mb-2 block">Comentarios (opcional)</label>
+            <textarea
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
-              placeholder="Razón del movimiento..."
-              className="w-full px-3 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
+              placeholder="Razón del movimiento, observaciones..."
+              rows={2}
+              className="w-full px-3 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 resize-none"
             />
+          </div>
+
+          {/* User & timestamp info */}
+          <div className="p-2.5 rounded-xl bg-slate-800/30 border border-slate-700/30">
+            <div className="flex items-center gap-3 text-xs text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <User size={12} />
+                {userEmail}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Clock size={12} />
+                {formatDate(new Date())}
+              </span>
+            </div>
           </div>
 
           {/* Preview */}

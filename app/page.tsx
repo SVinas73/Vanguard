@@ -56,7 +56,7 @@ import { NotificationBell } from '@/components/ui/notifications';
 import { ShortcutsHelp } from '@/components/ui/shortcuts-help';
 import { OnboardingTour } from '@/components/ui/onboarding-tour';
 import { ProductTable } from '@/components/productos';
-import { MovementList, MovementTypeSelector } from '@/components/movimientos';
+import { MovementList, MovementTypeSelector, TransferenciasDashboard } from '@/components/movimientos';
 import { AlertList, PredictionCard, ConsumptionChart, AnalyticsDashboard } from '@/components/analytics';
 
 export default function HomePage() {
@@ -665,15 +665,13 @@ export default function HomePage() {
           />
         )}
 
-        {/* ==================== MOVIMIENTOS ==================== */}
+        {/* ==================== MOVIMIENTOS (Transferencias) ==================== */}
         {activeTab === 'movimientos' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">{t('movements.title')}</h2>
-              <Button onClick={() => setShowNewMovement(true)}>+ {t('movements.register')}</Button>
-            </div>
-            <MovementList movements={movements} products={products} />
-          </div>
+          <TransferenciasDashboard
+            products={products}
+            userEmail={user?.email || ''}
+            onRefreshProducts={fetchProducts}
+          />
         )}
 
         {/* ==================== COMERCIAL ==================== */}

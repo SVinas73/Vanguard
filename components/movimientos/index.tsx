@@ -1,3 +1,5 @@
+export { TransferenciasDashboard } from './TransferenciasDashboard';
+
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';

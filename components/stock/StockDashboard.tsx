@@ -409,6 +409,7 @@ export function StockDashboard({
     cantidad: number;
     notas: string;
     costoCompra?: number;
+    factura?: string;
   }) => {
     await addMovement(
       { codigo: data.codigo, tipo: data.tipo, cantidad: data.cantidad, notas: data.notas, costoCompra: data.costoCompra },
@@ -458,6 +459,7 @@ export function StockDashboard({
         <QuickMovementModal
           product={movementProduct}
           tipo={movementTipo}
+          userEmail={userEmail}
           onSubmit={handleMovementSubmit}
           onClose={() => { setShowMovementModal(false); setMovementProduct(null); }}
         />

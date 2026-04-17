@@ -626,6 +626,69 @@ tr:hover td {
   color: #1a2030 !important;
 }
 
+/* ---- Inline style color overrides for cards and dashboard ---- */
+/* rgba gray text used across cards — make readable on light bg */
+.light-mode [style*="color: rgba(148,163,184"],
+.light-mode [style*="color: rgba(148, 163, 184"] {
+  color: #4a5468 !important;
+}
+/* Specific hex colors used in dashboard metrics/cards */
+.light-mode [style*="color: '#3d9a5f'"],
+.light-mode [style*="color: rgb(61, 154, 95)"],
+.light-mode [style*="color: #3d9a5f"] { color: #247a3f !important; }
+.light-mode [style*="color: '#4a7fb5'"],
+.light-mode [style*="color: rgb(74, 127, 181)"],
+.light-mode [style*="color: #4a7fb5"] { color: #2d5480 !important; }
+.light-mode [style*="color: '#c94444'"],
+.light-mode [style*="color: rgb(201, 68, 68)"],
+.light-mode [style*="color: #c94444"] { color: #a83636 !important; }
+.light-mode [style*="color: '#c8872e'"],
+.light-mode [style*="color: rgb(200, 135, 46)"],
+.light-mode [style*="color: #c8872e"] { color: #9a6520 !important; }
+.light-mode [style*="color: '#836ba0'"],
+.light-mode [style*="color: rgb(131, 107, 160)"],
+.light-mode [style*="color: #836ba0"] { color: #564470 !important; }
+.light-mode [style*="color: '#6b8baa'"],
+.light-mode [style*="color: rgb(107, 139, 170)"],
+.light-mode [style*="color: #6b8baa"] { color: #3b6189 !important; }
+.light-mode [style*="color: '#cc5555'"],
+.light-mode [style*="color: #cc5555"] { color: #a83636 !important; }
+.light-mode [style*="color: '#4aaa73'"],
+.light-mode [style*="color: #4aaa73"] { color: #247a3f !important; }
+.light-mode [style*="color: '#b89a2e'"],
+.light-mode [style*="color: #b89a2e"] { color: #8a7420 !important; }
+.light-mode [style*="color: '#6b5488'"],
+.light-mode [style*="color: #6b5488"] { color: #4e3d66 !important; }
+.light-mode [style*="color: '#cc9a40'"],
+.light-mode [style*="color: #cc9a40"] { color: #9a6520 !important; }
+.light-mode [style*="color: '#94a3b8'"],
+.light-mode [style*="color: #94a3b8"] { color: #4a5468 !important; }
+/* Inline dark backgrounds used in panels/cards */
+.light-mode [style*="background: rgba(255,255,255,0.0"],
+.light-mode [style*="background: rgba(255, 255, 255, 0.0"] {
+  background: rgba(0,0,0,0.02) !important;
+}
+.light-mode [style*="background: linear-gradient(135deg, rgba(15,23,42"],
+.light-mode [style*="background: linear-gradient(135deg, rgba(15, 23, 42"] {
+  background: linear-gradient(135deg, #ffffff, #f5f7fa) !important;
+}
+.light-mode [style*="border: 1px solid rgba(51,65,85"],
+.light-mode [style*="border: 1px solid rgba(51, 65, 85"] {
+  border-color: #d1d5de !important;
+}
+/* rgba green/red/amber/blue/purple backgrounds used in icons/badges */
+.light-mode [style*="background: rgba(61,154,95"],
+.light-mode [style*="background: rgba(61, 154, 95"] { background: rgba(36,122,63,0.12) !important; }
+.light-mode [style*="background: rgba(201,68,68"],
+.light-mode [style*="background: rgba(201, 68, 68"] { background: rgba(168,54,54,0.1) !important; }
+.light-mode [style*="background: rgba(200,135,46"],
+.light-mode [style*="background: rgba(200, 135, 46"] { background: rgba(154,101,32,0.1) !important; }
+.light-mode [style*="background: rgba(107,84,136"],
+.light-mode [style*="background: rgba(107, 84, 136"] { background: rgba(86,68,112,0.1) !important; }
+.light-mode [style*="background: rgba(6,182,212"],
+.light-mode [style*="background: rgba(6, 182, 212"] { background: rgba(6,140,170,0.1) !important; }
+.light-mode [style*="background: rgba(51,65,85,0.3)"] { background: rgba(200,206,216,0.5) !important; }
+
 /* ---- Text gradient fix ---- */
 .light-mode .text-gradient {
   background: linear-gradient(135deg, #2d5480 0%, #4a5468 100%);
