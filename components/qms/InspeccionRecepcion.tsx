@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardCheck, Package, Search, Plus, Filter, Download,
@@ -435,7 +436,12 @@ export default function InspeccionRecepcion() {
         
         await supabase.from('qms_resultados_inspeccion').insert(resultadosData);
       }
-      
+
+      await registrarAuditoria('qms_inspecciones', 'CREAR', numero, null, {
+        numero, producto: formData.producto_codigo, estado, aceptados, rechazados,
+        inspector: formData.inspector,
+      }, user?.email || '');
+
       // Recargar y volver a lista
       await loadInspecciones();
       setVistaActiva('lista');
@@ -470,8 +476,10 @@ export default function InspeccionRecepcion() {
           supervisor_calidad: user?.email || 'Sistema',
         })
         .eq('id', inspeccionId);
-      
+
       if (error) throw error;
+
+      await registrarAuditoria('qms_inspecciones', `DECISION_${decision.toUpperCase()}`, inspeccionId, null, { estado, decision }, user?.email || '');
       
       // Si es rechazado, crear NCR automáticamente
       if (estado === 'rechazado') {

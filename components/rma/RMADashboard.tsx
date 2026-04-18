@@ -10,6 +10,7 @@ import {
   PackageCheck, AlertCircle, Box, ArrowRight
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
 import { cn, formatCurrency } from '@/lib/utils';
 
@@ -456,6 +457,11 @@ export default function RMAEnterprise() {
       // Registrar operación
       await registrarOperacion(rmaData.id, 'creacion', `RMA ${numero} creado con ${rmaForm.items.length} items`);
 
+      await registrarAuditoria('rma', 'CREAR', numero, null, {
+        numero, cliente_id: rmaForm.clienteId, tipo: rmaForm.tipo, motivo: rmaForm.motivo,
+        valor_productos: valorTotal, items: itemsToInsert,
+      }, user?.email || '');
+
       toast.success('RMA creado', `Número: ${numero}`);
       setModalType(null);
       resetRmaForm();
@@ -515,6 +521,8 @@ export default function RMAEnterprise() {
 
       await registrarOperacion(rma.id, 'cambio_estado', `Estado cambiado de ${rma.estado} a ${nuevoEstado}`);
 
+      await registrarAuditoria('rma', `ESTADO_${nuevoEstado.toUpperCase()}`, rma.numero, { estado: rma.estado }, updateData, user?.email || '');
+
       toast.success('Estado actualizado', `${rma.numero} → ${nuevoEstado}`);
       loadData();
     } catch (error: any) {
@@ -568,6 +576,10 @@ export default function RMAEnterprise() {
       }).eq('id', selectedRMA.id);
 
       await registrarOperacion(selectedRMA.id, 'inspeccion', 'Inspección completada');
+
+      await registrarAuditoria('rma', 'INSPECCION', selectedRMA.numero, null, {
+        items: inspeccionForm.items, notas_generales: inspeccionForm.notasGenerales,
+      }, user?.email || '');
 
       toast.success('Inspección guardada');
       setModalType(null);
@@ -645,6 +657,12 @@ export default function RMAEnterprise() {
 
       await registrarOperacion(selectedRMA.id, 'resolucion', `Resolución: ${resolucionForm.resolucionFinal}`);
 
+      await registrarAuditoria('rma', 'RESOLUCION', selectedRMA.numero, null, {
+        resolucion_final: resolucionForm.resolucionFinal,
+        valor_reembolso: resolucionForm.valorReembolso,
+        reingreso_stock: resolucionForm.reingresoStock,
+      }, user?.email || '');
+
       toast.success('Resolución procesada');
       setModalType(null);
       loadData();
@@ -669,6 +687,8 @@ export default function RMAEnterprise() {
       }).eq('id', rma.id);
 
       await registrarOperacion(rma.id, 'completado', 'RMA completado');
+
+      await registrarAuditoria('rma', 'COMPLETAR', rma.numero, { estado: rma.estado }, { estado: 'completada' }, user?.email || '');
 
       toast.success('RMA completado', rma.numero);
       loadData();

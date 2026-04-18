@@ -6,6 +6,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
 import { Button, Card, Select } from '@/components/ui';
 import { KanbanBoard } from './KanbanBoard';
 import { TareasListView } from './TareasListView';
@@ -482,6 +483,11 @@ export function ProyectosDashboard() {
       );
     }
 
+    await registrarAuditoria('proyectos', 'CREAR_DESDE_PLANTILLA', proyectoData.id, null, {
+      nombre, plantilla: plantilla.nombre, columnas: plantilla.columnasConfig.length,
+      tareas: plantilla.tareasConfig.length,
+    }, user.email);
+
     await fetchProyectos();
     setShowCrearDesdeTemplate(false);
     setPlantillaSeleccionada(null);
@@ -521,6 +527,10 @@ export function ProyectosDashboard() {
         ...c,
       }))
     );
+
+    await registrarAuditoria('proyectos', 'CREAR', data.id, null, {
+      nombre: proyecto.nombre, estado: proyecto.estado, descripcion: proyecto.descripcion,
+    }, user?.email || proyecto.creadoPor || '');
 
     fetchProyectos();
     setShowProyectoModal(false);
@@ -571,6 +581,7 @@ export function ProyectosDashboard() {
       console.error('Error actualizando tarea:', error);
       alert(t('proyectos.errors.updateTask'));
     } else {
+      await registrarAuditoria('proyecto_tareas', 'ACTUALIZAR', tareaId, null, updateData, user?.email || '');
       fetchProyectoData(proyectoActual.id);
     }
   };
@@ -598,6 +609,9 @@ export function ProyectosDashboard() {
       console.error('Error duplicando tarea:', error);
       alert(t('proyectos.errors.duplicateTask'));
     } else {
+      await registrarAuditoria('proyecto_tareas', 'DUPLICAR', tarea.id, null, {
+        titulo: `${tarea.titulo} (copia)`, proyecto_id: proyectoActual.id,
+      }, user?.email || '');
       fetchProyectoData(proyectoActual.id);
     }
   };
@@ -629,8 +643,9 @@ export function ProyectosDashboard() {
           descripcion: `Eliminó la tarea "${tareaAEliminar.titulo}"`,
           tarea_id: null,  // Ya no existe
         });
+        await registrarAuditoria('proyecto_tareas', 'ELIMINAR', tareaId, tareaAEliminar, null, user.email);
       }
-      
+
       setTareaSeleccionada(null);
       fetchProyectoData(proyectoActual.id);
     }

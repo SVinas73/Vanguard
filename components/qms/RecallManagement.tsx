@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
 import {
   AlertOctagon, Search, Plus, Filter, Download, RefreshCw,
@@ -529,6 +530,7 @@ export default function RecallManagement() {
           });
         
         if (error) throw error;
+        await registrarAuditoria('qms_recalls', 'CREAR', numero, null, { numero, ...formData }, user?.email || '');
       } else {
         // Actualizar
         const { error } = await supabase
@@ -539,10 +541,11 @@ export default function RecallManagement() {
             actualizado_por: user?.email || 'Sistema',
           })
           .eq('id', recallSeleccionado?.id);
-        
+
         if (error) throw error;
+        await registrarAuditoria('qms_recalls', 'ACTUALIZAR', recallSeleccionado?.numero || null, recallSeleccionado, formData, user?.email || '');
       }
-      
+
       await loadRecalls();
       setVistaActiva('lista');
       
@@ -571,9 +574,11 @@ export default function RecallManagement() {
         .from('qms_recalls')
         .update(updates)
         .eq('id', recallId);
-      
+
       if (error) throw error;
-      
+
+      await registrarAuditoria('qms_recalls', `ESTADO_${nuevoEstado.toUpperCase()}`, recallId, null, updates, user?.email || '');
+
       await loadRecalls();
       if (recallSeleccionado?.id === recallId) {
         setRecallSeleccionado({ ...recallSeleccionado, ...updates });
@@ -680,6 +685,8 @@ export default function RecallManagement() {
         });
         creados++;
       }
+
+      await registrarAuditoria('qms_recall', 'CREAR_SEGUIMIENTOS_AUTO', recallId, null, { seguimientos_creados: creados }, user?.email || '');
 
       await loadRecalls();
       alert(`Se crearon ${creados} seguimientos automáticos para clientes afectados.`);

@@ -15,6 +15,7 @@ import {
   CircleDollarSign, BadgePercent, Banknote, Coins, HandCoins
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -759,6 +760,8 @@ export default function CostosEnterprise() {
         .update({ precio_venta: nuevoPrecio })
         .eq('id', producto.id);
 
+      await registrarAuditoria('productos', 'ACTUALIZAR_PRECIO', producto.codigo, { precio: producto.precio }, { precio: nuevoPrecio, motivo }, user?.email || '');
+
       toast.success('Precio actualizado');
       loadProductos();
     } catch (error: any) {
@@ -785,11 +788,13 @@ export default function CostosEnterprise() {
       // Actualizar producto
       await supabase
         .from('productos')
-        .update({ 
+        .update({
           costo: nuevoCosto,
           costo_ultima_compra: nuevoCosto,
         })
         .eq('id', producto.id);
+
+      await registrarAuditoria('productos', 'ACTUALIZAR_COSTO', producto.codigo, { costo: producto.costo }, { costo: nuevoCosto, motivo }, user?.email || '');
 
       toast.success('Costo actualizado');
       loadProductos();
@@ -881,6 +886,11 @@ export default function CostosEnterprise() {
             .eq('id', update.producto.id);
         }
       }
+
+      await registrarAuditoria('productos', `ACTUALIZACION_MASIVA_${actualizacionMasivaForm.campo.toUpperCase()}`, null, null, {
+        cantidad: updates.length, tipo: actualizacionMasivaForm.tipo,
+        valor: actualizacionMasivaForm.valor, aplica_a: actualizacionMasivaForm.aplicaA,
+      }, user?.email || '');
 
       toast.success(`${updates.length} productos actualizados`);
       setModalType(null);
@@ -991,6 +1001,10 @@ export default function CostosEnterprise() {
         }
       }
 
+      await registrarAuditoria('productos', 'IMPORTAR_COSTOS_CSV', null, null, {
+        archivo: file.name, actualizados, errores,
+      }, user?.email || '');
+
       toast.success(`Importación completada`, `${actualizados} actualizados, ${errores} errores`);
       loadAllData();
     } catch (error: any) {
@@ -1083,6 +1097,8 @@ export default function CostosEnterprise() {
         activo: true,
       });
 
+      await registrarAuditoria('costos_indirectos', 'CREAR', costoIndirectoForm.nombre, null, costoIndirectoForm, user?.email || '');
+
       toast.success('Costo indirecto creado');
       setModalType(null);
       setCostoIndirectoForm({ nombre: '', tipo: 'porcentaje', valor: 0, aplicaA: 'todos', filtroId: '' });
@@ -1101,6 +1117,8 @@ export default function CostosEnterprise() {
         .update({ activo: !costo.activo })
         .eq('id', costo.id);
 
+      await registrarAuditoria('costos_indirectos', costo.activo ? 'DESACTIVAR' : 'ACTIVAR', costo.nombre, { activo: costo.activo }, { activo: !costo.activo }, user?.email || '');
+
       loadCostosIndirectos();
     } catch (error: any) {
       toast.error('Error', error.message);
@@ -1113,6 +1131,8 @@ export default function CostosEnterprise() {
         .from('costos_indirectos')
         .delete()
         .eq('id', id);
+
+      await registrarAuditoria('costos_indirectos', 'ELIMINAR', id, null, null, user?.email || '');
 
       toast.success('Costo indirecto eliminado');
       loadCostosIndirectos();
@@ -1178,6 +1198,12 @@ export default function CostosEnterprise() {
         fecha: loteForm.fechaCompra,
         usuario: user?.email,
       });
+
+      await registrarAuditoria('lotes', 'CREAR', producto.codigo, null, {
+        producto_codigo: producto.codigo, cantidad: loteForm.cantidad,
+        costo_unitario: loteForm.costoUnitario, proveedor_id: loteForm.proveedorId,
+        numero_factura: loteForm.numeroFactura, nuevo_stock: nuevoStock,
+      }, user?.email || '');
 
       toast.success('Lote creado', `Stock actualizado: ${nuevoStock}`);
       setModalType(null);

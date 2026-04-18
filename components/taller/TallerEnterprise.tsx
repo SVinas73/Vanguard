@@ -16,6 +16,7 @@ import {
   GripVertical, Layers, LayoutGrid, List, Kanban, Cpu
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
 import MantenimientoPredictivo from './MantenimientoPredictivo';
 
@@ -745,6 +746,11 @@ export default function TallerEnterprise() {
       // Registrar en historial
       await registrarHistorial(data.id, undefined, 'recepcion', 'Orden creada');
 
+      await registrarAuditoria('ordenes_taller', 'CREAR', numero, null, {
+        numero, cliente_nombre: ingresoForm.clienteNombre, tipo_equipo: ingresoForm.tipoEquipo,
+        tipo_orden: tipoOrden, problema_reportado: ingresoForm.problemaReportado,
+      }, user?.email || '');
+
       toast.success('Orden creada', `Número: ${numero}`);
       setModalType(null);
       resetIngresoForm();
@@ -803,6 +809,8 @@ export default function TallerEnterprise() {
 
       // Registrar en historial
       await registrarHistorial(orden.id, orden.estado, nuevoEstado, datos?.descripcion || `Estado cambiado a ${ESTADO_CONFIG[nuevoEstado].label}`);
+
+      await registrarAuditoria('ordenes_taller', `ESTADO_${nuevoEstado.toUpperCase()}`, orden.numero, { estado: orden.estado }, updateData, user?.email || '');
 
       toast.success('Estado actualizado');
       loadOrdenes();
@@ -921,6 +929,11 @@ export default function TallerEnterprise() {
         'cotizacion',
         `Cotización creada: ${numeroCot} - Total: ${formatCurrency(total)}`
       );
+
+      await registrarAuditoria('cotizaciones_taller', 'CREAR', numeroCot, null, {
+        numero: numeroCot, orden: ordenSeleccionada.numero, subtotal, descuento, total,
+        items_count: cotizacionForm.items.length,
+      }, user?.email || '');
 
       toast.success('Cotización creada', `Total: ${formatCurrency(total)}`);
       setModalType(null);
@@ -1061,6 +1074,11 @@ export default function TallerEnterprise() {
         'reparado',
         `Reparación completada: ${reparacionForm.trabajoRealizado.substring(0, 100)}...`
       );
+
+      await registrarAuditoria('ordenes_taller', 'REPARACION_FINALIZADA', ordenSeleccionada.numero, { estado: ordenSeleccionada.estado }, {
+        trabajo_realizado: reparacionForm.trabajoRealizado,
+        repuestos_usados: reparacionForm.repuestosUsados,
+      }, user?.email || '');
 
       toast.success('Reparación finalizada');
       setModalType(null);

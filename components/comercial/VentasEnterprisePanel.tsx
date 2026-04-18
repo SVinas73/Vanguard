@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn, formatCurrency } from '@/lib/utils';
+import { registrarAuditoria } from '@/lib/audit';
 import { Product } from '@/types';
 
 // ============================================
@@ -448,6 +449,10 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
         }).eq('id', desdeCotizacion.id);
       }
 
+      await registrarAuditoria('ordenes_venta', 'CREAR', numero, null, {
+        numero, cliente_id: form.clienteId, subtotal, total: subtotal, items: itemsToInsert,
+      }, userEmail);
+
       toast.success('Orden creada', `${numero}`);
       setModalType(null);
       setOrdenForm({ clienteId: '', fechaEntrega: '', direccionEnvio: '', notas: '', items: [] });
@@ -502,6 +507,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
       }
 
       await supabase.from('ordenes_venta').update(updateData).eq('id', orden.id);
+      await registrarAuditoria('ordenes_venta', `ESTADO_${nuevoEstado.toUpperCase()}`, orden.numero, { estado: orden.estado }, updateData, userEmail);
       toast.success('Estado actualizado', `${orden.numero} → ${nuevoEstado}`);
       loadData();
     } catch (error: any) {
@@ -553,6 +559,11 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
         estado_pago: nuevoEstadoPago,
         pagado: nuevoSaldo <= 0,
       }).eq('id', selectedOrden.id);
+
+      await registrarAuditoria('pagos_venta', 'CREAR', numero, null, {
+        numero, orden_venta: selectedOrden.numero, monto: pagoForm.monto,
+        metodo_pago: pagoForm.metodoPago, nuevo_estado_pago: nuevoEstadoPago,
+      }, userEmail);
 
       toast.success('Pago registrado', `${numero} - ${formatCurrency(pagoForm.monto)}`);
       setModalType(null);
@@ -612,6 +623,10 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
 
       await supabase.from('cotizaciones_items').insert(itemsToInsert);
 
+      await registrarAuditoria('cotizaciones', 'CREAR', numero, null, {
+        numero, cliente_id: cotizacionForm.clienteId, subtotal, total: subtotal, items: itemsToInsert,
+      }, userEmail);
+
       toast.success('Cotización creada', `${numero}`);
       setModalType(null);
       setCotizacionForm({ clienteId: '', fechaValidez: '', notas: '', items: [] });
@@ -627,6 +642,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
     try {
       setProcesando(cot.id);
       await supabase.from('cotizaciones').update({ estado: nuevoEstado }).eq('id', cot.id);
+      await registrarAuditoria('cotizaciones', `ESTADO_${nuevoEstado.toUpperCase()}`, cot.numero, { estado: cot.estado }, { estado: nuevoEstado }, userEmail);
       toast.success('Estado actualizado', `${cot.numero} → ${nuevoEstado}`);
       loadData();
     } catch (error: any) {
@@ -666,9 +682,11 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
 
       if (editingCliente) {
         await supabase.from('clientes').update(data).eq('id', editingCliente.id);
+        await registrarAuditoria('clientes', 'ACTUALIZAR', data.codigo, editingCliente, data, userEmail);
         toast.success('Cliente actualizado');
       } else {
         await supabase.from('clientes').insert(data);
+        await registrarAuditoria('clientes', 'CREAR', data.codigo, null, data, userEmail);
         toast.success('Cliente creado');
       }
 

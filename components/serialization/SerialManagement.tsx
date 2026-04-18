@@ -7,6 +7,7 @@ import {
   DollarSign, TrendingUp, Package
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
 import { ProductoSerial, EstadoSerial, Product, Almacen } from '@/types';
 import { format } from 'date-fns';
@@ -169,6 +170,8 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
       const { error } = await supabase.from('productos_seriales').insert([serialData]);
       if (error) throw error;
 
+      await registrarAuditoria('productos_seriales', 'CREAR', numeroSerie, null, serialData, user?.email || '');
+
       alert('Serial creado exitosamente');
       setShowCreateModal(false);
       setNewSerial({
@@ -225,6 +228,10 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
       const { error } = await supabase.from('productos_seriales').insert(serialesCrear);
       if (error) throw error;
 
+      await registrarAuditoria('productos_seriales', 'CREAR_MASIVO', bulkGeneration.productoCodigo, null, {
+        producto_codigo: bulkGeneration.productoCodigo, cantidad: bulkGeneration.cantidad,
+      }, user?.email || '');
+
       alert(`${bulkGeneration.cantidad} seriales creados exitosamente`);
       setShowBulkModal(false);
       setBulkGeneration({
@@ -248,6 +255,7 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
     try {
       const { error } = await supabase.from('productos_seriales').delete().eq('id', serialId);
       if (error) throw error;
+      await registrarAuditoria('productos_seriales', 'ELIMINAR', serialId, null, null, user?.email || '');
       alert('Serial eliminado');
       loadData();
     } catch (error: any) {

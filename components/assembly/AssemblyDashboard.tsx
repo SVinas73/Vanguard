@@ -9,6 +9,7 @@ import {
   FileText, Calendar
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Ensamblaje, BOM, Almacen, EstadoEnsamblaje, TipoEnsamblaje,
@@ -380,6 +381,11 @@ export default function AssemblyDashboard() {
 
       if (error) throw error;
 
+      await registrarAuditoria('ensamblajes', 'CREAR', numero, null, {
+        numero, bom_id: newAssembly.bomId, producto_codigo: bom.productoCodigo,
+        cantidad_planificada: newAssembly.cantidadPlanificada,
+      }, user?.email || '');
+
       toast.success('Ensamblaje creado', `Orden ${numero} lista para ejecutar`);
       setModalType(null);
       setNewAssembly({ bomId: '', cantidadPlanificada: 1, almacenId: '', supervisor: '', generarSeriales: false, notas: '' });
@@ -409,6 +415,8 @@ export default function AssemblyDashboard() {
 
       await registrarOperacion(ensamblaje.id, 'inicio', 'Ensamblaje iniciado');
 
+      await registrarAuditoria('ensamblajes', 'INICIAR', ensamblaje.numero, { estado: 'planificado' }, { estado: 'en_proceso' }, user?.email || '');
+
       toast.success('Ensamblaje iniciado', `Orden ${ensamblaje.numero} en proceso`);
       loadData();
     } catch (error: any) {
@@ -437,6 +445,8 @@ export default function AssemblyDashboard() {
       }]);
 
       await registrarOperacion(selectedEnsamblaje.id, 'pausa', `Pausa: ${pauseForm.motivo}`);
+
+      await registrarAuditoria('ensamblajes', 'PAUSAR', selectedEnsamblaje.numero, null, { motivo: pauseForm.motivo, descripcion: pauseForm.descripcion }, user?.email || '');
 
       toast.warning('Ensamblaje pausado', `Motivo: ${pauseForm.motivo}`);
       setModalType(null);
@@ -581,6 +591,11 @@ export default function AssemblyDashboard() {
 
       await registrarOperacion(ensamblaje.id, 'completado', `Producidas ${ensamblaje.cantidadPlanificada} unidades`);
 
+      await registrarAuditoria('ensamblajes', 'COMPLETAR', ensamblaje.numero, { estado: ensamblaje.estado }, {
+        estado: 'completado', cantidad_producida: ensamblaje.cantidadPlanificada,
+        costo_materiales_real: costoMaterialesReal,
+      }, user?.email || '');
+
       toast.success('Ensamblaje completado', `${ensamblaje.cantidadPlanificada} unidades producidas`);
       loadData();
     } catch (error: any) {
@@ -623,6 +638,11 @@ export default function AssemblyDashboard() {
 
       const tipoOp = qcForm.resultado === 'rechazado' ? 'qc_rechazado' : 'qc_aprobado';
       await registrarOperacion(selectedEnsamblaje.id, tipoOp, `QC: ${qcForm.cantidadAprobada} aprobadas, ${qcForm.cantidadRechazada} rechazadas`);
+
+      await registrarAuditoria('ensamblaje_qc', 'CREAR', selectedEnsamblaje.numero, null, {
+        tipo_inspeccion: qcForm.tipoInspeccion, resultado: qcForm.resultado,
+        cantidad_aprobada: qcForm.cantidadAprobada, cantidad_rechazada: qcForm.cantidadRechazada,
+      }, user?.email || '');
 
       toast.success('Inspección registrada', `Resultado: ${qcForm.resultado}`);
       setModalType(null);
