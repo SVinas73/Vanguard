@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
 import {
   AlertTriangle, Search, Plus, Filter, Download, RefreshCw,
@@ -456,6 +457,7 @@ export default function NoConformidades() {
           });
         
         if (error) throw error;
+        await registrarAuditoria('qms_no_conformidades', 'CREAR', numero, null, { numero, ...formData }, user?.email || '');
       } else {
         // Actualizar
         const { error } = await supabase
@@ -466,10 +468,11 @@ export default function NoConformidades() {
             actualizado_por: user?.email || 'Sistema',
           })
           .eq('id', ncrSeleccionada?.id);
-        
+
         if (error) throw error;
+        await registrarAuditoria('qms_no_conformidades', 'ACTUALIZAR', ncrSeleccionada?.numero || null, ncrSeleccionada, formData, user?.email || '');
       }
-      
+
       await loadNCRs();
       setVistaActiva('lista');
       
@@ -498,9 +501,11 @@ export default function NoConformidades() {
         .from('qms_no_conformidades')
         .update(updates)
         .eq('id', ncrId);
-      
+
       if (error) throw error;
-      
+
+      await registrarAuditoria('qms_no_conformidades', `ESTADO_${nuevoEstado.toUpperCase()}`, ncrId, null, updates, user?.email || '');
+
       await loadNCRs();
       if (ncrSeleccionada?.id === ncrId) {
         setNcrSeleccionada({ ...ncrSeleccionada, ...updates });
@@ -530,9 +535,11 @@ export default function NoConformidades() {
         .eq('id', ncrId);
       
       if (error) throw error;
-      
+
+      await registrarAuditoria('qms_no_conformidades', 'DISPOSICION', ncrId, null, { disposicion, detalle }, user?.email || '');
+
       await loadNCRs();
-      
+
     } catch (error) {
       console.error('Error aplicando disposición:', error);
     } finally {
@@ -581,6 +588,11 @@ export default function NoConformidades() {
           actualizado_at: new Date().toISOString(),
         })
         .eq('id', ncr.id);
+
+      await registrarAuditoria('qms_acciones_correctivas', 'CREAR', nuevoNumero, null, {
+        numero: nuevoNumero, ncr_numero: ncr.numero, titulo: `Acción correctiva para ${ncr.numero}`,
+        prioridad: ncr.severidad === 'critica' ? 'critica' : ncr.severidad === 'mayor' ? 'alta' : 'media',
+      }, user?.email || '');
 
       await loadNCRs();
       alert(`CAPA ${nuevoNumero} creada exitosamente y vinculada a ${ncr.numero}`);

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CATEGORIA_NOMBRES } from '@/lib/constants';
+import { registrarAuditoria } from '@/lib/audit';
 
 // ============================================
 // TYPES
@@ -357,6 +358,7 @@ export function StockDashboard({
     e.stopPropagation();
     if (!confirm(t('warehouses.confirmDeactivate'))) return;
     await supabase.from('almacenes').update({ activo: false }).eq('id', almacen.id);
+    await registrarAuditoria('almacenes', 'DESACTIVAR', almacen.codigo, almacen, { ...almacen, activo: false }, userEmail);
     fetchAlmacenes();
   };
 
@@ -387,8 +389,10 @@ export function StockDashboard({
 
     if (editingAlmacen) {
       await supabase.from('almacenes').update(data).eq('id', editingAlmacen.id);
+      await registrarAuditoria('almacenes', 'ACTUALIZAR', data.codigo, editingAlmacen, data, userEmail);
     } else {
       await supabase.from('almacenes').insert(data);
+      await registrarAuditoria('almacenes', 'CREAR', data.codigo, null, data, userEmail);
     }
 
     setShowAlmacenModal(false);
@@ -432,10 +436,12 @@ export function StockDashboard({
       const codigos = bulkProducts.map(p => p.codigo);
       if (bulkActionType === 'category' && bulkValue) {
         await supabase.from('productos').update({ categoria: bulkValue }).in('codigo', codigos);
+        await registrarAuditoria('productos', 'CAMBIO_MASIVO_CATEGORIA', null, { codigos, cantidad: codigos.length }, { categoria: bulkValue, codigos }, userEmail);
       } else if (bulkActionType === 'minStock' && bulkValue) {
         const val = parseInt(bulkValue);
         if (!isNaN(val) && val >= 0) {
           await supabase.from('productos').update({ stock_minimo: val }).in('codigo', codigos);
+          await registrarAuditoria('productos', 'CAMBIO_MASIVO_STOCK_MINIMO', null, { codigos, cantidad: codigos.length }, { stock_minimo: val, codigos }, userEmail);
         }
       }
       onRefreshProducts();

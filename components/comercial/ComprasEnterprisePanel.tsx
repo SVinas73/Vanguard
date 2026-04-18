@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn, formatCurrency } from '@/lib/utils';
+import { registrarAuditoria } from '@/lib/audit';
 import { Product } from '@/types';
 
 // ============================================
@@ -322,6 +323,16 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
 
       await supabase.from('ordenes_compra_items').insert(itemsToInsert);
 
+      await registrarAuditoria('ordenes_compra', 'CREAR', numero, null, {
+        numero,
+        proveedor_id: newOrden.proveedorId,
+        estado: 'borrador',
+        prioridad: newOrden.prioridad,
+        subtotal,
+        total: subtotal,
+        items: itemsToInsert,
+      }, userEmail);
+
       toast.success('Orden creada', `Orden ${numero} creada correctamente`);
       setModalType(null);
       setNewOrden({ proveedorId: '', fechaEsperada: '', prioridad: 'normal', notas: '', items: [] });
@@ -347,6 +358,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
       }
 
       await supabase.from('ordenes_compra').update(updateData).eq('id', orden.id);
+      await registrarAuditoria('ordenes_compra', `ESTADO_${nuevoEstado.toUpperCase()}`, orden.numero, { estado: orden.estado }, updateData, userEmail);
       toast.success('Estado actualizado', `Orden ${orden.numero} → ${nuevoEstado}`);
       loadData();
     } catch (error: any) {
@@ -478,6 +490,13 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
         }).eq('id', selectedOrden.id);
       }
 
+      await registrarAuditoria('recepciones_compra', 'CREAR', numero, null, {
+        orden_compra: selectedOrden.numero,
+        documento_proveedor: recepcionForm.documentoProveedor || null,
+        items: recepcionForm.items,
+        nuevo_estado_oc: nuevoEstado,
+      }, userEmail);
+
       toast.success('Recepción registrada', `${numero} - Stock actualizado`);
       setModalType(null);
       setSelectedOrden(null);
@@ -511,9 +530,11 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
 
       if (editingProveedor) {
         await supabase.from('proveedores').update(data).eq('id', editingProveedor.id);
+        await registrarAuditoria('proveedores', 'ACTUALIZAR', data.codigo, editingProveedor, data, userEmail);
         toast.success('Proveedor actualizado');
       } else {
         await supabase.from('proveedores').insert(data);
+        await registrarAuditoria('proveedores', 'CREAR', data.codigo, null, data, userEmail);
         toast.success('Proveedor creado');
       }
 

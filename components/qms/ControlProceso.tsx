@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Activity, Search, Plus, Filter, Download, RefreshCw,
@@ -618,7 +619,12 @@ export default function ControlProceso() {
         });
       
       if (error) throw error;
-      
+
+      await registrarAuditoria('qms_mediciones_proceso', 'CREAR', puntoSeleccionado.nombre, null, {
+        punto_control: puntoSeleccionado.nombre, promedio, resultado,
+        fuera_especificacion: fueraEspec, fuera_control: fueraControl,
+      }, user?.email || '');
+
       await loadMedicionesRecientes();
       setShowMedicionModal(false);
       
@@ -674,8 +680,10 @@ export default function ControlProceso() {
           actualizado_at: new Date().toISOString(),
         })
         .eq('id', puntoId);
-      
+
       if (error) throw error;
+
+      await registrarAuditoria('qms_puntos_control', `ESTADO_${nuevoEstado.toUpperCase()}`, puntoId, null, { estado: nuevoEstado }, user?.email || '');
       await loadPuntosControl();
     } catch (error) {
       console.error('Error cambiando estado:', error);

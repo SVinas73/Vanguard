@@ -15,6 +15,7 @@ import {
   CheckSquare, Square, ArrowLeftRight, Percent, BadgePercent, Wallet2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -1078,7 +1079,7 @@ export default function FinanzasEnterprise() {
     try {
       setProcesando('cuenta');
 
-      const { error } = await supabase.from('cuentas_bancarias').insert({
+      const cuentaData = {
         nombre: cuentaForm.nombre,
         banco: cuentaForm.banco || null,
         numero_cuenta: cuentaForm.numeroCuenta || null,
@@ -1087,9 +1088,12 @@ export default function FinanzasEnterprise() {
         saldo_actual: cuentaForm.saldoActual,
         saldo_disponible: cuentaForm.saldoActual,
         activo: true,
-      });
+      };
+      const { error } = await supabase.from('cuentas_bancarias').insert(cuentaData);
 
       if (error) throw error;
+
+      await registrarAuditoria('cuentas_bancarias', 'CREAR', cuentaData.nombre, null, cuentaData, user?.email || '');
 
       toast.success('Cuenta creada');
       setModalType(null);
@@ -1118,7 +1122,7 @@ export default function FinanzasEnterprise() {
       const total = cxcForm.subtotal + cxcForm.impuestos;
       const cliente = clientes.find(c => c.id === cxcForm.clienteId);
 
-      const { error } = await supabase.from('cuentas_por_cobrar').insert({
+      const cxcData = {
         numero: cxcForm.numero,
         cliente_id: cxcForm.clienteId,
         tipo: cxcForm.tipo,
@@ -1132,9 +1136,12 @@ export default function FinanzasEnterprise() {
         saldo: total,
         estado: 'pendiente',
         notas: cxcForm.notas || null,
-      });
+      };
+      const { error } = await supabase.from('cuentas_por_cobrar').insert(cxcData);
 
       if (error) throw error;
+
+      await registrarAuditoria('cuentas_por_cobrar', 'CREAR', cxcForm.numero, null, cxcData, user?.email || '');
 
       toast.success('Documento creado');
       setModalType(null);
@@ -1172,7 +1179,7 @@ export default function FinanzasEnterprise() {
       const total = cxpForm.subtotal + cxpForm.impuestos;
       const proveedor = proveedores.find(p => p.id === cxpForm.proveedorId);
 
-      const { error } = await supabase.from('cuentas_por_pagar').insert({
+      const cxpData = {
         numero: cxpForm.numero,
         proveedor_id: cxpForm.proveedorId,
         tipo: cxpForm.tipo,
@@ -1187,9 +1194,12 @@ export default function FinanzasEnterprise() {
         saldo: total,
         estado: 'pendiente',
         notas: cxpForm.notas || null,
-      });
+      };
+      const { error } = await supabase.from('cuentas_por_pagar').insert(cxpData);
 
       if (error) throw error;
+
+      await registrarAuditoria('cuentas_por_pagar', 'CREAR', cxpForm.numero, null, cxpData, user?.email || '');
 
       toast.success('Documento creado');
       setModalType(null);
@@ -1291,6 +1301,11 @@ export default function FinanzasEnterprise() {
         }).eq('id', gestion.id);
       }
 
+      await registrarAuditoria('pagos_recibidos', 'CREAR', doc.numero, null, {
+        documento: doc.numero, cuenta_id: pagoForm.cuentaId, monto: pagoForm.monto,
+        metodo_pago: pagoForm.metodoPago, nuevo_estado: nuevoEstado,
+      }, user?.email || '');
+
       toast.success('Cobro registrado');
       setModalType(null);
       resetPagoForm();
@@ -1376,6 +1391,12 @@ export default function FinanzasEnterprise() {
         creado_por: user?.email,
       });
 
+      await registrarAuditoria('pagos_realizados', 'CREAR', doc.numero, null, {
+        documento: doc.numero, cuenta_id: pagoForm.cuentaId, monto: pagoForm.monto,
+        metodo_pago: pagoForm.metodoPago, nuevo_estado: nuevoEstado,
+        retencion_iva: pagoForm.retencionIVA, retencion_renta: pagoForm.retencionRenta,
+      }, user?.email || '');
+
       toast.success('Pago registrado');
       setModalType(null);
       resetPagoForm();
@@ -1436,6 +1457,11 @@ export default function FinanzasEnterprise() {
         );
       }
 
+      await registrarAuditoria('transacciones_financieras', 'CREAR', null, null, {
+        cuenta_id: transaccionForm.cuentaId, tipo: transaccionForm.tipo,
+        monto: transaccionForm.monto, concepto: transaccionForm.concepto,
+      }, user?.email || '');
+
       toast.success('Transacción registrada');
       setModalType(null);
       resetTransaccionForm();
@@ -1475,6 +1501,11 @@ export default function FinanzasEnterprise() {
       });
 
       if (error) throw error;
+
+      await registrarAuditoria('cheques', 'CREAR', chequeForm.numero, null, {
+        numero: chequeForm.numero, banco: chequeForm.banco, monto: chequeForm.monto,
+        moneda: chequeForm.moneda, tipo: chequeForm.tipo,
+      }, user?.email || '');
 
       toast.success('Cheque registrado');
       setModalType(null);
@@ -1521,6 +1552,8 @@ export default function FinanzasEnterprise() {
         }
       }
 
+      await registrarAuditoria('cheques', `ESTADO_${nuevoEstado.toUpperCase()}`, cheque.numero, { estado: cheque.estado }, { estado: nuevoEstado, cuenta_id: cuentaId }, user?.email || '');
+
       toast.success('Cheque actualizado');
       loadAllData();
     } catch (error: any) {
@@ -1551,6 +1584,11 @@ export default function FinanzasEnterprise() {
       });
 
       if (error) throw error;
+
+      await registrarAuditoria('tipos_cambio', 'CREAR', `${tipoCambioForm.monedaOrigen}/${tipoCambioForm.monedaDestino}`, null, {
+        moneda_origen: tipoCambioForm.monedaOrigen, moneda_destino: tipoCambioForm.monedaDestino,
+        tasa: tipoCambioForm.tasa, fecha: tipoCambioForm.fecha,
+      }, user?.email || '');
 
       toast.success('Tipo de cambio guardado');
       setModalType(null);
@@ -1599,6 +1637,11 @@ export default function FinanzasEnterprise() {
       });
 
       if (error) throw error;
+
+      await registrarAuditoria('notas_credito_debito', 'CREAR', numero, null, {
+        numero, tipo: notaForm.tipo, origen: notaForm.origen,
+        entidad_nombre: entidad?.nombre, monto: notaForm.monto, motivo: notaForm.motivo,
+      }, user?.email || '');
 
       toast.success('Nota creada');
       setModalType(null);
@@ -1767,6 +1810,11 @@ export default function FinanzasEnterprise() {
       });
 
       if (error) throw error;
+
+      await registrarAuditoria('presupuestos_financieros', 'UPSERT', `${añoPresupuesto}-${mesPresupuesto}-${presupuestoForm.categoria}`, null, {
+        año: añoPresupuesto, mes: mesPresupuesto, categoria: presupuestoForm.categoria,
+        tipo: presupuestoForm.tipo, monto: presupuestoForm.monto,
+      }, user?.email || '');
 
       toast.success('Presupuesto guardado');
       setModalType(null);
