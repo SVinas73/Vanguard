@@ -132,13 +132,9 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       defaultOpen: true,
       items: [
         { id: 'comercial', label: t('modules.comercial'), icon: DollarSign, permission: 'canViewComercial' },
-        { id: 'compras', label: t('nav.purchases'), icon: ShoppingCart, permission: 'canViewComercial' },
-        { id: 'ventas', label: t('nav.sales'), icon: TrendingUp, permission: 'canViewComercial' },
-        { id: 'finanzas', label: t('modules.finance'), icon: Landmark, permission: 'canViewFinanzas' },
         { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
         { id: 'taller', label: t('modules.workshop'), icon: Wrench, permission: 'canViewTaller' },
         { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
-        { id: 'costos', label: t('nav.costs'), icon: CircleDollarSign, permission: 'canViewCosts' },
       ]
     },
     {
