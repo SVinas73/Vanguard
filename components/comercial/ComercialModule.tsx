@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  BarChart3, ShoppingCart, TrendingUp, Landmark, CircleDollarSign
+  BarChart3, ShoppingCart, TrendingUp, Landmark, CircleDollarSign,
+  Brain, Tag, Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types';
@@ -12,10 +13,13 @@ import { Product } from '@/types';
 import ComercialDashboard from './ComercialDashboard';
 import ComprasEnterprisePanel from './ComprasEnterprisePanel';
 import VentasEnterprisePanel from './VentasEnterprisePanel';
+import ComercialAnalytics from './ComercialAnalytics';
+import CondicionesComerciales from './CondicionesComerciales';
+import ComisionesVendedores from './ComisionesVendedores';
 import FinanzasEnterprise from '@/components/finanzas/FinanzasEnterprise';
 import CostosEnterprise from '@/components/costos/CostosEnterprise';
 
-export type ComercialSubTab = 'dashboard' | 'compras' | 'ventas' | 'finanzas' | 'costos';
+export type ComercialSubTab = 'dashboard' | 'compras' | 'ventas' | 'finanzas' | 'costos' | 'analytics' | 'condiciones' | 'comisiones';
 
 interface ComercialModuleProps {
   products: Product[];
@@ -49,6 +53,9 @@ export default function ComercialModule({
     { id: 'ventas', label: t('nav.sales', 'Ventas'), icon: TrendingUp, visible: true },
     { id: 'finanzas', label: t('modules.finance', 'Finanzas'), icon: Landmark, visible: hasPermission('canViewFinanzas') },
     { id: 'costos', label: t('nav.costs', 'Costos'), icon: CircleDollarSign, visible: hasPermission('canViewCosts') },
+    { id: 'analytics', label: 'Inteligencia', icon: Brain, visible: true },
+    { id: 'condiciones', label: 'Condiciones', icon: Tag, visible: true },
+    { id: 'comisiones', label: 'Comisiones', icon: Award, visible: true },
   ];
 
   const visibleTabs = tabs.filter(tab => tab.visible);
@@ -103,6 +110,18 @@ export default function ComercialModule({
 
       {subTab === 'costos' && (
         <CostosEnterprise />
+      )}
+
+      {subTab === 'analytics' && (
+        <ComercialAnalytics />
+      )}
+
+      {subTab === 'condiciones' && (
+        <CondicionesComerciales />
+      )}
+
+      {subTab === 'comisiones' && (
+        <ComisionesVendedores />
       )}
     </div>
   );
