@@ -1,6 +1,6 @@
 'use client';
 
-import { ComercialDashboard, ComprasEnterprisePanel, VentasEnterprisePanel } from '@/components/comercial';
+import { ComercialModule, ComercialSubTab } from '@/components/comercial';
 
 import { ChatModule } from '@/components/chat';
 import { DemandPlanningModule } from '@/components/demand-planning';
@@ -16,15 +16,11 @@ import { ImportCSV } from '@/components/import';
 import { IntegracionesDashboard } from '@/components/integraciones';
 import { ProductImage } from '@/components/productos';
 import TallerEnterprise from '@/components/taller';
-import { VentasDashboard } from '@/components/ventas';
-import { ComprasDashboard } from '@/components/compras';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { AuditLogPanel } from '@/components/audit';
-import CostosEnterprise from '@/components/costos';
 import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
 import { ReportsEnterprise } from '@/components/reports';
-import FinanzasEnterprise from '@/components/finanzas/FinanzasEnterprise';
 import { QuickScanner } from '@/components/scanner';
 import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadge } from '@/components/ai';
 import SerialManagement from '@/components/serialization/SerialManagement';
@@ -93,6 +89,20 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [dashboardPeriod, setDashboardPeriod] = useState('30d');
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [comercialSubTab, setComercialSubTab] = useState<ComercialSubTab>('dashboard');
+
+  const handleTabChange = useCallback((tab: TabType) => {
+    const comercialSubTabs = ['compras', 'ventas', 'finanzas', 'costos'];
+    if (comercialSubTabs.includes(tab)) {
+      setActiveTab('comercial');
+      setComercialSubTab(tab as ComercialSubTab);
+    } else {
+      setActiveTab(tab);
+      if (tab === 'comercial') {
+        setComercialSubTab('dashboard');
+      }
+    }
+  }, []);
 
   // Persistent filters
   useEffect(() => {
@@ -495,7 +505,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <Sidebar 
         activeTab={activeTab} 
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         permissions={{
           canViewCosts: hasPermission('canViewCosts'),
           canViewAudit: hasPermission('canViewAudit'),
@@ -519,7 +529,7 @@ export default function HomePage() {
 
         {/* Breadcrumbs + Notifications */}
         <div className="flex items-center justify-between mb-2">
-          <Breadcrumbs activeTab={activeTab} onNavigate={setActiveTab} />
+          <Breadcrumbs activeTab={activeTab} onNavigate={handleTabChange} />
           <NotificationBell />
         </div>
 
@@ -551,7 +561,7 @@ export default function HomePage() {
             <StatsGrid stats={stats} products={products} movements={movements} />
 
             {/* Cross-Module Summary */}
-            <CrossModuleSummary onNavigate={(tab) => setActiveTab(tab as TabType)} />
+            <CrossModuleSummary onNavigate={(tab) => handleTabChange(tab as TabType)} />
 
             {/* Enterprise Panels Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -560,7 +570,7 @@ export default function HomePage() {
                 movements={movements}
                 onCategoryClick={(category: string) => {
                   setSelectedCategory(category);
-                  setActiveTab('stock');
+                  handleTabChange('stock');
                 }}
               />
               <StockAlertsPanel
@@ -568,7 +578,7 @@ export default function HomePage() {
                 predictions={predictions}
                 onProductClick={(product: Product) => handleOpenEdit(product)}
                 onCreatePurchaseOrder={(productsAtRisk: Product[]) => {
-                  setActiveTab('compras');
+                  handleTabChange('compras');
                 }}
               />
             </div>
@@ -599,7 +609,7 @@ export default function HomePage() {
               products={products}
               movements={movements}
               predictions={predictions}
-              onNavigate={(tab) => setActiveTab(tab as TabType)}
+              onNavigate={(tab) => handleTabChange(tab as TabType)}
             />
 
             {/* Quick Actions */}
@@ -621,7 +631,7 @@ export default function HomePage() {
                 <div className="text-xs text-slate-500">Entrada o salida</div>
               </button>
               <button
-                onClick={() => setActiveTab('compras')}
+                onClick={() => handleTabChange('compras')}
                 className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left group"
               >
                 <ShoppingCart size={20} className="text-amber-400 mb-2 group-hover:scale-110 transition-transform" />
@@ -629,7 +639,7 @@ export default function HomePage() {
                 <div className="text-xs text-slate-500">Crear nueva orden</div>
               </button>
               <button
-                onClick={() => setActiveTab('reportes')}
+                onClick={() => handleTabChange('reportes')}
                 className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left group"
               >
                 <FileText size={20} className="text-violet-400 mb-2 group-hover:scale-110 transition-transform" />
@@ -674,31 +684,14 @@ export default function HomePage() {
           />
         )}
 
-        {/* ==================== COMERCIAL ==================== */}
+        {/* ==================== COMERCIAL (Compras, Ventas, Finanzas, Costos) ==================== */}
         {activeTab === 'comercial' && (
-          <ComercialDashboard
-            onNavigate={(view) => {
-              if (view === 'compras') setActiveTab('compras');
-              if (view === 'ventas') setActiveTab('ventas');
-              if (view === 'cotizaciones') setActiveTab('ventas');
-            }}
+          <ComercialModule
+            products={products}
+            userEmail={user?.email || ''}
+            activeSubTab={comercialSubTab}
+            onSubTabChange={setComercialSubTab}
           />
-        )}
-
-        {/* ==================== COMPRAS ==================== */}
-        {activeTab === 'compras' && (
-          <ComprasEnterprisePanel products={products} userEmail={user?.email || ''} />
-        )}
-
-        {/* ==================== VENTAS ==================== */}
-        {activeTab === 'ventas' && (
-          <VentasEnterprisePanel products={products} userEmail={user?.email || ''} />
-        )}
-
-        {activeTab === 'finanzas' && (
-          <div className="w-full">
-            <FinanzasEnterprise />
-          </div>
         )}
 
         {activeTab === 'taller' && (
@@ -733,13 +726,6 @@ export default function HomePage() {
         {activeTab === 'reportes' && (
           <div className="w-full">
             <ReportsEnterprise />
-          </div>
-        )}
-
-        {/* ==================== COSTOS ==================== */}
-        {activeTab === 'costos' && (
-          <div className="w-full">
-            <CostosEnterprise />
           </div>
         )}
 
@@ -1116,7 +1102,7 @@ export default function HomePage() {
 
       {/* Buscador Global - Ctrl+K */}
       <GlobalSearch
-        onNavigate={(tab) => setActiveTab(tab as TabType)}
+        onNavigate={(tab) => handleTabChange(tab as TabType)}
         onSelectProduct={(product) => handleOpenEdit(product)}
       />
 
