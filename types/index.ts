@@ -1044,38 +1044,38 @@ export interface ProyectoTarea {
   descripcion?: string;
   prioridad: PrioridadTarea;
   orden: number;
-  
+
   // Fechas
   fechaLimite?: Date;
   fechaInicio?: Date;
   fechaCompletado?: Date;
-  
+
   // Asignación
   asignadoA?: string;
-  
+
   // Vínculos
   productoCodigo?: string;
   ordenCompraId?: string;
   ordenVentaId?: string;
   rmaId?: string;
   ensamblajeId?: string;
-  
+
   // Estado
   completado: boolean;
   bloqueado: boolean;
   razonBloqueo?: string;
-  
+
   // Seguimiento
   tiempoEstimadoHoras?: number;
   tiempoRealHoras?: number;
   progreso: number;
-  
+
   // Relaciones
   subtareas?: ProyectoSubtarea[];
   etiquetas?: ProyectoEtiqueta[];
   comentarios?: ProyectoComentario[];
   adjuntos?: ProyectoAdjunto[];
-  
+
   // Auditoría
   creadoPor?: string;
   createdAt: Date;
@@ -1152,23 +1152,23 @@ export type TipoOperacionEnsamblaje =
 export interface EnsamblajeOperacion {
   id: string;
   ensamblajeId: string;
-  
+
   tipo: TipoOperacionEnsamblaje;
   descripcion?: string;
   datos?: Record<string, any>;
-  
+
   cantidad?: number;
   unidad?: string;
-  
+
   resultadoQc?: 'aprobado' | 'rechazado' | 'condicional';
   defectosEncontrados?: DefectoQC[];
-  
+
   costoAsociado?: number;
-  
+
   ejecutadoPor: string;
   estacionTrabajo?: string;
   ipAddress?: string;
-  
+
   createdAt: Date;
 }
 
@@ -1184,29 +1184,29 @@ export interface EnsamblajeConsumo {
   id: string;
   ensamblajeId: string;
   operacionId?: string;
-  
+
   componenteCodigo: string;
   componenteDescripcion?: string;
-  
+
   cantidadPlanificada: number;
   cantidadConsumida: number;
   cantidadDesperdicio: number;
   unidad?: string;
-  
+
   loteId?: string;
   loteNumero?: string;
   serialNumber?: string;
-  
+
   almacenId?: string;
   ubicacion?: string;
-  
+
   costoUnitario?: number;
   costoTotal?: number;
-  
+
   esSustituto: boolean;
   componenteOriginalCodigo?: string;
   motivoSustitucion?: string;
-  
+
   consumidoPor?: string;
   createdAt: Date;
 }
@@ -1220,31 +1220,31 @@ export interface EnsamblajeQC {
   id: string;
   ensamblajeId: string;
   operacionId?: string;
-  
+
   tipoInspeccion: TipoInspeccionQC;
   numeroInspeccion: number;
-  
+
   cantidadInspeccionada: number;
   cantidadAprobada: number;
   cantidadRechazada: number;
   cantidadRetrabajo: number;
-  
+
   resultado: ResultadoInspeccionQC;
-  
+
   defectos?: DefectoQC[];
   checklistId?: string;
   checklistResultados?: Record<string, any>;
   mediciones?: MedicionQC[];
-  
+
   disposicionRechazo?: DisposicionRechazo;
   evidencias?: EvidenciaQC[];
-  
+
   notas?: string;
-  
+
   inspector: string;
   supervisorAprobacion?: string;
   fechaInspeccion: Date;
-  
+
   createdAt: Date;
 }
 
@@ -1264,61 +1264,61 @@ export interface EvidenciaQC {
 }
 
 // Pausas
-export type MotivoPausa = 
-  | 'falta_material' 
-  | 'falla_equipo' 
-  | 'cambio_turno' 
-  | 'descanso' 
-  | 'qc_pendiente' 
+export type MotivoPausa =
+  | 'falta_material'
+  | 'falla_equipo'
+  | 'cambio_turno'
+  | 'descanso'
+  | 'qc_pendiente'
   | 'otro';
 
 export interface EnsamblajePausa {
   id: string;
   ensamblajeId: string;
-  
+
   fechaPausa: Date;
   fechaReanudacion?: Date;
   duracionMinutos?: number;
-  
+
   motivo: MotivoPausa;
   descripcion?: string;
-  
+
   impactoProduccion: boolean;
   costoTiempoMuerto?: number;
-  
+
   pausadoPor: string;
   reanudadoPor?: string;
-  
+
   createdAt: Date;
 }
 
 // Seriales generados
-export type EstadoSerialEnsamblaje = 
-  | 'producido' 
-  | 'qc_aprobado' 
-  | 'qc_rechazado' 
-  | 'despachado' 
+export type EstadoSerialEnsamblaje =
+  | 'producido'
+  | 'qc_aprobado'
+  | 'qc_rechazado'
+  | 'despachado'
   | 'devuelto';
 
 export interface EnsamblajeSerial {
   id: string;
   ensamblajeId: string;
-  
+
   serialNumber: string;
   secuencia: number;
-  
+
   estado: EstadoSerialEnsamblaje;
-  
+
   qcId?: string;
   resultadoQc?: string;
-  
+
   loteId?: string;
-  
+
   componentesTrazados?: ComponenteTrazado[];
-  
+
   almacenId?: string;
   ubicacion?: string;
-  
+
   createdAt: Date;
 }
 
@@ -1344,11 +1344,11 @@ export interface EnsamblajeDashboardView {
   fechaInicio?: Date;
   fechaFin?: Date;
   duracionRealMinutos?: number;
-  
+
   // BOM
   bomVersion: string;
   costoBomPlanificado: number;
-  
+
   // Costos
   costoMaterialesReal?: number;
   costoManoObraReal?: number;
@@ -1356,28 +1356,28 @@ export interface EnsamblajeDashboardView {
   costoTotalReal?: number;
   costoTotalPlanificado: number;
   variacionCostoPct?: number;
-  
+
   // Eficiencia
   rendimientoPct: number;
-  
+
   // QC
   totalInspecciones: number;
   ultimoQc?: string;
-  
+
   // Pausas
   totalPausas: number;
   minutosPausados?: number;
-  
+
   // Timeline
   ultimaOperacion?: string;
   fechaUltimaOperacion?: Date;
-  
+
   // Seriales
   serialesGenerados: number;
-  
+
   // Almacén
   almacenNombre: string;
-  
+
   supervisor?: string;
   creadoPor?: string;
   createdAt: Date;
@@ -1403,7 +1403,7 @@ export interface QMSPlanInspeccion {
   nombre: string;
   descripcion?: string;
   tipo: TipoPlanInspeccion;
-  
+
   // Aplica a
   aplica_a: AplicaA;
   producto_id?: string;
@@ -1411,25 +1411,25 @@ export interface QMSPlanInspeccion {
   categoria?: string;
   proveedor_id?: string;
   proveedor?: Proveedor;
-  
+
   // Configuración de muestreo
   metodo_muestreo: MetodoMuestreo;
   nivel_aql?: number; // Acceptable Quality Level (ej: 1.0, 2.5, 4.0)
   porcentaje_muestra?: number;
   cantidad_fija?: number;
-  
+
   // Frecuencia (para inspecciones periódicas)
   frecuencia_dias?: number;
   ultima_inspeccion?: Date;
   proxima_inspeccion?: Date;
-  
+
   // Estado
   activo: boolean;
   version: number;
-  
+
   // Características asociadas
   caracteristicas?: QMSCaracteristica[];
-  
+
   // Auditoría
   creado_por?: string;
   creado_at: Date;
@@ -1446,33 +1446,33 @@ export type TipoCaracteristica = 'dimensional' | 'visual' | 'funcional' | 'docum
 export interface QMSCaracteristica {
   id: string;
   plan_id: string;
-  
+
   codigo: string;
   nombre: string;
   descripcion?: string;
-  
+
   // Tipo de característica
   tipo: TipoCaracteristica;
-  
+
   // Especificaciones
   unidad_medida?: string;
   valor_nominal?: number;
   tolerancia_min?: number;
   tolerancia_max?: number;
   valores_aceptables?: string[]; // Para características cualitativas
-  
+
   // Método de medición
   instrumento?: string;
   metodo_ensayo?: string; // Referencia a norma o procedimiento
-  
+
   // Criticidad
   critico: boolean; // Característica crítica (CTQ)
   mayor: boolean;   // Defecto mayor
   menor: boolean;   // Defecto menor
-  
+
   // Orden de inspección
   orden: number;
-  
+
   activo: boolean;
   created_at: Date;
 }
@@ -1488,12 +1488,12 @@ export type TipoInspeccion = 'recepcion' | 'proceso' | 'final' | 'retencion';
 export interface QMSInspeccion {
   id: string;
   numero: string; // INS-2024-00001
-  
+
   // Referencias
   plan_id?: string;
   plan?: QMSPlanInspeccion;
   tipo: TipoInspeccion;
-  
+
   // Origen (qué se está inspeccionando)
   producto_id?: string;
   producto?: Product;
@@ -1508,39 +1508,39 @@ export interface QMSInspeccion {
   proveedor_id?: string;
   proveedor?: Proveedor;
   proveedor_nombre?: string;
-  
+
   // Cantidades
   cantidad_recibida: number;
   cantidad_muestra: number;
   cantidad_aceptada: number;
   cantidad_rechazada: number;
-  
+
   // Resultado
   estado: EstadoInspeccion;
   decision?: DecisionInspeccion;
-  
+
   // Fechas
   fecha_inspeccion: Date;
   fecha_decision?: Date;
-  
+
   // Responsables
   inspector?: string;
   supervisor_calidad?: string;
-  
+
   // Observaciones
   observaciones?: string;
   acciones_tomadas?: string;
-  
+
   // Documentos adjuntos
   documentos?: QMSDocumento[];
-  
+
   // Resultados detallados
   resultados?: QMSResultadoInspeccion[];
-  
+
   // NCR relacionada
   ncr_id?: string;
   ncr?: QMSNoConformidad;
-  
+
   // Auditoría
   creado_por?: string;
   creado_at: Date;
@@ -1566,28 +1566,28 @@ export interface QMSResultadoInspeccion {
   inspeccion_id: string;
   caracteristica_id: string;
   caracteristica?: QMSCaracteristica;
-  
+
   // Valores medidos
   valor_medido?: number;
   valor_texto?: string; // Para características cualitativas
   valores_multiples?: number[]; // Para múltiples mediciones
-  
+
   // Resultado
   conforme?: boolean;
   desviacion?: number; // Diferencia con nominal
-  
+
   // Defectos encontrados
   cantidad_defectos: number;
   tipo_defecto?: TipoDefecto;
   descripcion_defecto?: string;
-  
+
   // Evidencia
   fotos?: QMSFotoEvidencia[];
-  
+
   // Instrumento usado
   instrumento_usado?: string;
   instrumento_calibrado?: boolean;
-  
+
   created_at: Date;
 }
 
@@ -1610,12 +1610,12 @@ export type EstadoNCR = 'abierta' | 'en_analisis' | 'en_implementacion' | 'verif
 export interface QMSNoConformidad {
   id: string;
   numero: string; // NCR-2024-00001
-  
+
   // Clasificación
   tipo: TipoNCR;
   origen: OrigenNCR;
   severidad: SeveridadNCR;
-  
+
   // Referencias
   inspeccion_id?: string;
   inspeccion?: QMSInspeccion;
@@ -1630,37 +1630,37 @@ export interface QMSNoConformidad {
   cliente_id?: string;
   cliente?: Cliente;
   cliente_nombre?: string;
-  
+
   // Descripción
   titulo: string;
   descripcion: string;
   evidencia?: string;
   cantidad_afectada?: number;
   costo_estimado?: number;
-  
+
   // Disposición inmediata
   disposicion?: DisposicionNCR;
   disposicion_detalle?: string;
-  
+
   // Estado del flujo
   estado: EstadoNCR;
-  
+
   // Fechas
   fecha_deteccion: Date;
   fecha_objetivo?: Date;
   fecha_cierre?: Date;
-  
+
   // Responsables
   detectado_por?: string;
   responsable?: string;
   aprobado_por?: string;
-  
+
   // Documentos
   documentos?: QMSDocumento[];
-  
+
   // CAPAs relacionadas
   capas?: QMSAccionCorrectiva[];
-  
+
   // Auditoría
   creado_por?: string;
   creado_at: Date;
@@ -1679,20 +1679,20 @@ export type EstadoCAPA = 'abierta' | 'en_analisis' | 'en_implementacion' | 'veri
 export interface QMSAccionCorrectiva {
   id: string;
   numero: string; // CAPA-2024-00001
-  
+
   // Tipo
   tipo: TipoCAPA;
-  
+
   // Origen
   ncr_id?: string;
   ncr?: QMSNoConformidad;
   auditoria_id?: string;
   origen_descripcion?: string;
-  
+
   // Descripción del problema
   titulo: string;
   descripcion_problema: string;
-  
+
   // Análisis de causa raíz (8D Methodology)
   d1_equipo?: string; // Equipo de trabajo
   d2_descripcion?: string; // Descripción del problema
@@ -1703,33 +1703,33 @@ export interface QMSAccionCorrectiva {
   d6_implementacion?: string; // Implementación y validación
   d7_prevencion?: string; // Prevención de recurrencia
   d8_reconocimiento?: string; // Reconocimiento al equipo
-  
+
   // Plan de acción
   acciones?: QMSAccionPlan[];
-  
+
   // Verificación de efectividad
   verificacion_requerida: boolean;
   verificacion_fecha?: Date;
   verificacion_resultado?: string;
   verificacion_efectiva?: boolean;
   verificado_por?: string;
-  
+
   // Estado
   estado: EstadoCAPA;
   porcentaje_avance: number;
-  
+
   // Fechas
   fecha_inicio: Date;
   fecha_objetivo?: Date;
   fecha_cierre?: Date;
-  
+
   // Responsables
   responsable?: string;
   aprobado_por?: string;
-  
+
   // Documentos
   documentos?: QMSDocumento[];
-  
+
   // Auditoría
   creado_por?: string;
   creado_at: Date;
@@ -1762,10 +1762,10 @@ export type EstadoCertificado = 'borrador' | 'emitido' | 'anulado';
 export interface QMSCertificado {
   id: string;
   numero: string; // COA-2024-00001
-  
+
   // Tipo
   tipo: TipoCertificado;
-  
+
   // Referencias
   inspeccion_id?: string;
   inspeccion?: QMSInspeccion;
@@ -1774,7 +1774,7 @@ export interface QMSCertificado {
   producto_codigo: string;
   producto_descripcion: string;
   lote_numero?: string;
-  
+
   // Destinatario
   cliente_id?: string;
   cliente?: Cliente;
@@ -1782,28 +1782,28 @@ export interface QMSCertificado {
   orden_venta_id?: string;
   orden_venta?: OrdenVenta;
   orden_venta_numero?: string;
-  
+
   // Contenido
   resultados: QMSResultadoCertificado[];
   observaciones?: string;
   conclusion: string; // "El producto cumple con las especificaciones"
-  
+
   // Validez
   fecha_emision: Date;
   fecha_vencimiento?: Date;
-  
+
   // Firmas
   elaborado_por?: string;
   revisado_por?: string;
   aprobado_por?: string;
-  
+
   // PDF generado
   pdf_url?: string;
   pdf_generado_at?: Date;
-  
+
   // Estado
   estado: EstadoCertificado;
-  
+
   // Auditoría
   creado_por?: string;
   creado_at: Date;
@@ -1829,56 +1829,56 @@ export type EstadoRecall = 'iniciado' | 'en_proceso' | 'completado' | 'cerrado';
 export interface QMSRecall {
   id: string;
   numero: string; // RCL-2024-00001
-  
+
   // Clasificación FDA
   clase: ClaseRecall;
   tipo: TipoRecall;
-  
+
   // Producto afectado
   producto_id?: string;
   producto?: Product;
   producto_codigo: string;
   producto_descripcion: string;
-  
+
   // Lotes afectados
   lotes_afectados: string[]; // Array de números de lote
   cantidad_total_afectada: number;
-  
+
   // Motivo
   motivo: string;
   descripcion: string;
   riesgo_salud?: string;
   ncr_id?: string;
   ncr?: QMSNoConformidad;
-  
+
   // Alcance
   alcance?: AlcanceRecall;
   regiones_afectadas?: string[];
-  
+
   // Estado y seguimiento
   estado: EstadoRecall;
   unidades_recuperadas: number;
   unidades_destruidas: number;
   porcentaje_recuperacion: number;
-  
+
   // Comunicaciones
   comunicado_publico?: string;
   comunicado_autoridades?: string;
   fecha_notificacion_autoridad?: Date;
-  
+
   // Fechas
   fecha_inicio: Date;
   fecha_cierre?: Date;
-  
+
   // Responsables
   coordinador?: string;
-  
+
   // Documentos
   documentos?: QMSDocumento[];
-  
+
   // Seguimiento por cliente
   seguimientos?: QMSRecallSeguimiento[];
-  
+
   // Auditoría
   creado_por?: string;
   creado_at: Date;
@@ -1897,30 +1897,30 @@ export type DisposicionRecallSeguimiento = 'devuelto' | 'destruido_cliente' | 'd
 export interface QMSRecallSeguimiento {
   id: string;
   recall_id: string;
-  
+
   // Destino original
   cliente_id?: string;
   cliente?: Cliente;
   cliente_nombre: string;
   orden_venta_id?: string;
-  
+
   // Lote específico
   lote_numero: string;
   cantidad_enviada: number;
   cantidad_recuperada: number;
-  
+
   // Estado
   estado: EstadoRecallSeguimiento;
-  
+
   // Comunicación
   fecha_notificacion?: Date;
   metodo_notificacion?: MetodoNotificacion;
   respuesta_cliente?: string;
-  
+
   // Disposición
   disposicion?: DisposicionRecallSeguimiento;
   fecha_disposicion?: Date;
-  
+
   notas?: string;
   created_at: Date;
 }
@@ -1936,42 +1936,42 @@ export interface QMSInstrumento {
   codigo: string;
   nombre: string;
   descripcion?: string;
-  
+
   // Clasificación
   tipo?: string; // 'calibrador', 'micrometro', 'balanza', 'termometro', etc.
   marca?: string;
   modelo?: string;
   numero_serie?: string;
-  
+
   // Ubicación
   ubicacion?: string;
   responsable?: string;
-  
+
   // Rango de medición
   rango_min?: number;
   rango_max?: number;
   unidad_medida?: string;
   resolucion?: number;
   exactitud?: number;
-  
+
   // Calibración
   requiere_calibracion: boolean;
   frecuencia_calibracion_dias: number;
   proveedor_calibracion?: string;
-  
+
   ultima_calibracion?: Date;
   proxima_calibracion?: Date;
   certificado_calibracion_url?: string;
-  
+
   // Estado
   estado: EstadoInstrumento;
-  
+
   // Calculado
   dias_para_calibracion?: number;
-  
+
   // Historial de calibraciones
   historial_calibraciones?: QMSCalibracionHistorial[];
-  
+
   // Auditoría
   creado_por?: string;
   creado_at: Date;
@@ -2088,40 +2088,40 @@ export interface QMSMetricas {
   inspeccionesEstaSemana: number;
   tasaAprobacion: number;
   tasaAprobacionTendencia: number;
-  
+
   // NCRs
   ncrsAbiertas: number;
   ncrsCriticas: number;
   ncrsMayores: number;
   ncrsEsteMes: number;
   tiempoPromedioResolucionNCR: number; // en días
-  
+
   // CAPAs
   capasAbiertas: number;
   capasVencidas: number;
   capasProximasVencer: number; // próximos 7 días
   efectividadCAPAs: number; // porcentaje
-  
+
   // Recalls
   recallsActivos: number;
   recallsClaseI: number;
   porcentajeRecuperacionPromedio: number;
-  
+
   // Instrumentos
   instrumentosPorCalibrar: number; // próximos 30 días
   instrumentosVencidos: number;
   instrumentosEnCalibracion: number;
-  
+
   // Calidad general
   ppmDefectos: number; // partes por millón
   costoNoCalidad: number;
   costoNoCalidadMes: number;
-  
+
   // Proveedores
   proveedoresConNCR: number;
   mejorProveedor?: { nombre: string; tasaAprobacion: number };
   peorProveedor?: { nombre: string; tasaAprobacion: number };
-  
+
   // Tendencias (últimos 6 meses)
   tendenciaInspecciones: QMSTendenciaMes[];
   tendenciaNCRs: QMSTendenciaMes[];
@@ -2166,7 +2166,7 @@ export interface QMSAlerta {
 // REPORTES QMS
 // --------------------------------------------
 
-export type TipoReporteQMS = 
+export type TipoReporteQMS =
   | 'resumen_mensual'
   | 'ncr_por_proveedor'
   | 'ncr_por_producto'
@@ -2202,25 +2202,25 @@ export interface QMSAuditoria {
   titulo: string;
   alcance: string;
   criterios: string;
-  
+
   // Fechas
   fecha_planificada: Date;
   fecha_inicio?: Date;
   fecha_fin?: Date;
-  
+
   // Equipo
   auditor_lider: string;
   auditores?: string[];
-  
+
   // Resultados
   estado: EstadoAuditoria;
   hallazgos?: QMSHallazgoAuditoria[];
   conclusion?: string;
-  
+
   // Documentos
   plan_url?: string;
   informe_url?: string;
-  
+
   creado_por?: string;
   creado_at: Date;
 }
@@ -2245,10 +2245,9 @@ export interface QMSHallazgoAuditoria {
 // --------------------------------------------
 
 export const calcularTamanioMuestraAQL = (
-  cantidadLote: number, 
+  cantidadLote: number,
   nivelInspeccion: 'I' | 'II' | 'III' = 'II'
 ): number => {
-  // Determinar código de letra según tamaño de lote
   let codigoLetra: string;
   if (cantidadLote <= 8) codigoLetra = 'A';
   else if (cantidadLote <= 15) codigoLetra = 'B';
@@ -2265,7 +2264,7 @@ export const calcularTamanioMuestraAQL = (
   else if (cantidadLote <= 150000) codigoLetra = 'N';
   else if (cantidadLote <= 500000) codigoLetra = 'P';
   else codigoLetra = 'Q';
-  
+
   const tabla = QMS_TABLA_AQL[codigoLetra];
   switch (nivelInspeccion) {
     case 'I': return tabla.nivelI;
@@ -2314,7 +2313,6 @@ export const getBgColorPorDiasRestantes = (dias: number): string => {
 // ============================================
 
 export type {
-
   Zona,
   Ubicacion,
   OrdenRecepcion,
@@ -2331,7 +2329,289 @@ export type {
 } from '@/components/wms/types';
 
 // ============================================
-// COMERCIAL — NOTAS CRÉDITO/DÉBITO
+// COTIZACIONES (con versionado)
+// ============================================
+
+export type CotizacionEstado =
+  | 'borrador'
+  | 'enviada'
+  | 'aceptada'
+  | 'rechazada'
+  | 'vencida'
+  | 'convertida'
+  | 'reemplazada'; // cuando se crea una versión nueva
+
+export interface Cotizacion {
+  id: string;
+  numero: string; // COT-2025-00001
+  clienteId: string;
+  cliente?: Cliente;
+  estado: CotizacionEstado;
+
+  // Versionado
+  version: number;                    // 1, 2, 3...
+  cotizacionPadreId?: string | null;  // FK a la versión anterior
+  cotizacionRaizId?: string | null;   // FK a la v1 (para agrupar)
+  esVersionActiva: boolean;           // solo una por raíz puede ser true
+
+  // Conversión a OV
+  ordenVentaId?: string | null;
+  fechaConversion?: Date;
+
+  // Fechas
+  fechaEmision: Date;
+  fechaValidez: Date;
+  fechaEnvio?: Date;
+  fechaRespuestaCliente?: Date;
+
+  // Económico
+  subtotal: number;
+  descuento: number;
+  impuestos: number;
+  total: number;
+  moneda: string;
+
+  // Comercial
+  vendedorEmail?: string;
+  metodoPagoSugerido?: string;
+  plazoEntregaDias?: number;
+  notas?: string;
+  notasInternas?: string; // no visibles al cliente
+
+  // Items
+  items?: CotizacionItem[];
+
+  // Auditoría
+  creadoPor: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CotizacionItem {
+  id: string;
+  cotizacionId: string;
+  productoCodigo: string;
+  producto?: Product;
+  cantidad: number;
+  precioUnitario: number;
+  descuentoItem: number;
+  subtotal: number;
+  notas?: string;
+}
+
+// Helper: agrupación de versiones
+export interface CotizacionConHistorial {
+  raiz: Cotizacion;
+  versiones: Cotizacion[]; // ordenadas por version desc
+  versionActiva: Cotizacion;
+}
+
+// ============================================
+// SCORING DE CLIENTES Y PROVEEDORES
+// ============================================
+
+export type CategoriaScore = 'A' | 'B' | 'C' | 'D';
+export type RiesgoCredito = 'bajo' | 'medio' | 'alto' | 'critico';
+
+export interface ScoringCliente {
+  clienteId: string;
+  cliente?: Cliente;
+
+  // Score consolidado
+  scoreTotal: number; // 0-100
+  categoria: CategoriaScore;
+  riesgoCredito: RiesgoCredito;
+
+  // Componentes (cada uno 0-100)
+  puntualidadPago: number;
+  volumenScore: number;
+  frecuenciaScore: number;
+  antiguedadScore: number;
+  rentabilidadScore: number;
+
+  // Métricas crudas que alimentan el score
+  diasMoraPromedio: number;
+  diasMoraActuales: number;
+  facturasPagadas: number;
+  facturasEnMora: number;
+  volumenUltimos12m: number;
+  ordenesUltimos12m: number;
+  antiguedadMeses: number;
+  margenPromedioGenerado: number;
+  ultimaCompra?: Date;
+
+  // Crédito
+  limiteCreditoUsado: number;
+  porcentajeCreditoUsado: number;
+
+  // Alertas activas
+  alertas: AlertaScoring[];
+
+  // Tendencia
+  scoreAnterior?: number;
+  variacionScore?: number;
+
+  calculadoEn: Date;
+}
+
+export interface ScoringProveedor {
+  proveedorId: string;
+  proveedor?: Proveedor;
+
+  scoreTotal: number;
+  categoria: CategoriaScore;
+
+  // Componentes
+  cumplimientoEntregaScore: number;
+  calidadScore: number;
+  precioScore: number;
+  tiempoEntregaScore: number;
+
+  // Métricas crudas
+  ordenesTotal12m: number;
+  ordenesAtrasadas12m: number;
+  porcentajeAtraso: number;
+  tiempoEntregaPromedioDias: number;
+  ncrsAbiertas: number;
+  ncrsCerradasUltimos6m: number;
+  variacionPrecioPromedio: number; // % vs benchmark categoría
+
+  alertas: AlertaScoring[];
+
+  scoreAnterior?: number;
+  variacionScore?: number;
+
+  calculadoEn: Date;
+}
+
+export interface AlertaScoring {
+  tipo: 'mora' | 'limite_credito' | 'caida_volumen' | 'incumplimiento' | 'calidad';
+  severidad: 'info' | 'warning' | 'critical';
+  mensaje: string;
+  valor?: number;
+}
+
+export interface ConfiguracionScoring {
+  // Pesos clientes (deben sumar 100)
+  pesoClientePuntualidad: number;
+  pesoClienteVolumen: number;
+  pesoClienteFrecuencia: number;
+  pesoClienteAntiguedad: number;
+  pesoClienteRentabilidad: number;
+  // Pesos proveedores (deben sumar 100)
+  pesoProveedorCumplimiento: number;
+  pesoProveedorCalidad: number;
+  pesoProveedorPrecio: number;
+  pesoProveedorTiempo: number;
+  // Umbrales
+  diasMoraAlerta: number;
+  diasMoraCritico: number;
+  porcentajeCreditoAlerta: number;
+}
+
+// ============================================
+// LIQUIDACIÓN DE COMISIONES
+// ============================================
+
+export type EstadoLiquidacion =
+  | 'borrador'
+  | 'pendiente_aprobacion'
+  | 'aprobada'
+  | 'pagada'
+  | 'anulada';
+
+export interface LiquidacionComision {
+  id: string;
+  numero: string; // LIQ-2025-12-juan_perez
+  vendedorEmail: string;
+  vendedorNombre?: string;
+
+  // Período
+  periodo: string;        // "2025-12"
+  fechaDesde: Date;
+  fechaHasta: Date;
+
+  // Resumen calculado
+  cantidadVentas: number;
+  totalVentasBruto: number;
+  comisionBase: number;
+  comisionBono: number;   // bono por cumplimiento de meta
+  comisionTotal: number;
+
+  // Ajustes manuales
+  ajustes: number;
+  motivoAjuste?: string;
+  totalLiquidar: number;
+
+  // Estado y flujo
+  estado: EstadoLiquidacion;
+  fechaGeneracion: Date;
+  generadoPor: string;
+  fechaAprobacion?: Date;
+  aprobadoPor?: string;
+  fechaPago?: Date;
+  metodoPago?: string;
+  referenciaPago?: string;
+  comprobantePagoUrl?: string;
+
+  // Detalle
+  items?: LiquidacionComisionItem[];
+  notas?: string;
+
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface LiquidacionComisionItem {
+  id: string;
+  liquidacionId: string;
+  ordenVentaId: string;
+  ordenVentaNumero: string;
+  clienteNombre: string;
+  fechaVenta: Date;
+  montoVenta: number;
+  porcentajeComision: number;
+  comisionCalculada: number;
+  esBonoMeta: boolean;
+}
+
+// ============================================
+// RENTABILIDAD PRODUCTO-CLIENTE
+// ============================================
+
+export type CategoriaRentabilidad = 'estrella' | 'rentable' | 'marginal' | 'perdida';
+
+export interface RentabilidadProductoCliente {
+  productoCodigo: string;
+  productoDescripcion: string;
+  clienteId: string;
+  clienteNombre: string;
+
+  // Volumen
+  unidadesVendidas: number;
+  cantidadOrdenes: number;
+  primeraVenta: Date;
+  ultimaVenta: Date;
+
+  // Económico
+  ingresoTotal: number;
+  costoTotal: number;
+  margenAbsoluto: number;
+  margenPorcentual: number;
+
+  // Comparativos
+  margenPromedioProducto: number;     // margen del producto en otros clientes
+  variacionVsPromedio: number;        // diff% vs promedio del producto
+  precioPromedioCobrado: number;
+  descuentoPromedio: number;
+
+  // Ranking
+  rankingMargenAbsoluto: number;      // 1 = mejor
+  categoria: CategoriaRentabilidad;
+}
+
+// ============================================
+// NOTAS DE CRÉDITO / DÉBITO
 // ============================================
 
 export type Moneda = 'USD' | 'UYU' | 'EUR' | 'BRL' | 'ARS';
@@ -2345,11 +2625,17 @@ export interface NotaCreditoDebito {
   numero: string;
   tipo: TipoNota;
   origen: OrigenNota;
+
+  // Entidad (cliente o proveedor)
   entidadId: string;
   entidadNombre?: string;
+
+  // Vínculo a documento origen
   documentoOrigenId?: string;
-  documentoOrigenNumero?: string;
   documentoOrigenTipo?: TipoDocumentoOrigen;
+  documentoOrigenNumero?: string;
+
+  // Datos económicos
   fecha: string;
   moneda: Moneda;
   monto: number;
@@ -2357,9 +2643,13 @@ export interface NotaCreditoDebito {
   saldo: number;
   motivo: string;
   estado: EstadoNota;
+
+  // Aplicaciones (historial de a qué docs se aplicó)
   aplicaciones?: AplicacionNota[];
+
+  // Auditoría
   creadoPor?: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface AplicacionNota {
