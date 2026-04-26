@@ -41,6 +41,19 @@ interface RentabilidadCliente {
   ordenes: number;
 }
 
+interface RentabilidadProductoCliente {
+  key: string;
+  productoCodigo: string;
+  productoDescripcion: string;
+  clienteId: string;
+  clienteNombre: string;
+  cantidad: number;
+  ventas: number;
+  costo: number;
+  margen: number;
+  margenPct: number;
+}
+
 interface TendenciaMes {
   mes: string;
   ventas: number;
@@ -107,10 +120,12 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'
 export default function ComercialAnalytics() {
   const [kpis, setKpis] = useState<KPIData | null>(null);
   const [rentabilidad, setRentabilidad] = useState<RentabilidadCliente[]>([]);
+  const [pivotPC, setPivotPC] = useState<RentabilidadProductoCliente[]>([]);
   const [tendencia, setTendencia] = useState<TendenciaMes[]>([]);
   const [pipeline, setPipeline] = useState<PipelineStage[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodo, setPeriodo] = useState<'3m' | '6m' | '12m'>('6m');
+  const [pivotSort, setPivotSort] = useState<'margen' | 'margenPct' | 'ventas' | 'cantidad'>('margen');
 
   useEffect(() => {
     loadData();
@@ -130,6 +145,7 @@ export default function ComercialAnalytics() {
       await Promise.all([
         calcularKPIs(desdeStr, inicioMes),
         calcularRentabilidad(desdeStr),
+        calcularPivotProductoCliente(desdeStr),
         calcularTendencia(meses),
         calcularPipeline(),
       ]);
@@ -245,6 +261,71 @@ export default function ComercialAnalytics() {
     }).sort((a, b) => b.margen - a.margen).slice(0, 10);
 
     setRentabilidad(result);
+  };
+
+  const calcularPivotProductoCliente = async (desdeStr: string) => {
+    const { data: items } = await supabase
+      .from('ordenes_venta_items')
+      .select(`
+        cantidad,
+        precio_unitario,
+        descuento_item,
+        subtotal,
+        producto_codigo,
+        ordenes_venta!inner(cliente_id, estado, fecha_orden, clientes(nombre)),
+        productos!left(codigo, descripcion, costo)
+      `)
+      .gte('ordenes_venta.fecha_orden', desdeStr)
+      .not('ordenes_venta.estado', 'eq', 'cancelada');
+
+    const map = new Map<string, RentabilidadProductoCliente>();
+
+    items?.forEach((item: any) => {
+      const ov = item.ordenes_venta;
+      if (!ov?.cliente_id) return;
+
+      const cid = ov.cliente_id;
+      const cnombre = ov.clientes?.nombre || 'Sin cliente';
+      const pcodigo = item.producto_codigo || item.productos?.codigo || 'SIN-CODIGO';
+      const pdesc = item.productos?.descripcion || pcodigo;
+
+      const cantidad = parseInt(item.cantidad || 0);
+      const ingreso = parseFloat(item.subtotal || 0);
+      const costoUnit = parseFloat(item.productos?.costo || item.precio_unitario * 0.6);
+      const costoItem = costoUnit * cantidad;
+
+      const key = `${pcodigo}__${cid}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.cantidad += cantidad;
+        existing.ventas += ingreso;
+        existing.costo += costoItem;
+      } else {
+        map.set(key, {
+          key,
+          productoCodigo: pcodigo,
+          productoDescripcion: pdesc,
+          clienteId: cid,
+          clienteNombre: cnombre,
+          cantidad,
+          ventas: ingreso,
+          costo: costoItem,
+          margen: 0,
+          margenPct: 0,
+        });
+      }
+    });
+
+    const result = Array.from(map.values()).map(r => {
+      const margen = r.ventas - r.costo;
+      return {
+        ...r,
+        margen,
+        margenPct: r.ventas > 0 ? (margen / r.ventas) * 100 : 0,
+      };
+    });
+
+    setPivotPC(result);
   };
 
   const calcularTendencia = async (meses: number) => {
@@ -569,6 +650,88 @@ export default function ComercialAnalytics() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </div>
+
+      {/* Rentabilidad Producto × Cliente */}
+      <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <h3 className="font-semibold text-slate-200 flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4 text-purple-400" />
+            Rentabilidad Producto × Cliente (Top 25)
+          </h3>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-slate-500 mr-1">Ordenar por:</span>
+            {([
+              { id: 'margen', label: 'Margen $' },
+              { id: 'margenPct', label: 'Margen %' },
+              { id: 'ventas', label: 'Ventas' },
+              { id: 'cantidad', label: 'Cantidad' },
+            ] as const).map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => setPivotSort(opt.id)}
+                className={cn(
+                  'px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                  pivotSort === opt.id ? 'bg-purple-500/20 text-purple-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {pivotPC.length === 0 ? (
+          <div className="flex items-center justify-center py-10 text-slate-500 text-sm">Sin datos del período</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-slate-500 border-b border-slate-800">
+                  <th className="pb-2 font-medium">Producto</th>
+                  <th className="pb-2 font-medium">Cliente</th>
+                  <th className="pb-2 font-medium text-right">Cant.</th>
+                  <th className="pb-2 font-medium text-right">Ventas</th>
+                  <th className="pb-2 font-medium text-right">Costo Est.</th>
+                  <th className="pb-2 font-medium text-right">Margen</th>
+                  <th className="pb-2 font-medium text-right">Margen %</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/50">
+                {[...pivotPC]
+                  .sort((a, b) => (b[pivotSort] as number) - (a[pivotSort] as number))
+                  .slice(0, 25)
+                  .map(r => (
+                    <tr key={r.key} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-2.5 pr-3">
+                        <div className="font-mono text-xs text-slate-500">{r.productoCodigo}</div>
+                        <div className="text-slate-200">{r.productoDescripcion}</div>
+                      </td>
+                      <td className="py-2.5 text-slate-300">{r.clienteNombre}</td>
+                      <td className="py-2.5 text-right text-slate-400 font-mono">{r.cantidad}</td>
+                      <td className="py-2.5 text-right text-emerald-400 font-mono">{formatCurrency(r.ventas)}</td>
+                      <td className="py-2.5 text-right text-slate-400 font-mono">{formatCurrency(r.costo)}</td>
+                      <td className="py-2.5 text-right font-semibold text-slate-200 font-mono">{formatCurrency(r.margen)}</td>
+                      <td className="py-2.5 text-right">
+                        <span className={cn(
+                          'px-2 py-0.5 rounded text-xs font-medium',
+                          r.margenPct >= 30 ? 'bg-emerald-500/20 text-emerald-400' :
+                          r.margenPct >= 15 ? 'bg-amber-500/20 text-amber-400' :
+                          r.margenPct < 0 ? 'bg-red-500/30 text-red-400' :
+                          'bg-amber-500/10 text-amber-400'
+                        )}>
+                          {r.margenPct.toFixed(1)}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+            <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-500 flex items-center gap-3">
+              <span>Mostrando top 25 de {pivotPC.length} combinaciones</span>
+              <span className="ml-auto">Costo estimado: producto.costo si existe, sino 60% del precio</span>
+            </div>
           </div>
         )}
       </div>

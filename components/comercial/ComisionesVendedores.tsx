@@ -55,7 +55,30 @@ interface VendedorResumen {
   ordenes: number;
 }
 
-type SeccionActiva = 'dashboard' | 'reglas' | 'metas';
+type EstadoLiquidacion = 'pendiente' | 'aprobada' | 'pagada' | 'anulada';
+
+interface LiquidacionComision {
+  id: string;
+  vendedor_email: string;
+  vendedor_nombre?: string;
+  mes: number;
+  anio: number;
+  ventas_total: number;
+  meta: number;
+  pct_cumplimiento: number;
+  comision_base: number;
+  comision_extra: number;
+  comision_total: number;
+  ordenes: number;
+  estado: EstadoLiquidacion;
+  fecha_cierre: string;
+  fecha_pago?: string;
+  cerrado_por?: string;
+  pagado_por?: string;
+  notas?: string;
+}
+
+type SeccionActiva = 'dashboard' | 'reglas' | 'metas' | 'liquidacion';
 
 // ============================================
 // TOAST
@@ -98,6 +121,9 @@ export default function ComisionesVendedores() {
   // Data
   const [reglas, setReglas] = useState<ReglaComision[]>([]);
   const [metas, setMetas] = useState<MetaVendedor[]>([]);
+  const [liquidaciones, setLiquidaciones] = useState<LiquidacionComision[]>([]);
+  const [filterAnio, setFilterAnio] = useState<number>(new Date().getFullYear());
+  const [procesandoLiq, setProcesandoLiq] = useState<string | null>(null);
   const [resumen, setResumen] = useState<VendedorResumen[]>([]);
   const [vendedores, setVendedores] = useState<Array<{ email: string; nombre: string }>>([]);
 
@@ -118,10 +144,37 @@ export default function ComisionesVendedores() {
     loadAll();
   }, []);
 
+  useEffect(() => {
+    loadLiquidaciones();
+  }, [filterAnio]);
+
   const loadAll = async () => {
     setLoading(true);
-    await Promise.all([loadVendedores(), loadReglas(), loadMetas(), loadResumen()]);
+    await Promise.all([loadVendedores(), loadReglas(), loadMetas(), loadResumen(), loadLiquidaciones()]);
     setLoading(false);
+  };
+
+  const loadLiquidaciones = async () => {
+    const { data } = await supabase
+      .from('liquidaciones_comisiones')
+      .select('*')
+      .eq('anio', filterAnio)
+      .order('mes', { ascending: false })
+      .order('comision_total', { ascending: false });
+    if (data) {
+      setLiquidaciones(data.map((l: any) => ({
+        ...l,
+        ventas_total: parseFloat(l.ventas_total) || 0,
+        meta: parseFloat(l.meta) || 0,
+        pct_cumplimiento: parseFloat(l.pct_cumplimiento) || 0,
+        comision_base: parseFloat(l.comision_base) || 0,
+        comision_extra: parseFloat(l.comision_extra) || 0,
+        comision_total: parseFloat(l.comision_total) || 0,
+        ordenes: parseInt(l.ordenes) || 0,
+      })));
+    } else {
+      setLiquidaciones([]);
+    }
   };
 
   const loadVendedores = async () => {
@@ -305,6 +358,95 @@ export default function ComisionesVendedores() {
     }
   };
 
+  // ---- LIQUIDACIÓN ----
+
+  const cerrarMes = async () => {
+    if (resumen.length === 0) {
+      toast.error('No hay ventas registradas este mes');
+      return;
+    }
+
+    const ya = liquidaciones.some(l => l.mes === mesActual && l.anio === anioActual);
+    if (ya) {
+      if (!confirm(`Ya existe una liquidación para ${mesActual}/${anioActual}. ¿Recalcular y reemplazar las pendientes?`)) return;
+    } else {
+      if (!confirm(`Cerrar comisiones de ${mesActual}/${anioActual}? Se generará una liquidación por cada vendedor.`)) return;
+    }
+
+    try {
+      setProcesandoLiq('cerrar');
+
+      // Eliminar previas en estado pendiente del mismo período (las pagadas/aprobadas se conservan)
+      await supabase
+        .from('liquidaciones_comisiones')
+        .delete()
+        .eq('mes', mesActual)
+        .eq('anio', anioActual)
+        .eq('estado', 'pendiente');
+
+      const payload = resumen.map(v => ({
+        vendedor_email: v.email,
+        vendedor_nombre: v.nombre,
+        mes: mesActual,
+        anio: anioActual,
+        ventas_total: v.ventasMes,
+        meta: v.meta,
+        pct_cumplimiento: v.pctCumplimiento,
+        comision_base: v.comisionBase,
+        comision_extra: v.comisionExtra,
+        comision_total: v.comisionTotal,
+        ordenes: v.ordenes,
+        estado: 'pendiente',
+        cerrado_por: user?.email || null,
+      }));
+
+      const { error } = await supabase.from('liquidaciones_comisiones').insert(payload);
+      if (error) throw error;
+
+      const totalLiq = resumen.reduce((s, v) => s + v.comisionTotal, 0);
+      await registrarAuditoria('liquidaciones_comisiones', 'CERRAR_MES', `${mesActual}/${anioActual}`,
+        null,
+        { mes: mesActual, anio: anioActual, vendedores: resumen.length, total_comisiones: totalLiq },
+        user?.email || ''
+      );
+
+      toast.success(`Mes cerrado · ${resumen.length} liquidaciones generadas`);
+      setFilterAnio(anioActual);
+      loadLiquidaciones();
+    } catch (e: any) {
+      toast.error(e.message || 'Error al cerrar mes');
+    } finally {
+      setProcesandoLiq(null);
+    }
+  };
+
+  const cambiarEstadoLiquidacion = async (liq: LiquidacionComision, nuevo: EstadoLiquidacion) => {
+    try {
+      setProcesandoLiq(liq.id);
+      const update: any = { estado: nuevo };
+      if (nuevo === 'pagada') {
+        update.fecha_pago = new Date().toISOString();
+        update.pagado_por = user?.email || null;
+      }
+      const { error } = await supabase.from('liquidaciones_comisiones').update(update).eq('id', liq.id);
+      if (error) throw error;
+
+      await registrarAuditoria('liquidaciones_comisiones', `ESTADO_${nuevo.toUpperCase()}`,
+        `${liq.vendedor_email} ${liq.mes}/${liq.anio}`,
+        { estado: liq.estado },
+        { estado: nuevo, monto: liq.comision_total },
+        user?.email || ''
+      );
+
+      toast.success(`Liquidación → ${nuevo}`);
+      loadLiquidaciones();
+    } catch (e: any) {
+      toast.error(e.message || 'Error');
+    } finally {
+      setProcesandoLiq(null);
+    }
+  };
+
   // ---- CHART DATA ----
 
   const chartData = useMemo(() => {
@@ -324,6 +466,7 @@ export default function ComisionesVendedores() {
     { id: 'dashboard', label: 'Resumen', icon: BarChart3 },
     { id: 'reglas', label: 'Reglas de Comisión', icon: Percent },
     { id: 'metas', label: 'Metas Mensuales', icon: Target },
+    { id: 'liquidacion', label: 'Liquidación', icon: DollarSign },
   ];
 
   const totalComisiones = resumen.reduce((s, v) => s + v.comisionTotal, 0);
@@ -717,6 +860,175 @@ export default function ComisionesVendedores() {
                 <p className="text-slate-500 text-sm mt-1">Los usuarios con rol &quot;vendedor&quot; aparecerán aquí automáticamente</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ============ LIQUIDACIÓN ============ */}
+      {!loading && seccion === 'liquidacion' && (
+        <div className="space-y-4">
+          {/* Header de liquidación */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-slate-400">
+                Cierre y pago de comisiones por vendedor · período {String(mesActual).padStart(2, '0')}/{anioActual}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={filterAnio}
+                onChange={e => setFilterAnio(parseInt(e.target.value))}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200"
+              >
+                {[anioActual - 2, anioActual - 1, anioActual, anioActual + 1].map(a => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+              <button
+                onClick={cerrarMes}
+                disabled={procesandoLiq === 'cerrar'}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-900 rounded-xl text-sm font-bold transition-colors"
+              >
+                {procesandoLiq === 'cerrar' ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
+                Cerrar mes {String(mesActual).padStart(2, '0')}/{anioActual}
+              </button>
+            </div>
+          </div>
+
+          {/* KPIs liquidación */}
+          {liquidaciones.length > 0 && (() => {
+            const pendientes = liquidaciones.filter(l => l.estado === 'pendiente');
+            const aprobadas = liquidaciones.filter(l => l.estado === 'aprobada');
+            const pagadas = liquidaciones.filter(l => l.estado === 'pagada');
+            const sumar = (arr: LiquidacionComision[]) => arr.reduce((s, l) => s + l.comision_total, 0);
+            return (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+                  <div className="text-xs text-slate-400 mb-1">Pendientes</div>
+                  <div className="text-xl font-bold text-amber-400">{formatCurrency(sumar(pendientes))}</div>
+                  <div className="text-xs text-slate-500">{pendientes.length} liquidaciones</div>
+                </div>
+                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+                  <div className="text-xs text-slate-400 mb-1">Aprobadas</div>
+                  <div className="text-xl font-bold text-blue-400">{formatCurrency(sumar(aprobadas))}</div>
+                  <div className="text-xs text-slate-500">{aprobadas.length} liquidaciones</div>
+                </div>
+                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+                  <div className="text-xs text-slate-400 mb-1">Pagadas</div>
+                  <div className="text-xl font-bold text-emerald-400">{formatCurrency(sumar(pagadas))}</div>
+                  <div className="text-xs text-slate-500">{pagadas.length} liquidaciones</div>
+                </div>
+                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+                  <div className="text-xs text-slate-400 mb-1">Total {filterAnio}</div>
+                  <div className="text-xl font-bold text-slate-200">{formatCurrency(sumar(liquidaciones))}</div>
+                  <div className="text-xs text-slate-500">{liquidaciones.length} liquidaciones</div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Tabla liquidaciones */}
+          <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-800/50">
+                  <tr className="text-left text-xs text-slate-500 border-b border-slate-800">
+                    <th className="px-4 py-3 font-medium">Período</th>
+                    <th className="px-4 py-3 font-medium">Vendedor</th>
+                    <th className="px-4 py-3 font-medium text-right">Ventas</th>
+                    <th className="px-4 py-3 font-medium text-right">Cumpl.</th>
+                    <th className="px-4 py-3 font-medium text-right">Comisión</th>
+                    <th className="px-4 py-3 font-medium">Estado</th>
+                    <th className="px-4 py-3 font-medium">Pago</th>
+                    <th className="px-4 py-3 font-medium text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50">
+                  {liquidaciones.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-12 text-center text-slate-500">
+                        <DollarSign className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                        Sin liquidaciones para {filterAnio}. Cerrá el mes para generarlas.
+                      </td>
+                    </tr>
+                  ) : liquidaciones.map(l => {
+                    const cfg = {
+                      pendiente: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'Pendiente' },
+                      aprobada: { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Aprobada' },
+                      pagada: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: 'Pagada' },
+                      anulada: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Anulada' },
+                    }[l.estado];
+                    return (
+                      <tr key={l.id} className="hover:bg-slate-800/30">
+                        <td className="px-4 py-3 font-mono text-slate-300">
+                          {String(l.mes).padStart(2, '0')}/{l.anio}
+                        </td>
+                        <td className="px-4 py-3 text-slate-200">{l.vendedor_nombre || l.vendedor_email}</td>
+                        <td className="px-4 py-3 text-right text-slate-300 font-mono">{formatCurrency(l.ventas_total)}</td>
+                        <td className="px-4 py-3 text-right">
+                          <span className={cn(
+                            'font-bold',
+                            l.pct_cumplimiento >= 100 ? 'text-emerald-400' :
+                            l.pct_cumplimiento >= 70 ? 'text-amber-400' : 'text-red-400'
+                          )}>
+                            {l.pct_cumplimiento.toFixed(0)}%
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="font-bold text-amber-400 font-mono">{formatCurrency(l.comision_total)}</div>
+                          {l.comision_extra > 0 && (
+                            <div className="text-[10px] text-slate-500">+{formatCurrency(l.comision_extra)} bono</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={cn('px-2 py-0.5 rounded text-xs font-medium', cfg.bg, cfg.color)}>
+                            {cfg.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-400">
+                          {l.fecha_pago ? new Date(l.fecha_pago).toLocaleDateString('es-UY') : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1 justify-end">
+                            {l.estado === 'pendiente' && (
+                              <button
+                                onClick={() => cambiarEstadoLiquidacion(l, 'aprobada')}
+                                disabled={procesandoLiq === l.id}
+                                className="px-2 py-1 rounded-lg text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 disabled:opacity-50"
+                                title="Aprobar"
+                              >
+                                Aprobar
+                              </button>
+                            )}
+                            {l.estado === 'aprobada' && (
+                              <button
+                                onClick={() => cambiarEstadoLiquidacion(l, 'pagada')}
+                                disabled={procesandoLiq === l.id}
+                                className="px-2 py-1 rounded-lg text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 disabled:opacity-50 flex items-center gap-1"
+                                title="Marcar como pagada"
+                              >
+                                <CheckCircle className="h-3 w-3" />
+                                Pagar
+                              </button>
+                            )}
+                            {(l.estado === 'pendiente' || l.estado === 'aprobada') && (
+                              <button
+                                onClick={() => cambiarEstadoLiquidacion(l, 'anulada')}
+                                disabled={procesandoLiq === l.id}
+                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 disabled:opacity-50"
+                                title="Anular"
+                              >
+                                <XCircle className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
