@@ -691,6 +691,8 @@ export default function FinanzasEnterprise() {
     origen: 'cliente' as OrigenNota,
     entidadId: '',
     documentoOrigenId: '',
+    documentoOrigenTipo: '' as '' | 'orden_venta' | 'orden_compra',
+    documentoOrigenNumero: '',
     monto: 0,
     motivo: '',
   });
@@ -1619,6 +1621,8 @@ export default function FinanzasEnterprise() {
 
       const numero = `NC-${Date.now().toString().slice(-8)}`;
 
+      const docOrigenTipo = notaForm.origen === 'cliente' ? 'orden_venta' : 'orden_compra';
+
       const { error } = await supabase.from('notas_credito_debito').insert({
         numero,
         tipo: notaForm.tipo,
@@ -1626,6 +1630,8 @@ export default function FinanzasEnterprise() {
         entidad_id: notaForm.entidadId,
         entidad_nombre: entidad?.nombre,
         documento_origen_id: notaForm.documentoOrigenId || null,
+        documento_origen_tipo: notaForm.documentoOrigenId ? docOrigenTipo : null,
+        documento_origen_numero: notaForm.documentoOrigenId ? notaForm.documentoOrigenNumero : null,
         fecha: new Date().toISOString().split('T')[0],
         moneda: monedaActiva,
         monto: notaForm.monto,
@@ -1645,7 +1651,7 @@ export default function FinanzasEnterprise() {
 
       toast.success('Nota creada');
       setModalType(null);
-      setNotaForm({ tipo: 'credito', origen: 'cliente', entidadId: '', documentoOrigenId: '', monto: 0, motivo: '' });
+      setNotaForm({ tipo: 'credito', origen: 'cliente', entidadId: '', documentoOrigenId: '', documentoOrigenTipo: '', documentoOrigenNumero: '', monto: 0, motivo: '' });
       loadNotasCD();
     } catch (error: any) {
       toast.error('Error', error.message);
@@ -3966,7 +3972,7 @@ export default function FinanzasEnterprise() {
                 </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Origen</label>
-                  <select value={notaForm.origen} onChange={(e) => setNotaForm({ ...notaForm, origen: e.target.value as OrigenNota, entidadId: '' })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                  <select value={notaForm.origen} onChange={(e) => setNotaForm({ ...notaForm, origen: e.target.value as OrigenNota, entidadId: '', documentoOrigenId: '', documentoOrigenNumero: '' })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
                     <option value="cliente">Cliente</option>
                     <option value="proveedor">Proveedor</option>
                   </select>
@@ -3974,11 +3980,47 @@ export default function FinanzasEnterprise() {
               </div>
               <div>
                 <label className="block text-sm text-slate-400 mb-1">{notaForm.origen === 'cliente' ? 'Cliente' : 'Proveedor'} *</label>
-                <select value={notaForm.entidadId} onChange={(e) => setNotaForm({ ...notaForm, entidadId: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                <select value={notaForm.entidadId} onChange={(e) => setNotaForm({ ...notaForm, entidadId: e.target.value, documentoOrigenId: '', documentoOrigenNumero: '' })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
                   <option value="">Seleccionar...</option>
                   {(notaForm.origen === 'cliente' ? clientes : proveedores).map(e => (<option key={e.id} value={e.id}>{e.nombre}</option>))}
                 </select>
               </div>
+              {notaForm.entidadId && (
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">
+                    Documento origen <span className="text-slate-600">(opcional)</span>
+                  </label>
+                  <select
+                    value={notaForm.documentoOrigenId}
+                    onChange={(e) => {
+                      const docId = e.target.value;
+                      const docs = notaForm.origen === 'cliente'
+                        ? documentosCxC.filter(d => d.clienteId === notaForm.entidadId)
+                        : documentosCxP.filter(d => d.proveedorId === notaForm.entidadId);
+                      const doc = docs.find(d => d.id === docId);
+                      setNotaForm({
+                        ...notaForm,
+                        documentoOrigenId: docId,
+                        documentoOrigenNumero: doc?.numero || '',
+                      });
+                    }}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
+                  >
+                    <option value="">Sin vincular a documento</option>
+                    {(notaForm.origen === 'cliente'
+                      ? documentosCxC.filter(d => d.clienteId === notaForm.entidadId && d.estado !== 'anulado')
+                      : documentosCxP.filter(d => d.proveedorId === notaForm.entidadId && d.estado !== 'anulado')
+                    ).map(d => (
+                      <option key={d.id} value={d.id}>
+                        {d.numero} — {formatDate(d.fechaEmision)} — {formatCurrency(d.total, d.moneda)}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Vincular permite trazabilidad: ver de qué OV/OC nació esta nota.
+                  </p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Monto *</label>
                 <input type="number" value={notaForm.monto} onChange={(e) => setNotaForm({ ...notaForm, monto: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
