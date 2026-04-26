@@ -2329,3 +2329,330 @@ export type {
   MetricasWMS,
   ConfiguracionWMS,
 } from '@/components/wms/types';
+
+
+
+// ============================================
+// COTIZACIONES (con versionado)
+// ============================================
+
+export type CotizacionEstado =
+  | 'borrador'
+  | 'enviada'
+  | 'aceptada'
+  | 'rechazada'
+  | 'vencida'
+  | 'convertida'
+  | 'reemplazada'; // cuando se crea una versión nueva
+
+export interface Cotizacion {
+  id: string;
+  numero: string; // COT-2025-00001
+  clienteId: string;
+  cliente?: Cliente;
+  estado: CotizacionEstado;
+
+  // Versionado
+  version: number;                    // 1, 2, 3...
+  cotizacionPadreId?: string | null;  // FK a la versión anterior
+  cotizacionRaizId?: string | null;   // FK a la v1 (para agrupar)
+  esVersionActiva: boolean;           // solo una por raíz puede ser true
+
+  // Conversión a OV
+  ordenVentaId?: string | null;
+  fechaConversion?: Date;
+
+  // Fechas
+  fechaEmision: Date;
+  fechaValidez: Date;
+  fechaEnvio?: Date;
+  fechaRespuestaCliente?: Date;
+
+  // Económico
+  subtotal: number;
+  descuento: number;
+  impuestos: number;
+  total: number;
+  moneda: string;
+
+  // Comercial
+  vendedorEmail?: string;
+  metodoPagoSugerido?: string;
+  plazoEntregaDias?: number;
+  notas?: string;
+  notasInternas?: string; // no visibles al cliente
+
+  // Items
+  items?: CotizacionItem[];
+
+  // Auditoría
+  creadoPor: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CotizacionItem {
+  id: string;
+  cotizacionId: string;
+  productoCodigo: string;
+  producto?: Product;
+  cantidad: number;
+  precioUnitario: number;
+  descuentoItem: number;
+  subtotal: number;
+  notas?: string;
+}
+
+// Helper: agrupación de versiones
+export interface CotizacionConHistorial {
+  raiz: Cotizacion;
+  versiones: Cotizacion[]; // ordenadas por version desc
+  versionActiva: Cotizacion;
+}
+
+// ============================================
+// NOTAS DE CRÉDITO / DÉBITO (con link a doc origen)
+// ============================================
+
+export type TipoNCD = 'credito' | 'debito';
+export type OrigenNCD = 'venta' | 'compra';
+export type EstadoNCD = 'pendiente' | 'aplicada' | 'anulada';
+export type TipoDocOrigen = 'orden_venta' | 'orden_compra';
+
+export interface NotaCreditoDebito {
+  id: string;
+  numero: string;
+  tipo: TipoNCD;
+  origen: OrigenNCD;
+
+  // Entidad (cliente o proveedor según origen)
+  entidadId: string;
+  cliente?: Cliente;       // populado si origen='venta'
+  proveedor?: Proveedor;   // populado si origen='compra'
+
+  // Vínculo al documento origen (lo que falta exponer en UI)
+  documentoOrigenTipo?: TipoDocOrigen;
+  documentoOrigenId?: string;
+  documentoOrigenNumero?: string; // para mostrar sin tener que joinear
+  ordenVentaOrigen?: OrdenVenta;
+  ordenCompraOrigen?: OrdenCompra;
+
+  // Aplicación específica (a qué pago/factura se aplicó)
+  aplicadaAId?: string;
+  aplicadaAFecha?: Date;
+
+  // Datos básicos
+  fecha: Date;
+  moneda: string;
+  monto: number;
+  motivo?: string;
+  estado: EstadoNCD;
+
+  // Auditoría
+  creadoPor?: string;
+  createdAt?: Date;
+}
+
+// ============================================
+// SCORING DE CLIENTES Y PROVEEDORES
+// ============================================
+
+export type CategoriaScore = 'A' | 'B' | 'C' | 'D';
+export type RiesgoCredito = 'bajo' | 'medio' | 'alto' | 'critico';
+
+export interface ScoringCliente {
+  clienteId: string;
+  cliente?: Cliente;
+
+  // Score consolidado
+  scoreTotal: number; // 0-100
+  categoria: CategoriaScore;
+  riesgoCredito: RiesgoCredito;
+
+  // Componentes (cada uno 0-100)
+  puntualidadPago: number;
+  volumenScore: number;
+  frecuenciaScore: number;
+  antiguedadScore: number;
+  rentabilidadScore: number;
+
+  // Métricas crudas que alimentan el score
+  diasMoraPromedio: number;
+  diasMoraActuales: number;
+  facturasPagadas: number;
+  facturasEnMora: number;
+  volumenUltimos12m: number;
+  ordenesUltimos12m: number;
+  antiguedadMeses: number;
+  margenPromedioGenerado: number;
+  ultimaCompra?: Date;
+
+  // Crédito
+  limiteCreditoUsado: number;
+  porcentajeCreditoUsado: number;
+
+  // Alertas activas
+  alertas: AlertaScoring[];
+
+  // Tendencia
+  scoreAnterior?: number;
+  variacionScore?: number;
+
+  calculadoEn: Date;
+}
+
+export interface ScoringProveedor {
+  proveedorId: string;
+  proveedor?: Proveedor;
+
+  scoreTotal: number;
+  categoria: CategoriaScore;
+
+  // Componentes
+  cumplimientoEntregaScore: number;
+  calidadScore: number;
+  precioScore: number;
+  tiempoEntregaScore: number;
+
+  // Métricas crudas
+  ordenesTotal12m: number;
+  ordenesAtrasadas12m: number;
+  porcentajeAtraso: number;
+  tiempoEntregaPromedioDias: number;
+  ncrsAbiertas: number;
+  ncrsCerradasUltimos6m: number;
+  variacionPrecioPromedio: number; // % vs benchmark categoría
+
+  alertas: AlertaScoring[];
+
+  scoreAnterior?: number;
+  variacionScore?: number;
+
+  calculadoEn: Date;
+}
+
+export interface AlertaScoring {
+  tipo: 'mora' | 'limite_credito' | 'caida_volumen' | 'incumplimiento' | 'calidad';
+  severidad: 'info' | 'warning' | 'critical';
+  mensaje: string;
+  valor?: number;
+}
+
+export interface ConfiguracionScoring {
+  // Pesos clientes (deben sumar 100)
+  pesoClientePuntualidad: number;
+  pesoClienteVolumen: number;
+  pesoClienteFrecuencia: number;
+  pesoClienteAntiguedad: number;
+  pesoClienteRentabilidad: number;
+  // Pesos proveedores (deben sumar 100)
+  pesoProveedorCumplimiento: number;
+  pesoProveedorCalidad: number;
+  pesoProveedorPrecio: number;
+  pesoProveedorTiempo: number;
+  // Umbrales
+  diasMoraAlerta: number;
+  diasMoraCritico: number;
+  porcentajeCreditoAlerta: number;
+}
+
+// ============================================
+// LIQUIDACIÓN DE COMISIONES
+// ============================================
+
+export type EstadoLiquidacion =
+  | 'borrador'
+  | 'pendiente_aprobacion'
+  | 'aprobada'
+  | 'pagada'
+  | 'anulada';
+
+export interface LiquidacionComision {
+  id: string;
+  numero: string; // LIQ-2025-12-juan_perez
+  vendedorEmail: string;
+  vendedorNombre?: string;
+
+  // Período
+  periodo: string;        // "2025-12"
+  fechaDesde: Date;
+  fechaHasta: Date;
+
+  // Resumen calculado
+  cantidadVentas: number;
+  totalVentasBruto: number;
+  comisionBase: number;
+  comisionBono: number;   // bono por cumplimiento de meta
+  comisionTotal: number;
+
+  // Ajustes manuales
+  ajustes: number;
+  motivoAjuste?: string;
+  totalLiquidar: number;
+
+  // Estado y flujo
+  estado: EstadoLiquidacion;
+  fechaGeneracion: Date;
+  generadoPor: string;
+  fechaAprobacion?: Date;
+  aprobadoPor?: string;
+  fechaPago?: Date;
+  metodoPago?: string;
+  referenciaPago?: string;
+  comprobantePagoUrl?: string;
+
+  // Detalle
+  items?: LiquidacionComisionItem[];
+  notas?: string;
+
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface LiquidacionComisionItem {
+  id: string;
+  liquidacionId: string;
+  ordenVentaId: string;
+  ordenVentaNumero: string;
+  clienteNombre: string;
+  fechaVenta: Date;
+  montoVenta: number;
+  porcentajeComision: number;
+  comisionCalculada: number;
+  esBonoMeta: boolean;
+}
+
+// ============================================
+// RENTABILIDAD PRODUCTO-CLIENTE
+// ============================================
+
+export type CategoriaRentabilidad = 'estrella' | 'rentable' | 'marginal' | 'perdida';
+
+export interface RentabilidadProductoCliente {
+  productoCodigo: string;
+  productoDescripcion: string;
+  clienteId: string;
+  clienteNombre: string;
+
+  // Volumen
+  unidadesVendidas: number;
+  cantidadOrdenes: number;
+  primeraVenta: Date;
+  ultimaVenta: Date;
+
+  // Económico
+  ingresoTotal: number;
+  costoTotal: number;
+  margenAbsoluto: number;
+  margenPorcentual: number;
+
+  // Comparativos
+  margenPromedioProducto: number;     // margen del producto en otros clientes
+  variacionVsPromedio: number;        // diff% vs promedio del producto
+  precioPromedioCobrado: number;
+  descuentoPromedio: number;
+
+  // Ranking
+  rankingMargenAbsoluto: number;      // 1 = mejor
+  categoria: CategoriaRentabilidad;
+}
