@@ -2656,3 +2656,55 @@ export interface RentabilidadProductoCliente {
   rankingMargenAbsoluto: number;      // 1 = mejor
   categoria: CategoriaRentabilidad;
 }
+
+
+// ============================================
+// NOTAS DE CRÉDITO / DÉBITO
+// ============================================
+
+export type TipoNota = 'credito' | 'debito';
+export type OrigenNota = 'cliente' | 'proveedor';
+export type EstadoNota = 'pendiente' | 'aplicada' | 'parcial' | 'anulada';
+export type TipoDocumentoOrigen = 'orden_venta' | 'orden_compra';
+
+export interface NotaCreditoDebito {
+  id: string;
+  numero: string;
+  tipo: TipoNota;
+  origen: OrigenNota;
+
+  // Entidad (cliente o proveedor)
+  entidadId: string;
+  entidadNombre?: string;
+
+  // Vínculo a documento origen
+  documentoOrigenId?: string;
+  documentoOrigenTipo?: TipoDocumentoOrigen;
+  documentoOrigenNumero?: string;
+
+  // Datos económicos
+  fecha: string;
+  moneda: string;
+  monto: number;
+  montoAplicado: number;
+  saldo: number;
+  motivo: string;
+  estado: EstadoNota;
+
+  // Aplicaciones (historial de a qué docs se aplicó)
+  aplicaciones?: AplicacionNota[];
+
+  // Auditoría
+  creadoPor?: string;
+  createdAt?: string;
+}
+
+export interface AplicacionNota {
+  id: string;
+  notaId: string;
+  documentoId: string;
+  documentoNumero: string;
+  monto: number;
+  fecha: string;
+  creadoPor?: string;
+}
