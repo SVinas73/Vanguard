@@ -17,6 +17,14 @@ import {
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
+import type {
+  TipoNota,
+  OrigenNota,
+  EstadoNota,
+  TipoDocumentoOrigen,
+  NotaCreditoDebito,
+  AplicacionNota,
+} from '@/types';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart as RechartsPie, Pie, Cell,
@@ -33,7 +41,7 @@ type TipoTransaccion = 'ingreso' | 'egreso' | 'transferencia' | 'ajuste';
 type EstadoDocumento = 'pendiente' | 'parcial' | 'pagado' | 'vencido' | 'anulado';
 type EstadoCheque = 'cartera' | 'depositado' | 'cobrado' | 'rechazado' | 'entregado';
 type MetodoPago = 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta' | 'digital' | 'compensacion';
-type TabActiva = 'dashboard' | 'cxc' | 'cxp' | 'flujo' | 'transacciones' | 'cheques' | 'conciliacion' | 'presupuesto' | 'cobranza';
+type TabActiva = 'dashboard' | 'cxc' | 'cxp' | 'flujo' | 'transacciones' | 'cheques' | 'conciliacion' | 'presupuesto' | 'cobranza' | 'notas';
 
 // ============================================
 // TIPOS EXTENDIDOS - CONCILIACIÓN
@@ -72,45 +80,6 @@ interface SesionConciliacion {
   realizadoPor?: string;
   completadoEn?: string;
   createdAt: string;
-}
-
-// ============================================
-// TIPOS EXTENDIDOS - NOTAS CRÉDITO/DÉBITO
-// ============================================
-
-type TipoNota = 'credito' | 'debito';
-type OrigenNota = 'cliente' | 'proveedor';
-type EstadoNota = 'pendiente' | 'aplicada' | 'parcial' | 'anulada';
-
-interface NotaCreditoDebito {
-  id: string;
-  numero: string;
-  tipo: TipoNota;
-  origen: OrigenNota;
-  entidadId: string;
-  entidadNombre?: string;
-  documentoOrigenId?: string;
-  documentoOrigenNumero?: string;
-  fecha: string;
-  moneda: Moneda;
-  monto: number;
-  montoAplicado: number;
-  saldo: number;
-  motivo: string;
-  estado: EstadoNota;
-  aplicaciones?: AplicacionNota[];
-  creadoPor?: string;
-  createdAt: string;
-}
-
-interface AplicacionNota {
-  id: string;
-  notaId: string;
-  documentoId: string;
-  documentoNumero: string;
-  monto: number;
-  fecha: string;
-  creadoPor?: string;
 }
 
 // ============================================
@@ -694,6 +663,15 @@ export default function FinanzasEnterprise() {
     monto: 0,
     motivo: '',
   });
+
+  const [aplicarNotaForm, setAplicarNotaForm] = useState({
+    notaId: '',
+    documentoId: '',
+    monto: 0,
+  });
+
+  const [filterTipoNota, setFilterTipoNota] = useState<TipoNota | 'todos'>('todos');
+  const [filterEstadoNota, setFilterEstadoNota] = useState<EstadoNota | 'todos'>('todos');
 
   const [contactoForm, setContactoForm] = useState({
     tipo: 'llamada' as TipoContactoCobranza,
@@ -1696,7 +1674,13 @@ export default function FinanzasEnterprise() {
         estado: nuevoSaldoNota <= 0 ? 'aplicada' : 'parcial',
       }).eq('id', nota.id);
 
-      toast.success('Nota aplicada');
+      await registrarAuditoria('notas_credito_debito', 'APLICAR', nota.numero,
+        { saldo_anterior: nota.saldo },
+        { documento_id: documentoId, monto_aplicado: monto, saldo_nuevo: nuevoSaldoNota },
+        user?.email || ''
+      );
+
+      toast.success('Nota aplicada', `${formatCurrency(monto, nota.moneda as Moneda)} aplicado`);
       loadAllData();
     } catch (error: any) {
       toast.error('Error', error.message);
@@ -2445,6 +2429,37 @@ export default function FinanzasEnterprise() {
     });
   }, [gestionesCobranza, filterEstadoCobranza, searchTerm]);
 
+  const notasFiltradas = useMemo(() => {
+    return notasCD.filter(n => {
+      if (filterTipoNota !== 'todos' && n.tipo !== filterTipoNota) return false;
+      if (filterEstadoNota !== 'todos' && n.estado !== filterEstadoNota) return false;
+      if (searchTerm) {
+        const s = searchTerm.toLowerCase();
+        if (!n.numero.toLowerCase().includes(s) &&
+            !n.entidadNombre?.toLowerCase().includes(s) &&
+            !n.documentoOrigenNumero?.toLowerCase().includes(s)) return false;
+      }
+      return true;
+    });
+  }, [notasCD, filterTipoNota, filterEstadoNota, searchTerm]);
+
+  const metricasNotas = useMemo(() => {
+    const ncCliente = notasCD.filter(n => n.tipo === 'credito' && n.origen === 'cliente' && n.saldo > 0);
+    const ncProveedor = notasCD.filter(n => n.tipo === 'credito' && n.origen === 'proveedor' && n.saldo > 0);
+    const ndCliente = notasCD.filter(n => n.tipo === 'debito' && n.origen === 'cliente' && n.saldo > 0);
+    const ndProveedor = notasCD.filter(n => n.tipo === 'debito' && n.origen === 'proveedor' && n.saldo > 0);
+    return {
+      totalNCCliente: ncCliente.reduce((s, n) => s + n.saldo, 0),
+      totalNCProveedor: ncProveedor.reduce((s, n) => s + n.saldo, 0),
+      totalNDCliente: ndCliente.reduce((s, n) => s + n.saldo, 0),
+      totalNDProveedor: ndProveedor.reduce((s, n) => s + n.saldo, 0),
+      cantNCCliente: ncCliente.length,
+      cantNCProveedor: ncProveedor.length,
+      cantNDCliente: ndCliente.length,
+      cantNDProveedor: ndProveedor.length,
+    };
+  }, [notasCD]);
+
   // ============================================
   // CONTINÚA EN PARTE 5 (RENDER)
   // ============================================
@@ -2504,6 +2519,7 @@ export default function FinanzasEnterprise() {
           { id: 'cheques', label: 'Cheques', icon: <FileCheck className="h-4 w-4" /> },
           { id: 'conciliacion', label: 'Conciliación', icon: <Scale className="h-4 w-4" /> },
           { id: 'presupuesto', label: 'Presupuesto', icon: <Target className="h-4 w-4" /> },
+          { id: 'notas', label: 'Notas C/D', icon: <Receipt className="h-4 w-4" /> },
         ].map(tab => (
           <button
             key={tab.id}
@@ -3508,6 +3524,184 @@ export default function FinanzasEnterprise() {
         </div>
       )}
 
+      {/* ==================== NOTAS C/D ==================== */}
+      {tabActiva === 'notas' && (
+        <div className="space-y-4">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Receipt className="h-4 w-4 text-emerald-400" />
+                <span className="text-xs text-slate-400">NC a favor de Cliente</span>
+              </div>
+              <div className="text-xl font-bold text-emerald-400">
+                {formatCurrency(metricasNotas.totalNCCliente, monedaActiva)}
+              </div>
+              <div className="text-xs text-slate-500">{metricasNotas.cantNCCliente} notas</div>
+            </div>
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Receipt className="h-4 w-4 text-cyan-400" />
+                <span className="text-xs text-slate-400">NC a favor nuestro (Proveedor)</span>
+              </div>
+              <div className="text-xl font-bold text-cyan-400">
+                {formatCurrency(metricasNotas.totalNCProveedor, monedaActiva)}
+              </div>
+              <div className="text-xs text-slate-500">{metricasNotas.cantNCProveedor} notas</div>
+            </div>
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Receipt className="h-4 w-4 text-amber-400" />
+                <span className="text-xs text-slate-400">ND contra Cliente</span>
+              </div>
+              <div className="text-xl font-bold text-amber-400">
+                {formatCurrency(metricasNotas.totalNDCliente, monedaActiva)}
+              </div>
+              <div className="text-xs text-slate-500">{metricasNotas.cantNDCliente} notas</div>
+            </div>
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Receipt className="h-4 w-4 text-red-400" />
+                <span className="text-xs text-slate-400">ND contra nosotros (Proveedor)</span>
+              </div>
+              <div className="text-xl font-bold text-red-400">
+                {formatCurrency(metricasNotas.totalNDProveedor, monedaActiva)}
+              </div>
+              <div className="text-xs text-slate-500">{metricasNotas.cantNDProveedor} notas</div>
+            </div>
+          </div>
+
+          {/* Filtros + acciones */}
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <div className="flex-1 flex gap-3 flex-wrap">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Buscar por número, entidad o doc origen..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
+                />
+              </div>
+              <select
+                value={filterTipoNota}
+                onChange={(e) => setFilterTipoNota(e.target.value as TipoNota | 'todos')}
+                className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
+              >
+                <option value="todos">Todos los tipos</option>
+                <option value="credito">Crédito</option>
+                <option value="debito">Débito</option>
+              </select>
+              <select
+                value={filterEstadoNota}
+                onChange={(e) => setFilterEstadoNota(e.target.value as EstadoNota | 'todos')}
+                className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
+              >
+                <option value="todos">Todos los estados</option>
+                <option value="pendiente">Pendientes</option>
+                <option value="parcial">Parciales</option>
+                <option value="aplicada">Aplicadas</option>
+                <option value="anulada">Anuladas</option>
+              </select>
+            </div>
+            <button onClick={() => setModalType('nota')} className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl">
+              <Plus className="h-4 w-4" />
+              Nueva Nota
+            </button>
+          </div>
+
+          {/* Tabla */}
+          <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-800/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Número</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Tipo</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Entidad</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Doc Origen</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Fecha</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Monto</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Aplicado</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Saldo</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Estado</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50">
+                  {notasFiltradas.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="px-4 py-12 text-center text-slate-500">
+                        <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        No hay notas que coincidan con los filtros
+                      </td>
+                    </tr>
+                  ) : notasFiltradas.map(nota => {
+                    const estadoCfg = {
+                      pendiente: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'Pendiente' },
+                      parcial: { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Parcial' },
+                      aplicada: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: 'Aplicada' },
+                      anulada: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Anulada' },
+                    }[nota.estado];
+
+                    return (
+                      <tr key={nota.id} className="hover:bg-slate-800/30">
+                        <td className="px-4 py-3 font-mono text-sm text-slate-200">{nota.numero}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded-lg text-xs ${
+                            nota.tipo === 'credito' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                          }`}>
+                            {nota.tipo === 'credito' ? 'NC' : 'ND'}
+                          </span>
+                          <span className="ml-2 text-xs text-slate-500">{nota.origen}</span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-300">{nota.entidadNombre || '-'}</td>
+                        <td className="px-4 py-3">
+                          {nota.documentoOrigenNumero ? (
+                            <div className="flex items-center gap-1 text-sm">
+                              <Link2 className="h-3 w-3 text-slate-500" />
+                              <span className="font-mono text-slate-300">{nota.documentoOrigenNumero}</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-600">— sin vínculo —</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-400">{formatDate(nota.fecha)}</td>
+                        <td className="px-4 py-3 text-right font-mono text-sm text-slate-300">{formatCurrency(nota.monto, nota.moneda as Moneda)}</td>
+                        <td className="px-4 py-3 text-right font-mono text-sm text-slate-400">{formatCurrency(nota.montoAplicado, nota.moneda as Moneda)}</td>
+                        <td className="px-4 py-3 text-right font-mono text-sm font-bold text-teal-400">{formatCurrency(nota.saldo, nota.moneda as Moneda)}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs ${estadoCfg.bg} ${estadoCfg.color}`}>
+                            {estadoCfg.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {nota.saldo > 0 && nota.estado !== 'anulada' && (
+                            <button
+                              onClick={() => {
+                                setSelectedItem(nota);
+                                setAplicarNotaForm({ notaId: nota.id, documentoId: '', monto: nota.saldo });
+                                setModalType('aplicarNota');
+                              }}
+                              className="px-2 py-1 text-xs bg-teal-600 hover:bg-teal-500 text-white rounded-lg flex items-center gap-1"
+                              title="Aplicar a documento"
+                            >
+                              <Link2 className="h-3 w-3" />
+                              Aplicar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ==================== MODALES ==================== */}
 
       {/* MODAL: NUEVA CUENTA */}
@@ -4136,6 +4330,112 @@ export default function FinanzasEnterprise() {
                 {procesando === 'cxp' ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Crear Documento'}
               </button>
               <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: APLICAR NOTA A DOCUMENTO */}
+      {modalType === 'aplicarNota' && selectedItem && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                <Link2 className="h-5 w-5 text-teal-400" />
+                Aplicar Nota a Documento
+              </h3>
+              <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg">
+                <X className="h-5 w-5 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="p-3 bg-teal-500/10 border border-teal-500/30 rounded-xl mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-lg text-slate-200">{selectedItem.numero}</span>
+                <span className={`px-2 py-1 rounded-lg text-xs ${
+                  selectedItem.tipo === 'credito' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {selectedItem.tipo === 'credito' ? 'Crédito' : 'Débito'}
+                </span>
+              </div>
+              <div className="text-sm text-slate-400 mb-1">{selectedItem.entidadNombre}</div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Saldo disponible:</span>
+                <span className="font-bold text-teal-400">{formatCurrency(selectedItem.saldo, selectedItem.moneda as Moneda)}</span>
+              </div>
+              {selectedItem.motivo && (
+                <div className="mt-2 pt-2 border-t border-teal-500/20 text-xs text-slate-400">
+                  {selectedItem.motivo}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Documento al que aplicar *</label>
+                <select
+                  value={aplicarNotaForm.documentoId}
+                  onChange={(e) => {
+                    const docId = e.target.value;
+                    const docs = selectedItem.origen === 'cliente'
+                      ? documentosCxC.filter(d => d.clienteId === selectedItem.entidadId && d.saldo > 0 && d.estado !== 'anulado')
+                      : documentosCxP.filter(d => d.proveedorId === selectedItem.entidadId && d.saldo > 0 && d.estado !== 'anulado');
+                    const doc = docs.find(d => d.id === docId);
+                    const montoSugerido = doc ? Math.min(selectedItem.saldo, doc.saldo) : 0;
+                    setAplicarNotaForm({ ...aplicarNotaForm, documentoId: docId, monto: montoSugerido });
+                  }}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
+                >
+                  <option value="">Seleccionar documento...</option>
+                  {(selectedItem.origen === 'cliente'
+                    ? documentosCxC.filter(d => d.clienteId === selectedItem.entidadId && d.saldo > 0 && d.estado !== 'anulado')
+                    : documentosCxP.filter(d => d.proveedorId === selectedItem.entidadId && d.saldo > 0 && d.estado !== 'anulado')
+                  ).map(d => (
+                    <option key={d.id} value={d.id}>
+                      {d.numero} — Saldo: {formatCurrency(d.saldo, d.moneda as Moneda)}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-500 mt-1">
+                  Solo se muestran documentos con saldo pendiente.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Monto a aplicar *</label>
+                <input
+                  type="number"
+                  value={aplicarNotaForm.monto}
+                  onChange={(e) => setAplicarNotaForm({ ...aplicarNotaForm, monto: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
+                  step="0.01"
+                  max={selectedItem.saldo}
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Máximo: {formatCurrency(selectedItem.saldo, selectedItem.moneda as Moneda)} (saldo de la nota)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={async () => {
+                  if (!aplicarNotaForm.documentoId || aplicarNotaForm.monto <= 0) {
+                    toast.warning('Seleccione un documento y un monto válido');
+                    return;
+                  }
+                  await aplicarNota(selectedItem, aplicarNotaForm.documentoId, aplicarNotaForm.monto);
+                  setModalType(null);
+                  setAplicarNotaForm({ notaId: '', documentoId: '', monto: 0 });
+                }}
+                disabled={procesando === selectedItem.id || !aplicarNotaForm.documentoId}
+                className="flex-1 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white rounded-xl"
+              >
+                {procesando === selectedItem.id ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : 'Aplicar'}
+              </button>
+              <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">
+                Cancelar
+              </button>
             </div>
           </div>
         </div>

@@ -2314,7 +2314,7 @@ export const getBgColorPorDiasRestantes = (dias: number): string => {
 // ============================================
 
 export type {
-  
+
   Zona,
   Ubicacion,
   OrdenRecepcion,
@@ -2329,3 +2329,45 @@ export type {
   MetricasWMS,
   ConfiguracionWMS,
 } from '@/components/wms/types';
+
+// ============================================
+// COMERCIAL — NOTAS CRÉDITO/DÉBITO
+// ============================================
+
+export type Moneda = 'USD' | 'UYU' | 'EUR' | 'BRL' | 'ARS';
+export type TipoNota = 'credito' | 'debito';
+export type OrigenNota = 'cliente' | 'proveedor';
+export type EstadoNota = 'pendiente' | 'aplicada' | 'parcial' | 'anulada';
+export type TipoDocumentoOrigen = 'orden_venta' | 'orden_compra' | 'cuenta_por_cobrar' | 'cuenta_por_pagar' | 'factura' | 'otro';
+
+export interface NotaCreditoDebito {
+  id: string;
+  numero: string;
+  tipo: TipoNota;
+  origen: OrigenNota;
+  entidadId: string;
+  entidadNombre?: string;
+  documentoOrigenId?: string;
+  documentoOrigenNumero?: string;
+  documentoOrigenTipo?: TipoDocumentoOrigen;
+  fecha: string;
+  moneda: Moneda;
+  monto: number;
+  montoAplicado: number;
+  saldo: number;
+  motivo: string;
+  estado: EstadoNota;
+  aplicaciones?: AplicacionNota[];
+  creadoPor?: string;
+  createdAt: string;
+}
+
+export interface AplicacionNota {
+  id: string;
+  notaId: string;
+  documentoId: string;
+  documentoNumero: string;
+  monto: number;
+  fecha: string;
+  creadoPor?: string;
+}
