@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plus, Users, ShoppingCart, FileText, Search, Edit, Trash2, Send, CheckCircle,
   XCircle, Clock, ChevronDown, ChevronUp, RefreshCw, Eye, CreditCard,
-  AlertTriangle, Calendar, DollarSign, Building, User, Package, X, ArrowRight
+  AlertTriangle, Calendar, DollarSign, Building, User, Package, X, ArrowRight, Copy
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -82,6 +82,9 @@ interface Cotizacion {
   total: number;
   notas?: string;
   ordenVentaId?: string;
+  version: number;
+  parentCotizacionId?: string;
+  numeroRaiz?: string;
   items: CotizacionItem[];
 }
 
@@ -215,6 +218,9 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
     items: [] as Array<{ productoCodigo: string; cantidad: number; precioUnitario: number; descuento: number }>,
   });
 
+  // Cuando se crea una nueva versión a partir de una cotización existente
+  const [versionandoDe, setVersionandoDe] = useState<Cotizacion | null>(null);
+
   // Form pago
   const [pagoForm, setPagoForm] = useState({
     monto: 0,
@@ -292,7 +298,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
       }
 
       if (cotizacionesRes.data) {
-        setCotizaciones(cotizacionesRes.data.map((c: any) => ({
+        const mapped = cotizacionesRes.data.map((c: any) => ({
           id: c.id,
           numero: c.numero,
           clienteId: c.cliente_id,
@@ -305,6 +311,8 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
           total: parseFloat(c.total) || 0,
           notas: c.notas,
           ordenVentaId: c.orden_venta_id,
+          version: c.version || 1,
+          parentCotizacionId: c.parent_cotizacion_id || undefined,
           items: (c.cotizaciones_items || []).map((i: any) => ({
             id: i.id,
             productoCodigo: i.producto_codigo,
@@ -313,7 +321,19 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
             descuentoItem: parseFloat(i.descuento_item) || 0,
             subtotal: parseFloat(i.subtotal) || 0,
           })),
-        })));
+        })) as Cotizacion[];
+
+        // Calcular numeroRaiz: si tiene parent, busca recursivamente al padre raíz
+        const byId = new Map(mapped.map(c => [c.id, c]));
+        const findRoot = (c: Cotizacion): string => {
+          let cur = c;
+          while (cur.parentCotizacionId && byId.has(cur.parentCotizacionId)) {
+            cur = byId.get(cur.parentCotizacionId)!;
+          }
+          return cur.numero;
+        };
+        mapped.forEach(c => { c.numeroRaiz = findRoot(c); });
+        setCotizaciones(mapped);
       }
 
       if (clientesRes.data) {
@@ -590,10 +610,22 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
     try {
       setProcesando('creating-cot');
 
-      const { count } = await supabase.from('cotizaciones').select('*', { count: 'exact', head: true });
-      const numero = `COT-${String((count || 0) + 1).padStart(6, '0')}`;
-      
       const subtotal = cotizacionForm.items.reduce((sum, i) => sum + ((i.cantidad * i.precioUnitario) - (i.descuento || 0)), 0);
+
+      let numero: string;
+      let nuevaVersion = 1;
+      let parentId: string | null = null;
+
+      if (versionandoDe) {
+        // Versión hija: numero = numeroRaiz-vN, version = parent.version + 1
+        nuevaVersion = (versionandoDe.version || 1) + 1;
+        const baseNumero = versionandoDe.numeroRaiz || versionandoDe.numero.replace(/-v\d+$/, '');
+        numero = `${baseNumero}-v${nuevaVersion}`;
+        parentId = versionandoDe.id;
+      } else {
+        const { count } = await supabase.from('cotizaciones').select('*', { count: 'exact', head: true });
+        numero = `COT-${String((count || 0) + 1).padStart(6, '0')}`;
+      }
 
       const { data: cotData, error } = await supabase
         .from('cotizaciones')
@@ -606,6 +638,8 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
           total: subtotal,
           notas: cotizacionForm.notas || null,
           creado_por: userEmail,
+          version: nuevaVersion,
+          parent_cotizacion_id: parentId,
         })
         .select()
         .single();
@@ -623,19 +657,44 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
 
       await supabase.from('cotizaciones_items').insert(itemsToInsert);
 
-      await registrarAuditoria('cotizaciones', 'CREAR', numero, null, {
-        numero, cliente_id: cotizacionForm.clienteId, subtotal, total: subtotal, items: itemsToInsert,
+      // Si es una nueva versión, marcar la versión anterior como expirada
+      if (versionandoDe && ['borrador', 'enviada'].includes(versionandoDe.estado)) {
+        await supabase.from('cotizaciones').update({ estado: 'expirada' }).eq('id', versionandoDe.id);
+        await registrarAuditoria('cotizaciones', 'EXPIRAR_POR_VERSION', versionandoDe.numero,
+          { estado: versionandoDe.estado }, { estado: 'expirada', reemplazada_por: numero }, userEmail);
+      }
+
+      await registrarAuditoria('cotizaciones', versionandoDe ? 'NUEVA_VERSION' : 'CREAR', numero, null, {
+        numero, cliente_id: cotizacionForm.clienteId, subtotal, total: subtotal, version: nuevaVersion,
+        parent_cotizacion_id: parentId, items: itemsToInsert,
       }, userEmail);
 
-      toast.success('Cotización creada', `${numero}`);
+      toast.success(versionandoDe ? `Versión v${nuevaVersion} creada` : 'Cotización creada', numero);
       setModalType(null);
       setCotizacionForm({ clienteId: '', fechaValidez: '', notas: '', items: [] });
+      setVersionandoDe(null);
       loadData();
     } catch (error: any) {
       toast.error('Error', error.message);
     } finally {
       setProcesando(null);
     }
+  };
+
+  const nuevaVersionCotizacion = (cot: Cotizacion) => {
+    setVersionandoDe(cot);
+    setCotizacionForm({
+      clienteId: cot.clienteId,
+      fechaValidez: cot.fechaValidez || '',
+      notas: cot.notas || '',
+      items: cot.items.map(i => ({
+        productoCodigo: i.productoCodigo,
+        cantidad: i.cantidad,
+        precioUnitario: i.precioUnitario,
+        descuento: i.descuentoItem,
+      })),
+    });
+    setModalType('crear-cotizacion');
   };
 
   const cambiarEstadoCotizacion = async (cot: Cotizacion, nuevoEstado: Cotizacion['estado']) => {
@@ -784,7 +843,11 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
             Clientes
           </button>
           <button
-            onClick={() => setModalType('crear-cotizacion')}
+            onClick={() => {
+              setVersionandoDe(null);
+              setCotizacionForm({ clienteId: '', fechaValidez: '', notas: '', items: [] });
+              setModalType('crear-cotizacion');
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl"
           >
             <FileText className="h-4 w-4" />
@@ -1060,8 +1123,22 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                     return (
                       <tr key={cot.id} className={cn('hover:bg-slate-800/30', vencida && 'bg-red-500/5')}>
                         <td className="px-4 py-4">
-                          <div className="font-mono text-sm text-slate-200">{cot.numero}</div>
-                          <div className="text-xs text-slate-500">{new Date(cot.fechaCotizacion).toLocaleDateString('es-UY')}</div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm text-slate-200">{cot.numero}</span>
+                            {cot.version > 1 && (
+                              <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[10px] font-bold tracking-wide" title={`Versión ${cot.version}`}>
+                                v{cot.version}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-500 flex items-center gap-2">
+                            <span>{new Date(cot.fechaCotizacion).toLocaleDateString('es-UY')}</span>
+                            {cot.parentCotizacionId && cot.numeroRaiz && cot.numeroRaiz !== cot.numero && (
+                              <span className="text-slate-600">
+                                ← {cot.numeroRaiz}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-4">
                           <div className="text-slate-200">{cot.cliente?.nombre || '-'}</div>
@@ -1102,6 +1179,11 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                             {(cot.estado === 'aceptada' || cot.estado === 'enviada') && (
                               <button onClick={() => convertirCotizacion(cot)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Convertir a orden">
                                 <ArrowRight className="h-4 w-4 text-purple-400" />
+                              </button>
+                            )}
+                            {cot.estado !== 'convertida' && (
+                              <button onClick={() => nuevaVersionCotizacion(cot)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Nueva versión">
+                                <Copy className="h-4 w-4 text-amber-400" />
                               </button>
                             )}
                             <button onClick={() => { setSelectedCotizacion(cot); setModalType('ver-cotizacion'); }} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Ver">
@@ -1218,11 +1300,33 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-slate-100">Nueva Cotización</h3>
-              <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg">
+              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                {versionandoDe ? (
+                  <>
+                    <Copy className="h-5 w-5 text-amber-400" />
+                    Nueva versión
+                  </>
+                ) : 'Nueva Cotización'}
+              </h3>
+              <button onClick={() => { setModalType(null); setVersionandoDe(null); }} className="p-2 hover:bg-slate-800 rounded-lg">
                 <X className="h-5 w-5 text-slate-400" />
               </button>
             </div>
+
+            {versionandoDe && (
+              <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                <div className="flex items-center gap-2 text-sm">
+                  <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                  <div>
+                    <span className="text-slate-300">Generando </span>
+                    <span className="font-mono text-amber-400">v{(versionandoDe.version || 1) + 1}</span>
+                    <span className="text-slate-300"> a partir de </span>
+                    <span className="font-mono text-amber-400">{versionandoDe.numero}</span>
+                    <span className="text-slate-500"> · La versión anterior pasará a "expirada".</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -1276,9 +1380,9 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
             <div className="flex gap-3 mt-6 pt-4 border-t border-slate-700">
               <button onClick={crearCotizacion} disabled={!cotizacionForm.clienteId || cotizacionForm.items.length === 0 || procesando === 'creating-cot'} className="flex-1 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-xl flex items-center justify-center gap-2">
                 {procesando === 'creating-cot' ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                Crear Cotización
+                {versionandoDe ? `Crear v${(versionandoDe.version || 1) + 1}` : 'Crear Cotización'}
               </button>
-              <button onClick={() => setModalType(null)} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
+              <button onClick={() => { setModalType(null); setVersionandoDe(null); }} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">Cancelar</button>
             </div>
           </div>
         </div>
