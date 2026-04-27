@@ -96,9 +96,15 @@ export async function crearNotificacion(n: NuevaNotificacion): Promise<void> {
  *  - no descartadas (ni globalmente ni por el usuario)
  *  - últimos N días (default 30)
  */
+// Ventana en días para considerar un evento como "reciente".
+// Solo se generan notifs cuando el evento (vencimiento, atraso)
+// ocurrió dentro de esta ventana. Eventos viejos NO se muestran
+// para evitar saturar al usuario con notifs históricas.
+const VENTANA_EVENTO_DIAS = 7;
+
 export async function cargarNotificaciones(
   usuarioEmail: string,
-  diasAtras: number = 30
+  diasAtras: number = 7
 ): Promise<Notificacion[]> {
   const desde = new Date();
   desde.setDate(desde.getDate() - diasAtras);
@@ -156,23 +162,19 @@ export async function marcarLeida(id: string, usuarioEmail: string): Promise<voi
   }
 }
 
-export async function marcarTodasLeidas(usuarioEmail: string): Promise<void> {
-  // Personales: leida = true
-  await supabase.from('notificaciones').update({ leida: true })
-    .eq('usuario_email', usuarioEmail).eq('leida', false);
-
-  // Globales: traemos las no leídas por este usuario y las actualizamos una a una
-  const { data } = await supabase
-    .from('notificaciones').select('id, leida_por')
-    .is('usuario_email', null).eq('descartada', false);
-  for (const n of data || []) {
-    const arr: string[] = (n as any).leida_por || [];
-    if (!arr.includes(usuarioEmail)) {
-      await supabase.from('notificaciones')
-        .update({ leida_por: [...arr, usuarioEmail] })
-        .eq('id', (n as any).id);
-    }
-  }
+export async function marcarTodasLeidas(
+  usuarioEmail: string,
+  notifs: Array<{ id: string }>
+): Promise<void> {
+  // Iteramos las notifs visibles del usuario y delegamos a
+  // marcarLeida (que ya distingue personal vs global). Es
+  // más simple y robusto que un update masivo y deja que
+  // cada operación falle de forma aislada sin romper el resto.
+  await Promise.all(notifs.map(n =>
+    marcarLeida(n.id, usuarioEmail).catch(err =>
+      console.error('Error marcando notif', n.id, err)
+    )
+  ));
 }
 
 export async function descartarNotificacion(id: string, usuarioEmail: string): Promise<void> {
@@ -284,6 +286,14 @@ async function scanCotizacionesPorVencer(): Promise<void> {
   }
 
   for (const c of (vencidas || []) as any[]) {
+    // Solo eventos recientes: cotizaciones que vencieron en
+    // los últimos VENTANA_EVENTO_DIAS días. Las muy viejas se
+    // ignoran (el usuario no quiere saturarse con históricas).
+    const diasDesdeVencimiento = Math.floor(
+      (hoy.getTime() - new Date(c.fecha_validez).getTime()) / 86400000
+    );
+    if (diasDesdeVencimiento > VENTANA_EVENTO_DIAS) continue;
+
     const key = `cotizacion_vencida:${c.id}`;
     keysVigentes.add(key);
     await crearNotificacion({
@@ -314,9 +324,11 @@ async function scanCxcVencidas(): Promise<void> {
   const keysVigentes = new Set<string>();
   for (const cxc of (data || []) as any[]) {
     if ((cxc.saldo ?? cxc.monto) <= 0) continue;
+    const diasVencido = Math.floor((Date.now() - new Date(cxc.fecha_vencimiento).getTime()) / 86400000);
+    // Solo CxC que vencieron recientemente
+    if (diasVencido > VENTANA_EVENTO_DIAS) continue;
     const key = `cxc_vencida:${cxc.id}`;
     keysVigentes.add(key);
-    const diasVencido = Math.floor((Date.now() - new Date(cxc.fecha_vencimiento).getTime()) / 86400000);
     await crearNotificacion({
       tipo: 'cxc_vencida',
       severidad: diasVencido > 30 ? 'error' : 'warning',
@@ -343,9 +355,11 @@ async function scanOrdenesSinEntregar(): Promise<void> {
   const keysVigentes = new Set<string>();
   for (const ov of (data || []) as any[]) {
     if (!ov.fecha_entrega_esperada) continue;
+    const diasAtraso = Math.floor((Date.now() - new Date(ov.fecha_entrega_esperada).getTime()) / 86400000);
+    // Solo órdenes con atraso reciente
+    if (diasAtraso > VENTANA_EVENTO_DIAS) continue;
     const key = `orden_sin_entregar:${ov.id}`;
     keysVigentes.add(key);
-    const diasAtraso = Math.floor((Date.now() - new Date(ov.fecha_entrega_esperada).getTime()) / 86400000);
     await crearNotificacion({
       tipo: 'orden_sin_entregar',
       severidad: diasAtraso > 7 ? 'error' : 'warning',

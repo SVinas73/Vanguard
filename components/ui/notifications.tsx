@@ -65,7 +65,7 @@ export function NotificationBell() {
 
   const recargar = useCallback(async () => {
     if (!userEmail) return;
-    const data = await cargarNotificaciones(userEmail, 30);
+    const data = await cargarNotificaciones(userEmail, 7);
     setNotifications(data);
   }, [userEmail]);
 
@@ -145,8 +145,12 @@ export function NotificationBell() {
   };
 
   const handleMarcarTodas = async () => {
-    await marcarTodasLeidas(userEmail);
+    // UI optimista: marcamos como leídas en local antes de
+    // persistir, así el badge desaparece inmediatamente. Si
+    // alguna actualización falla, queda logueada en consola.
+    const noLeidas = notifications.filter(n => !n.leida);
     setNotifications(prev => prev.map(n => ({ ...n, leida: true })));
+    await marcarTodasLeidas(userEmail, noLeidas);
   };
 
   const handleDescartar = async (id: string) => {
@@ -241,7 +245,7 @@ export function NotificationBell() {
           </div>
 
           <div className="p-2 border-t border-slate-800 text-[10px] text-slate-600 text-center">
-            Mostrando últimos 30 días · solo eventos activos
+            Solo eventos recientes · últimos 7 días
           </div>
         </div>,
         document.body
