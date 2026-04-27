@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import {
   BarChart3, ShoppingCart, TrendingUp, Landmark, CircleDollarSign,
-  Brain, Tag, Award
+  Brain, Tag, Award, Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types';
@@ -16,10 +16,11 @@ import VentasEnterprisePanel from './VentasEnterprisePanel';
 import ComercialAnalytics from './ComercialAnalytics';
 import CondicionesComerciales from './CondicionesComerciales';
 import ComisionesVendedores from './ComisionesVendedores';
+import ScoringComercial from './ScoringComercial';
 import FinanzasEnterprise from '@/components/finanzas/FinanzasEnterprise';
 import CostosEnterprise from '@/components/costos/CostosEnterprise';
 
-export type ComercialSubTab = 'dashboard' | 'compras' | 'ventas' | 'finanzas' | 'costos' | 'analytics' | 'condiciones' | 'comisiones';
+export type ComercialSubTab = 'dashboard' | 'compras' | 'ventas' | 'finanzas' | 'costos' | 'analytics' | 'condiciones' | 'comisiones' | 'scoring';
 
 interface ComercialModuleProps {
   products: Product[];
@@ -56,6 +57,7 @@ export default function ComercialModule({
     { id: 'analytics', label: 'Inteligencia', icon: Brain, visible: true },
     { id: 'condiciones', label: 'Condiciones', icon: Tag, visible: true },
     { id: 'comisiones', label: 'Comisiones', icon: Award, visible: true },
+    { id: 'scoring', label: 'Scoring', icon: Star, visible: true },
   ];
 
   const visibleTabs = tabs.filter(tab => tab.visible);
@@ -122,6 +124,10 @@ export default function ComercialModule({
 
       {subTab === 'comisiones' && (
         <ComisionesVendedores />
+      )}
+
+      {subTab === 'scoring' && (
+        <ScoringComercial />
       )}
     </div>
   );
