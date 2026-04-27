@@ -5,4 +5,5 @@ export { default as ComercialModule } from './ComercialModule';
 export { default as ComercialAnalytics } from './ComercialAnalytics';
 export { default as CondicionesComerciales } from './CondicionesComerciales';
 export { default as ComisionesVendedores } from './ComisionesVendedores';
+export { default as ScoringComercial } from './ScoringComercial';
 export type { ComercialSubTab } from './ComercialModule';
