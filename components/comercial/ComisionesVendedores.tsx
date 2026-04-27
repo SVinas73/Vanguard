@@ -208,10 +208,11 @@ export default function ComisionesVendedores() {
     const inicioMes = new Date(anioActual, mesActual - 1, 1).toISOString().split('T')[0];
     const finMes = new Date(anioActual, mesActual, 0).toISOString().split('T')[0];
 
-    // Get all sales this month with creator
+    // Ventas del mes — atribuir al vendedor real si existe,
+    // si no, caer al usuario que cargó la orden (compat).
     const { data: ventas } = await supabase
       .from('ordenes_venta')
-      .select('creado_por, total')
+      .select('vendedor_email, creado_por, total')
       .gte('fecha_orden', inicioMes)
       .lte('fecha_orden', finMes)
       .not('estado', 'eq', 'cancelada');
@@ -229,14 +230,15 @@ export default function ComisionesVendedores() {
     // Group by seller
     const vendedorMap = new Map<string, { ventas: number; ordenes: number }>();
     ventas?.forEach((v: any) => {
-      if (!v.creado_por) return;
-      const existing = vendedorMap.get(v.creado_por);
+      const email = v.vendedor_email || v.creado_por;
+      if (!email) return;
       const total = parseFloat(v.total || 0);
+      const existing = vendedorMap.get(email);
       if (existing) {
         existing.ventas += total;
         existing.ordenes += 1;
       } else {
-        vendedorMap.set(v.creado_por, { ventas: total, ordenes: 1 });
+        vendedorMap.set(email, { ventas: total, ordenes: 1 });
       }
     });
 

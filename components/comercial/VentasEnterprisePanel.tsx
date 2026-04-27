@@ -204,11 +204,15 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
   // Form orden
   const [ordenForm, setOrdenForm] = useState({
     clienteId: '',
+    vendedorEmail: '',
     fechaEntrega: '',
     direccionEnvio: '',
     notas: '',
     items: [] as Array<{ productoCodigo: string; cantidad: number; precioUnitario: number; descuento: number }>,
   });
+
+  // Vendedores (rol = vendedor) para el selector en órdenes
+  const [vendedores, setVendedores] = useState<Array<{ email: string; nombre: string }>>([]);
 
   // Form cotización
   const [cotizacionForm, setCotizacionForm] = useState({
@@ -247,7 +251,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
     try {
       setLoading(true);
 
-      const [ordenesRes, cotizacionesRes, clientesRes] = await Promise.all([
+      const [ordenesRes, cotizacionesRes, clientesRes, vendedoresRes] = await Promise.all([
         supabase
           .from('ordenes_venta')
           .select(`*, clientes(id, codigo, nombre, email, telefono), ordenes_venta_items(*)`)
@@ -263,6 +267,11 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
           .select('*')
           .eq('activo', true)
           .order('nombre'),
+        supabase
+          .from('usuarios')
+          .select('email, nombre')
+          .eq('activo', true)
+          .or('rol.eq.vendedor,rol.eq.admin'),
       ]);
 
       if (ordenesRes.data) {
@@ -350,6 +359,13 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
           saldoPendiente: parseFloat(c.saldo_pendiente) || 0,
         })));
       }
+
+      if (vendedoresRes.data) {
+        setVendedores(vendedoresRes.data.map((v: any) => ({
+          email: v.email,
+          nombre: v.nombre || v.email.split('@')[0],
+        })));
+      }
     } catch (error: any) {
       toast.error('Error al cargar datos', error.message);
     } finally {
@@ -429,6 +445,8 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
       
       const subtotal = form.items.reduce((sum, i) => sum + ((i.cantidad * i.precioUnitario) - (i.descuento || 0)), 0);
 
+      const vendedorEmail = ordenForm.vendedorEmail || userEmail;
+
       const { data: ordenData, error } = await supabase
         .from('ordenes_venta')
         .insert({
@@ -444,6 +462,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
           direccion_envio: ordenForm.direccionEnvio || null,
           cotizacion_origen_id: desdeCotizacion?.id || null,
           creado_por: userEmail,
+          vendedor_email: vendedorEmail,
         })
         .select()
         .single();
@@ -475,7 +494,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
 
       toast.success('Orden creada', `${numero}`);
       setModalType(null);
-      setOrdenForm({ clienteId: '', fechaEntrega: '', direccionEnvio: '', notas: '', items: [] });
+      setOrdenForm({ clienteId: '', vendedorEmail: '', fechaEntrega: '', direccionEnvio: '', notas: '', items: [] });
       loadData();
     } catch (error: any) {
       toast.error('Error', error.message);
@@ -1213,16 +1232,30 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-slate-400 mb-1">Cliente *</label>
-                <select
-                  value={ordenForm.clienteId}
-                  onChange={(e) => setOrdenForm({ ...ordenForm, clienteId: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
-                >
-                  <option value="">Seleccionar...</option>
-                  {clientes.map(c => <option key={c.id} value={c.id}>{c.codigo} - {c.nombre}</option>)}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Cliente *</label>
+                  <select
+                    value={ordenForm.clienteId}
+                    onChange={(e) => setOrdenForm({ ...ordenForm, clienteId: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
+                  >
+                    <option value="">Seleccionar...</option>
+                    {clientes.map(c => <option key={c.id} value={c.id}>{c.codigo} - {c.nombre}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Vendedor</label>
+                  <select
+                    value={ordenForm.vendedorEmail}
+                    onChange={(e) => setOrdenForm({ ...ordenForm, vendedorEmail: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
+                  >
+                    <option value="">{userEmail ? `${userEmail} (yo)` : 'Sin asignar'}</option>
+                    {vendedores.map(v => <option key={v.email} value={v.email}>{v.nombre} ({v.email})</option>)}
+                  </select>
+                  <p className="text-[11px] text-slate-500 mt-1">Determina la atribución de comisiones.</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
