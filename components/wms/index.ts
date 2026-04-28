@@ -16,6 +16,7 @@ export { default as Picking } from './Picking';
 export { default as Inventario } from './Inventario';
 export { default as Movimientos } from './Movimientos';
 export { default as Slotting } from './Slotting';
+export { default as ConfiguracionWMS } from './ConfiguracionWMS';
 
 // Tipos
 // export { default as Recepcion } from './Recepcion';

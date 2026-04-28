@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
+import { useAuth } from '@/hooks/useAuth';
+import { useWmsToast } from './useWmsToast';
 import {
   MapPin, Search, Plus, RefreshCw, Eye, Edit,
   ChevronRight, ChevronDown, X, Save,
@@ -86,6 +89,8 @@ const ABC_CONFIG: Record<ClasificacionABC, { label: string; color: string; bg: s
 // ============================================
 
 export default function Ubicaciones() {
+  const { user } = useAuth(false);
+  const toast = useWmsToast();
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('lista');
   const [ubicacionSeleccionada, setUbicacionSeleccionada] = useState<Ubicacion | null>(null);
@@ -127,16 +132,7 @@ export default function Ubicaciones() {
         .select('*')
         .eq('activo', true)
         .order('codigo');
-      
-      if (zonasData) setZonas(zonasData);
-      else {
-        // Datos de ejemplo
-        setZonas([
-          { id: '1', almacen_id: '1', codigo: 'ZA', nombre: 'Zona A - Alta Rotación', tipo: 'picking', ubicaciones_totales: 200, ubicaciones_disponibles: 50, activo: true },
-          { id: '2', almacen_id: '1', codigo: 'ZB', nombre: 'Zona B - Media Rotación', tipo: 'almacenamiento', ubicaciones_totales: 400, ubicaciones_disponibles: 150, activo: true },
-          { id: '3', almacen_id: '1', codigo: 'ZC', nombre: 'Zona C - Baja Rotación', tipo: 'almacenamiento', ubicaciones_totales: 300, ubicaciones_disponibles: 100, activo: true },
-        ]);
-      }
+      setZonas(zonasData || []);
 
       // Cargar ubicaciones
       const { data: ubicacionesData } = await supabase
@@ -144,54 +140,7 @@ export default function Ubicaciones() {
         .select('*')
         .order('codigo_completo')
         .limit(500);
-      
-      if (ubicacionesData) setUbicaciones(ubicacionesData);
-      else {
-        // Generar datos de ejemplo
-        const ejemplos: Ubicacion[] = [];
-        const pasillos = ['A', 'B', 'C'];
-        const estados: EstadoUbicacion[] = ['disponible', 'ocupada', 'ocupada', 'ocupada', 'reservada'];
-        
-        pasillos.forEach((pasillo, pi) => {
-          for (let rack = 1; rack <= 5; rack++) {
-            for (let nivel = 1; nivel <= 4; nivel++) {
-              for (let pos = 1; pos <= 3; pos++) {
-                const estadoRandom = estados[Math.floor(Math.random() * estados.length)];
-                const tieneProducto = estadoRandom === 'ocupada';
-                
-                ejemplos.push({
-                  id: `${pasillo}-${rack}-${nivel}-${pos}`,
-                  almacen_id: '1',
-                  zona_id: pi === 0 ? '1' : pi === 1 ? '2' : '3',
-                  zona_nombre: pi === 0 ? 'Zona A' : pi === 1 ? 'Zona B' : 'Zona C',
-                  codigo: `${pasillo}-${rack.toString().padStart(2, '0')}-${nivel.toString().padStart(2, '0')}-${pos.toString().padStart(2, '0')}`,
-                  codigo_completo: `ALM01-${pasillo}-${rack.toString().padStart(2, '0')}-${nivel.toString().padStart(2, '0')}-${pos.toString().padStart(2, '0')}`,
-                  pasillo,
-                  rack: rack.toString(),
-                  nivel: nivel.toString(),
-                  posicion: pos.toString(),
-                  estado: estadoRandom,
-                  ancho_cm: 120,
-                  alto_cm: 150,
-                  profundidad_cm: 100,
-                  peso_maximo_kg: 500,
-                  clasificacion_abc: pi === 0 ? 'A' : pi === 1 ? 'B' : 'C',
-                  producto_codigo: tieneProducto ? `SKU-${Math.floor(Math.random() * 9000) + 1000}` : undefined,
-                  producto_nombre: tieneProducto ? `Producto ${Math.floor(Math.random() * 100)}` : undefined,
-                  cantidad: tieneProducto ? Math.floor(Math.random() * 100) + 10 : 0,
-                  cantidad_reservada: 0,
-                  cantidad_disponible: tieneProducto ? Math.floor(Math.random() * 100) + 10 : 0,
-                  pickeable: true,
-                  es_ubicacion_picking: pi === 0,
-                  frecuencia_picks: Math.floor(Math.random() * 50),
-                  created_at: new Date().toISOString(),
-                });
-              }
-            }
-          }
-        });
-        setUbicaciones(ejemplos);
-      }
+      setUbicaciones(ubicacionesData || []);
     } finally {
       setLoading(false);
     }
@@ -254,10 +203,28 @@ export default function Ubicaciones() {
   };
 
   const handleCambiarEstado = async (id: string, nuevoEstado: EstadoUbicacion) => {
-    setUbicaciones(prev => prev.map(u => u.id === id ? { ...u, estado: nuevoEstado } : u));
+    const prev = ubicaciones.find(u => u.id === id);
+    const { error } = await supabase
+      .from('wms_ubicaciones')
+      .update({ estado: nuevoEstado })
+      .eq('id', id);
+    if (error) {
+      toast.error('No se pudo cambiar el estado');
+      return;
+    }
+    setUbicaciones(p => p.map(u => u.id === id ? { ...u, estado: nuevoEstado } : u));
     if (ubicacionSeleccionada?.id === id) {
       setUbicacionSeleccionada({ ...ubicacionSeleccionada, estado: nuevoEstado });
     }
+    await registrarAuditoria(
+      'wms_ubicaciones',
+      'CAMBIAR_ESTADO',
+      prev?.codigo || id,
+      { estado: prev?.estado },
+      { estado: nuevoEstado },
+      user?.email || ''
+    );
+    toast.success(`Estado actualizado a ${nuevoEstado}`);
   };
 
   const handleGenerarUbicaciones = async () => {
@@ -266,17 +233,15 @@ export default function Ubicaciones() {
       const zona = zonas.find(z => z.id === generarData.zona_id);
       if (!zona) return;
 
-      const nuevas: Ubicacion[] = [];
+      const nuevas: any[] = [];
       generarData.pasillos.forEach(pasillo => {
         for (let r = 1; r <= generarData.racks_por_pasillo; r++) {
           for (let n = 1; n <= generarData.niveles_por_rack; n++) {
             for (let p = 1; p <= generarData.posiciones_por_nivel; p++) {
               const codigo = `${pasillo}-${r.toString().padStart(2, '0')}-${n.toString().padStart(2, '0')}-${p.toString().padStart(2, '0')}`;
               nuevas.push({
-                id: `gen-${codigo}`,
                 almacen_id: zona.almacen_id,
                 zona_id: zona.id,
-                zona_nombre: zona.nombre,
                 codigo,
                 codigo_completo: `${zona.codigo}-${codigo}`,
                 pasillo,
@@ -290,15 +255,34 @@ export default function Ubicaciones() {
                 pickeable: true,
                 es_ubicacion_picking: zona.tipo === 'picking',
                 frecuencia_picks: 0,
-                created_at: new Date().toISOString(),
               });
             }
           }
         }
       });
 
-      setUbicaciones(prev => [...prev, ...nuevas]);
-      alert(`✅ Se generaron ${nuevas.length} ubicaciones`);
+      // Insertamos en chunks para no superar límites de payload
+      const chunkSize = 100;
+      for (let i = 0; i < nuevas.length; i += chunkSize) {
+        const chunk = nuevas.slice(i, i + chunkSize);
+        const { error } = await supabase.from('wms_ubicaciones').insert(chunk);
+        if (error) {
+          toast.error(`Error al guardar (chunk ${i / chunkSize + 1}): ${error.message}`);
+          return;
+        }
+      }
+
+      await registrarAuditoria(
+        'wms_ubicaciones',
+        'GENERAR_MASIVO',
+        zona.codigo,
+        null,
+        { zona: zona.nombre, cantidad: nuevas.length, pasillos: generarData.pasillos },
+        user?.email || ''
+      );
+
+      toast.success(`${nuevas.length} ubicaciones generadas`);
+      await loadData();
       setVistaActiva('lista');
     } finally {
       setSaving(false);
@@ -319,6 +303,7 @@ export default function Ubicaciones() {
 
   return (
     <div className="space-y-6">
+      <toast.Toast />
       {/* ==================== LISTA ==================== */}
       {vistaActiva === 'lista' && (
         <>

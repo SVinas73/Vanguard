@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
+import { useAuth } from '@/hooks/useAuth';
+import { useWmsToast } from './useWmsToast';
 import {
   Target, Search, Plus, RefreshCw, Eye, Edit,
   ChevronRight, ChevronDown, X, Save, Check,
@@ -175,6 +178,8 @@ const optimizarRuta = (lineas: LineaPicking[]): LineaPicking[] => {
 // ============================================
 
 export default function Picking() {
+  const { user } = useAuth(false);
+  const toast = useWmsToast();
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('ordenes');
   const [waveSeleccionada, setWaveSeleccionada] = useState<WavePicking | null>(null);
@@ -212,53 +217,7 @@ export default function Picking() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
-      
-      if (wavesData) {
-        setWaves(wavesData);
-      } else {
-        // Datos de ejemplo
-        setWaves([
-          {
-            id: 'w1',
-            numero: 'WAV-20240210-001',
-            nombre: 'Wave Mañana',
-            tipo: 'wave',
-            estado: 'en_proceso',
-            ordenes_ids: ['o1', 'o2', 'o3'],
-            ordenes_count: 3,
-            fecha_creacion: new Date(Date.now() - 3600000).toISOString(),
-            fecha_liberacion: new Date(Date.now() - 1800000).toISOString(),
-            fecha_inicio: new Date(Date.now() - 900000).toISOString(),
-            lineas_totales: 12,
-            lineas_completadas: 5,
-            unidades_totales: 150,
-            unidades_pickeadas: 65,
-            pickers_asignados: ['Juan P.', 'María L.'],
-            ruta_optimizada: true,
-            tiempo_estimado_min: 45,
-            distancia_estimada_m: 320,
-            prioridad: 1,
-          },
-          {
-            id: 'w2',
-            numero: 'WAV-20240210-002',
-            nombre: 'Wave Tarde',
-            tipo: 'wave',
-            estado: 'liberada',
-            ordenes_ids: ['o4', 'o5'],
-            ordenes_count: 2,
-            fecha_creacion: new Date().toISOString(),
-            fecha_liberacion: new Date().toISOString(),
-            lineas_totales: 8,
-            lineas_completadas: 0,
-            unidades_totales: 95,
-            unidades_pickeadas: 0,
-            ruta_optimizada: true,
-            tiempo_estimado_min: 30,
-            prioridad: 2,
-          },
-        ]);
-      }
+      setWaves(wavesData || []);
 
       // Cargar órdenes de picking
       const { data: ordenesData } = await supabase
@@ -267,89 +226,7 @@ export default function Picking() {
         .order('prioridad', { ascending: true })
         .order('fecha_requerida', { ascending: true })
         .limit(100);
-      
-      if (ordenesData) {
-        setOrdenes(ordenesData);
-      } else {
-        // Datos de ejemplo
-        setOrdenes([
-          {
-            id: 'o1',
-            numero: 'PICK-2024-0892',
-            tipo_origen: 'venta',
-            orden_venta_numero: 'OV-2024-1234',
-            cliente_nombre: 'Cliente ABC S.A.',
-            wave_id: 'w1',
-            wave_numero: 'WAV-20240210-001',
-            almacen_id: '1',
-            fecha_requerida: new Date().toISOString(),
-            estado: 'en_proceso',
-            lineas_totales: 4,
-            lineas_completadas: 2,
-            unidades_totales: 50,
-            unidades_pickeadas: 25,
-            picker_asignado: 'Juan P.',
-            prioridad: 1,
-            created_at: new Date(Date.now() - 7200000).toISOString(),
-            lineas: [
-              { id: 'l1', orden_picking_id: 'o1', producto_id: 'p1', producto_codigo: 'SKU-1001', producto_nombre: 'Producto Alpha', cantidad_solicitada: 10, cantidad_pickeada: 10, cantidad_short: 0, unidad_medida: 'UND', ubicacion_id: 'u1', ubicacion_codigo: 'A-01-02-01', estado: 'completada', secuencia: 1 },
-              { id: 'l2', orden_picking_id: 'o1', producto_id: 'p2', producto_codigo: 'SKU-1002', producto_nombre: 'Producto Beta', cantidad_solicitada: 15, cantidad_pickeada: 15, cantidad_short: 0, unidad_medida: 'UND', ubicacion_id: 'u2', ubicacion_codigo: 'A-02-01-03', estado: 'completada', secuencia: 2 },
-              { id: 'l3', orden_picking_id: 'o1', producto_id: 'p3', producto_codigo: 'SKU-1003', producto_nombre: 'Producto Gamma', cantidad_solicitada: 20, cantidad_pickeada: 0, cantidad_short: 0, unidad_medida: 'UND', ubicacion_id: 'u3', ubicacion_codigo: 'B-01-03-02', estado: 'pendiente', secuencia: 3 },
-              { id: 'l4', orden_picking_id: 'o1', producto_id: 'p4', producto_codigo: 'SKU-1004', producto_nombre: 'Producto Delta', cantidad_solicitada: 5, cantidad_pickeada: 0, cantidad_short: 0, unidad_medida: 'UND', ubicacion_id: 'u4', ubicacion_codigo: 'B-02-02-01', estado: 'pendiente', secuencia: 4 },
-            ]
-          },
-          {
-            id: 'o2',
-            numero: 'PICK-2024-0893',
-            tipo_origen: 'venta',
-            orden_venta_numero: 'OV-2024-1235',
-            cliente_nombre: 'Distribuidora XYZ',
-            wave_id: 'w1',
-            wave_numero: 'WAV-20240210-001',
-            almacen_id: '1',
-            fecha_requerida: new Date().toISOString(),
-            estado: 'asignada',
-            lineas_totales: 3,
-            lineas_completadas: 0,
-            unidades_totales: 45,
-            unidades_pickeadas: 0,
-            picker_asignado: 'María L.',
-            prioridad: 1,
-            created_at: new Date(Date.now() - 5400000).toISOString(),
-          },
-          {
-            id: 'o3',
-            numero: 'PICK-2024-0894',
-            tipo_origen: 'transferencia',
-            cliente_nombre: 'Almacén Secundario',
-            almacen_id: '1',
-            fecha_requerida: new Date(Date.now() + 86400000).toISOString(),
-            estado: 'pendiente',
-            lineas_totales: 5,
-            lineas_completadas: 0,
-            unidades_totales: 120,
-            unidades_pickeadas: 0,
-            prioridad: 2,
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-          },
-          {
-            id: 'o4',
-            numero: 'PICK-2024-0895',
-            tipo_origen: 'venta',
-            orden_venta_numero: 'OV-2024-1236',
-            cliente_nombre: 'Retail Plus',
-            almacen_id: '1',
-            fecha_requerida: new Date().toISOString(),
-            estado: 'pendiente',
-            lineas_totales: 6,
-            lineas_completadas: 0,
-            unidades_totales: 80,
-            unidades_pickeadas: 0,
-            prioridad: 1,
-            created_at: new Date(Date.now() - 1800000).toISOString(),
-          },
-        ]);
-      }
+      setOrdenes(ordenesData || []);
     } finally {
       setLoading(false);
     }
@@ -495,7 +372,7 @@ export default function Picking() {
     ));
   };
 
-  const handleConfirmarLinea = () => {
+  const handleConfirmarLinea = async () => {
     if (!ordenSeleccionada?.lineas) return;
     
     const lineas = ordenSeleccionada.lineas;
@@ -532,11 +409,30 @@ export default function Picking() {
       const estadoFinal: EstadoOrdenPicking = lineasActualizadas.some(l => l.estado === 'short_pick') ? 'parcial' : 'completada';
       ordenActualizada.estado = estadoFinal;
       ordenActualizada.fecha_completado = new Date().toISOString();
-      
+
+      // Persistir el cierre
+      await supabase.from('wms_ordenes_picking')
+        .update({
+          estado: estadoFinal,
+          fecha_completada: ordenActualizada.fecha_completado,
+          unidades_pickeadas: ordenActualizada.unidades_pickeadas,
+          lineas_completadas: ordenActualizada.lineas_completadas,
+        })
+        .eq('id', ordenActualizada.id);
+
+      await registrarAuditoria(
+        'wms_ordenes_picking',
+        'COMPLETAR_PICKING',
+        ordenActualizada.numero,
+        { estado: ordenSeleccionada.estado },
+        { estado: estadoFinal, unidades_pickeadas: ordenActualizada.unidades_pickeadas },
+        user?.email || ''
+      );
+
       setOrdenes(prev => prev.map(o => o.id === ordenActualizada.id ? ordenActualizada : o));
       setOrdenSeleccionada(null);
       setVistaActiva('ordenes');
-      alert('✅ Picking completado');
+      toast.success('Picking completado');
     } else {
       // Siguiente línea
       setOrdenSeleccionada(ordenActualizada);
@@ -565,6 +461,7 @@ export default function Picking() {
 
   return (
     <div className="space-y-6">
+      <toast.Toast />
       {/* Tabs principales */}
       <div className="flex gap-2 border-b border-slate-800 pb-2">
         {[

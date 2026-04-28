@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Product, Almacen } from '@/types';
+import { registrarAuditoria } from '@/lib/audit';
+import { useAuth } from '@/hooks/useAuth';
+import { useWmsToast } from './useWmsToast';
 import {
   Package, Search, RefreshCw, Eye, Filter,
   ChevronRight, ChevronDown, X, Check,
@@ -70,6 +73,8 @@ type VistaStock = 'por_producto' | 'por_ubicacion' | 'alertas';
 // ============================================
 
 export default function Inventario() {
+  const { user } = useAuth(false);
+  const toast = useWmsToast();
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('stock');
   const [vistaStock, setVistaStock] = useState<VistaStock>('por_producto');
@@ -146,35 +151,12 @@ export default function Inventario() {
         })));
       }
 
-      // Cargar stock por ubicación (si existe la tabla)
+      // Cargar stock por ubicación
       const { data: stockData } = await supabase
         .from('wms_stock_ubicacion')
         .select('*')
         .order('ubicacion_codigo');
-      
-      if (stockData) {
-        setStockUbicaciones(stockData);
-      } else {
-        // Generar datos de ejemplo basados en productos reales
-        if (productosData && productosData.length > 0) {
-          const stockEjemplo: StockUbicacion[] = [];
-          const ubicaciones = ['A-01-01-01', 'A-01-02-01', 'A-02-01-01', 'B-01-01-01', 'B-02-01-01'];
-          
-          productosData.slice(0, 10).forEach((p, idx) => {
-            stockEjemplo.push({
-              id: `stock-${idx}`,
-              producto_codigo: p.codigo,
-              ubicacion_codigo: ubicaciones[idx % ubicaciones.length],
-              almacen_id: almacenesData?.[0]?.id || '1',
-              cantidad: p.stock || Math.floor(Math.random() * 100) + 10,
-              cantidad_reservada: Math.floor(Math.random() * 10),
-              cantidad_disponible: p.stock || Math.floor(Math.random() * 90) + 5,
-              ultimo_movimiento: new Date(Date.now() - Math.random() * 7 * 86400000).toISOString(),
-            });
-          });
-          setStockUbicaciones(stockEjemplo);
-        }
-      }
+      setStockUbicaciones(stockData || []);
 
       // Cargar conteos
       const { data: conteosData } = await supabase
@@ -182,28 +164,7 @@ export default function Inventario() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
-      
-      if (conteosData) {
-        setConteos(conteosData);
-      } else {
-        setConteos([
-          {
-            id: 'c1',
-            numero: 'CNT-2024-001',
-            tipo: 'ciclico',
-            estado: 'completado',
-            almacen_id: almacenesData?.[0]?.id || '1',
-            ubicaciones_total: 25,
-            ubicaciones_contadas: 25,
-            diferencias_encontradas: 2,
-            fecha_inicio: new Date(Date.now() - 172800000).toISOString(),
-            fecha_fin: new Date(Date.now() - 86400000).toISOString(),
-            ejecutado_por: 'operador@example.com',
-            created_at: new Date(Date.now() - 172800000).toISOString(),
-          }
-        ]);
-      }
-      
+      setConteos(conteosData || []);
     } finally {
       setLoading(false);
     }
@@ -396,7 +357,7 @@ export default function Inventario() {
     }
   };
 
-  const handleConfirmarLineaConteo = () => {
+  const handleConfirmarLineaConteo = async () => {
     if (!conteoActivo) return;
     
     const cantidad = parseInt(cantidadContada) || 0;
@@ -431,11 +392,30 @@ export default function Inventario() {
     if (lineaConteoActual >= lineasConteo.length - 1) {
       conteoActualizado.estado = 'completado';
       conteoActualizado.fecha_fin = new Date().toISOString();
-      
+
+      // Persistir cierre del conteo
+      await supabase.from('wms_conteos')
+        .update({
+          estado: 'completado',
+          fecha_fin: conteoActualizado.fecha_fin,
+          ubicaciones_contadas: contadas,
+          diferencias_encontradas: diferencias,
+        })
+        .eq('id', conteoActualizado.id);
+
+      await registrarAuditoria(
+        'wms_conteos',
+        'COMPLETAR_CONTEO',
+        conteoActualizado.numero || conteoActualizado.id,
+        { estado: conteoActivo.estado },
+        { estado: 'completado', diferencias },
+        user?.email || ''
+      );
+
       setConteoActivo(conteoActualizado);
       setConteos(prev => prev.map(c => c.id === conteoActualizado.id ? conteoActualizado : c));
-      
-      alert(`✅ Conteo completado. ${diferencias} diferencia(s) encontrada(s).`);
+
+      toast.success(`Conteo completado · ${diferencias} diferencia(s)`);
       setVistaActiva('conteos');
     } else {
       setConteoActivo(conteoActualizado);
@@ -451,10 +431,10 @@ export default function Inventario() {
     const lineasConDiferencia = lineasConteo.filter(l => l.diferencia && l.diferencia !== 0);
     
     if (lineasConDiferencia.length === 0) {
-      alert('No hay diferencias para ajustar');
+      toast.warning('No hay diferencias para ajustar');
       return;
     }
-    
+
     if (!confirm(`¿Aplicar ${lineasConDiferencia.length} ajuste(s) de inventario?`)) return;
     
     setSaving(true);
@@ -486,9 +466,18 @@ export default function Inventario() {
         l.diferencia && l.diferencia !== 0 ? { ...l, estado: 'ajustado' as const } : l
       ));
       
-      alert('✅ Ajustes aplicados correctamente');
-      await loadData(); // Recargar datos
-      
+      await registrarAuditoria(
+        'wms_conteos',
+        'APLICAR_AJUSTES',
+        conteoActivo?.numero || 'ajuste-manual',
+        null,
+        { ajustes: lineasConDiferencia.length, items: lineasConDiferencia.map(l => ({ codigo: l.producto_codigo, diferencia: l.diferencia })) },
+        user?.email || ''
+      );
+
+      toast.success(`${lineasConDiferencia.length} ajuste(s) aplicado(s)`);
+      await loadData();
+
     } finally {
       setSaving(false);
     }
@@ -508,6 +497,7 @@ export default function Inventario() {
 
   return (
     <div className="space-y-6">
+      <toast.Toast />
       {/* Tabs principales */}
       <div className="flex gap-2 border-b border-slate-800 pb-2">
         {[

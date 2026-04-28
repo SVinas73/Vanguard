@@ -1,63 +1,48 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import {
-  Package, MapPin, TrendingUp, TrendingDown, AlertTriangle,
-  Clock, CheckCircle, XCircle, RefreshCw, ArrowRight,
-  Warehouse, Layers, Target, Zap, BarChart3, Activity,
-  Calendar, Users, Truck, Box, Archive, AlertCircle,
-  ChevronRight, ArrowUpRight, ArrowDownRight, Minus
+  Package, MapPin, AlertTriangle, Clock, CheckCircle,
+  RefreshCw, Warehouse, Layers, Target, Truck, Box,
+  AlertCircle, Calendar, XCircle, ArrowRight, Archive,
+  BarChart3,
 } from 'lucide-react';
 
 // ============================================
-// TIPOS LOCALES
+// TIPOS
 // ============================================
 
 interface MetricasWMS {
   ubicaciones_totales: number;
   ubicaciones_ocupadas: number;
-  ubicaciones_disponibles: number;
   porcentaje_ocupacion: number;
-  
+  ubicaciones_bloqueadas: number;
+
   recepciones_pendientes: number;
+  recepciones_en_proceso: number;
   recepciones_hoy: number;
   unidades_recibidas_hoy: number;
-  
-  ordenes_picking_pendientes: number;
-  ordenes_picking_en_proceso: number;
-  ordenes_picking_completadas_hoy: number;
+
+  picking_pendientes: number;
+  picking_en_proceso: number;
+  picking_completados_hoy: number;
   unidades_pickeadas_hoy: number;
-  
-  picks_por_hora: number;
-  putaways_por_hora: number;
-  tiempo_promedio_picking_min: number;
-  
-  precision_inventario: number;
-  precision_picking: number;
-  
+
+  putaway_pendientes: number;
+
   productos_sin_stock: number;
   productos_bajo_minimo: number;
   lotes_proximos_vencer: number;
-  ubicaciones_bloqueadas: number;
 }
 
 interface ActividadReciente {
   id: string;
-  tipo: 'recepcion' | 'picking' | 'putaway' | 'movimiento' | 'conteo';
+  tipo: 'recepcion' | 'picking' | 'movimiento';
   descripcion: string;
   usuario: string;
   fecha: string;
-  estado: 'completado' | 'en_proceso' | 'pendiente';
-}
-
-interface AlertaWMS {
-  id: string;
-  tipo: 'stock' | 'vencimiento' | 'capacidad' | 'pendiente';
-  severidad: 'alta' | 'media' | 'baja';
-  titulo: string;
-  descripcion: string;
-  cantidad?: number;
+  estado: string;
 }
 
 interface OcupacionZona {
@@ -70,19 +55,14 @@ interface OcupacionZona {
 }
 
 // ============================================
-// COMPONENTE PRINCIPAL
+// COMPONENTE
 // ============================================
 
 export default function WMSDashboard() {
   const [loading, setLoading] = useState(true);
   const [metricas, setMetricas] = useState<MetricasWMS | null>(null);
   const [actividades, setActividades] = useState<ActividadReciente[]>([]);
-  const [alertas, setAlertas] = useState<AlertaWMS[]>([]);
   const [ocupacionZonas, setOcupacionZonas] = useState<OcupacionZona[]>([]);
-
-  // ============================================
-  // CARGA DE DATOS
-  // ============================================
 
   useEffect(() => {
     loadDashboardData();
@@ -91,68 +71,172 @@ export default function WMSDashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // En producción, estos datos vendrían de queries reales
-      // Por ahora, simulamos datos para demostración
-      
-      // Simular métricas
-      setMetricas({
-        ubicaciones_totales: 1250,
-        ubicaciones_ocupadas: 847,
-        ubicaciones_disponibles: 403,
-        porcentaje_ocupacion: 67.8,
-        
-        recepciones_pendientes: 5,
-        recepciones_hoy: 12,
-        unidades_recibidas_hoy: 3420,
-        
-        ordenes_picking_pendientes: 23,
-        ordenes_picking_en_proceso: 8,
-        ordenes_picking_completadas_hoy: 45,
-        unidades_pickeadas_hoy: 1890,
-        
-        picks_por_hora: 48.5,
-        putaways_por_hora: 32.2,
-        tiempo_promedio_picking_min: 4.2,
-        
-        precision_inventario: 99.2,
-        precision_picking: 99.8,
-        
-        productos_sin_stock: 3,
-        productos_bajo_minimo: 12,
-        lotes_proximos_vencer: 8,
-        ubicaciones_bloqueadas: 2,
+
+      const hoy = new Date();
+      const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).toISOString();
+
+      // ---- KPIs (queries reales) ----
+      const [
+        ubicacionesRes,
+        recepcionesRes,
+        recepcionesHoyRes,
+        pickingRes,
+        pickingHoyRes,
+        putawayRes,
+        zonasRes,
+        productosRes,
+        lotesRes,
+        actividadRecepRes,
+        actividadPickRes,
+        actividadMovRes,
+      ] = await Promise.all([
+        supabase
+          .from('wms_ubicaciones')
+          .select('id, zona_id, estado'),
+        supabase
+          .from('wms_ordenes_recepcion')
+          .select('estado, unidades_recibidas')
+          .in('estado', ['pendiente', 'en_proceso']),
+        supabase
+          .from('wms_ordenes_recepcion')
+          .select('id, unidades_recibidas, fecha_recepcion')
+          .gte('fecha_recepcion', inicioHoy),
+        supabase
+          .from('wms_ordenes_picking')
+          .select('estado')
+          .in('estado', ['pendiente', 'en_proceso']),
+        supabase
+          .from('wms_ordenes_picking')
+          .select('id, unidades_pickeadas, fecha_completada, estado')
+          .gte('fecha_completada', inicioHoy)
+          .eq('estado', 'completada'),
+        supabase
+          .from('wms_tareas_putaway')
+          .select('id', { count: 'exact', head: true })
+          .eq('estado', 'pendiente'),
+        supabase
+          .from('wms_zonas')
+          .select('id, codigo, nombre, tipo, activo')
+          .eq('activo', true),
+        supabase
+          .from('productos')
+          .select('codigo, stock, stockMinimo:stock_minimo'),
+        supabase
+          .from('lotes')
+          .select('id, fecha_vencimiento')
+          .not('fecha_vencimiento', 'is', null)
+          .gte('fecha_vencimiento', new Date().toISOString().split('T')[0])
+          .lte('fecha_vencimiento', new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]),
+        supabase
+          .from('wms_ordenes_recepcion')
+          .select('id, numero, estado, created_at, creado_por, unidades_recibidas')
+          .order('created_at', { ascending: false })
+          .limit(5),
+        supabase
+          .from('wms_ordenes_picking')
+          .select('id, numero, estado, created_at, creado_por, unidades_pickeadas')
+          .order('created_at', { ascending: false })
+          .limit(5),
+        supabase
+          .from('wms_movimientos')
+          .select('id, numero, tipo, estado, created_at, creado_por')
+          .order('created_at', { ascending: false })
+          .limit(5),
+      ]);
+
+      // ---- Calcular ocupación ----
+      const ubics = ubicacionesRes.data || [];
+      const totales = ubics.length;
+      const ocupadas = ubics.filter((u: any) => u.estado === 'ocupada' || u.estado === 'reservada').length;
+      const bloqueadas = ubics.filter((u: any) => u.estado === 'bloqueada' || u.estado === 'mantenimiento').length;
+
+      // Por zona
+      const zonas = zonasRes.data || [];
+      const ocupacionPorZona: OcupacionZona[] = zonas.map((z: any) => {
+        const ubicsZona = ubics.filter((u: any) => u.zona_id === z.id);
+        const totZ = ubicsZona.length;
+        const ocZ = ubicsZona.filter((u: any) => u.estado === 'ocupada' || u.estado === 'reservada').length;
+        return {
+          zona_id: z.id,
+          zona_nombre: z.nombre,
+          zona_tipo: z.tipo,
+          ubicaciones_totales: totZ,
+          ubicaciones_ocupadas: ocZ,
+          porcentaje: totZ > 0 ? Math.round((ocZ / totZ) * 1000) / 10 : 0,
+        };
       });
-      
-      // Simular ocupación por zonas
-      setOcupacionZonas([
-        { zona_id: '1', zona_nombre: 'Zona A - Alta Rotación', zona_tipo: 'picking', ubicaciones_totales: 200, ubicaciones_ocupadas: 185, porcentaje: 92.5 },
-        { zona_id: '2', zona_nombre: 'Zona B - Media Rotación', zona_tipo: 'almacenamiento', ubicaciones_totales: 400, ubicaciones_ocupadas: 312, porcentaje: 78 },
-        { zona_id: '3', zona_nombre: 'Zona C - Baja Rotación', zona_tipo: 'almacenamiento', ubicaciones_totales: 450, ubicaciones_ocupadas: 280, porcentaje: 62.2 },
-        { zona_id: '4', zona_nombre: 'Refrigerado', zona_tipo: 'almacenamiento', ubicaciones_totales: 100, ubicaciones_ocupadas: 45, porcentaje: 45 },
-        { zona_id: '5', zona_nombre: 'Recepción', zona_tipo: 'recepcion', ubicaciones_totales: 50, ubicaciones_ocupadas: 15, porcentaje: 30 },
-        { zona_id: '6', zona_nombre: 'Despacho', zona_tipo: 'despacho', ubicaciones_totales: 50, ubicaciones_ocupadas: 10, porcentaje: 20 },
-      ]);
-      
-      // Simular alertas
-      setAlertas([
-        { id: '1', tipo: 'vencimiento', severidad: 'alta', titulo: 'Lotes próximos a vencer', descripcion: '8 lotes vencen en los próximos 30 días', cantidad: 8 },
-        { id: '2', tipo: 'stock', severidad: 'alta', titulo: 'Productos sin stock', descripcion: '3 productos con stock cero', cantidad: 3 },
-        { id: '3', tipo: 'stock', severidad: 'media', titulo: 'Stock bajo mínimo', descripcion: '12 productos bajo punto de reorden', cantidad: 12 },
-        { id: '4', tipo: 'pendiente', severidad: 'media', titulo: 'Órdenes atrasadas', descripcion: '5 órdenes de picking pendientes desde ayer', cantidad: 5 },
-      ]);
-      
-      // Simular actividades recientes
-      setActividades([
-        { id: '1', tipo: 'picking', descripcion: 'Orden #ORD-2024-0892 completada', usuario: 'Carlos M.', fecha: new Date(Date.now() - 5 * 60000).toISOString(), estado: 'completado' },
-        { id: '2', tipo: 'recepcion', descripcion: 'Recepción #REC-2024-0156 en proceso', usuario: 'María L.', fecha: new Date(Date.now() - 12 * 60000).toISOString(), estado: 'en_proceso' },
-        { id: '3', tipo: 'putaway', descripcion: 'Put-away de 45 unidades en A-03-02-01', usuario: 'Juan P.', fecha: new Date(Date.now() - 18 * 60000).toISOString(), estado: 'completado' },
-        { id: '4', tipo: 'picking', descripcion: 'Wave #WAV-0023 liberada (8 órdenes)', usuario: 'Sistema', fecha: new Date(Date.now() - 25 * 60000).toISOString(), estado: 'pendiente' },
-        { id: '5', tipo: 'movimiento', descripcion: 'Reposición de SKU-1234 a picking', usuario: 'Roberto G.', fecha: new Date(Date.now() - 35 * 60000).toISOString(), estado: 'completado' },
-      ]);
-      
+
+      // ---- Productos ----
+      const prods = productosRes.data || [];
+      const sinStock = prods.filter((p: any) => (p.stock ?? 0) === 0).length;
+      const bajoMin = prods.filter((p: any) => (p.stock ?? 0) > 0 && (p.stock ?? 0) <= (p.stockMinimo ?? 0)).length;
+
+      // ---- Métricas finales ----
+      const recepcionesHoy = (recepcionesHoyRes.data || []);
+      const pickingHoy = (pickingHoyRes.data || []);
+      const recPend = (recepcionesRes.data || []);
+
+      setMetricas({
+        ubicaciones_totales: totales,
+        ubicaciones_ocupadas: ocupadas,
+        porcentaje_ocupacion: totales > 0 ? Math.round((ocupadas / totales) * 1000) / 10 : 0,
+        ubicaciones_bloqueadas: bloqueadas,
+
+        recepciones_pendientes: recPend.filter((r: any) => r.estado === 'pendiente').length,
+        recepciones_en_proceso: recPend.filter((r: any) => r.estado === 'en_proceso').length,
+        recepciones_hoy: recepcionesHoy.length,
+        unidades_recibidas_hoy: recepcionesHoy.reduce((s: number, r: any) => s + (parseInt(r.unidades_recibidas) || 0), 0),
+
+        picking_pendientes: (pickingRes.data || []).filter((p: any) => p.estado === 'pendiente').length,
+        picking_en_proceso: (pickingRes.data || []).filter((p: any) => p.estado === 'en_proceso').length,
+        picking_completados_hoy: pickingHoy.length,
+        unidades_pickeadas_hoy: pickingHoy.reduce((s: number, p: any) => s + (parseInt(p.unidades_pickeadas) || 0), 0),
+
+        putaway_pendientes: putawayRes.count || 0,
+
+        productos_sin_stock: sinStock,
+        productos_bajo_minimo: bajoMin,
+        lotes_proximos_vencer: (lotesRes.data || []).length,
+      });
+
+      setOcupacionZonas(ocupacionPorZona);
+
+      // ---- Actividad reciente ----
+      const acts: ActividadReciente[] = [];
+      (actividadRecepRes.data || []).forEach((r: any) => {
+        acts.push({
+          id: `r-${r.id}`,
+          tipo: 'recepcion',
+          descripcion: `Recepción ${r.numero || ''} (${r.unidades_recibidas || 0} uds)`,
+          usuario: r.creado_por || 'Sistema',
+          fecha: r.created_at,
+          estado: r.estado,
+        });
+      });
+      (actividadPickRes.data || []).forEach((p: any) => {
+        acts.push({
+          id: `p-${p.id}`,
+          tipo: 'picking',
+          descripcion: `Picking ${p.numero || ''} (${p.unidades_pickeadas || 0} uds)`,
+          usuario: p.creado_por || 'Sistema',
+          fecha: p.created_at,
+          estado: p.estado,
+        });
+      });
+      (actividadMovRes.data || []).forEach((m: any) => {
+        acts.push({
+          id: `m-${m.id}`,
+          tipo: 'movimiento',
+          descripcion: `${(m.tipo || 'Movimiento').replace(/_/g, ' ')} ${m.numero || ''}`,
+          usuario: m.creado_por || 'Sistema',
+          fecha: m.created_at,
+          estado: m.estado,
+        });
+      });
+      acts.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+      setActividades(acts.slice(0, 8));
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error('Error cargando dashboard WMS:', error);
     } finally {
       setLoading(false);
     }
@@ -162,13 +246,14 @@ export default function WMSDashboard() {
   // HELPERS
   // ============================================
 
-  const formatTime = (date: string): string => {
-    const diff = Date.now() - new Date(date).getTime();
+  const formatTime = (iso: string): string => {
+    const diff = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `Hace ${mins} min`;
+    if (mins < 1) return 'ahora';
+    if (mins < 60) return `hace ${mins} min`;
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `Hace ${hours}h`;
-    return `Hace ${Math.floor(hours / 24)}d`;
+    if (hours < 24) return `hace ${hours}h`;
+    return `hace ${Math.floor(hours / 24)}d`;
   };
 
   const getColorOcupacion = (porcentaje: number) => {
@@ -182,9 +267,7 @@ export default function WMSDashboard() {
     switch (tipo) {
       case 'recepcion': return Truck;
       case 'picking': return Target;
-      case 'putaway': return Archive;
       case 'movimiento': return ArrowRight;
-      case 'conteo': return BarChart3;
       default: return Package;
     }
   };
@@ -201,11 +284,16 @@ export default function WMSDashboard() {
     );
   }
 
-  if (!metricas) return null;
+  if (!metricas) {
+    return (
+      <div className="text-center p-12 text-slate-500 text-sm">
+        Sin datos de WMS aún.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
@@ -213,10 +301,9 @@ export default function WMSDashboard() {
             Dashboard WMS
           </h3>
           <p className="text-slate-400 text-sm mt-1">
-            Gestión de Almacenes en Tiempo Real
+            Datos en tiempo real desde la base
           </p>
         </div>
-        
         <button
           onClick={loadDashboardData}
           className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 rounded-xl text-slate-300 text-sm"
@@ -226,110 +313,51 @@ export default function WMSDashboard() {
         </button>
       </div>
 
-      {/* Alertas críticas */}
-      {alertas.filter(a => a.severidad === 'alta').length > 0 && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5" />
-            <div className="flex-1">
-              <h4 className="font-semibold text-red-400 mb-2">Alertas Críticas</h4>
-              <div className="space-y-1">
-                {alertas.filter(a => a.severidad === 'alta').map(alerta => (
-                  <div key={alerta.id} className="flex items-center justify-between text-sm">
-                    <span className="text-red-300">{alerta.titulo}: {alerta.descripcion}</span>
-                    {alerta.cantidad && (
-                      <span className="px-2 py-0.5 bg-red-500/20 rounded-full text-red-400 font-medium">
-                        {alerta.cantidad}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* KPIs principales */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {/* Ocupación */}
-        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-400">Ocupación</span>
-            <Layers className="h-4 w-4 text-blue-400" />
-          </div>
-          <div className="text-2xl font-bold text-slate-100">{metricas.porcentaje_ocupacion}%</div>
-          <div className="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-            <div 
-              className={`h-full ${getColorOcupacion(metricas.porcentaje_ocupacion).bg}`}
-              style={{ width: `${metricas.porcentaje_ocupacion}%` }}
-            />
-          </div>
-          <div className="text-xs text-slate-500 mt-1">
-            {metricas.ubicaciones_ocupadas} / {metricas.ubicaciones_totales}
-          </div>
-        </div>
-
-        {/* Recepciones pendientes */}
-        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-400">Recepciones Pend.</span>
-            <Truck className="h-4 w-4 text-amber-400" />
-          </div>
-          <div className="text-2xl font-bold text-amber-400">{metricas.recepciones_pendientes}</div>
-          <div className="text-xs text-slate-500 mt-1">
-            {metricas.unidades_recibidas_hoy.toLocaleString()} uds hoy
-          </div>
-        </div>
-
-        {/* Picking pendiente */}
-        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-400">Picking Pend.</span>
-            <Target className="h-4 w-4 text-purple-400" />
-          </div>
-          <div className="text-2xl font-bold text-purple-400">{metricas.ordenes_picking_pendientes}</div>
-          <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
-            <span>{metricas.ordenes_picking_en_proceso} en proceso</span>
-          </div>
-        </div>
-
-        {/* Completados hoy */}
-        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-400">Completados Hoy</span>
-            <CheckCircle className="h-4 w-4 text-emerald-400" />
-          </div>
-          <div className="text-2xl font-bold text-emerald-400">{metricas.ordenes_picking_completadas_hoy}</div>
-          <div className="text-xs text-slate-500 mt-1">
-            {metricas.unidades_pickeadas_hoy.toLocaleString()} unidades
-          </div>
-        </div>
-
-        {/* Picks/hora */}
-        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-400">Picks/Hora</span>
-            <Zap className="h-4 w-4 text-cyan-400" />
-          </div>
-          <div className="text-2xl font-bold text-cyan-400">{metricas.picks_por_hora}</div>
-          <div className="flex items-center gap-1 text-xs text-emerald-400 mt-1">
-            <ArrowUpRight className="h-3 w-3" />
-            <span>+12% vs ayer</span>
-          </div>
-        </div>
-
-        {/* Precisión */}
-        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-400">Precisión Picking</span>
-            <Activity className="h-4 w-4 text-emerald-400" />
-          </div>
-          <div className="text-2xl font-bold text-emerald-400">{metricas.precision_picking}%</div>
-          <div className="text-xs text-slate-500 mt-1">
-            Inv: {metricas.precision_inventario}%
-          </div>
-        </div>
+        <KpiCard
+          icon={Layers}
+          color="text-blue-400"
+          label="Ocupación"
+          value={`${metricas.porcentaje_ocupacion}%`}
+          sub={`${metricas.ubicaciones_ocupadas} / ${metricas.ubicaciones_totales}`}
+          progress={metricas.porcentaje_ocupacion}
+        />
+        <KpiCard
+          icon={Truck}
+          color="text-amber-400"
+          label="Recepciones Pend."
+          value={String(metricas.recepciones_pendientes)}
+          sub={`${metricas.recepciones_en_proceso} en proceso`}
+        />
+        <KpiCard
+          icon={Target}
+          color="text-purple-400"
+          label="Picking Pend."
+          value={String(metricas.picking_pendientes)}
+          sub={`${metricas.picking_en_proceso} en proceso`}
+        />
+        <KpiCard
+          icon={Archive}
+          color="text-cyan-400"
+          label="Putaway Pend."
+          value={String(metricas.putaway_pendientes)}
+          sub="tareas por acomodar"
+        />
+        <KpiCard
+          icon={CheckCircle}
+          color="text-emerald-400"
+          label="Recibidas Hoy"
+          value={String(metricas.recepciones_hoy)}
+          sub={`${metricas.unidades_recibidas_hoy.toLocaleString()} uds`}
+        />
+        <KpiCard
+          icon={CheckCircle}
+          color="text-emerald-400"
+          label="Pickeadas Hoy"
+          value={String(metricas.picking_completados_hoy)}
+          sub={`${metricas.unidades_pickeadas_hoy.toLocaleString()} uds`}
+        />
       </div>
 
       {/* Contenido principal */}
@@ -339,11 +367,15 @@ export default function WMSDashboard() {
           <div className="p-4 border-b border-slate-800/50">
             <h4 className="font-semibold text-slate-200 flex items-center gap-2">
               <MapPin className="h-5 w-5 text-blue-400" />
-              Ocupación por Zonas
+              Ocupación por zonas
             </h4>
           </div>
           <div className="p-4 space-y-3">
-            {ocupacionZonas.map(zona => {
+            {ocupacionZonas.length === 0 ? (
+              <div className="text-center py-6 text-slate-500 text-sm">
+                Sin zonas configuradas todavía. Andá a Ubicaciones para crearlas.
+              </div>
+            ) : ocupacionZonas.map(zona => {
               const colorConfig = getColorOcupacion(zona.porcentaje);
               return (
                 <div key={zona.zona_id} className="space-y-1">
@@ -364,7 +396,7 @@ export default function WMSDashboard() {
                     </div>
                   </div>
                   <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={`h-full ${colorConfig.bg} transition-all`}
                       style={{ width: `${zona.porcentaje}%` }}
                     />
@@ -380,22 +412,20 @@ export default function WMSDashboard() {
           <div className="p-4 border-b border-slate-800/50">
             <h4 className="font-semibold text-slate-200 flex items-center gap-2">
               <Clock className="h-5 w-5 text-slate-400" />
-              Actividad Reciente
+              Actividad reciente
             </h4>
           </div>
           <div className="divide-y divide-slate-800/50">
-            {actividades.map(act => {
+            {actividades.length === 0 ? (
+              <div className="p-6 text-center text-slate-500 text-sm">Sin actividad reciente</div>
+            ) : actividades.map(act => {
               const Icon = getIconActividad(act.tipo);
+              const ok = act.estado === 'completada' || act.estado === 'completado';
+              const inProc = act.estado === 'en_proceso';
               return (
                 <div key={act.id} className="p-3 flex items-start gap-3">
-                  <div className={`p-2 rounded-lg ${
-                    act.estado === 'completado' ? 'bg-emerald-500/20' :
-                    act.estado === 'en_proceso' ? 'bg-blue-500/20' : 'bg-slate-800'
-                  }`}>
-                    <Icon className={`h-4 w-4 ${
-                      act.estado === 'completado' ? 'text-emerald-400' :
-                      act.estado === 'en_proceso' ? 'text-blue-400' : 'text-slate-400'
-                    }`} />
+                  <div className={`p-2 rounded-lg ${ok ? 'bg-emerald-500/20' : inProc ? 'bg-blue-500/20' : 'bg-slate-800'}`}>
+                    <Icon className={`h-4 w-4 ${ok ? 'text-emerald-400' : inProc ? 'text-blue-400' : 'text-slate-400'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-200 truncate">{act.descripcion}</p>
@@ -412,104 +442,101 @@ export default function WMSDashboard() {
         </div>
       </div>
 
-      {/* Fila inferior */}
+      {/* Alertas inferiores */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Productos sin stock */}
-        <div className={`rounded-xl p-4 ${metricas.productos_sin_stock > 0 ? 'bg-red-500/10 border border-red-500/30' : 'bg-slate-900/50 border border-slate-800/50'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs text-slate-400 mb-1">Sin Stock</div>
-              <div className={`text-2xl font-bold ${metricas.productos_sin_stock > 0 ? 'text-red-400' : 'text-slate-400'}`}>
-                {metricas.productos_sin_stock}
-              </div>
-              <div className="text-xs text-slate-500 mt-1">productos</div>
-            </div>
-            <XCircle className={`h-8 w-8 ${metricas.productos_sin_stock > 0 ? 'text-red-400' : 'text-slate-600'}`} />
-          </div>
-        </div>
-
-        {/* Bajo mínimo */}
-        <div className={`rounded-xl p-4 ${metricas.productos_bajo_minimo > 0 ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-slate-900/50 border border-slate-800/50'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs text-slate-400 mb-1">Bajo Mínimo</div>
-              <div className={`text-2xl font-bold ${metricas.productos_bajo_minimo > 0 ? 'text-amber-400' : 'text-slate-400'}`}>
-                {metricas.productos_bajo_minimo}
-              </div>
-              <div className="text-xs text-slate-500 mt-1">productos</div>
-            </div>
-            <AlertCircle className={`h-8 w-8 ${metricas.productos_bajo_minimo > 0 ? 'text-amber-400' : 'text-slate-600'}`} />
-          </div>
-        </div>
-
-        {/* Próximos a vencer */}
-        <div className={`rounded-xl p-4 ${metricas.lotes_proximos_vencer > 0 ? 'bg-orange-500/10 border border-orange-500/30' : 'bg-slate-900/50 border border-slate-800/50'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs text-slate-400 mb-1">Próx. Vencer</div>
-              <div className={`text-2xl font-bold ${metricas.lotes_proximos_vencer > 0 ? 'text-orange-400' : 'text-slate-400'}`}>
-                {metricas.lotes_proximos_vencer}
-              </div>
-              <div className="text-xs text-slate-500 mt-1">lotes (30 días)</div>
-            </div>
-            <Calendar className={`h-8 w-8 ${metricas.lotes_proximos_vencer > 0 ? 'text-orange-400' : 'text-slate-600'}`} />
-          </div>
-        </div>
-
-        {/* Ubicaciones bloqueadas */}
-        <div className={`rounded-xl p-4 ${metricas.ubicaciones_bloqueadas > 0 ? 'bg-slate-700/50 border border-slate-600/50' : 'bg-slate-900/50 border border-slate-800/50'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs text-slate-400 mb-1">Bloqueadas</div>
-              <div className={`text-2xl font-bold ${metricas.ubicaciones_bloqueadas > 0 ? 'text-slate-300' : 'text-slate-400'}`}>
-                {metricas.ubicaciones_bloqueadas}
-              </div>
-              <div className="text-xs text-slate-500 mt-1">ubicaciones</div>
-            </div>
-            <Box className={`h-8 w-8 ${metricas.ubicaciones_bloqueadas > 0 ? 'text-slate-400' : 'text-slate-600'}`} />
-          </div>
-        </div>
+        <AlertCard
+          icon={XCircle}
+          label="Sin stock"
+          value={metricas.productos_sin_stock}
+          unit="productos"
+          color="red"
+        />
+        <AlertCard
+          icon={AlertCircle}
+          label="Bajo mínimo"
+          value={metricas.productos_bajo_minimo}
+          unit="productos"
+          color="amber"
+        />
+        <AlertCard
+          icon={Calendar}
+          label="Próx. vencer (30 días)"
+          value={metricas.lotes_proximos_vencer}
+          unit="lotes"
+          color="orange"
+        />
+        <AlertCard
+          icon={Box}
+          label="Bloqueadas"
+          value={metricas.ubicaciones_bloqueadas}
+          unit="ubicaciones"
+          color="slate"
+        />
       </div>
+    </div>
+  );
+}
 
-      {/* Resumen de productividad */}
-      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-        <h4 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-emerald-400" />
-          Resumen de Productividad - Hoy
-        </h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-slate-800/30 rounded-xl">
-            <div className="text-3xl font-bold text-slate-100">{metricas.recepciones_hoy}</div>
-            <div className="text-sm text-slate-400 mt-1">Recepciones</div>
-            <div className="text-xs text-emerald-400 mt-1">
-              {metricas.unidades_recibidas_hoy.toLocaleString()} unidades
-            </div>
-          </div>
-          
-          <div className="text-center p-4 bg-slate-800/30 rounded-xl">
-            <div className="text-3xl font-bold text-slate-100">{metricas.ordenes_picking_completadas_hoy}</div>
-            <div className="text-sm text-slate-400 mt-1">Órdenes Picking</div>
-            <div className="text-xs text-emerald-400 mt-1">
-              {metricas.unidades_pickeadas_hoy.toLocaleString()} unidades
-            </div>
-          </div>
-          
-          <div className="text-center p-4 bg-slate-800/30 rounded-xl">
-            <div className="text-3xl font-bold text-slate-100">{metricas.picks_por_hora}</div>
-            <div className="text-sm text-slate-400 mt-1">Picks/Hora</div>
-            <div className="text-xs text-cyan-400 mt-1">
-              {metricas.tiempo_promedio_picking_min} min promedio
-            </div>
-          </div>
-          
-          <div className="text-center p-4 bg-slate-800/30 rounded-xl">
-            <div className="text-3xl font-bold text-slate-100">{metricas.putaways_por_hora}</div>
-            <div className="text-sm text-slate-400 mt-1">Put-aways/Hora</div>
-            <div className="text-xs text-blue-400 mt-1">
-              Eficiencia alta
-            </div>
-          </div>
+// ============================================
+// SUBCOMPONENTES
+// ============================================
+
+function KpiCard({
+  icon: Icon, color, label, value, sub, progress,
+}: {
+  icon: React.ElementType;
+  color: string;
+  label: string;
+  value: string;
+  sub?: string;
+  progress?: number;
+}) {
+  return (
+    <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-slate-400">{label}</span>
+        <Icon className={`h-4 w-4 ${color}`} />
+      </div>
+      <div className={`text-2xl font-bold ${color}`}>{value}</div>
+      {progress !== undefined && (
+        <div className="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${progress >= 90 ? 'bg-red-500' : progress >= 75 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+            style={{ width: `${Math.min(100, progress)}%` }}
+          />
         </div>
+      )}
+      {sub && <div className="text-xs text-slate-500 mt-1">{sub}</div>}
+    </div>
+  );
+}
+
+function AlertCard({
+  icon: Icon, label, value, unit, color,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: number;
+  unit: string;
+  color: 'red' | 'amber' | 'orange' | 'slate';
+}) {
+  const isActive = value > 0;
+  const palette = {
+    red: { bg: 'bg-red-500/10 border-red-500/30', text: 'text-red-400' },
+    amber: { bg: 'bg-amber-500/10 border-amber-500/30', text: 'text-amber-400' },
+    orange: { bg: 'bg-orange-500/10 border-orange-500/30', text: 'text-orange-400' },
+    slate: { bg: 'bg-slate-700/30 border-slate-600/50', text: 'text-slate-300' },
+  }[color];
+
+  return (
+    <div className={`rounded-xl p-4 border ${isActive ? palette.bg : 'bg-slate-900/50 border-slate-800/50'}`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-xs text-slate-400 mb-1">{label}</div>
+          <div className={`text-2xl font-bold ${isActive ? palette.text : 'text-slate-400'}`}>{value}</div>
+          <div className="text-xs text-slate-500 mt-1">{unit}</div>
+        </div>
+        <Icon className={`h-8 w-8 ${isActive ? palette.text : 'text-slate-600'}`} />
       </div>
     </div>
   );
