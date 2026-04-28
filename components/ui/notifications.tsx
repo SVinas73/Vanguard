@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import {
   Bell, AlertTriangle, X, Check, CheckCheck, Package,
-  FileText, FileWarning, CreditCard, Truck, Info, RefreshCw
+  FileText, FileWarning, CreditCard, Truck, Info, RefreshCw,
+  Archive, Target
 } from 'lucide-react';
 import { useInventoryStore } from '@/store';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +29,8 @@ const TIPO_ICON: Record<TipoNotificacion, React.ElementType> = {
   cxc_vencida: CreditCard,
   cxp_vencida: CreditCard,
   orden_sin_entregar: Truck,
+  putaway_pendiente: Archive,
+  picking_sin_asignar: Target,
   sistema: Info,
 };
 

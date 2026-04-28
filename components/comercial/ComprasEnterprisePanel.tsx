@@ -9,6 +9,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { cn, formatCurrency } from '@/lib/utils';
 import { registrarAuditoria } from '@/lib/audit';
+import { crearRecepcionWmsDesdeCompra } from '@/lib/wms-bridge';
 import { Product } from '@/types';
 
 // ============================================
@@ -359,6 +360,24 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
 
       await supabase.from('ordenes_compra').update(updateData).eq('id', orden.id);
       await registrarAuditoria('ordenes_compra', `ESTADO_${nuevoEstado.toUpperCase()}`, orden.numero, { estado: orden.estado }, updateData, userEmail);
+
+      // Cuando la OC pasa a "enviada", el almacén ya sabe que va
+      // a recibir. Generamos la orden de recepción WMS para que
+      // el equipo pueda planificar el putaway.
+      if (nuevoEstado === 'enviada' && orden.items?.length) {
+        await crearRecepcionWmsDesdeCompra({
+          ordenCompraId: orden.id,
+          ordenCompraNumero: orden.numero,
+          proveedorNombre: orden.proveedor?.nombre,
+          items: orden.items.map(it => ({
+            productoCodigo: it.productoCodigo,
+            productoNombre: it.productoCodigo,
+            cantidadEsperada: it.cantidadOrdenada,
+          })),
+          creadoPor: userEmail,
+        });
+      }
+
       toast.success('Estado actualizado', `Orden ${orden.numero} → ${nuevoEstado}`);
       loadData();
     } catch (error: any) {

@@ -9,6 +9,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { cn, formatCurrency } from '@/lib/utils';
 import { registrarAuditoria } from '@/lib/audit';
+import { crearPickingWmsDesdeVenta } from '@/lib/wms-bridge';
 import { Product } from '@/types';
 
 // ============================================
@@ -547,6 +548,25 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
 
       await supabase.from('ordenes_venta').update(updateData).eq('id', orden.id);
       await registrarAuditoria('ordenes_venta', `ESTADO_${nuevoEstado.toUpperCase()}`, orden.numero, { estado: orden.estado }, updateData, userEmail);
+
+      // Al confirmar la orden, generamos la orden de picking
+      // en WMS para que el almacén la prepare. Idempotente —
+      // si ya existe una para esta venta, no se duplica.
+      if (nuevoEstado === 'confirmada' && orden.items?.length) {
+        await crearPickingWmsDesdeVenta({
+          ordenVentaId: orden.id,
+          ordenVentaNumero: orden.numero,
+          clienteNombre: orden.cliente?.nombre,
+          fechaRequerida: orden.fechaEntregaEsperada,
+          items: orden.items.map(it => ({
+            productoCodigo: it.productoCodigo,
+            productoNombre: it.productoCodigo,
+            cantidadSolicitada: it.cantidad,
+          })),
+          creadoPor: userEmail,
+        });
+      }
+
       toast.success('Estado actualizado', `${orden.numero} → ${nuevoEstado}`);
       loadData();
     } catch (error: any) {

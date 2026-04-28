@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Product, Almacen, Movement } from '@/types';
+import { registrarAuditoria } from '@/lib/audit';
+import { useAuth } from '@/hooks/useAuth';
+import { useWmsToast } from './useWmsToast';
 import {
   ArrowRight, Search, RefreshCw, Eye, Plus,
   ChevronRight, X, Check, Package, MapPin,
@@ -157,6 +160,8 @@ const generarNumeroTransferencia = (): string => {
 // ============================================
 
 export default function Movimientos() {
+  const { user } = useAuth(false);
+  const toast = useWmsToast();
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('movimientos');
   
@@ -303,26 +308,7 @@ export default function Movimientos() {
         .order('created_at', { ascending: false })
         .limit(50);
       
-      if (transData) {
-        setTransferencias(transData);
-      } else {
-        // Datos ejemplo si no hay tabla
-        setTransferencias([
-          {
-            id: 't1',
-            numero: 'TRF-2024-001',
-            almacen_origen_id: almacenesData?.[0]?.id || '1',
-            almacen_destino_id: almacenesData?.[1]?.id || '2',
-            estado: 'recibida',
-            fecha_solicitud: new Date(Date.now() - 172800000).toISOString(),
-            fecha_envio: new Date(Date.now() - 86400000).toISOString(),
-            fecha_recepcion: new Date().toISOString(),
-            items: [],
-            solicitado_por: 'admin@example.com',
-          }
-        ]);
-      }
-      
+      setTransferencias(transData || []);
     } finally {
       setLoading(false);
     }
@@ -610,6 +596,7 @@ export default function Movimientos() {
 
   return (
     <div className="space-y-6">
+      <toast.Toast />
       {/* Tabs principales */}
       <div className="flex gap-2 border-b border-slate-800 pb-2">
         {[

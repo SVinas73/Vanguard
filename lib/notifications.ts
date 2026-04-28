@@ -12,6 +12,8 @@ export type TipoNotificacion =
   | 'cxc_vencida'
   | 'cxp_vencida'
   | 'orden_sin_entregar'
+  | 'putaway_pendiente'
+  | 'picking_sin_asignar'
   | 'sistema';
 
 export type SeveridadNotificacion = 'info' | 'warning' | 'error';
@@ -242,7 +244,67 @@ export async function escanearAlertasComerciales(): Promise<void> {
     scanCotizacionesPorVencer(),
     scanCxcVencidas(),
     scanOrdenesSinEntregar(),
+    scanWmsPutawayPendiente(),
+    scanWmsPickingSinAsignar(),
   ]);
+}
+
+// WMS: tareas de putaway que llevan más de 1 día pendientes
+async function scanWmsPutawayPendiente(): Promise<void> {
+  const ayer = new Date(Date.now() - 86400000).toISOString();
+  const hoy = new Date().toISOString();
+  const { data } = await supabase
+    .from('wms_tareas_putaway')
+    .select('id, producto_codigo, producto_nombre, cantidad, ubicacion_destino_codigo, created_at')
+    .eq('estado', 'pendiente')
+    .lte('created_at', ayer)
+    .gte('created_at', new Date(Date.now() - VENTANA_EVENTO_DIAS * 86400000).toISOString());
+
+  const keysVigentes = new Set<string>();
+  for (const t of (data || []) as any[]) {
+    void hoy;
+    const key = `putaway_pendiente:${t.id}`;
+    keysVigentes.add(key);
+    await crearNotificacion({
+      tipo: 'putaway_pendiente',
+      severidad: 'warning',
+      titulo: 'Putaway pendiente',
+      mensaje: `${t.producto_nombre || t.producto_codigo} (${t.cantidad} uds) sin acomodar en ${t.ubicacion_destino_codigo || 'destino'}`,
+      entidadTipo: 'wms_tareas_putaway',
+      entidadId: t.id,
+      dedupKey: key,
+    });
+  }
+  await cerrarNotificacionesObsoletas('putaway_pendiente:', keysVigentes);
+}
+
+// WMS: órdenes de picking sin picker asignado y con más de 4hs
+async function scanWmsPickingSinAsignar(): Promise<void> {
+  const haceCuatroHs = new Date(Date.now() - 4 * 3600 * 1000).toISOString();
+  const { data } = await supabase
+    .from('wms_ordenes_picking')
+    .select('id, numero, cliente_nombre, picker_asignado, estado, created_at, fecha_requerida')
+    .in('estado', ['pendiente'])
+    .is('picker_asignado', null)
+    .lte('created_at', haceCuatroHs)
+    .gte('created_at', new Date(Date.now() - VENTANA_EVENTO_DIAS * 86400000).toISOString());
+
+  const keysVigentes = new Set<string>();
+  for (const o of (data || []) as any[]) {
+    const key = `picking_sin_asignar:${o.id}`;
+    keysVigentes.add(key);
+    await crearNotificacion({
+      tipo: 'picking_sin_asignar',
+      severidad: 'warning',
+      titulo: 'Picking sin asignar',
+      mensaje: `${o.numero} (${o.cliente_nombre || 'Sin cliente'}) sin picker asignado`,
+      entidadTipo: 'wms_ordenes_picking',
+      entidadId: o.id,
+      entidadCodigo: o.numero,
+      dedupKey: key,
+    });
+  }
+  await cerrarNotificacionesObsoletas('picking_sin_asignar:', keysVigentes);
 }
 
 async function scanCotizacionesPorVencer(): Promise<void> {

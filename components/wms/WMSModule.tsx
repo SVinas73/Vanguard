@@ -15,6 +15,7 @@ import Picking from './Picking';
 import Inventario from './Inventario';
 import Movimientos from './Movimientos';
 import Slotting from './Slotting';
+import ConfiguracionWMS from './ConfiguracionWMS';
 
 // ============================================
 // TIPOS
@@ -105,8 +106,8 @@ const MENU_ITEMS: MenuItemConfig[] = [
     label: 'Configuración',
     icon: Settings,
     color: 'text-slate-400',
-    descripcion: 'Almacenes y zonas',
-    disponible: false,
+    descripcion: 'Estrategias y políticas',
+    disponible: true,
   },
 ];
 
@@ -136,19 +137,8 @@ export default function WMSModule() {
         return <Movimientos />;
       case 'slotting':
         return <Slotting />;
-      // Módulos pendientes
       case 'configuracion':
-        return (
-          <div className="flex flex-col items-center justify-center p-12 text-center">
-            <Layers className="h-16 w-16 text-slate-600 mb-4" />
-            <h3 className="text-xl font-semibold text-slate-300 mb-2">
-              Módulo en Desarrollo
-            </h3>
-            <p className="text-slate-500 max-w-md">
-              El módulo de {moduloConfig?.label} está siendo desarrollado y estará disponible próximamente.
-            </p>
-          </div>
-        );
+        return <ConfiguracionWMS />;
       default:
         return <WMSDashboard />;
     }

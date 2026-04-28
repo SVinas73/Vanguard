@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Product, Almacen } from '@/types';
+import { registrarAuditoria } from '@/lib/audit';
+import { useAuth } from '@/hooks/useAuth';
+import { useWmsToast } from './useWmsToast';
 import {
   Layers, Search, RefreshCw, Eye, Play,
   ChevronRight, ChevronDown, X, Check,
@@ -173,6 +176,8 @@ const XYZ_CONFIG: Record<ClasificacionXYZ, { label: string; color: string; bg: s
 // ============================================
 
 export default function Slotting() {
+  const { user } = useAuth(false);
+  const toast = useWmsToast();
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('analisis');
   
@@ -249,15 +254,108 @@ export default function Slotting() {
       if (productosData) {
         const analisisCalculado = calcularAnalisisABC(productosData, movimientosData || []);
         setAnalisis(analisisCalculado);
-        
-        // Generar recomendaciones
-        const recsGeneradas = generarRecomendaciones(analisisCalculado);
+
+        // Generar recomendaciones reales: leemos la ubicación
+        // actual de cada producto desde wms_stock_ubicacion y la
+        // comparamos con la zona ideal según su clasificación ABC.
+        const recsGeneradas = await generarRecomendacionesReales(analisisCalculado);
         setRecomendaciones(recsGeneradas);
       }
-      
+
     } finally {
       setLoading(false);
     }
+  };
+
+  // Recomendaciones basadas en datos reales:
+  // - Trae la ubicación actual de cada producto
+  // - Si un producto A está en zona de baja prioridad → mover a alta
+  // - Si un producto C está en zona de alta prioridad → mover a baja
+  // Si no hay stock asignado a ubicaciones, devuelve [].
+  const generarRecomendacionesReales = async (analisis: AnalisisProducto[]): Promise<RecomendacionSlotting[]> => {
+    const codigos = analisis.map(a => a.producto_codigo);
+    if (codigos.length === 0) return [];
+
+    const { data: stockUbic } = await supabase
+      .from('wms_stock_ubicacion')
+      .select('producto_codigo, ubicacion_codigo, ubicacion_id, cantidad')
+      .in('producto_codigo', codigos);
+
+    if (!stockUbic || stockUbic.length === 0) return [];
+
+    // Cargar ubicaciones y zonas para resolver prioridades
+    const { data: zonasData } = await supabase
+      .from('wms_zonas')
+      .select('id, nombre, prioridad_picking');
+    const { data: ubicData } = await supabase
+      .from('wms_ubicaciones')
+      .select('id, codigo, codigo_completo, zona_id');
+
+    const zonaPorId = new Map<string, { nombre: string; prioridad: number }>();
+    (zonasData || []).forEach((z: any) =>
+      zonaPorId.set(z.id, { nombre: z.nombre, prioridad: z.prioridad_picking ?? 99 })
+    );
+
+    const ubicPorId = new Map<string, { codigo: string; zonaId: string }>();
+    (ubicData || []).forEach((u: any) =>
+      ubicPorId.set(u.id, { codigo: u.codigo_completo || u.codigo, zonaId: u.zona_id })
+    );
+
+    // Identificar zonas premium / baja por prioridad_picking (1 = más cerca de despacho)
+    const zonasOrdenadas = (zonasData || []).slice().sort((a: any, b: any) => (a.prioridad_picking ?? 99) - (b.prioridad_picking ?? 99));
+    const idsZonaPremium = new Set(zonasOrdenadas.slice(0, Math.max(1, Math.floor(zonasOrdenadas.length / 3))).map((z: any) => z.id));
+    const idsZonaBaja = new Set(zonasOrdenadas.slice(-Math.max(1, Math.floor(zonasOrdenadas.length / 3))).map((z: any) => z.id));
+
+    const recs: RecomendacionSlotting[] = [];
+    for (const s of stockUbic) {
+      const item = analisis.find(a => a.producto_codigo === (s as any).producto_codigo);
+      if (!item) continue;
+      const ubic = (s as any).ubicacion_id ? ubicPorId.get((s as any).ubicacion_id) : null;
+      if (!ubic) continue;
+      const zonaActual = zonaPorId.get(ubic.zonaId);
+      if (!zonaActual) continue;
+
+      const esPremium = idsZonaPremium.has(ubic.zonaId);
+      const esBaja = idsZonaBaja.has(ubic.zonaId);
+
+      if (item.clasificacion_abc === 'A' && esBaja) {
+        recs.push({
+          id: `rec-${item.producto_codigo}`,
+          producto_codigo: item.producto_codigo,
+          producto: item.producto,
+          ubicacion_origen: ubic.codigo,
+          zona_origen: zonaActual.nombre,
+          ubicacion_destino: '(asignar zona premium)',
+          zona_destino: zonasOrdenadas[0]?.nombre || 'Premium',
+          razon: `Producto clase A con ${item.movimientos_90d} movimientos/90d ubicado en zona de baja prioridad`,
+          clasificacion_abc: 'A',
+          prioridad: 3,
+          ahorro_tiempo_min: 0,
+          ahorro_distancia_m: 0,
+          estado: 'pendiente',
+          fecha_creacion: new Date().toISOString(),
+        });
+      } else if (item.clasificacion_abc === 'C' && esPremium) {
+        recs.push({
+          id: `rec-c-${item.producto_codigo}`,
+          producto_codigo: item.producto_codigo,
+          producto: item.producto,
+          ubicacion_origen: ubic.codigo,
+          zona_origen: zonaActual.nombre,
+          ubicacion_destino: '(asignar zona baja)',
+          zona_destino: zonasOrdenadas[zonasOrdenadas.length - 1]?.nombre || 'Baja',
+          razon: `Producto clase C ocupando espacio premium con solo ${item.movimientos_90d} movimientos/90d`,
+          clasificacion_abc: 'C',
+          prioridad: 2,
+          ahorro_tiempo_min: 0,
+          ahorro_distancia_m: 0,
+          estado: 'pendiente',
+          fecha_creacion: new Date().toISOString(),
+        });
+      }
+    }
+
+    return recs.sort((a, b) => b.prioridad - a.prioridad);
   };
 
   // ============================================
@@ -372,62 +470,7 @@ export default function Slotting() {
     return ordenado;
   };
 
-  const generarRecomendaciones = (analisis: AnalisisProducto[]): RecomendacionSlotting[] => {
-    const recomendaciones: RecomendacionSlotting[] = [];
-    
-    // Productos A que deberían estar en zona premium
-    const productosA = analisis.filter(a => a.clasificacion_abc === 'A');
-    const productosC = analisis.filter(a => a.clasificacion_abc === 'C');
-    
-    // Simular ubicaciones actuales y generar recomendaciones
-    const zonasPremium = ['A-01', 'A-02', 'B-01'];
-    const zonasMedia = ['A-03', 'B-02', 'B-03'];
-    const zonasBaja = ['C-01', 'C-02', 'C-03'];
-    
-    productosA.slice(0, 5).forEach((p, idx) => {
-      // Simular que algunos A están mal ubicados
-      if (idx % 2 === 0) {
-        recomendaciones.push({
-          id: `rec-${p.producto_codigo}`,
-          producto_codigo: p.producto_codigo,
-          producto: p.producto,
-          ubicacion_origen: `${zonasBaja[idx % zonasBaja.length]}-01-01`,
-          zona_origen: 'Zona C (Baja rotación)',
-          ubicacion_destino: `${zonasPremium[idx % zonasPremium.length]}-01-01`,
-          zona_destino: 'Zona A (Premium)',
-          razon: `Producto clase A con ${p.movimientos_90d} movimientos/90d, debe estar cerca de despacho`,
-          clasificacion_abc: 'A',
-          prioridad: 3,
-          ahorro_tiempo_min: Math.floor(Math.random() * 10) + 5,
-          ahorro_distancia_m: Math.floor(Math.random() * 50) + 20,
-          estado: 'pendiente',
-          fecha_creacion: new Date().toISOString(),
-        });
-      }
-    });
-
-    // Productos C en zonas premium (deberían moverse)
-    productosC.slice(0, 3).forEach((p, idx) => {
-      recomendaciones.push({
-        id: `rec-c-${p.producto_codigo}`,
-        producto_codigo: p.producto_codigo,
-        producto: p.producto,
-        ubicacion_origen: `${zonasPremium[idx % zonasPremium.length]}-02-01`,
-        zona_origen: 'Zona A (Premium)',
-        ubicacion_destino: `${zonasBaja[idx % zonasBaja.length]}-03-01`,
-        zona_destino: 'Zona C (Baja rotación)',
-        razon: `Producto clase C ocupando espacio premium, solo ${p.movimientos_90d} movimientos/90d`,
-        clasificacion_abc: 'C',
-        prioridad: 2,
-        ahorro_tiempo_min: Math.floor(Math.random() * 5) + 2,
-        ahorro_distancia_m: Math.floor(Math.random() * 30) + 10,
-        estado: 'pendiente',
-        fecha_creacion: new Date().toISOString(),
-      });
-    });
-
-    return recomendaciones.sort((a, b) => b.prioridad - a.prioridad);
-  };
+  // (función legada eliminada — usamos generarRecomendacionesReales)
 
   // ============================================
   // DATOS COMPUTADOS
@@ -534,18 +577,26 @@ export default function Slotting() {
   const handleEjecutarTodas = async () => {
     const aprobadas = recomendaciones.filter(r => r.estado === 'aprobada');
     if (aprobadas.length === 0) {
-      alert('No hay recomendaciones aprobadas para ejecutar');
+      toast.warning('No hay recomendaciones aprobadas para ejecutar');
       return;
     }
-    
+
     if (!confirm(`¿Ejecutar ${aprobadas.length} reubicación(es)?`)) return;
-    
+
     setSaving(true);
     try {
       for (const rec of aprobadas) {
         await handleEjecutarRecomendacion(rec.id);
       }
-      alert(`✅ ${aprobadas.length} reubicaciones ejecutadas`);
+      await registrarAuditoria(
+        'wms_slotting',
+        'EJECUTAR_REUBICACIONES',
+        null,
+        null,
+        { cantidad: aprobadas.length, codigos: aprobadas.map(r => r.producto_codigo) },
+        user?.email || ''
+      );
+      toast.success(`${aprobadas.length} reubicación(es) ejecutada(s)`);
     } finally {
       setSaving(false);
     }
@@ -565,6 +616,7 @@ export default function Slotting() {
 
   return (
     <div className="space-y-6">
+      <toast.Toast />
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-800 pb-2">
         {[

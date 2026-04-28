@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { registrarAuditoria } from '@/lib/audit';
+import { useAuth } from '@/hooks/useAuth';
+import { useWmsToast } from './useWmsToast';
 import {
   Truck, Search, Plus, RefreshCw, Eye, Edit,
   ChevronRight, ChevronDown, X, Save, Check,
@@ -145,6 +148,8 @@ const generarNumeroRecepcion = (): string => {
 // ============================================
 
 export default function Recepcion() {
+  const { user } = useAuth(false);
+  const toast = useWmsToast();
   const [loading, setLoading] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('lista');
   const [ordenSeleccionada, setOrdenSeleccionada] = useState<OrdenRecepcion | null>(null);
@@ -190,75 +195,7 @@ export default function Recepcion() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
-      
-      if (ordenesData) {
-        setOrdenes(ordenesData);
-      } else {
-        // Datos de ejemplo
-        setOrdenes([
-          {
-            id: '1',
-            numero: 'REC-2024-0156',
-            tipo_origen: 'compra',
-            orden_compra_numero: 'OC-2024-0892',
-            proveedor_nombre: 'Proveedor ABC S.A.',
-            almacen_id: '1',
-            almacen_nombre: 'Almacén Principal',
-            fecha_esperada: new Date(Date.now() + 86400000).toISOString(),
-            estado: 'pendiente',
-            lineas_totales: 5,
-            lineas_recibidas: 0,
-            unidades_esperadas: 500,
-            unidades_recibidas: 0,
-            guia_remision: 'GR-001234',
-            requiere_inspeccion: true,
-            created_at: new Date().toISOString(),
-            lineas: [
-              { id: 'l1', orden_recepcion_id: '1', producto_id: 'p1', producto_codigo: 'SKU-1001', producto_nombre: 'Producto Alpha', cantidad_esperada: 100, cantidad_recibida: 0, cantidad_rechazada: 0, unidad_medida: 'UND', estado: 'pendiente', putaway_completado: false },
-              { id: 'l2', orden_recepcion_id: '1', producto_id: 'p2', producto_codigo: 'SKU-1002', producto_nombre: 'Producto Beta', cantidad_esperada: 150, cantidad_recibida: 0, cantidad_rechazada: 0, unidad_medida: 'UND', estado: 'pendiente', putaway_completado: false },
-              { id: 'l3', orden_recepcion_id: '1', producto_id: 'p3', producto_codigo: 'SKU-1003', producto_nombre: 'Producto Gamma', cantidad_esperada: 250, cantidad_recibida: 0, cantidad_rechazada: 0, unidad_medida: 'UND', estado: 'pendiente', putaway_completado: false },
-            ]
-          },
-          {
-            id: '2',
-            numero: 'REC-2024-0155',
-            tipo_origen: 'compra',
-            orden_compra_numero: 'OC-2024-0891',
-            proveedor_nombre: 'Distribuidora XYZ',
-            almacen_id: '1',
-            almacen_nombre: 'Almacén Principal',
-            fecha_recepcion: new Date(Date.now() - 3600000).toISOString(),
-            estado: 'en_proceso',
-            lineas_totales: 3,
-            lineas_recibidas: 2,
-            unidades_esperadas: 300,
-            unidades_recibidas: 200,
-            requiere_inspeccion: false,
-            created_at: new Date(Date.now() - 86400000).toISOString(),
-            lineas: [
-              { id: 'l4', orden_recepcion_id: '2', producto_id: 'p4', producto_codigo: 'SKU-2001', producto_nombre: 'Componente X', cantidad_esperada: 100, cantidad_recibida: 100, cantidad_rechazada: 0, unidad_medida: 'UND', lote_numero: 'LOT-2024-001', estado: 'completa', putaway_completado: true },
-              { id: 'l5', orden_recepcion_id: '2', producto_id: 'p5', producto_codigo: 'SKU-2002', producto_nombre: 'Componente Y', cantidad_esperada: 100, cantidad_recibida: 100, cantidad_rechazada: 0, unidad_medida: 'UND', lote_numero: 'LOT-2024-002', estado: 'completa', putaway_completado: false },
-              { id: 'l6', orden_recepcion_id: '2', producto_id: 'p6', producto_codigo: 'SKU-2003', producto_nombre: 'Componente Z', cantidad_esperada: 100, cantidad_recibida: 0, cantidad_rechazada: 0, unidad_medida: 'UND', estado: 'pendiente', putaway_completado: false },
-            ]
-          },
-          {
-            id: '3',
-            numero: 'REC-2024-0154',
-            tipo_origen: 'devolucion',
-            proveedor_nombre: 'Cliente Retail SA',
-            almacen_id: '1',
-            almacen_nombre: 'Almacén Principal',
-            fecha_recepcion: new Date(Date.now() - 172800000).toISOString(),
-            estado: 'completada',
-            lineas_totales: 2,
-            lineas_recibidas: 2,
-            unidades_esperadas: 50,
-            unidades_recibidas: 48,
-            requiere_inspeccion: true,
-            created_at: new Date(Date.now() - 172800000).toISOString(),
-          },
-        ]);
-      }
+      setOrdenes(ordenesData || []);
 
       // Cargar tareas de putaway
       const { data: putawayData } = await supabase
@@ -266,31 +203,7 @@ export default function Recepcion() {
         .select('*')
         .in('estado', ['pendiente', 'asignado', 'en_proceso'])
         .order('prioridad', { ascending: true });
-      
-      if (putawayData) {
-        setTareasPutaway(putawayData);
-      } else {
-        setTareasPutaway([
-          {
-            id: 't1',
-            orden_recepcion_id: '2',
-            linea_recepcion_id: 'l5',
-            producto_id: 'p5',
-            producto_codigo: 'SKU-2002',
-            producto_nombre: 'Componente Y',
-            lote_numero: 'LOT-2024-002',
-            cantidad: 100,
-            unidad_medida: 'UND',
-            ubicacion_origen_codigo: 'REC-01',
-            ubicacion_destino_id: 'ub1',
-            ubicacion_destino_codigo: 'A-03-02-01',
-            razon_sugerencia: 'Misma familia de productos',
-            estado: 'pendiente',
-            prioridad: 1,
-            created_at: new Date().toISOString(),
-          }
-        ]);
-      }
+      setTareasPutaway(putawayData || []);
     } finally {
       setLoading(false);
     }
@@ -437,14 +350,58 @@ export default function Recepcion() {
         }
       });
 
+      // Persistir en Supabase: actualizar la orden y crear las
+      // tareas de putaway. Sin esto los cambios se perdían al
+      // refrescar.
+      const { error: errOrden } = await supabase
+        .from('wms_ordenes_recepcion')
+        .update({
+          estado: nuevoEstado,
+          unidades_recibidas: totalRecibido,
+          lineas_recibidas: lineasCompletas,
+          fecha_recepcion: ordenActualizada.fecha_recepcion,
+        })
+        .eq('id', ordenSeleccionada.id);
+
+      if (errOrden) {
+        toast.error('Error al guardar la recepción');
+        return;
+      }
+
       if (nuevasTareas.length > 0) {
+        const tareasInsert = nuevasTareas.map(t => ({
+          orden_recepcion_id: t.orden_recepcion_id,
+          linea_recepcion_id: t.linea_recepcion_id,
+          producto_id: t.producto_id,
+          producto_codigo: t.producto_codigo,
+          producto_nombre: t.producto_nombre,
+          lote_numero: t.lote_numero,
+          cantidad: t.cantidad,
+          unidad_medida: t.unidad_medida,
+          ubicacion_origen_codigo: t.ubicacion_origen_codigo,
+          ubicacion_destino_id: t.ubicacion_destino_id,
+          ubicacion_destino_codigo: t.ubicacion_destino_codigo,
+          razon_sugerencia: t.razon_sugerencia,
+          estado: t.estado,
+          prioridad: t.prioridad,
+        }));
+        await supabase.from('wms_tareas_putaway').insert(tareasInsert);
         setTareasPutaway(prev => [...nuevasTareas, ...prev]);
       }
 
-      alert(`✅ Recepción confirmada. ${nuevasTareas.length} tarea(s) de put-away generada(s).`);
+      await registrarAuditoria(
+        'wms_ordenes_recepcion',
+        'CONFIRMAR_RECEPCION',
+        ordenSeleccionada.numero,
+        { estado: ordenSeleccionada.estado, unidades_recibidas: ordenSeleccionada.unidades_recibidas },
+        { estado: nuevoEstado, unidades_recibidas: totalRecibido, tareas_putaway: nuevasTareas.length },
+        user?.email || ''
+      );
+
+      toast.success(`Recepción confirmada — ${nuevasTareas.length} putaway generado(s)`);
       setVistaActiva('detalle');
       setTabActivo('putaway');
-      
+
     } finally {
       setSaving(false);
     }
@@ -532,6 +489,7 @@ export default function Recepcion() {
 
   return (
     <div className="space-y-6">
+      <toast.Toast />
       {/* ==================== LISTA ==================== */}
       {vistaActiva === 'lista' && (
         <>
