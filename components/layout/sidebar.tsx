@@ -135,6 +135,8 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
         { id: 'taller', label: t('modules.workshop'), icon: Wrench, permission: 'canViewTaller' },
         { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
+        { id: 'bom', label: t('modules.bom'), icon: Boxes, permission: 'canViewBOM' },
+        { id: 'ensamblajes', label: t('modules.assemblies'), icon: Wrench, permission: 'canViewBOM' },
       ]
     },
     {
@@ -144,7 +146,6 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'analytics', label: t('nav.analytics'), icon: Brain, badge: 'AI' },
         { id: 'demand', label: t('modules.demandPlanning'), icon: Zap, badge: 'AI', permission: 'canViewDemand' },
         { id: 'reportes', label: t('nav.reports'), icon: FileText, permission: 'canViewReports' },
-        { id: 'qms', label: t('modules.quality'), icon: Shield, permission: 'canViewQMS' },
       ]
     },
     {
@@ -154,8 +155,8 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'seriales', label: t('modules.serials'), icon: QrCode, permission: 'canViewSeriales' },
         { id: 'trazabilidad', label: t('modules.traceability'), icon: GitBranch, permission: 'canViewSeriales' },
         { id: 'rma', label: t('modules.returns'), icon: RotateCcw, permission: 'canViewRMA' },
-        { id: 'bom', label: t('modules.bom'), icon: Boxes, permission: 'canViewBOM' },
-        { id: 'ensamblajes', label: t('modules.assemblies'), icon: Wrench, permission: 'canViewBOM' },
+        { id: 'qms', label: t('modules.quality'), icon: Shield, permission: 'canViewQMS' },
+        { id: 'auditoria', label: t('nav.audit'), icon: Shield, permission: 'canViewAudit' },
       ]
     },
     {
@@ -163,7 +164,6 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       defaultOpen: false,
       items: [
         { id: 'integraciones', label: t('nav.integrations'), icon: Plug },
-        { id: 'auditoria', label: t('nav.audit'), icon: Shield, permission: 'canViewAudit' },
       ]
     },
   ];

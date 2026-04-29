@@ -87,10 +87,10 @@ const MENU_ITEMS: MenuItemConfig[] = [
   },
   {
     id: 'movimientos',
-    label: 'Movimientos',
+    label: 'Transacciones de Movimientos',
     icon: ArrowRight,
     color: 'text-orange-400',
-    descripcion: 'Transferencias internas',
+    descripcion: 'Transferencias internas y ajustes',
     disponible: true,
   },
   {
