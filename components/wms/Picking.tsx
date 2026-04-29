@@ -6,13 +6,26 @@ import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import {
+  optimizarRutaPicking,
+  sugerirWaves,
+  predecirTiempoPicking,
+  asignarPickerOptimo,
+  detectarAnomaliasPicking,
+  cargarMetricasPickers,
+  type WaveSugerida,
+  type Anomalia,
+  type PickerInfo,
+  type OrdenParaWave,
+} from '@/lib/wms-picking-ai';
+import {
   Target, Search, Plus, RefreshCw, Eye, Edit,
   ChevronRight, ChevronDown, X, Save, Check,
   Package, Box, MapPin, ClipboardCheck, AlertTriangle,
   Clock, CheckCircle, XCircle, ArrowRight, Layers,
   Users, Calendar, User, FileText, Zap, Route,
   Play, Pause, SkipForward, AlertCircle, Truck,
-  BarChart3, Timer, Navigation, List, Grid3X3
+  BarChart3, Timer, Navigation, List, Grid3X3,
+  Sparkles, Brain, TrendingUp, TrendingDown,
 } from 'lucide-react';
 
 // ============================================
@@ -98,7 +111,7 @@ interface LineaPicking {
   notas?: string;
 }
 
-type VistaActiva = 'ordenes' | 'waves' | 'nueva_wave' | 'detalle_wave' | 'picking_activo' | 'detalle_orden';
+type VistaActiva = 'ordenes' | 'waves' | 'asistente' | 'nueva_wave' | 'detalle_wave' | 'picking_activo' | 'detalle_orden';
 
 // ============================================
 // CONFIGURACIONES
@@ -163,14 +176,33 @@ const generarNumeroWave = (): string => {
   return `WAV-${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}-${seq}`;
 };
 
-// Optimizar ruta de picking (algoritmo simplificado - nearest neighbor)
-const optimizarRuta = (lineas: LineaPicking[]): LineaPicking[] => {
-  if (lineas.length <= 1) return lineas;
-  
-  // Ordenar por ubicación (pasillo -> rack -> nivel -> posición)
-  return [...lineas].sort((a, b) => {
-    return a.ubicacion_codigo.localeCompare(b.ubicacion_codigo);
-  }).map((linea, idx) => ({ ...linea, secuencia: idx + 1 }));
+// Optimiza ruta usando 2-opt (importado de lib/wms-picking-ai).
+// Devuelve la lista con secuencia asignada y la distancia
+// estimada para mostrarla en la UI.
+const optimizarRuta = (lineas: LineaPicking[]): { lineas: LineaPicking[]; distancia: number; ahorroPct: number } => {
+  if (lineas.length <= 1) return { lineas, distancia: 0, ahorroPct: 0 };
+
+  // Parseo del código jerárquico A-01-02-03 para alimentar al
+  // optimizador. Si el código no respeta el formato, igual
+  // funciona con string fallback.
+  const puntos = lineas.map(l => {
+    const partes = (l.ubicacion_codigo || '').split('-');
+    return {
+      ...l,
+      pasillo: partes[0],
+      rack: partes[1],
+      nivel: partes[2],
+      posicion: partes[3],
+      ubicacion_codigo: l.ubicacion_codigo,
+    };
+  });
+
+  const { ruta, distancia, ahorroPct } = optimizarRutaPicking(puntos);
+  return {
+    lineas: ruta.map((linea, idx) => ({ ...linea, secuencia: idx + 1 } as LineaPicking)),
+    distancia,
+    ahorroPct,
+  };
 };
 
 // ============================================
@@ -199,6 +231,12 @@ export default function Picking() {
   const [cantidadPickeada, setCantidadPickeada] = useState<number>(0);
   
   const [saving, setSaving] = useState(false);
+
+  // Asistente IA
+  const [waveSugerencias, setWaveSugerencias] = useState<WaveSugerida[]>([]);
+  const [pickerMetricas, setPickerMetricas] = useState<PickerInfo[]>([]);
+  const [anomalias, setAnomalias] = useState<Anomalia[]>([]);
+  const [analizando, setAnalizando] = useState(false);
 
   // ============================================
   // CARGA DE DATOS
@@ -287,6 +325,104 @@ export default function Picking() {
   }, [ordenes, waves, ordenesSinWave]);
 
   // ============================================
+  // ASISTENTE IA
+  // ============================================
+
+  const correrAnalisisIA = async () => {
+    setAnalizando(true);
+    try {
+      // 1. Sugerencias de waves a partir de las órdenes
+      // pendientes sin wave asignada.
+      const candidatas: OrdenParaWave[] = ordenes
+        .filter(o => !o.wave_id && o.estado === 'pendiente')
+        .map(o => ({
+          id: o.id,
+          numero: o.numero,
+          cliente_nombre: o.cliente_nombre,
+          fecha_requerida: o.fecha_requerida,
+          prioridad: o.prioridad,
+          unidades_totales: o.unidades_totales,
+          lineas_totales: o.lineas_totales,
+          productos: (o.lineas || []).map(l => l.producto_codigo),
+        }));
+      const sugerencias = sugerirWaves(candidatas);
+      setWaveSugerencias(sugerencias);
+
+      // 2. Carga y productividad por picker
+      const pickers = await cargarMetricasPickers();
+      setPickerMetricas(pickers);
+
+      // 3. Anomalías
+      const { data: completadas } = await supabase
+        .from('wms_ordenes_picking')
+        .select('picker_asignado, fecha_inicio, fecha_completada, unidades_pickeadas, lineas_completadas')
+        .eq('estado', 'completada')
+        .gte('fecha_completada', new Date(Date.now() - 30 * 86400000).toISOString())
+        .limit(500);
+
+      const { data: lineasHistoricas } = await supabase
+        .from('wms_ordenes_picking_lineas')
+        .select('producto_codigo, cantidad_solicitada, cantidad_pickeada')
+        .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString())
+        .limit(2000);
+
+      const abiertas = ordenes
+        .filter(o => o.estado === 'en_proceso')
+        .map(o => ({ numero: o.numero, fecha_inicio: o.fecha_inicio, picker_asignado: o.picker_asignado }));
+
+      const anom = detectarAnomaliasPicking(
+        (completadas || []) as any,
+        (lineasHistoricas || []) as any,
+        abiertas
+      );
+      setAnomalias(anom);
+    } catch (err) {
+      console.error('Error en análisis IA:', err);
+      toast.error('No se pudo correr el análisis');
+    } finally {
+      setAnalizando(false);
+    }
+  };
+
+  const aplicarSugerenciaWave = async (sug: WaveSugerida) => {
+    setOrdenesSeleccionadas(new Set(sug.ordenesIds));
+    setVistaActiva('ordenes');
+    toast.success(`${sug.ordenesIds.length} órdenes seleccionadas — confirmá la wave`);
+  };
+
+  const asignarMejorPicker = async (orden: OrdenPicking) => {
+    const optimo = asignarPickerOptimo(pickerMetricas);
+    if (!optimo) {
+      toast.error('No hay pickers disponibles');
+      return;
+    }
+    await supabase
+      .from('wms_ordenes_picking')
+      .update({ picker_asignado: optimo.email, estado: 'asignada' })
+      .eq('id', orden.id);
+    setOrdenes(prev => prev.map(o =>
+      o.id === orden.id ? { ...o, picker_asignado: optimo.email, estado: 'asignada' as EstadoOrdenPicking } : o
+    ));
+    await registrarAuditoria(
+      'wms_ordenes_picking',
+      'ASIGNAR_PICKER_AUTO',
+      orden.numero,
+      { picker: orden.picker_asignado },
+      { picker: optimo.email },
+      user?.email || ''
+    );
+    toast.success(`Asignado a ${optimo.nombre || optimo.email}`);
+  };
+
+  // Cargar análisis automáticamente al entrar al asistente
+  useEffect(() => {
+    if (vistaActiva === 'asistente' && pickerMetricas.length === 0) {
+      correrAnalisisIA();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vistaActiva]);
+
+  // ============================================
   // HANDLERS
   // ============================================
 
@@ -302,73 +438,154 @@ export default function Picking() {
 
   const handleCrearWave = async () => {
     if (ordenesSeleccionadas.size === 0) return;
-    
+
     setSaving(true);
     try {
       const ordenesParaWave = ordenes.filter(o => ordenesSeleccionadas.has(o.id));
-      
-      // Calcular totales
       const lineasTotales = ordenesParaWave.reduce((sum, o) => sum + o.lineas_totales, 0);
       const unidadesTotales = ordenesParaWave.reduce((sum, o) => sum + o.unidades_totales, 0);
-      
+
+      const numero = generarNumeroWave();
+      const tiempoEstimado = predecirTiempoPicking(lineasTotales, unidadesTotales);
+
+      // Persistir wave en DB
+      const { data, error } = await supabase
+        .from('wms_waves_picking')
+        .insert({
+          numero,
+          tipo: 'wave',
+          estado: 'planificada',
+          ordenes_ids: Array.from(ordenesSeleccionadas),
+          ordenes_count: ordenesSeleccionadas.size,
+          lineas_totales: lineasTotales,
+          lineas_completadas: 0,
+          unidades_totales: unidadesTotales,
+          unidades_pickeadas: 0,
+          ruta_optimizada: false,
+          prioridad: 1,
+          tiempo_estimado_min: tiempoEstimado.minutosEstimados,
+          created_by: user?.email || null,
+        })
+        .select()
+        .single();
+
+      if (error || !data) {
+        toast.error('No se pudo crear la wave');
+        return;
+      }
+
+      // Vincular órdenes a la wave
+      await supabase
+        .from('wms_ordenes_picking')
+        .update({ wave_id: data.id, wave_numero: numero })
+        .in('id', Array.from(ordenesSeleccionadas));
+
+      await registrarAuditoria(
+        'wms_waves_picking',
+        'CREAR',
+        numero,
+        null,
+        { ordenes: ordenesSeleccionadas.size, unidades: unidadesTotales },
+        user?.email || ''
+      );
+
       const nuevaWave: WavePicking = {
-        id: `wave-${Date.now()}`,
-        numero: generarNumeroWave(),
-        tipo: 'wave',
-        estado: 'planificada',
-        ordenes_ids: Array.from(ordenesSeleccionadas),
-        ordenes_count: ordenesSeleccionadas.size,
-        fecha_creacion: new Date().toISOString(),
-        lineas_totales: lineasTotales,
-        lineas_completadas: 0,
-        unidades_totales: unidadesTotales,
-        unidades_pickeadas: 0,
-        ruta_optimizada: false,
-        prioridad: 1,
+        ...(data as any),
+        ordenes_ids: data.ordenes_ids || Array.from(ordenesSeleccionadas),
       };
 
       setWaves(prev => [nuevaWave, ...prev]);
-      
-      // Actualizar órdenes con wave_id
-      setOrdenes(prev => prev.map(o => 
-        ordenesSeleccionadas.has(o.id) 
-          ? { ...o, wave_id: nuevaWave.id, wave_numero: nuevaWave.numero }
+      setOrdenes(prev => prev.map(o =>
+        ordenesSeleccionadas.has(o.id)
+          ? { ...o, wave_id: data.id, wave_numero: numero }
           : o
       ));
-      
+
       setOrdenesSeleccionadas(new Set());
       setWaveSeleccionada(nuevaWave);
       setVistaActiva('detalle_wave');
-      
+      toast.success(`Wave ${numero} creada · ${tiempoEstimado.minutosEstimados} min estimados`);
+
     } finally {
       setSaving(false);
     }
   };
 
   const handleLiberarWave = async (waveId: string) => {
-    setWaves(prev => prev.map(w => 
-      w.id === waveId 
-        ? { ...w, estado: 'liberada' as EstadoWave, fecha_liberacion: new Date().toISOString(), ruta_optimizada: true }
+    const fechaLiberacion = new Date().toISOString();
+
+    // Persistir
+    const { error: errWave } = await supabase
+      .from('wms_waves_picking')
+      .update({
+        estado: 'liberada',
+        fecha_liberacion: fechaLiberacion,
+        ruta_optimizada: true,
+      })
+      .eq('id', waveId);
+
+    if (errWave) {
+      toast.error('No se pudo liberar la wave');
+      return;
+    }
+
+    await supabase
+      .from('wms_ordenes_picking')
+      .update({ estado: 'asignada' })
+      .eq('wave_id', waveId);
+
+    setWaves(prev => prev.map(w =>
+      w.id === waveId
+        ? { ...w, estado: 'liberada' as EstadoWave, fecha_liberacion: fechaLiberacion, ruta_optimizada: true }
         : w
     ));
-    
-    // Actualizar órdenes a asignada
-    setOrdenes(prev => prev.map(o => 
-      o.wave_id === waveId 
+    setOrdenes(prev => prev.map(o =>
+      o.wave_id === waveId
         ? { ...o, estado: 'asignada' as EstadoOrdenPicking }
         : o
     ));
+
+    const wave = waves.find(w => w.id === waveId);
+    await registrarAuditoria(
+      'wms_waves_picking',
+      'LIBERAR',
+      wave?.numero || waveId,
+      { estado: wave?.estado },
+      { estado: 'liberada' },
+      user?.email || ''
+    );
+
+    toast.success('Wave liberada — órdenes listas para picker');
   };
 
-  const handleIniciarPicking = (orden: OrdenPicking) => {
-    setOrdenSeleccionada(orden);
+  const handleIniciarPicking = async (orden: OrdenPicking) => {
+    const fechaInicio = new Date().toISOString();
+
+    // Persistir el inicio
+    await supabase.from('wms_ordenes_picking')
+      .update({
+        estado: 'en_proceso',
+        fecha_inicio: fechaInicio,
+        picker_asignado: orden.picker_asignado || user?.email,
+      })
+      .eq('id', orden.id);
+
+    await registrarAuditoria(
+      'wms_ordenes_picking',
+      'INICIAR_PICKING',
+      orden.numero,
+      { estado: orden.estado },
+      { estado: 'en_proceso', picker: user?.email },
+      user?.email || ''
+    );
+
+    setOrdenSeleccionada({ ...orden, estado: 'en_proceso', fecha_inicio: fechaInicio, picker_asignado: orden.picker_asignado || user?.email });
     setLineaActual(0);
     setCantidadPickeada(0);
     setVistaActiva('picking_activo');
-    
-    // Actualizar estado
-    setOrdenes(prev => prev.map(o => 
-      o.id === orden.id ? { ...o, estado: 'en_proceso' as EstadoOrdenPicking, fecha_inicio: new Date().toISOString() } : o
+
+    setOrdenes(prev => prev.map(o =>
+      o.id === orden.id ? { ...o, estado: 'en_proceso' as EstadoOrdenPicking, fecha_inicio: fechaInicio } : o
     ));
   };
 
@@ -467,6 +684,7 @@ export default function Picking() {
         {[
           { id: 'ordenes' as const, label: 'Órdenes', icon: ClipboardCheck, count: stats.pendientes },
           { id: 'waves' as const, label: 'Waves', icon: Layers, count: stats.wavesActivas },
+          { id: 'asistente' as const, label: 'Asistente IA', icon: Sparkles, count: 0 },
         ].map(tab => {
           const Icon = tab.icon;
           return (
@@ -756,6 +974,20 @@ export default function Picking() {
         </>
       )}
 
+      {/* ==================== ASISTENTE IA ==================== */}
+      {vistaActiva === 'asistente' && (
+        <AsistenteIA
+          waveSugerencias={waveSugerencias}
+          pickerMetricas={pickerMetricas}
+          anomalias={anomalias}
+          analizando={analizando}
+          onCorrerAnalisis={correrAnalisisIA}
+          onAplicarWave={aplicarSugerenciaWave}
+          ordenesSinAsignar={ordenes.filter(o => !o.picker_asignado && (o.estado === 'pendiente' || o.estado === 'asignada'))}
+          onAsignarMejorPicker={asignarMejorPicker}
+        />
+      )}
+
       {/* ==================== PICKING ACTIVO ==================== */}
       {vistaActiva === 'picking_activo' && ordenSeleccionada?.lineas && (
         <PickingActivo
@@ -794,6 +1026,208 @@ export default function Picking() {
 // ============================================
 // SUB-COMPONENTES
 // ============================================
+
+// ----- Asistente IA -----
+
+interface AsistenteIAProps {
+  waveSugerencias: WaveSugerida[];
+  pickerMetricas: PickerInfo[];
+  anomalias: Anomalia[];
+  analizando: boolean;
+  onCorrerAnalisis: () => void;
+  onAplicarWave: (sug: WaveSugerida) => void;
+  ordenesSinAsignar: OrdenPicking[];
+  onAsignarMejorPicker: (orden: OrdenPicking) => void;
+}
+
+function AsistenteIA({
+  waveSugerencias, pickerMetricas, anomalias, analizando,
+  onCorrerAnalisis, onAplicarWave, ordenesSinAsignar, onAsignarMejorPicker,
+}: AsistenteIAProps) {
+  const cargaTotal = pickerMetricas.reduce((s, p) => s + (p.cargaActualUnidades || 0), 0);
+  const cargaMax = Math.max(1, ...pickerMetricas.map(p => p.cargaActualUnidades || 0));
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-emerald-500/10 border border-purple-500/30 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-purple-500/20 rounded-lg">
+            <Sparkles className="h-5 w-5 text-purple-300" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-100">Asistente IA de Picking</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Sugerencias de waves, balance de carga, predicciones y detección de anomalías — todo en tiempo real desde tus datos.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onCorrerAnalisis}
+          disabled={analizando}
+          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-xl text-sm font-medium"
+        >
+          {analizando ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
+          {analizando ? 'Analizando...' : 'Correr análisis'}
+        </button>
+      </div>
+
+      {/* Sugerencias de waves */}
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+        <h4 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+          <Layers className="h-4 w-4 text-blue-400" />
+          Waves sugeridas ({waveSugerencias.length})
+        </h4>
+        {waveSugerencias.length === 0 ? (
+          <div className="text-center py-6 text-sm text-slate-500">
+            {analizando ? 'Calculando...' : 'No hay órdenes pendientes que agrupar.'}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {waveSugerencias.map(sug => (
+              <div key={sug.id} className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${
+                        sug.motivo === 'urgencia' ? 'bg-red-500/20 text-red-300' :
+                        sug.motivo === 'batch_producto' ? 'bg-blue-500/20 text-blue-300' :
+                        sug.motivo === 'cluster_cliente' ? 'bg-emerald-500/20 text-emerald-300' :
+                        'bg-purple-500/20 text-purple-300'
+                      }`}>
+                        {sug.motivo.replace('_', ' ')}
+                      </span>
+                      <span className="text-xs text-slate-500">P{sug.prioridad}</span>
+                    </div>
+                    <h5 className="text-sm font-semibold text-slate-100">{sug.titulo}</h5>
+                    <p className="text-xs text-slate-400 mt-0.5">{sug.descripcion}</p>
+                    <div className="text-[11px] text-slate-500 mt-2">
+                      {sug.ordenesIds.length} órdenes · {sug.unidadesTotales} uds
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => onAplicarWave(sug)}
+                    className="px-2.5 py-1 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-xs font-medium rounded-lg flex-shrink-0"
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Balance de carga por picker */}
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+        <h4 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+          <Users className="h-4 w-4 text-emerald-400" />
+          Carga de pickers ({cargaTotal} uds activas)
+        </h4>
+        {pickerMetricas.length === 0 ? (
+          <div className="text-center py-6 text-sm text-slate-500">Sin pickers registrados</div>
+        ) : (
+          <div className="space-y-2">
+            {pickerMetricas
+              .sort((a, b) => (b.cargaActualUnidades || 0) - (a.cargaActualUnidades || 0))
+              .map(p => {
+                const carga = p.cargaActualUnidades || 0;
+                const pct = cargaMax > 0 ? (carga / cargaMax) * 100 : 0;
+                const factor = p.productividadFactor ?? 1;
+                const eficiencia = factor < 0.85 ? 'rápido' : factor > 1.15 ? 'lento' : 'normal';
+                const eficColor = factor < 0.85 ? 'text-emerald-400' : factor > 1.15 ? 'text-amber-400' : 'text-slate-400';
+                return (
+                  <div key={p.email}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-200">{p.nombre || p.email.split('@')[0]}</span>
+                        <span className={`text-[10px] uppercase tracking-wider ${eficColor}`}>
+                          {eficiencia === 'rápido' && <TrendingUp className="inline h-3 w-3" />}
+                          {eficiencia === 'lento' && <TrendingDown className="inline h-3 w-3" />}
+                          {' '}{eficiencia}
+                        </span>
+                      </div>
+                      <span className="text-xs text-slate-500">{carga} uds</span>
+                    </div>
+                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${pct >= 80 ? 'bg-amber-500' : pct >= 50 ? 'bg-blue-500' : 'bg-emerald-500'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+      </div>
+
+      {/* Auto-asignación */}
+      {ordenesSinAsignar.length > 0 && pickerMetricas.length > 0 && (
+        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+          <h4 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+            <Target className="h-4 w-4 text-blue-400" />
+            Órdenes sin picker asignado ({ordenesSinAsignar.length})
+          </h4>
+          <div className="space-y-2">
+            {ordenesSinAsignar.slice(0, 8).map(o => (
+              <div key={o.id} className="flex items-center justify-between bg-slate-800/30 rounded-lg p-2 text-sm">
+                <div className="flex-1 min-w-0">
+                  <div className="text-slate-200 font-medium truncate">{o.numero}</div>
+                  <div className="text-[11px] text-slate-500">
+                    {o.cliente_nombre || 'Sin cliente'} · {o.unidades_totales} uds
+                  </div>
+                </div>
+                <button
+                  onClick={() => onAsignarMejorPicker(o)}
+                  className="px-2.5 py-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-xs font-medium rounded-lg"
+                >
+                  Asignar mejor picker
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Anomalías */}
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+        <h4 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-orange-400" />
+          Anomalías detectadas ({anomalias.length})
+        </h4>
+        {anomalias.length === 0 ? (
+          <div className="text-center py-6 text-sm text-slate-500">
+            {analizando ? 'Analizando...' : 'Todo dentro de los rangos esperados'}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {anomalias.map((a, idx) => (
+              <div
+                key={idx}
+                className={`p-3 rounded-lg border flex items-start gap-3 ${
+                  a.severidad === 'error' ? 'bg-red-500/10 border-red-500/30' :
+                  a.severidad === 'warning' ? 'bg-amber-500/10 border-amber-500/30' :
+                  'bg-blue-500/10 border-blue-500/30'
+                }`}
+              >
+                <AlertCircle className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
+                  a.severidad === 'error' ? 'text-red-300' :
+                  a.severidad === 'warning' ? 'text-amber-300' :
+                  'text-blue-300'
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-slate-100">{a.titulo}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{a.descripcion}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface PickingActivoProps {
   orden: OrdenPicking;

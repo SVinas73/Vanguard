@@ -6,7 +6,7 @@ const resources = {
     translation: {
       header: { subtitle: 'Sistema de Gestión de Inventarios', logout: 'Cerrar sesión' },
       roles: { admin: 'Admin', seller: 'Vendedor', warehouse: 'Bodeguero', operator: 'Operador' },
-      nav: { main: 'Principal', dashboard: 'Dashboard', stock: 'Stock', movements: 'Movimientos', operations: 'Operaciones', purchases: 'Compras', sales: 'Ventas', warehouses: 'Almacenes', analysis: 'Análisis', analytics: 'Analytics IA', reports: 'Reportes', costs: 'Costos', config: 'Config', integrations: 'Integraciones', audit: 'Auditoría', controlTracking: 'Control & Seguimiento' },
+      nav: { main: 'Principal', dashboard: 'Dashboard', stock: 'Stock', movements: 'Transacciones de Movimientos', operations: 'Operaciones', purchases: 'Compras', sales: 'Ventas', warehouses: 'Almacenes', analysis: 'Análisis', analytics: 'Analytics IA', reports: 'Reportes', costs: 'Costos', config: 'Configuración', integrations: 'Integraciones', audit: 'Auditoría', controlTracking: 'Control & Seguimiento' },
       greetings: {
         morning: 'Buenos días',
         afternoon: 'Buenas tardes',
@@ -348,7 +348,7 @@ const resources = {
     translation: {
       header: { subtitle: 'Inventory Management System', logout: 'Log out' },
       roles: { admin: 'Admin', seller: 'Seller', warehouse: 'Warehouse', operator: 'Operator' },
-      nav: { main: 'Main', dashboard: 'Dashboard', stock: 'Stock', movements: 'Movements', operations: 'Operations', purchases: 'Purchases', sales: 'Sales', warehouses: 'Warehouses', analysis: 'Analysis', analytics: 'AI Analytics', reports: 'Reports', costs: 'Costs', config: 'Config', integrations: 'Integrations', audit: 'Audit', controlTracking: 'Control & Tracking' },
+      nav: { main: 'Main', dashboard: 'Dashboard', stock: 'Stock', movements: 'Movement Transactions', operations: 'Operations', purchases: 'Purchases', sales: 'Sales', warehouses: 'Warehouses', analysis: 'Analysis', analytics: 'AI Analytics', reports: 'Reports', costs: 'Costs', config: 'Configuration', integrations: 'Integrations', audit: 'Audit', controlTracking: 'Control & Tracking' },
       greetings: {
         morning: 'Good morning',
         afternoon: 'Good afternoon',
