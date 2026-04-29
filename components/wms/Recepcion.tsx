@@ -435,11 +435,91 @@ export default function Recepcion() {
   };
 
   const handleCompletarPutaway = async (tareaId: string) => {
-    setTareasPutaway(prev => prev.map(t => 
-      t.id === tareaId 
-        ? { ...t, estado: 'completado' as EstadoPutaway, fecha_completado: new Date().toISOString() }
+    const tarea = tareasPutaway.find(t => t.id === tareaId);
+    if (!tarea) return;
+
+    const fechaCompletado = new Date().toISOString();
+
+    // 1. Persistir el cierre de la tarea
+    const { error: errPutaway } = await supabase
+      .from('wms_tareas_putaway')
+      .update({
+        estado: 'completado',
+        fecha_completado: fechaCompletado,
+        completado_por: user?.email,
+      })
+      .eq('id', tareaId);
+
+    if (errPutaway) {
+      toast.error(`No se pudo cerrar el putaway: ${errPutaway.message}`);
+      return;
+    }
+
+    // 2. Incrementar stock por ubicación destino
+    if (tarea.ubicacion_destino_id && tarea.cantidad > 0) {
+      const { data: stockExistente } = await supabase
+        .from('wms_stock_ubicacion')
+        .select('id, cantidad')
+        .eq('ubicacion_id', tarea.ubicacion_destino_id)
+        .eq('producto_codigo', tarea.producto_codigo)
+        .maybeSingle();
+
+      if (stockExistente) {
+        await supabase
+          .from('wms_stock_ubicacion')
+          .update({
+            cantidad: ((stockExistente as any).cantidad || 0) + tarea.cantidad,
+            ultimo_movimiento: fechaCompletado,
+          })
+          .eq('id', (stockExistente as any).id);
+      } else {
+        await supabase.from('wms_stock_ubicacion').insert({
+          ubicacion_id: tarea.ubicacion_destino_id,
+          ubicacion_codigo: tarea.ubicacion_destino_codigo,
+          producto_codigo: tarea.producto_codigo,
+          cantidad: tarea.cantidad,
+          cantidad_reservada: 0,
+          cantidad_disponible: tarea.cantidad,
+          lote_numero: tarea.lote_numero || null,
+          ultimo_movimiento: fechaCompletado,
+        });
+      }
+
+      // Marcar la ubicación como ocupada si no lo está
+      await supabase
+        .from('wms_ubicaciones')
+        .update({ estado: 'ocupada' })
+        .eq('id', tarea.ubicacion_destino_id);
+    }
+
+    // 3. Marcar la línea de recepción como con putaway hecho
+    if (tarea.linea_recepcion_id) {
+      await supabase
+        .from('wms_ordenes_recepcion_lineas')
+        .update({ putaway_completado: true })
+        .eq('id', tarea.linea_recepcion_id);
+    }
+
+    await registrarAuditoria(
+      'wms_tareas_putaway',
+      'COMPLETAR_PUTAWAY',
+      tarea.producto_codigo,
+      { estado: tarea.estado },
+      {
+        estado: 'completado',
+        ubicacion: tarea.ubicacion_destino_codigo,
+        cantidad: tarea.cantidad,
+      },
+      user?.email || ''
+    );
+
+    setTareasPutaway(prev => prev.map(t =>
+      t.id === tareaId
+        ? { ...t, estado: 'completado' as EstadoPutaway, fecha_completado: fechaCompletado }
         : t
     ));
+
+    toast.success(`Putaway completado · ${tarea.cantidad} uds en ${tarea.ubicacion_destino_codigo}`);
   };
 
   const handleCrearRecepcion = async () => {
