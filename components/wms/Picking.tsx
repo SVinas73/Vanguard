@@ -18,6 +18,9 @@ import {
   type OrdenParaWave,
 } from '@/lib/wms-picking-ai';
 import {
+  getReservasActivasPorOrigen,
+} from '@/lib/stock-reservations';
+import {
   Target, Search, Plus, RefreshCw, Eye, Edit,
   ChevronRight, ChevronDown, X, Save, Check,
   Package, Box, MapPin, ClipboardCheck, AlertTriangle,
@@ -591,20 +594,69 @@ export default function Picking() {
 
   const handleConfirmarLinea = async () => {
     if (!ordenSeleccionada?.lineas) return;
-    
+
     const lineas = ordenSeleccionada.lineas;
     const lineaActualData = lineas[lineaActual];
-    
+
     const cantidad = cantidadPickeada || lineaActualData.cantidad_solicitada;
     const esShortPick = cantidad < lineaActualData.cantidad_solicitada;
-    
+
     const nuevoEstadoLinea: EstadoLineaPicking = esShortPick ? 'short_pick' : 'completada';
-    
-    // Actualizar línea
-    const lineasActualizadas = lineas.map((l, idx) => 
-      idx === lineaActual 
-        ? { 
-            ...l, 
+
+    // -- Persistencia física de stock --
+    // El stock LÓGICO (productos.stock) se decrementa cuando
+    // se confirma la venta en Comercial → no lo tocamos acá.
+    // Acá actualizamos la POSICIÓN FÍSICA en el almacén:
+    // wms_stock_ubicacion.cantidad. Y si la venta dejó una
+    // reserva activa (caso futuro o picking de Taller), la
+    // marcamos como consumida.
+    if (cantidad > 0) {
+      // 1. Decrementar stock por ubicación
+      if (lineaActualData.ubicacion_id) {
+        const { data: stockUbic } = await supabase
+          .from('wms_stock_ubicacion')
+          .select('id, cantidad')
+          .eq('ubicacion_id', lineaActualData.ubicacion_id)
+          .eq('producto_codigo', lineaActualData.producto_codigo)
+          .maybeSingle();
+        if (stockUbic) {
+          await supabase
+            .from('wms_stock_ubicacion')
+            .update({
+              cantidad: Math.max(0, ((stockUbic as any).cantidad || 0) - cantidad),
+              ultimo_movimiento: new Date().toISOString(),
+            })
+            .eq('id', (stockUbic as any).id);
+        }
+      }
+
+      // 2. Cerrar reserva si existe (sin doble decrement: si la
+      // venta ya bajó stock, sólo marcamos la reserva consumida).
+      const reservas = await getReservasActivasPorOrigen(
+        'orden_venta_picking',
+        ordenSeleccionada.id
+      );
+      const reservaProducto = reservas.find(
+        r => r.producto_codigo === lineaActualData.producto_codigo
+      );
+      if (reservaProducto) {
+        await supabase
+          .from('reservas_stock')
+          .update({
+            estado: 'consumido',
+            cerrada_at: new Date().toISOString(),
+            cerrada_por: user?.email || null,
+            motivo: `Picking ${ordenSeleccionada.numero}`,
+          })
+          .eq('id', reservaProducto.id);
+      }
+    }
+
+    // Actualizar línea (memoria local)
+    const lineasActualizadas = lineas.map((l, idx) =>
+      idx === lineaActual
+        ? {
+            ...l,
             cantidad_pickeada: cantidad,
             cantidad_short: lineaActualData.cantidad_solicitada - cantidad,
             estado: nuevoEstadoLinea,
@@ -612,7 +664,20 @@ export default function Picking() {
           }
         : l
     );
-    
+
+    // Persistir la línea
+    if (lineaActualData.id) {
+      await supabase
+        .from('wms_ordenes_picking_lineas')
+        .update({
+          cantidad_pickeada: cantidad,
+          cantidad_short: lineaActualData.cantidad_solicitada - cantidad,
+          estado: nuevoEstadoLinea,
+          fecha_picking: new Date().toISOString(),
+        })
+        .eq('id', lineaActualData.id);
+    }
+
     const ordenActualizada: OrdenPicking = {
       ...ordenSeleccionada,
       lineas: lineasActualizadas,

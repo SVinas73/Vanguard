@@ -18,6 +18,12 @@ import {
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  crearReserva,
+  liberarReservasPorOrigen,
+  consumirReservasPorOrigen,
+  getStockDisponible,
+} from '@/lib/stock-reservations';
 import MantenimientoPredictivo from './MantenimientoPredictivo';
 
 // ============================================
@@ -543,7 +549,7 @@ export default function TallerEnterprise() {
 
     if (errorActivas) {
       console.error('Error loading active orders:', errorActivas);
-      alert('Error al cargar órdenes activas: ' + errorActivas.message);
+      toast.error('Error', errorActivas.message);
     }
 
     const { data: historicas, error: errorHistoricas } = await supabase
@@ -668,9 +674,9 @@ export default function TallerEnterprise() {
   const loadProductos = async () => {
     const { data, error } = await supabase
       .from('productos')
-      .select('id, nombre, codigo, precio_venta, stock_actual, stock_reservado')
+      .select('id, descripcion, codigo, precio, stock, stock_reservado')
       .eq('activo', true)
-      .order('nombre');
+      .order('descripcion');
 
     if (error) throw error;
     if (data) setProductos(data);
@@ -684,15 +690,7 @@ export default function TallerEnterprise() {
       .or('rol.eq.tecnico,rol.eq.admin');
 
     if (error) throw error;
-    if (data) {
-      setTecnicos(data);
-    } else {
-      // Si no hay tabla usuarios, usar datos de ejemplo
-      setTecnicos([
-        { id: '1', nombre: 'Técnico 1' },
-        { id: '2', nombre: 'Técnico 2' },
-      ]);
-    }
+    setTecnicos(data || []);
   };
 
   // Continúa en parte 2...
@@ -806,6 +804,17 @@ export default function TallerEnterprise() {
         .eq('id', orden.id);
 
       if (error) throw error;
+
+      // Si la orden se cancela, liberar todas las reservas activas
+      // de la cotización (los repuestos vuelven a estar disponibles).
+      if (nuevoEstado === 'cancelado') {
+        await liberarReservasPorOrigen(
+          'cotizacion_taller',
+          orden.id,
+          'OT cancelada',
+          user?.email || ''
+        );
+      }
 
       // Registrar en historial
       await registrarHistorial(orden.id, orden.estado, nuevoEstado, datos?.descripcion || `Estado cambiado a ${ESTADO_CONFIG[nuevoEstado].label}`);
@@ -961,13 +970,14 @@ export default function TallerEnterprise() {
           .update({ estado: aprobada ? 'aprobada' : 'rechazada' })
           .eq('id', ordenSeleccionada.cotizacion.id);
 
-        // Si rechazada, liberar stock reservado
+        // Si rechazada, liberar todas las reservas de la cotización
         if (!aprobada) {
-          for (const item of ordenSeleccionada.cotizacion.items) {
-            if (item.tipo === 'repuesto' && item.productoId && item.reservado) {
-              await liberarStock(item.productoId, item.cantidad);
-            }
-          }
+          await liberarReservasPorOrigen(
+            'cotizacion_taller',
+            ordenSeleccionada.id,
+            'Cliente rechazó cotización',
+            user?.email || ''
+          );
         }
       }
 
@@ -1043,11 +1053,18 @@ export default function TallerEnterprise() {
     try {
       setProcesando('finalizar');
 
-      // Dar de baja repuestos usados
-      for (const repuesto of reparacionForm.repuestosUsados) {
-        await darBajaStock(repuesto.productoId, repuesto.cantidad, ordenSeleccionada.id);
+      // Consumir todas las reservas de repuestos creadas en
+      // la cotización: baja stock real + cierra cada reserva +
+      // registra movimiento de salida (uno por reserva).
+      await consumirReservasPorOrigen(
+        'cotizacion_taller',
+        ordenSeleccionada.id,
+        `Reparación finalizada · OT ${ordenSeleccionada.numero}`,
+        user?.email || ''
+      );
 
-        // Registrar repuesto usado
+      // Registrar repuestos usados
+      for (const repuesto of reparacionForm.repuestosUsados) {
         await supabase.from('repuestos_usados_taller').insert({
           orden_id: ordenSeleccionada.id,
           producto_id: repuesto.productoId,
@@ -1238,63 +1255,52 @@ export default function TallerEnterprise() {
   // ============================================
   // FUNCIONES AUXILIARES - STOCK
   // ============================================
+  // Toda la lógica de reservas vive en lib/stock-reservations.ts.
+  // Acá solo orquestamos llamadas con el contexto de la OT/cotización.
 
   const reservarStock = async (productoId: string, cantidad: number, ordenId: string) => {
-    // Crear reserva de stock
-    const { error: insertError } = await supabase.from('reservas_stock').insert({
-      producto_id: productoId,
-      cantidad,
-      orden_taller_id: ordenId,
-      estado: 'reservado',
+    const producto = productos.find(p => p.id === productoId);
+    // Validamos disponibilidad antes de reservar; si no hay
+    // suficiente, reservamos lo que se pueda y avisamos.
+    const disponible = await getStockDisponible({
+      productoCodigo: producto?.codigo || null,
+      productoId,
     });
-    if (insertError) throw insertError;
-
-    // Actualizar stock disponible (no el actual)
-    const producto = productos.find(p => p.id === productoId);
-    if (producto) {
-      const { error: updateError } = await supabase
-        .from('productos')
-        .update({ stock_reservado: (producto.stock_reservado || 0) + cantidad })
-        .eq('id', productoId);
-      if (updateError) throw updateError;
+    const cantidadReservar = Math.min(cantidad, Math.max(0, disponible));
+    if (cantidadReservar === 0) {
+      toast.warning(
+        'Sin stock disponible',
+        `${producto?.descripcion || producto?.codigo || 'producto'}: 0 unidades libres`
+      );
+      return;
     }
+    if (cantidadReservar < cantidad) {
+      toast.warning(
+        'Reserva parcial',
+        `${producto?.descripcion || ''}: solo ${cantidadReservar} de ${cantidad} reservadas`
+      );
+    }
+    await crearReserva({
+      productoCodigo: producto?.codigo || null,
+      productoId,
+      cantidad: cantidadReservar,
+      origenTipo: 'cotizacion_taller',
+      origenId: ordenId,
+      origenCodigo: ordenSeleccionada?.numero,
+      motivo: `Cotización OT ${ordenSeleccionada?.numero}`,
+      creadoPor: user?.email || '',
+    });
   };
 
-  const liberarStock = async (productoId: string, cantidad: number) => {
-    const producto = productos.find(p => p.id === productoId);
-    if (producto) {
-      const { error } = await supabase
-        .from('productos')
-        .update({ stock_reservado: Math.max(0, (producto.stock_reservado || 0) - cantidad) })
-        .eq('id', productoId);
-      if (error) throw error;
-    }
+  const liberarStock = async (_productoId: string, _cantidad: number) => {
+    // Helper preservado por compatibilidad. La liberación real
+    // se hace en bloque por origen (ver responderCotizacion y
+    // cancelarOrden).
   };
 
-  const darBajaStock = async (productoId: string, cantidad: number, ordenId: string) => {
-    const producto = productos.find(p => p.id === productoId);
-    if (producto) {
-      const { error: updateError } = await supabase
-        .from('productos')
-        .update({
-          stock_actual: Math.max(0, producto.stock_actual - cantidad),
-          stock_reservado: Math.max(0, (producto.stock_reservado || 0) - cantidad),
-        })
-        .eq('id', productoId);
-      if (updateError) throw updateError;
-
-      // Registrar movimiento
-      const { error: insertError } = await supabase.from('movimientos_inventario').insert({
-        producto_id: productoId,
-        tipo: 'salida',
-        cantidad,
-        motivo: 'uso_taller',
-        referencia_tipo: 'orden_taller',
-        referencia_id: ordenId,
-        realizado_por: user?.email,
-      });
-      if (insertError) throw insertError;
-    }
+  const darBajaStock = async (_productoId: string, _cantidad: number, _ordenId: string) => {
+    // Helper preservado por compatibilidad. El consumo real se
+    // hace en bloque por origen al finalizar la reparación.
   };
 
   // ============================================
@@ -2487,8 +2493,8 @@ export default function TallerEnterprise() {
                                 const items = [...cotizacionForm.items];
                                 const prod = productos.find(p => p.id === e.target.value);
                                 items[idx].productoId = e.target.value;
-                                items[idx].descripcion = prod?.nombre || '';
-                                items[idx].precioUnitario = prod?.precio_venta || 0;
+                                items[idx].descripcion = prod?.descripcion || '';
+                                items[idx].precioUnitario = prod?.precio || 0;
                                 items[idx].total = items[idx].cantidad * items[idx].precioUnitario;
                                 setCotizacionForm({ ...cotizacionForm, items });
                               }}
@@ -2496,7 +2502,9 @@ export default function TallerEnterprise() {
                             >
                               <option value="">Seleccionar...</option>
                               {productos.map(p => (
-                                <option key={p.id} value={p.id}>{p.codigo} - {p.nombre} (Stock: {p.stock_actual})</option>
+                                <option key={p.id} value={p.id}>
+                                  {p.codigo} - {p.descripcion} (Disp: {Math.max(0, (p.stock || 0) - (p.stock_reservado || 0))})
+                                </option>
                               ))}
                             </select>
                           ) : (
@@ -2689,15 +2697,17 @@ export default function TallerEnterprise() {
                           const repuestos = [...reparacionForm.repuestosUsados];
                           const prod = productos.find(p => p.id === e.target.value);
                           repuestos[idx].productoId = e.target.value;
-                          repuestos[idx].productoNombre = prod?.nombre || '';
-                          repuestos[idx].costo = prod?.precio_venta || 0;
+                          repuestos[idx].productoNombre = prod?.descripcion || '';
+                          repuestos[idx].costo = prod?.precio || 0;
                           setReparacionForm({ ...reparacionForm, repuestosUsados: repuestos });
                         }}
                         className="flex-1 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-sm text-slate-100"
                       >
                         <option value="">Seleccionar...</option>
                         {productos.map(p => (
-                          <option key={p.id} value={p.id}>{p.nombre} (Stock: {p.stock_actual})</option>
+                          <option key={p.id} value={p.id}>
+                            {p.descripcion} (Disp: {Math.max(0, (p.stock || 0) - (p.stock_reservado || 0))})
+                          </option>
                         ))}
                       </select>
                       <input

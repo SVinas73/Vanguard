@@ -188,6 +188,10 @@ export async function crearPickingWmsDesdeVenta(args: CrearPickingWmsArgs): Prom
         secuencia: idx + 1,
       }))
     );
+    // Nota: la confirmación de venta ya descuenta productos.stock
+    // y registra el movimiento de salida. Acá no creamos una
+    // reserva porque el stock lógico ya bajó. El picking solo
+    // mueve la posición física en wms_stock_ubicacion.
   }
 
   return orden.id;
