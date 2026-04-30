@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { registrarAuditoria } from '@/lib/audit';
 import { useWmsToast } from './useWmsToast';
 import {
   escanearReposicionesNecesarias,
@@ -86,6 +87,14 @@ export default function Reposicion() {
     await supabase.from('wms_tareas_reposicion')
       .update({ estado: 'cancelada' })
       .eq('id', tarea.id);
+    await registrarAuditoria(
+      'wms_tareas_reposicion',
+      'CANCELAR',
+      tarea.numero || tarea.id,
+      { estado: tarea.estado },
+      { estado: 'cancelada' },
+      user?.email || ''
+    );
     toast.success('Tarea cancelada');
     await loadData();
   };
