@@ -170,6 +170,30 @@ export default function Packing() {
       return;
     }
 
+    // Llenar items del paquete a partir de las líneas pickeadas
+    // de la orden de picking de origen. Esto deja constancia de
+    // qué productos / lotes / cantidades viajan en el paquete.
+    if (form.orden_picking_id) {
+      const { data: lineas } = await supabase
+        .from('wms_ordenes_picking_lineas')
+        .select('producto_codigo, producto_nombre, cantidad_pickeada, unidad_medida, lote_numero')
+        .eq('orden_picking_id', form.orden_picking_id)
+        .gt('cantidad_pickeada', 0);
+
+      if (lineas && lineas.length > 0) {
+        await supabase.from('wms_paquetes_items').insert(
+          lineas.map((l: any) => ({
+            paquete_id: data.id,
+            producto_codigo: l.producto_codigo,
+            producto_nombre: l.producto_nombre,
+            cantidad: parseFloat(l.cantidad_pickeada) || 0,
+            unidad_medida: l.unidad_medida || 'UND',
+            lote_numero: l.lote_numero || null,
+          }))
+        );
+      }
+    }
+
     await registrarAuditoria('wms_paquetes', 'CREAR', numero, null,
       { orden: form.orden_picking_id, transportista: form.transportista },
       user?.email || '');

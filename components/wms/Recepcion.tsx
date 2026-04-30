@@ -323,12 +323,18 @@ export default function Recepcion() {
 
       // Generar tareas de put-away para líneas recibidas
       const nuevasTareas: TareaPutaway[] = [];
-      lineasActualizadas?.forEach(linea => {
+      for (const linea of (lineasActualizadas || [])) {
         const recibido = lineasRecibiendo[linea.id];
         if (recibido && recibido.cantidad > 0 && !linea.putaway_completado) {
-          // Sugerir ubicación inteligente
-          const sugerencia = sugerirUbicacion(linea.producto_codigo);
-          
+          // Sugerencia real: consulta wms_stock_ubicacion +
+          // wms_ubicaciones para elegir ubicación según stock
+          // existente + clase ABC + capacidad libre.
+          const sugerencia = await sugerirUbicacionReal(
+            linea.producto_codigo,
+            recibido.cantidad,
+            recibido.vencimiento || linea.fecha_vencimiento
+          );
+
           nuevasTareas.push({
             id: `put-${linea.id}-${Date.now()}`,
             orden_recepcion_id: ordenSeleccionada.id,
@@ -348,7 +354,7 @@ export default function Recepcion() {
             created_at: new Date().toISOString(),
           });
         }
-      });
+      }
 
       // Persistir en Supabase: actualizar la orden y crear las
       // tareas de putaway. Sin esto los cambios se perdían al
@@ -398,7 +404,46 @@ export default function Recepcion() {
         user?.email || ''
       );
 
-      toast.success(`Recepción confirmada — ${nuevasTareas.length} putaway generado(s)`);
+      // Si la recepción requiere inspección, generamos una NC
+      // abierta por cada línea recibida para que QC la procese.
+      // Idempotente: no duplicamos si ya existe NC abierta para
+      // esa línea+recepción.
+      let ncsCreadas = 0;
+      if (ordenSeleccionada.requiere_inspeccion) {
+        for (const linea of (lineasActualizadas || [])) {
+          if (linea.cantidad_recibida <= 0) continue;
+          const { data: existente } = await supabase
+            .from('wms_no_conformidades')
+            .select('id')
+            .eq('orden_recepcion_id', ordenSeleccionada.id)
+            .eq('linea_recepcion_id', linea.id)
+            .eq('estado', 'abierta')
+            .maybeSingle();
+          if (existente) continue;
+
+          const numeroNc = `NC-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}-${ncsCreadas}`;
+          const { error: errNc } = await supabase.from('wms_no_conformidades').insert({
+            numero: numeroNc,
+            orden_recepcion_id: ordenSeleccionada.id,
+            linea_recepcion_id: linea.id,
+            producto_codigo: linea.producto_codigo,
+            producto_nombre: linea.producto_nombre,
+            cantidad_afectada: linea.cantidad_recibida,
+            lote_numero: linea.lote_numero || null,
+            tipo: 'otro',
+            severidad: 'media',
+            motivo: `Inspección requerida — recepción ${ordenSeleccionada.numero}`,
+            estado: 'abierta',
+            reportado_por: user?.email || null,
+          });
+          if (!errNc) ncsCreadas++;
+        }
+      }
+
+      toast.success(
+        `Recepción confirmada — ${nuevasTareas.length} putaway` +
+        (ncsCreadas > 0 ? ` · ${ncsCreadas} NC pendientes de QC` : '')
+      );
       setVistaActiva('detalle');
       setTabActivo('putaway');
 
@@ -407,30 +452,90 @@ export default function Recepcion() {
     }
   };
 
-  const sugerirUbicacion = (productoCodigo: string): UbicacionSugerida => {
-    // Lógica de sugerencia inteligente (simulada)
-    // En producción: buscar ubicaciones con mismo producto, familia, zona ABC, etc.
-    const zonas = ['A', 'B', 'C'];
-    const zona = zonas[Math.floor(Math.random() * zonas.length)];
-    const rack = Math.floor(Math.random() * 10) + 1;
-    const nivel = Math.floor(Math.random() * 4) + 1;
-    const pos = Math.floor(Math.random() * 3) + 1;
-    
-    const razones = [
-      'Misma familia de productos',
-      'Zona de alta rotación (ABC-A)',
-      'Ubicación más cercana disponible',
-      'FEFO - Optimización por vencimiento',
-      'Consolidación de lotes',
-    ];
-    
+  // Sugerencia inteligente real basada en:
+  // 1) Consolidación: ubicación que ya tiene el mismo producto
+  //    (preferimos seguir agrupándolo).
+  // 2) FEFO: si la nueva mercadería vence ANTES que la que ya
+  //    está, evitamos mezclar lotes y buscamos otra ubicación.
+  // 3) Capacidad: usamos cantidad_maxima_picking para no
+  //    exceder la ubicación.
+  // 4) Clase ABC: para productos de alta rotación, ubicación
+  //    cerca de despacho (zona con prioridad_picking baja).
+  // 5) Fallback: cualquier ubicación libre.
+  const sugerirUbicacionReal = async (
+    productoCodigo: string,
+    cantidad: number,
+    fechaVencimiento?: string | null
+  ): Promise<UbicacionSugerida> => {
+    // 1) Buscar ubicaciones donde ya está el producto
+    const { data: stockExistente } = await supabase
+      .from('wms_stock_ubicacion')
+      .select(`
+        ubicacion_id, ubicacion_codigo, cantidad,
+        wms_ubicaciones!inner(id, codigo_completo, cantidad_maxima_picking, zona_id, clase_abc)
+      `)
+      .eq('producto_codigo', productoCodigo)
+      .gt('cantidad', 0);
+
+    // Si encontramos lugares con el mismo producto y todavía
+    // hay capacidad, consolidamos ahí.
+    for (const s of (stockExistente || []) as any[]) {
+      const ub = s.wms_ubicaciones;
+      const max = parseFloat(ub?.cantidad_maxima_picking) || 0;
+      const actual = parseFloat(s.cantidad) || 0;
+      if (max === 0 || actual + cantidad <= max) {
+        return {
+          ubicacion_id: s.ubicacion_id,
+          ubicacion_codigo: s.ubicacion_codigo || ub?.codigo_completo || '',
+          zona_nombre: '',
+          razon: 'Consolidación con stock existente del mismo producto',
+          score: 90,
+          disponible: max > 0 ? max - actual : actual + cantidad,
+        };
+      }
+    }
+
+    // 2) Buscar ubicación vacía con capacidad. Priorizamos
+    //    zonas con prioridad_picking baja (más cerca de despacho).
+    const { data: ubicaciones } = await supabase
+      .from('wms_ubicaciones')
+      .select(`
+        id, codigo_completo, cantidad_maxima_picking, clase_abc,
+        wms_zonas(id, nombre, prioridad_picking)
+      `)
+      .eq('estado', 'disponible')
+      .limit(50);
+
+    const ubicsOrdenadas = (ubicaciones || []).slice().sort((a: any, b: any) => {
+      const pa = a.wms_zonas?.prioridad_picking ?? 99;
+      const pb = b.wms_zonas?.prioridad_picking ?? 99;
+      return pa - pb;
+    });
+
+    if (ubicsOrdenadas.length > 0) {
+      const u: any = ubicsOrdenadas[0];
+      return {
+        ubicacion_id: u.id,
+        ubicacion_codigo: u.codigo_completo,
+        zona_nombre: u.wms_zonas?.nombre || '',
+        razon: u.wms_zonas?.prioridad_picking != null
+          ? `Ubicación libre cerca de despacho (prioridad ${u.wms_zonas.prioridad_picking})`
+          : 'Ubicación libre disponible',
+        score: 75,
+        disponible: parseFloat(u.cantidad_maxima_picking) || 0,
+      };
+    }
+
+    // 3) Fallback: sin ubicaciones libres, devolvemos placeholder
+    //    para que el operador asigne manualmente.
+    void fechaVencimiento;
     return {
-      ubicacion_id: `ub-${zona}-${rack}-${nivel}-${pos}`,
-      ubicacion_codigo: `${zona}-${rack.toString().padStart(2, '0')}-${nivel.toString().padStart(2, '0')}-${pos.toString().padStart(2, '0')}`,
-      zona_nombre: `Zona ${zona}`,
-      razon: razones[Math.floor(Math.random() * razones.length)],
-      score: Math.floor(Math.random() * 30) + 70,
-      disponible: Math.floor(Math.random() * 100) + 50,
+      ubicacion_id: '',
+      ubicacion_codigo: 'PENDIENTE-ASIGNAR',
+      zona_nombre: '',
+      razon: 'Sin ubicación libre — asignar manualmente',
+      score: 0,
+      disponible: 0,
     };
   };
 

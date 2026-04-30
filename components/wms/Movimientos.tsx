@@ -395,29 +395,47 @@ export default function Movimientos() {
 
   const handleCrearMovimiento = async () => {
     if (!formMovimiento.producto_codigo || !formMovimiento.cantidad) return;
-    
+
     setSaving(true);
     try {
       const cantidad = parseInt(formMovimiento.cantidad) || 0;
-      
-      const nuevoMov: MovimientoWMS = {
-        id: `wms-${Date.now()}`,
-        numero: generarNumeroMovimiento(),
+      const numero = generarNumeroMovimiento();
+      const payload = {
+        numero,
         tipo: formMovimiento.tipo,
         estado: 'pendiente',
         producto_codigo: formMovimiento.producto_codigo,
         cantidad,
-        ubicacion_origen_codigo: formMovimiento.ubicacion_origen || undefined,
-        ubicacion_destino_codigo: formMovimiento.ubicacion_destino || undefined,
-        lote_numero: formMovimiento.lote_numero || undefined,
-        notas: formMovimiento.notas || undefined,
+        ubicacion_origen_codigo: formMovimiento.ubicacion_origen || null,
+        ubicacion_destino_codigo: formMovimiento.ubicacion_destino || null,
+        lote_numero: formMovimiento.lote_numero || null,
+        notas: formMovimiento.notas || null,
         fecha_solicitud: new Date().toISOString(),
-        created_at: new Date().toISOString(),
+        solicitado_por: user?.email || null,
       };
-      
-      setMovimientosWMS(prev => [nuevoMov, ...prev]);
-      
-      // Resetear form
+
+      const { data, error } = await supabase
+        .from('wms_movimientos')
+        .insert(payload)
+        .select()
+        .single();
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      await registrarAuditoria(
+        'wms_movimientos',
+        'CREAR',
+        numero,
+        null,
+        payload,
+        user?.email || ''
+      );
+
+      setMovimientosWMS(prev => [data as MovimientoWMS, ...prev]);
+      toast.success(`Movimiento ${numero} creado`);
+
       setFormMovimiento({
         tipo: 'transferencia',
         producto_codigo: '',
@@ -427,9 +445,9 @@ export default function Movimientos() {
         lote_numero: '',
         notas: '',
       });
-      
+
       setVistaActiva('movimientos');
-      
+
     } finally {
       setSaving(false);
     }
@@ -438,50 +456,91 @@ export default function Movimientos() {
   const handleEjecutarMovimiento = async (movId: string) => {
     const mov = movimientosWMS.find(m => m.id === movId);
     if (!mov) return;
-    
+
     setSaving(true);
     try {
-      // Actualizar estado
-      setMovimientosWMS(prev => prev.map(m => 
-        m.id === movId 
-          ? { ...m, estado: 'completado' as EstadoMovimientoWMS, fecha_ejecucion: new Date().toISOString() }
-          : m
-      ));
-      
-      // Si es entrada/salida, también crear en tabla movimientos original para mantener sincronía
+      const fecha = new Date().toISOString();
+
+      const { error } = await supabase
+        .from('wms_movimientos')
+        .update({
+          estado: 'completado',
+          fecha_ejecucion: fecha,
+          ejecutado_por: user?.email || null,
+        })
+        .eq('id', movId);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      // Si es entrada/salida, sincronizar con tabla movimientos
+      // global y stock del producto.
       if (mov.tipo === 'entrada' || mov.tipo === 'salida') {
-        // Actualizar stock del producto
         const producto = productos.find(p => p.codigo === mov.producto_codigo);
         if (producto) {
-          const nuevoStock = mov.tipo === 'entrada' 
-            ? producto.stock + mov.cantidad 
+          const nuevoStock = mov.tipo === 'entrada'
+            ? producto.stock + mov.cantidad
             : producto.stock - mov.cantidad;
-          
+
           await supabase
             .from('productos')
             .update({ stock: Math.max(0, nuevoStock) })
             .eq('codigo', mov.producto_codigo);
-          
-          // Crear movimiento en tabla original
+
           await supabase.from('movimientos').insert({
             codigo: mov.producto_codigo,
             tipo: mov.tipo,
             cantidad: mov.cantidad,
-            usuario: 'wms_system',
+            usuario_email: user?.email || 'wms_system',
             notas: `[WMS] ${mov.notas || ''} - Ubicación: ${mov.ubicacion_origen_codigo || ''} → ${mov.ubicacion_destino_codigo || ''}`,
           });
         }
       }
-      
+
+      await registrarAuditoria(
+        'wms_movimientos',
+        'EJECUTAR',
+        mov.numero || movId,
+        { estado: mov.estado },
+        { estado: 'completado', fecha },
+        user?.email || ''
+      );
+
+      setMovimientosWMS(prev => prev.map(m =>
+        m.id === movId
+          ? { ...m, estado: 'completado' as EstadoMovimientoWMS, fecha_ejecucion: fecha }
+          : m
+      ));
+
+      toast.success(`${mov.numero || ''} ejecutado`);
+
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCancelarMovimiento = (movId: string) => {
-    setMovimientosWMS(prev => prev.map(m => 
+  const handleCancelarMovimiento = async (movId: string) => {
+    const mov = movimientosWMS.find(m => m.id === movId);
+    if (!mov) return;
+    await supabase
+      .from('wms_movimientos')
+      .update({ estado: 'cancelado' })
+      .eq('id', movId);
+
+    await registrarAuditoria(
+      'wms_movimientos',
+      'CANCELAR',
+      mov.numero || movId,
+      { estado: mov.estado },
+      { estado: 'cancelado' },
+      user?.email || ''
+    );
+
+    setMovimientosWMS(prev => prev.map(m =>
       m.id === movId ? { ...m, estado: 'cancelado' as EstadoMovimientoWMS } : m
     ));
+    toast.success('Movimiento cancelado');
   };
 
   const handleAgregarItemTransferencia = () => {
