@@ -3,6 +3,82 @@
 -- =====================================================
 
 -- =====================================================
+-- 0) TABLAS DE LÍNEAS — recepción y picking
+-- =====================================================
+-- Estas tablas las usaba el código (Recepcion.tsx, Picking.tsx,
+-- wms-bridge.ts) pero nunca se habían creado en una migración.
+-- Las definimos acá para que el módulo funcione completo.
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS wms_ordenes_recepcion_lineas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  orden_recepcion_id UUID NOT NULL,
+
+  producto_id UUID,
+  producto_codigo TEXT NOT NULL,
+  producto_nombre TEXT,
+
+  cantidad_esperada  NUMERIC(12,3) NOT NULL,
+  cantidad_recibida  NUMERIC(12,3) NOT NULL DEFAULT 0,
+  cantidad_rechazada NUMERIC(12,3) NOT NULL DEFAULT 0,
+  unidad_medida TEXT DEFAULT 'UND',
+
+  lote_numero TEXT,
+  fecha_vencimiento DATE,
+
+  estado TEXT NOT NULL DEFAULT 'pendiente',
+  -- 'pendiente' | 'parcial' | 'completa' | 'con_diferencias'
+  putaway_completado BOOLEAN NOT NULL DEFAULT false,
+
+  notas TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_recep_lineas_orden  ON wms_ordenes_recepcion_lineas (orden_recepcion_id);
+CREATE INDEX IF NOT EXISTS idx_recep_lineas_codigo ON wms_ordenes_recepcion_lineas (producto_codigo);
+
+CREATE TABLE IF NOT EXISTS wms_ordenes_picking_lineas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  orden_picking_id UUID NOT NULL,
+
+  producto_id UUID,
+  producto_codigo TEXT NOT NULL,
+  producto_nombre TEXT,
+
+  cantidad_solicitada NUMERIC(12,3) NOT NULL,
+  cantidad_pickeada   NUMERIC(12,3) NOT NULL DEFAULT 0,
+  cantidad_short      NUMERIC(12,3) NOT NULL DEFAULT 0,
+  unidad_medida TEXT DEFAULT 'UND',
+
+  ubicacion_id UUID,
+  ubicacion_codigo TEXT,
+
+  lote_numero TEXT,
+  fecha_vencimiento DATE,
+
+  estado TEXT NOT NULL DEFAULT 'pendiente',
+  -- 'pendiente' | 'en_proceso' | 'completada' | 'short_pick' | 'cancelada'
+
+  secuencia INT,
+
+  fecha_picking TIMESTAMPTZ,
+  pickeado_por TEXT,
+  tiempo_picking_seg INT,
+
+  notas TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pick_lineas_orden     ON wms_ordenes_picking_lineas (orden_picking_id);
+CREATE INDEX IF NOT EXISTS idx_pick_lineas_codigo    ON wms_ordenes_picking_lineas (producto_codigo);
+CREATE INDEX IF NOT EXISTS idx_pick_lineas_ubicacion ON wms_ordenes_picking_lineas (ubicacion_id);
+
+-- Si las tablas ya existían sin la columna tiempo_picking_seg,
+-- la agregamos sin duplicar.
+ALTER TABLE wms_ordenes_picking_lineas
+  ADD COLUMN IF NOT EXISTS tiempo_picking_seg INT;
+
+-- =====================================================
 -- 1) PACKING & OUTBOUND SHIPMENT
 -- =====================================================
 -- Cuando una orden de picking se completa, los productos
@@ -172,12 +248,8 @@ ALTER TABLE wms_ubicaciones
   ADD COLUMN IF NOT EXISTS proxima_revision_at TIMESTAMPTZ;
 
 -- =====================================================
--- 5) Picking: tracking de tiempo por línea (para reportes
---    de productividad)
+-- 5) Picking: short total
 -- =====================================================
-
-ALTER TABLE wms_ordenes_picking_lineas
-  ADD COLUMN IF NOT EXISTS tiempo_picking_seg INT;
 
 ALTER TABLE wms_ordenes_picking
   ADD COLUMN IF NOT EXISTS unidades_short_total NUMERIC(10,3) DEFAULT 0;
