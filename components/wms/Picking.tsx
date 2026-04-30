@@ -1308,13 +1308,45 @@ function PickingActivo({ orden, lineaActual, cantidadPickeada, setCantidadPickea
   const lineas = orden.lineas || [];
   const linea = lineas[lineaActual];
   const progreso = lineas.length > 0 ? Math.round(((lineaActual) / lineas.length) * 100) : 0;
-  
+
+  // Modo scanner: input invisible que captura el barcode
+  const [scannerMode, setScannerMode] = useState(false);
+  const [escaneado, setEscaneado] = useState<{ ubicacion: boolean; producto: boolean }>({ ubicacion: false, producto: false });
+  const [scanInput, setScanInput] = useState('');
+  const scanRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (scannerMode) {
+      scanRef.current?.focus();
+      setEscaneado({ ubicacion: false, producto: false });
+    }
+  }, [scannerMode, lineaActual]);
+
+  const handleScan = (valor: string) => {
+    const v = valor.trim();
+    if (!v) return;
+    if (linea.ubicacion_codigo && v === linea.ubicacion_codigo) {
+      setEscaneado(s => ({ ...s, ubicacion: true }));
+    } else if (v === linea.producto_codigo) {
+      setEscaneado(s => ({ ...s, producto: true }));
+    } else {
+      // No coincide — feedback visual
+      setEscaneado({ ubicacion: false, producto: false });
+    }
+    setScanInput('');
+    scanRef.current?.focus();
+  };
+
   if (!linea) return null;
-  
+
+  const ubicacionOk = !linea.ubicacion_codigo || escaneado.ubicacion || !scannerMode;
+  const productoOk  = escaneado.producto || !scannerMode;
+  const puedeConfirmar = ubicacionOk && productoOk;
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="flex items-center gap-3">
             <span className="font-mono text-lg text-purple-400">{orden.numero}</span>
@@ -1324,10 +1356,74 @@ function PickingActivo({ orden, lineaActual, cantidadPickeada, setCantidadPickea
           </div>
           <p className="text-sm text-slate-400 mt-1">{orden.cliente_nombre}</p>
         </div>
-        <button onClick={onSalir} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl">
-          Pausar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setScannerMode(!scannerMode)}
+            className={`px-3 py-2 rounded-xl text-sm font-medium flex items-center gap-2 ${
+              scannerMode ? 'bg-cyan-600 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+            }`}
+            title="Modo escáner: confirma con barcode"
+          >
+            <Zap className="h-4 w-4" />
+            {scannerMode ? 'Scanner ON' : 'Scanner'}
+          </button>
+          <button onClick={onSalir} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl">
+            Pausar
+          </button>
+        </div>
       </div>
+
+      {/* Input invisible para barcode scanner */}
+      {scannerMode && (
+        <input
+          ref={scanRef}
+          type="text"
+          value={scanInput}
+          onChange={(e) => setScanInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleScan(scanInput); }}
+          onBlur={() => setTimeout(() => scanRef.current?.focus(), 100)}
+          autoFocus
+          className="absolute opacity-0 pointer-events-none -z-10"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Status de scanner */}
+      {scannerMode && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className={`rounded-xl p-3 border-2 transition-all ${
+            escaneado.ubicacion ? 'bg-emerald-500/15 border-emerald-500/50' : 'bg-slate-900/50 border-amber-500/40'
+          }`}>
+            <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">1. Escanear ubicación</div>
+            <div className="text-lg font-bold flex items-center gap-2">
+              {escaneado.ubicacion ? (
+                <>
+                  <Check className="h-5 w-5 text-emerald-400" />
+                  <span className="text-emerald-300">{linea.ubicacion_codigo}</span>
+                </>
+              ) : (
+                <span className="text-amber-300">Esperando {linea.ubicacion_codigo}</span>
+              )}
+            </div>
+          </div>
+          <div className={`rounded-xl p-3 border-2 transition-all ${
+            escaneado.producto ? 'bg-emerald-500/15 border-emerald-500/50' :
+            escaneado.ubicacion ? 'bg-slate-900/50 border-amber-500/40' : 'bg-slate-900/30 border-slate-700/50 opacity-60'
+          }`}>
+            <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">2. Escanear producto</div>
+            <div className="text-lg font-bold flex items-center gap-2">
+              {escaneado.producto ? (
+                <>
+                  <Check className="h-5 w-5 text-emerald-400" />
+                  <span className="text-emerald-300">{linea.producto_codigo}</span>
+                </>
+              ) : (
+                <span className="text-slate-300">Esperando {linea.producto_codigo}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Progreso */}
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
@@ -1386,10 +1482,11 @@ function PickingActivo({ orden, lineaActual, cantidadPickeada, setCantidadPickea
         </button>
         <button
           onClick={onConfirmar}
-          className="flex-[2] px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 text-lg"
+          disabled={!puedeConfirmar}
+          className="flex-[2] px-4 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-medium flex items-center justify-center gap-2 text-lg"
         >
           <Check className="h-5 w-5" />
-          Confirmar
+          {scannerMode && !puedeConfirmar ? 'Escaneá para confirmar' : 'Confirmar'}
         </button>
       </div>
 

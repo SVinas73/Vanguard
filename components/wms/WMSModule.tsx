@@ -4,31 +4,40 @@ import React, { useState } from 'react';
 import {
   Warehouse, MapPin, Truck, Target, ArrowRight,
   Package, BarChart3, Layers, Settings,
-  ChevronRight, RefreshCw, ClipboardCheck
+  ChevronRight, RefreshCw, ClipboardCheck,
+  ShieldCheck, Repeat,
 } from 'lucide-react';
 
 // Importar componentes WMS
 import WMSDashboard from './WMSDashboard';
 import Ubicaciones from './Ubicaciones';
 import Recepcion from './Recepcion';
+import ControlCalidad from './ControlCalidad';
 import Picking from './Picking';
+import Packing from './Packing';
 import Inventario from './Inventario';
 import Movimientos from './Movimientos';
+import Reposicion from './Reposicion';
 import Slotting from './Slotting';
+import Reportes from './Reportes';
 import ConfiguracionWMS from './ConfiguracionWMS';
 
 // ============================================
 // TIPOS
 // ============================================
 
-type ModuloWMS = 
-  | 'dashboard' 
-  | 'ubicaciones' 
+type ModuloWMS =
+  | 'dashboard'
+  | 'ubicaciones'
   | 'recepcion'
-  | 'picking' 
-  | 'inventario' 
+  | 'qc'
+  | 'picking'
+  | 'packing'
+  | 'inventario'
   | 'movimientos'
+  | 'reposicion'
   | 'slotting'
+  | 'reportes'
   | 'configuracion';
 
 interface MenuItemConfig {
@@ -70,11 +79,27 @@ const MENU_ITEMS: MenuItemConfig[] = [
     disponible: true,
   },
   {
+    id: 'qc',
+    label: 'Control de Calidad',
+    icon: ShieldCheck,
+    color: 'text-orange-400',
+    descripcion: 'Inspección y no conformidades',
+    disponible: true,
+  },
+  {
     id: 'picking',
     label: 'Picking',
     icon: Target,
     color: 'text-purple-400',
-    descripcion: 'Wave picking y rutas',
+    descripcion: 'Wave picking + IA + scanner',
+    disponible: true,
+  },
+  {
+    id: 'packing',
+    label: 'Packing & Despacho',
+    icon: Package,
+    color: 'text-blue-400',
+    descripcion: 'Bultos, transportista, tracking',
     disponible: true,
   },
   {
@@ -82,7 +107,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     label: 'Inventario',
     icon: Package,
     color: 'text-cyan-400',
-    descripcion: 'Stock por ubicación',
+    descripcion: 'Stock + cycle counting ABC',
     disponible: true,
   },
   {
@@ -90,7 +115,15 @@ const MENU_ITEMS: MenuItemConfig[] = [
     label: 'Transacciones de Movimientos',
     icon: ArrowRight,
     color: 'text-orange-400',
-    descripcion: 'Transferencias internas y ajustes',
+    descripcion: 'Transferencias y ajustes',
+    disponible: true,
+  },
+  {
+    id: 'reposicion',
+    label: 'Reposición',
+    icon: Repeat,
+    color: 'text-cyan-400',
+    descripcion: 'Pick-from-bulk automático',
     disponible: true,
   },
   {
@@ -99,6 +132,14 @@ const MENU_ITEMS: MenuItemConfig[] = [
     icon: Layers,
     color: 'text-pink-400',
     descripcion: 'Optimización ABC',
+    disponible: true,
+  },
+  {
+    id: 'reportes',
+    label: 'Reportes',
+    icon: BarChart3,
+    color: 'text-pink-400',
+    descripcion: 'Productividad, exactitud, CSV',
     disponible: true,
   },
   {
@@ -129,14 +170,22 @@ export default function WMSModule() {
         return <Ubicaciones />;
       case 'recepcion':
         return <Recepcion />;
+      case 'qc':
+        return <ControlCalidad />;
       case 'picking':
         return <Picking />;
+      case 'packing':
+        return <Packing />;
       case 'inventario':
         return <Inventario />;
       case 'movimientos':
         return <Movimientos />;
+      case 'reposicion':
+        return <Reposicion />;
       case 'slotting':
         return <Slotting />;
+      case 'reportes':
+        return <Reportes />;
       case 'configuracion':
         return <ConfiguracionWMS />;
       default:

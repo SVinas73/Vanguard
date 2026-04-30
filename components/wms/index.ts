@@ -12,10 +12,14 @@ export { default as WMSDashboard } from './WMSDashboard';
 // Módulos implementados
 export { default as Ubicaciones } from './Ubicaciones';
 export { default as Recepcion } from './Recepcion';
+export { default as ControlCalidad } from './ControlCalidad';
 export { default as Picking } from './Picking';
+export { default as Packing } from './Packing';
 export { default as Inventario } from './Inventario';
 export { default as Movimientos } from './Movimientos';
+export { default as Reposicion } from './Reposicion';
 export { default as Slotting } from './Slotting';
+export { default as Reportes } from './Reportes';
 export { default as ConfiguracionWMS } from './ConfiguracionWMS';
 
 // Tipos

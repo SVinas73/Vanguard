@@ -65,7 +65,7 @@ interface LineaConteo {
   fecha_conteo?: string;
 }
 
-type VistaActiva = 'stock' | 'conteos' | 'nuevo_conteo' | 'ejecutar_conteo' | 'historial';
+type VistaActiva = 'stock' | 'conteos' | 'nuevo_conteo' | 'ejecutar_conteo' | 'historial' | 'cycle_count';
 type VistaStock = 'por_producto' | 'por_ubicacion' | 'alertas';
 
 // ============================================
@@ -503,6 +503,7 @@ export default function Inventario() {
         {[
           { id: 'stock' as const, label: 'Stock', icon: Package, count: stats.totalProductos },
           { id: 'conteos' as const, label: 'Conteos', icon: ClipboardList, count: conteos.filter(c => c.estado === 'en_proceso').length },
+          { id: 'cycle_count' as const, label: 'Cycle counting', icon: Calendar },
           { id: 'historial' as const, label: 'Historial', icon: History },
         ].map(tab => {
           const Icon = tab.icon;
@@ -829,6 +830,9 @@ export default function Inventario() {
         />
       )}
 
+      {/* ==================== CYCLE COUNTING ABC ==================== */}
+      {vistaActiva === 'cycle_count' && <CycleCountingPanel />}
+
       {/* ==================== HISTORIAL ==================== */}
       {vistaActiva === 'historial' && (
         <div className="text-center py-12 text-slate-500">
@@ -849,6 +853,135 @@ interface ProductoStockCardProps {
   producto: Product;
   ubicaciones: StockUbicacion[];
   totalStock: number;
+}
+
+// ====================================================
+// PANEL DE CYCLE COUNTING POR CLASE ABC
+// ====================================================
+function CycleCountingPanel() {
+  const [cargando, setCargando] = useState(true);
+  const [ubics, setUbics] = useState<any[]>([]);
+  const [marcando, setMarcando] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { getUbicacionesParaContar } = await import('@/lib/wms-cycle-count');
+      const data = await getUbicacionesParaContar();
+      setUbics(data);
+      setCargando(false);
+    })();
+  }, []);
+
+  const recargar = async () => {
+    setCargando(true);
+    const { getUbicacionesParaContar } = await import('@/lib/wms-cycle-count');
+    setUbics(await getUbicacionesParaContar());
+    setCargando(false);
+  };
+
+  const marcar = async (id: string, clase: string | null | undefined) => {
+    setMarcando(id);
+    try {
+      const { marcarUbicacionContada } = await import('@/lib/wms-cycle-count');
+      await marcarUbicacionContada(id, clase);
+      await recargar();
+    } finally {
+      setMarcando(null);
+    }
+  };
+
+  if (cargando) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-blue-500/5 border border-blue-500/30 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <Calendar className="h-5 w-5 text-blue-300 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-semibold text-blue-300">Cycle counting con frecuencia ABC</h4>
+            <p className="text-xs text-slate-400 mt-1">
+              Las ubicaciones de clase A se cuentan más seguido (default: 10 días), B cada 30 días, C cada 180.
+              Ajustá los días en <strong>Configuración WMS</strong>. Esta vista lista las que ya tocan revisar.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+        <div className="p-3 border-b border-slate-800 flex items-center justify-between">
+          <h4 className="text-sm font-semibold text-slate-200">
+            Pendientes de contar ({ubics.length})
+          </h4>
+          <button onClick={recargar} className="p-1.5 hover:bg-slate-800 rounded text-slate-400">
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-900/50">
+              <tr className="text-left text-xs text-slate-400 uppercase">
+                <th className="px-4 py-2">Ubicación</th>
+                <th className="px-4 py-2">Zona</th>
+                <th className="px-4 py-2">Clase ABC</th>
+                <th className="px-4 py-2">Última revisión</th>
+                <th className="px-4 py-2">Días desde</th>
+                <th className="px-4 py-2 text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {ubics.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-8 text-slate-500 text-sm">
+                  No hay ubicaciones que requieran conteo. Todas están al día.
+                </td></tr>
+              ) : ubics.slice(0, 50).map(u => (
+                <tr key={u.id} className="hover:bg-slate-800/30">
+                  <td className="px-4 py-2 font-mono text-slate-200">{u.codigo_completo || u.codigo}</td>
+                  <td className="px-4 py-2 text-slate-400 text-xs">{u.zona_nombre || '—'}</td>
+                  <td className="px-4 py-2">
+                    <span className={
+                      u.clase_abc === 'A' ? 'inline-flex px-2 py-0.5 rounded text-xs bg-amber-500/15 text-amber-300' :
+                      u.clase_abc === 'B' ? 'inline-flex px-2 py-0.5 rounded text-xs bg-blue-500/15 text-blue-300' :
+                      u.clase_abc === 'C' ? 'inline-flex px-2 py-0.5 rounded text-xs bg-slate-500/15 text-slate-300' :
+                      'inline-flex px-2 py-0.5 rounded text-xs bg-slate-500/15 text-slate-400'
+                    }>
+                      {u.clase_abc || 'sin clase'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-slate-400 text-xs">
+                    {u.ultima_revision_at ? new Date(u.ultima_revision_at).toLocaleDateString('es-UY') : 'Nunca'}
+                  </td>
+                  <td className="px-4 py-2">
+                    {u.dias_desde_ultima === null ? (
+                      <span className="text-red-400 text-xs">Nunca</span>
+                    ) : (
+                      <span className={u.dias_desde_ultima > 60 ? 'text-orange-400 text-xs' : 'text-slate-400 text-xs'}>
+                        {u.dias_desde_ultima} días
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    <button
+                      onClick={() => marcar(u.id, u.clase_abc)}
+                      disabled={marcando === u.id}
+                      className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-medium rounded-lg disabled:opacity-50"
+                    >
+                      {marcando === u.id ? 'Marcando...' : 'Marcar contada'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ProductoStockCard({ producto, ubicaciones, totalStock }: ProductoStockCardProps) {
