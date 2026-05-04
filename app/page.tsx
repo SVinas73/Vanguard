@@ -1,33 +1,50 @@
 'use client';
 
-import { ComercialModule, ComercialSubTab } from '@/components/comercial';
+import dynamic from 'next/dynamic';
+import { ComercialSubTab } from '@/components/comercial';
 
-import { ChatModule } from '@/components/chat';
-import { DemandPlanningModule } from '@/components/demand-planning';
-import { WMSModule } from '@/components/wms';
-import { AccionesCorrectivas } from '@/components/qms';
-import { Certificados } from '@/components/qms';
-import { QMSModule } from '@/components/qms';
-import { ProyectosDashboard } from '@/components/proyectos';
+// Módulos del dashboard que se ven al toque (no se splittean)
 import { WelcomeHeader, StatsGrid, InsightsPanel, CrossModuleSummary, InventoryTrendChart, PeriodSelector } from '@/components/dashboard';
 import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
-import { StockDashboard } from '@/components/stock';
-import { ImportCSV } from '@/components/import';
-import { IntegracionesDashboard } from '@/components/integraciones';
-import { ProductImage } from '@/components/productos';
-import TallerEnterprise from '@/components/taller';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
-import { AuditLogPanel } from '@/components/audit';
 import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
-import { ReportsEnterprise } from '@/components/reports';
-import { QuickScanner } from '@/components/scanner';
-import { AIPredictionsPanel, AIAnomaliesPanel, AIAssociationsPanel, AIStatusBadge } from '@/components/ai';
-import SerialManagement from '@/components/serialization/SerialManagement';
-import TraceabilityViewer from '@/components/traceability/TraceabilityViewer';
-import RMADashboard from '@/components/rma/RMADashboard';
-import BOMManager from '@/components/bom/BOMManager';
-import AssemblyDashboard from '@/components/assembly/AssemblyDashboard';
+import { AIStatusBadge } from '@/components/ai';
+import { ProductImage } from '@/components/productos';
+
+// Loader compartido para los módulos splitteados
+const ModuleLoader = () => (
+  <div className="flex items-center justify-center p-12 text-slate-500 text-sm gap-2">
+    <RefreshCw className="h-4 w-4 animate-spin" />
+    Cargando módulo...
+  </div>
+);
+
+// Módulos pesados: lazy-load con next/dynamic.
+// Esto reduce el bundle inicial dramáticamente.
+const ComercialModule       = dynamic(() => import('@/components/comercial').then(m => ({ default: m.ComercialModule })),       { loading: ModuleLoader });
+const ChatModule            = dynamic(() => import('@/components/chat').then(m => ({ default: m.ChatModule })),                  { loading: ModuleLoader });
+const DemandPlanningModule  = dynamic(() => import('@/components/demand-planning').then(m => ({ default: m.DemandPlanningModule })), { loading: ModuleLoader });
+const WMSModule             = dynamic(() => import('@/components/wms').then(m => ({ default: m.WMSModule })),                    { loading: ModuleLoader });
+const QMSModule             = dynamic(() => import('@/components/qms').then(m => ({ default: m.QMSModule })),                    { loading: ModuleLoader });
+const ProyectosDashboard    = dynamic(() => import('@/components/proyectos').then(m => ({ default: m.ProyectosDashboard })),     { loading: ModuleLoader });
+const StockDashboard        = dynamic(() => import('@/components/stock').then(m => ({ default: m.StockDashboard })),             { loading: ModuleLoader });
+const ImportCSV             = dynamic(() => import('@/components/import').then(m => ({ default: m.ImportCSV })),                 { loading: ModuleLoader });
+const IntegracionesDashboard = dynamic(() => import('@/components/integraciones').then(m => ({ default: m.IntegracionesDashboard })), { loading: ModuleLoader });
+const TallerEnterprise      = dynamic(() => import('@/components/taller'),                                                       { loading: ModuleLoader });
+const AuditLogPanel         = dynamic(() => import('@/components/audit').then(m => ({ default: m.AuditLogPanel })),              { loading: ModuleLoader });
+const ReportsEnterprise     = dynamic(() => import('@/components/reports').then(m => ({ default: m.ReportsEnterprise })),        { loading: ModuleLoader });
+const QuickScanner          = dynamic(() => import('@/components/scanner').then(m => ({ default: m.QuickScanner })),             { loading: ModuleLoader });
+const AIPredictionsPanel    = dynamic(() => import('@/components/ai').then(m => ({ default: m.AIPredictionsPanel })),            { loading: ModuleLoader });
+const AIAnomaliesPanel      = dynamic(() => import('@/components/ai').then(m => ({ default: m.AIAnomaliesPanel })),              { loading: ModuleLoader });
+const AIAssociationsPanel   = dynamic(() => import('@/components/ai').then(m => ({ default: m.AIAssociationsPanel })),           { loading: ModuleLoader });
+const SerialManagement      = dynamic(() => import('@/components/serialization/SerialManagement'),                               { loading: ModuleLoader });
+const TraceabilityViewer    = dynamic(() => import('@/components/traceability/TraceabilityViewer'),                              { loading: ModuleLoader });
+const RMADashboard          = dynamic(() => import('@/components/rma/RMADashboard'),                                             { loading: ModuleLoader });
+const BOMManager            = dynamic(() => import('@/components/bom/BOMManager'),                                               { loading: ModuleLoader });
+const AssemblyDashboard     = dynamic(() => import('@/components/assembly/AssemblyDashboard'),                                   { loading: ModuleLoader });
+const ApprovalsInbox        = dynamic(() => import('@/components/approvals/ApprovalsInbox'),                                     { loading: ModuleLoader });
+const FacturasElectronicas  = dynamic(() => import('@/components/facturacion/FacturasElectronicas'),                             { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -732,6 +749,16 @@ export default function HomePage() {
         {/* ==================== AUDITORÍA ==================== */}
         {activeTab === 'auditoria' && (
           <AuditLogPanel />
+        )}
+
+        {/* ==================== APROBACIONES ==================== */}
+        {activeTab === 'aprobaciones' && (
+          <ApprovalsInbox />
+        )}
+
+        {/* ==================== FACTURACIÓN ELECTRÓNICA ==================== */}
+        {activeTab === 'facturacion' && (
+          <FacturasElectronicas />
         )}
 
         {/* ==================== INTEGRACIONES ==================== */}

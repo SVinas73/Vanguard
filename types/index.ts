@@ -152,7 +152,7 @@ export interface StatsData {
   todayMovements: number;
 }
 
-export type TabType = 'dashboard' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes' | 'proyectos' | 'comercial' | 'finanzas' | 'taller' | 'qms' | 'wms' | 'demand' | 'chat' ;
+export type TabType = 'dashboard' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes' | 'proyectos' | 'comercial' | 'finanzas' | 'taller' | 'qms' | 'wms' | 'demand' | 'chat' | 'aprobaciones' | 'facturacion' ;
 
 export interface ModalState {
   showNewProduct: boolean;

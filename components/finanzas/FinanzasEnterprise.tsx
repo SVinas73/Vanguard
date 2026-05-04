@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
+import { crearAprobacion, requiereAprobacion } from '@/lib/approvals';
 import { useAuth } from '@/hooks/useAuth';
 import type {
   TipoNota,
@@ -1601,7 +1602,14 @@ export default function FinanzasEnterprise() {
 
       const docOrigenTipo = notaForm.origen === 'cliente' ? 'orden_venta' : 'orden_compra';
 
-      const { error } = await supabase.from('notas_credito_debito').insert({
+      // Si la nota supera el umbral configurado, queda en
+      // estado "pendiente_aprobacion" y se crea una solicitud
+      // de aprobación. Solo cuando el supervisor aprueba la
+      // nota pasa a 'pendiente' y puede aplicarse.
+      const necesitaAprob = await requiereAprobacion('nota_credito_debito', notaForm.monto);
+      const estadoInicial = necesitaAprob ? 'pendiente_aprobacion' : 'pendiente';
+
+      const { data: notaCreada, error } = await supabase.from('notas_credito_debito').insert({
         numero,
         tipo: notaForm.tipo,
         origen: notaForm.origen,
@@ -1616,18 +1624,35 @@ export default function FinanzasEnterprise() {
         monto_aplicado: 0,
         saldo: notaForm.monto,
         motivo: notaForm.motivo,
-        estado: 'pendiente',
+        estado: estadoInicial,
         creado_por: user?.email,
-      });
+      }).select().single();
 
       if (error) throw error;
 
       await registrarAuditoria('notas_credito_debito', 'CREAR', numero, null, {
         numero, tipo: notaForm.tipo, origen: notaForm.origen,
         entidad_nombre: entidad?.nombre, monto: notaForm.monto, motivo: notaForm.motivo,
+        estado: estadoInicial,
       }, user?.email || '');
 
-      toast.success('Nota creada');
+      if (necesitaAprob && notaCreada) {
+        await crearAprobacion({
+          origenTipo: 'nota_credito_debito',
+          origenId: notaCreada.id,
+          origenCodigo: numero,
+          titulo: `${notaForm.tipo === 'credito' ? 'Nota crédito' : 'Nota débito'} ${numero} — ${entidad?.nombre || ''}`,
+          descripcion: notaForm.motivo,
+          monto: notaForm.monto,
+          moneda: monedaActiva,
+          prioridad: notaForm.monto > 100000 ? 'alta' : 'normal',
+          payload: { tipo: notaForm.tipo, origen: notaForm.origen, motivo: notaForm.motivo },
+          solicitadoPor: user?.email || '',
+        });
+        toast.warning('Nota creada — requiere aprobación', `Monto ${notaForm.monto} excede umbral`);
+      } else {
+        toast.success('Nota creada');
+      }
       setModalType(null);
       setNotaForm({ tipo: 'credito', origen: 'cliente', entidadId: '', documentoOrigenId: '', documentoOrigenTipo: '', documentoOrigenNumero: '', monto: 0, motivo: '' });
       loadNotasCD();
@@ -1641,6 +1666,13 @@ export default function FinanzasEnterprise() {
   const aplicarNota = async (nota: NotaCreditoDebito, documentoId: string, monto: number) => {
     try {
       setProcesando(nota.id);
+
+      // Bloqueo: las notas pendientes de aprobación no se
+      // pueden aplicar hasta que un supervisor las apruebe.
+      if (nota.estado === ('pendiente_aprobacion' as any)) {
+        toast.warning('Aprobación pendiente', 'Esta nota requiere aprobación de un supervisor antes de aplicarse');
+        return;
+      }
 
       if (monto > nota.saldo) {
         toast.warning('El monto excede el saldo de la nota');
