@@ -135,6 +135,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
         { id: 'taller', label: t('modules.workshop'), icon: Wrench, permission: 'canViewTaller' },
         { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
+        { id: 'facturacion', label: 'Facturación electrónica', icon: FileText },
         { id: 'bom', label: t('modules.bom'), icon: Boxes, permission: 'canViewBOM' },
         { id: 'ensamblajes', label: t('modules.assemblies'), icon: Wrench, permission: 'canViewBOM' },
       ]
@@ -152,6 +153,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       title: t('nav.controlTracking', 'Control & Seguimiento'),
       defaultOpen: false,
       items: [
+        { id: 'aprobaciones', label: 'Aprobaciones', icon: Shield },
         { id: 'seriales', label: t('modules.serials'), icon: QrCode, permission: 'canViewSeriales' },
         { id: 'trazabilidad', label: t('modules.traceability'), icon: GitBranch, permission: 'canViewSeriales' },
         { id: 'rma', label: t('modules.returns'), icon: RotateCcw, permission: 'canViewRMA' },

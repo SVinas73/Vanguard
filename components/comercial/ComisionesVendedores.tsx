@@ -13,6 +13,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { cn, formatCurrency } from '@/lib/utils';
 import { registrarAuditoria } from '@/lib/audit';
+import { crearAprobacion, requiereAprobacion, getAprobacionPorOrigen } from '@/lib/approvals';
 import { useAuth } from '@/hooks/useAuth';
 
 // ============================================
@@ -97,6 +98,7 @@ function useToast() {
         <div key={t.id} className={cn(
           'px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3',
           t.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
+          t.type === 'warning' ? 'bg-amber-500/20 border-amber-500/30 text-amber-400' :
           'bg-red-500/20 border-red-500/30 text-red-400'
         )}>
           {t.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
@@ -105,7 +107,12 @@ function useToast() {
       ))}
     </div>
   ) : null;
-  return { success: (t: string) => add('success', t), error: (t: string) => add('error', t), Toast };
+  return {
+    success: (t: string) => add('success', t),
+    error: (t: string) => add('error', t),
+    warning: (t: string, _detail?: string) => add('warning', _detail ? `${t} — ${_detail}` : t),
+    Toast,
+  };
 }
 
 // ============================================
@@ -425,6 +432,38 @@ export default function ComisionesVendedores() {
   const cambiarEstadoLiquidacion = async (liq: LiquidacionComision, nuevo: EstadoLiquidacion) => {
     try {
       setProcesandoLiq(liq.id);
+
+      // Cuando se va a pasar a "pagada", verificamos si la
+      // comisión supera el umbral. Si sí, requiere aprobación
+      // previa antes de poder pagarla.
+      if (nuevo === 'pagada') {
+        const necesita = await requiereAprobacion('comision', liq.comision_total);
+        if (necesita) {
+          const aprobExistente = await getAprobacionPorOrigen('comision', liq.id);
+          if (!aprobExistente || aprobExistente.estado === 'rechazada') {
+            // No hay aprobación o fue rechazada → crear nueva
+            await crearAprobacion({
+              origenTipo: 'comision',
+              origenId: liq.id,
+              origenCodigo: `${liq.vendedor_email} ${liq.mes}/${liq.anio}`,
+              titulo: `Pago de comisión ${liq.vendedor_email} — ${liq.mes}/${liq.anio}`,
+              descripcion: `Ventas: ${liq.ventas_total} · Cumplimiento: ${liq.pct_cumplimiento}%`,
+              monto: liq.comision_total,
+              moneda: 'UYU',
+              prioridad: 'normal',
+              payload: { vendedor: liq.vendedor_email, mes: liq.mes, anio: liq.anio },
+              solicitadoPor: user?.email || '',
+            });
+            toast.warning('Pago bloqueado', 'Se generó solicitud de aprobación — el pago se habilitará al aprobarse');
+            return;
+          }
+          if (aprobExistente.estado !== 'aprobada') {
+            toast.warning('Aprobación pendiente', 'La aprobación de esta comisión todavía está en revisión');
+            return;
+          }
+        }
+      }
+
       const update: any = { estado: nuevo };
       if (nuevo === 'pagada') {
         update.fecha_pago = new Date().toISOString();

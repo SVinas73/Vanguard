@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Product, Almacen } from '@/types';
 import { registrarAuditoria } from '@/lib/audit';
+import { crearAprobacion, requiereAprobacion } from '@/lib/approvals';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import {
@@ -436,7 +437,42 @@ export default function Inventario() {
     }
 
     if (!confirm(`¿Aplicar ${lineasConDiferencia.length} ajuste(s) de inventario?`)) return;
-    
+
+    // Si la magnitud total del ajuste supera el umbral
+    // configurado, no se aplica directo: se crea una
+    // solicitud de aprobación y queda esperando sign-off.
+    const totalDiferencia = lineasConDiferencia.reduce(
+      (s, l) => s + Math.abs(l.diferencia || 0),
+      0
+    );
+    const necesitaAprob = await requiereAprobacion('ajuste_stock', undefined, totalDiferencia);
+    if (necesitaAprob) {
+      await crearAprobacion({
+        origenTipo: 'ajuste_stock',
+        origenId: conteoActivo?.id,
+        origenCodigo: conteoActivo?.numero || 'ajuste-manual',
+        titulo: `Ajuste de inventario — conteo ${conteoActivo?.numero || ''}`,
+        descripcion: `${lineasConDiferencia.length} líneas con diferencias · total ${totalDiferencia} unidades`,
+        cantidad: totalDiferencia,
+        prioridad: totalDiferencia > 500 ? 'alta' : 'normal',
+        payload: {
+          conteo: conteoActivo?.numero,
+          items: lineasConDiferencia.map(l => ({
+            codigo: l.producto_codigo,
+            ubicacion: l.ubicacion_codigo,
+            sistema: l.cantidad_sistema,
+            contada: l.cantidad_contada,
+            diferencia: l.diferencia,
+          })),
+        },
+        solicitadoPor: user?.email || '',
+      });
+      toast.warning(
+        `Aprobación requerida — ${totalDiferencia} unidades excede el umbral. Se generó solicitud de aprobación.`
+      );
+      return;
+    }
+
     setSaving(true);
     try {
       // Actualizar stock en las ubicaciones
