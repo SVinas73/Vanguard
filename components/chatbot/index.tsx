@@ -135,6 +135,7 @@ export function ChatbotWidget() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sesionId, setSesionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -142,26 +143,43 @@ export function ChatbotWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Hidratar sesion_id de localStorage al cargar (memoria
+  // entre navegaciones del navegador)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user?.email) {
+      const key = `vanguard-chat-sesion-${user.email}`;
+      const stored = localStorage.getItem(key);
+      if (stored) setSesionId(stored);
+    }
+  }, [user?.email]);
+
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
-      
+
       if (messages.length === 0) {
         const nombre = user?.nombre?.split(' ')[0] || '';
+        const rol = (user?.rol || '').toLowerCase();
+        const sugByRol = rol === 'admin'
+          ? ['Resumen ejecutivo de hoy', '¿Qué aprobaciones tengo pendientes?', '¿Hay CxC vencidas?']
+          : rol === 'vendedor'
+            ? ['¿Cuáles son mis cotizaciones pendientes?', 'Top clientes del mes', '¿Cómo creo una cotización?']
+            : rol === 'bodeguero'
+              ? ['¿Qué picking tengo pendiente?', '¿Hay recepciones para hoy?', '¿Cómo recibo mercadería?']
+              : rol === 'operador'
+                ? ['¿Qué OT tengo activas?', 'Presupuestos esperando aprobación', '¿Cómo abro una OT?']
+                : ['¿Qué productos tienen stock bajo?', '¿Cuánto vendimos este mes?', '¿Cómo creo una cotización?'];
+
         setMessages([{
           id: 'welcome',
           role: 'assistant',
-          content: `¡Hola${nombre ? ` ${nombre}` : ''}! 👋 Soy el asistente de Vanguard.\n\nPuedo ayudarte a:\n• 📦 Consultar stock y productos\n• 📊 Analizar ventas y métricas\n• 🔮 Ver tendencias y recomendaciones\n• ⚡ Crear órdenes y movimientos\n\n¿En qué puedo ayudarte?`,
+          content: `¡Hola${nombre ? ` ${nombre}` : ''}! 👋 Soy el Asistente Omnisciente de Vanguard.\n\nPuedo:\n• 📦 Responder sobre cualquier módulo (stock, ventas, finanzas, WMS, taller, calidad, RMA, trazabilidad...)\n• 📍 **Guiarte**: preguntame "¿cómo hago X?" o "¿dónde está Y?"\n• 📊 Resumirte tu día según tu rol\n• ⚡ Crear movimientos y órdenes con tu permiso\n\n¿En qué te ayudo?`,
           timestamp: new Date(),
-          suggestions: [
-            '¿Qué productos tienen stock bajo?',
-            '¿Cuánto vendimos este mes?',
-            'Recomendaciones de reposición'
-          ]
+          suggestions: sugByRol,
         }]);
       }
     }
-  }, [isOpen, messages.length, user?.nombre]);
+  }, [isOpen, messages.length, user?.nombre, user?.rol]);
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -187,12 +205,14 @@ export function ChatbotWidget() {
       const response = await fetch('/api/asistente/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           mensaje: text.trim(),
           historial,
+          sesion_id: sesionId,
           contexto: {
             usuario_email: user?.email,
             usuario_nombre: user?.nombre,
+            rol: user?.rol,
           }
         })
       });
@@ -203,6 +223,14 @@ export function ChatbotWidget() {
       }
 
       const data = await response.json();
+
+      // Persistir sesion_id devuelto por el server
+      if (data.sesion_id && data.sesion_id !== sesionId) {
+        setSesionId(data.sesion_id);
+        if (typeof window !== 'undefined' && user?.email) {
+          localStorage.setItem(`vanguard-chat-sesion-${user.email}`, data.sesion_id);
+        }
+      }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
