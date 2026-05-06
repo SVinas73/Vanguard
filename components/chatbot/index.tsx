@@ -153,6 +153,29 @@ export function ChatbotWidget() {
     }
   }, [user?.email]);
 
+  // Escuchar evento global "vg:ask-ai" disparado desde
+  // command palette / Mi Día / atajos del sistema. Abre
+  // el chat y rellena el input con el prompt.
+  useEffect(() => {
+    const onAskAI = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.prompt) {
+        setIsOpen(true);
+        setInput(detail.prompt);
+        // Auto-enviar tras un pequeño delay para que el
+        // usuario vea el prompt y pueda cancelar/editar
+        setTimeout(() => {
+          if (typeof detail.prompt === 'string') {
+            sendMessage(detail.prompt);
+          }
+        }, 150);
+      }
+    };
+    window.addEventListener('vg:ask-ai', onAskAI as EventListener);
+    return () => window.removeEventListener('vg:ask-ai', onAskAI as EventListener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
