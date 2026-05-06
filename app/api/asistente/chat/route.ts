@@ -9,6 +9,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ejecutarHerramienta } from '@/components/asistente/tools';
 import { createClient } from '@supabase/supabase-js';
+import { parseSafe, chatRequestSchema } from '@/lib/security/zod-schemas';
+import { chequearRateLimit, extraerIP } from '@/lib/security/rate-limit';
+import { requireAuth } from '@/lib/security/permissions';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
@@ -188,22 +191,46 @@ async function asegurarSesion(
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { mensaje, historial = [], contexto, sesion_id } = body;
-
-    if (!mensaje) {
-      return NextResponse.json({ error: 'Mensaje requerido' }, { status: 400 });
+    // 1. Auth: el chat solo acepta usuarios logueados
+    const auth = await requireAuth();
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
+
+    // 2. Validación con Zod
+    const body = await request.json().catch(() => ({}));
+    const parsed = parseSafe(chatRequestSchema, body);
+    if (!parsed.ok) {
+      return NextResponse.json(parsed, { status: 400 });
+    }
+    const { mensaje, historial = [], contexto, sesion_id } = parsed.data;
+
     if (!process.env.GOOGLE_AI_API_KEY) {
       return NextResponse.json({ error: 'API Key no configurada' }, { status: 500 });
     }
 
-    const usuarioEmail = contexto?.usuario_email || '';
-    const rol = (contexto?.rol || '').toLowerCase();
-    const usuarioNombre = contexto?.usuario_nombre || usuarioEmail.split('@')[0] || 'usuario';
+    // 3. Rate limit por usuario (max 60 mensajes / minuto)
+    const ip = extraerIP(request);
+    const rl = await chequearRateLimit({
+      bucket: `chat:${auth.user.email}`,
+      max: 60, windowSeconds: 60,
+      ip, usuarioEmail: auth.user.email, ruta: '/api/asistente/chat',
+    });
+    if (rl.bloqueado) {
+      return NextResponse.json(
+        { error: 'Estás enviando muchos mensajes. Esperá un momento.', retry_after: rl.retryAfterSeconds },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds || 60) } }
+      );
+    }
+
+    // 4. Forzar contexto al usuario realmente logueado
+    // (ignoramos lo que mande el cliente para evitar spoofing)
+    const usuarioEmail = auth.user.email;
+    const rol = (auth.user.rol || '').toLowerCase();
+    const usuarioNombre = auth.user.name || contexto?.usuario_nombre || usuarioEmail.split('@')[0] || 'usuario';
 
     // Sesión persistente
-    const sesionIdActiva = await asegurarSesion(sesion_id, usuarioEmail);
+    const sesionIdActiva = await asegurarSesion(sesion_id || undefined, usuarioEmail);
     const historialPersistente = sesionIdActiva ? await obtenerHistorial(sesionIdActiva) : [];
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
