@@ -13,6 +13,7 @@ import {
   Barcode, Calendar, User, FileText, Target,
   Play, Pause, SkipForward, AlertCircle, Zap
 } from 'lucide-react';
+import { DocumentImporter } from '@/components/import/DocumentImporter';
 
 // ============================================
 // TIPOS
@@ -1005,14 +1006,49 @@ export default function Recepcion() {
 
       {/* ==================== RECIBIR ==================== */}
       {vistaActiva === 'recibir' && ordenSeleccionada && (
-        <RecibirMercaderia
-          orden={ordenSeleccionada}
-          lineasRecibiendo={lineasRecibiendo}
-          setLineasRecibiendo={setLineasRecibiendo}
-          onVolver={() => setVistaActiva('detalle')}
-          onConfirmar={handleConfirmarRecepcion}
-          saving={saving}
-        />
+        <>
+          {/* Importar remito con IA — autocompleta cantidades */}
+          <div className="mb-4">
+            <DocumentImporter
+              tipo="remito"
+              uploadLabel="Arrastrá el remito del proveedor para autocompletar las cantidades"
+              onExtracted={(datos) => {
+                if (!ordenSeleccionada.lineas) return;
+                const next = { ...lineasRecibiendo };
+                let matched = 0;
+                for (const item of (datos.items || [])) {
+                  const codigo = (item.codigo || '').trim().toLowerCase();
+                  const descripcion = (item.descripcion || '').trim().toLowerCase();
+                  const linea = ordenSeleccionada.lineas.find(l =>
+                    (l.producto_codigo || '').toLowerCase() === codigo ||
+                    (l.producto_nombre || '').toLowerCase().includes(descripcion.slice(0, 10))
+                  );
+                  if (linea) {
+                    next[linea.id] = {
+                      ...next[linea.id],
+                      cantidad: Number(item.cantidad) || next[linea.id]?.cantidad || 0,
+                      lote: item.lote || next[linea.id]?.lote,
+                      vencimiento: item.fecha_vencimiento || next[linea.id]?.vencimiento,
+                    };
+                    matched++;
+                  }
+                }
+                setLineasRecibiendo(next);
+                toast.success(
+                  `Remito procesado · ${matched} de ${datos.items?.length || 0} ítems matcheados`
+                );
+              }}
+            />
+          </div>
+          <RecibirMercaderia
+            orden={ordenSeleccionada}
+            lineasRecibiendo={lineasRecibiendo}
+            setLineasRecibiendo={setLineasRecibiendo}
+            onVolver={() => setVistaActiva('detalle')}
+            onConfirmar={handleConfirmarRecepcion}
+            saving={saving}
+          />
+        </>
       )}
 
       {/* ==================== PUTAWAY ==================== */}
