@@ -14,6 +14,9 @@ export type TipoNotificacion =
   | 'orden_sin_entregar'
   | 'putaway_pendiente'
   | 'picking_sin_asignar'
+  | 'ticket_sla_breached'
+  | 'ticket_critico'
+  | 'garantia_por_vencer'
   | 'sistema';
 
 export type SeveridadNotificacion = 'info' | 'warning' | 'error';
@@ -246,7 +249,105 @@ export async function escanearAlertasComerciales(): Promise<void> {
     scanOrdenesSinEntregar(),
     scanWmsPutawayPendiente(),
     scanWmsPickingSinAsignar(),
+    scanTicketsSLABreached(),
+    scanTicketsCriticos(),
+    scanGarantiasPorVencer(),
   ]);
+}
+
+// =====================================================
+// SCANNERS — Post-venta
+// =====================================================
+
+async function scanTicketsSLABreached(): Promise<void> {
+  const ahora = new Date().toISOString();
+  const desdeWindow = new Date(Date.now() - VENTANA_EVENTO_DIAS * 86400000).toISOString();
+
+  const { data } = await supabase
+    .from('tickets_soporte')
+    .select('id, numero, asunto, prioridad, sla_vencimiento, asignado_a')
+    .in('estado', ['abierto', 'en_progreso', 'esperando_cliente', 'esperando_repuesto'])
+    .lt('sla_vencimiento', ahora)
+    .gte('sla_vencimiento', desdeWindow);
+
+  const keysVigentes = new Set<string>();
+  for (const t of (data || []) as any[]) {
+    const key = `ticket_sla:${t.id}`;
+    keysVigentes.add(key);
+    const horasAtraso = Math.round((Date.now() - new Date(t.sla_vencimiento).getTime()) / 3600000);
+    await crearNotificacion({
+      tipo: 'ticket_sla_breached',
+      severidad: t.prioridad === 'critica' ? 'error' : 'warning',
+      titulo: 'SLA vencido',
+      mensaje: `${t.numero}: ${t.asunto.slice(0, 60)} · ${horasAtraso}h atraso · ${t.asignado_a || 'sin asignar'}`,
+      entidadTipo: 'ticket_soporte',
+      entidadId: t.id,
+      entidadCodigo: t.numero,
+      usuarioEmail: t.asignado_a || null,
+      dedupKey: key,
+      metadata: { horas_atraso: horasAtraso },
+    });
+  }
+  await cerrarNotificacionesObsoletas('ticket_sla:', keysVigentes);
+}
+
+async function scanTicketsCriticos(): Promise<void> {
+  const desde = new Date(Date.now() - VENTANA_EVENTO_DIAS * 86400000).toISOString();
+  const { data } = await supabase
+    .from('tickets_soporte')
+    .select('id, numero, asunto, asignado_a')
+    .eq('prioridad', 'critica')
+    .in('estado', ['abierto', 'en_progreso'])
+    .gte('fecha_apertura', desde);
+
+  const keysVigentes = new Set<string>();
+  for (const t of (data || []) as any[]) {
+    const key = `ticket_critico:${t.id}`;
+    keysVigentes.add(key);
+    await crearNotificacion({
+      tipo: 'ticket_critico',
+      severidad: 'error',
+      titulo: 'Ticket crítico abierto',
+      mensaje: `${t.numero}: ${t.asunto.slice(0, 70)}`,
+      entidadTipo: 'ticket_soporte',
+      entidadId: t.id,
+      entidadCodigo: t.numero,
+      usuarioEmail: t.asignado_a || null,
+      dedupKey: key,
+    });
+  }
+  await cerrarNotificacionesObsoletas('ticket_critico:', keysVigentes);
+}
+
+async function scanGarantiasPorVencer(): Promise<void> {
+  const hoy = new Date().toISOString().split('T')[0];
+  const en30Dias = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+
+  const { data } = await supabase
+    .from('garantias')
+    .select('id, numero, producto_codigo, producto_nombre, cliente_nombre, fecha_vencimiento')
+    .eq('estado', 'activa')
+    .gte('fecha_vencimiento', hoy)
+    .lte('fecha_vencimiento', en30Dias);
+
+  const keysVigentes = new Set<string>();
+  for (const g of (data || []) as any[]) {
+    const key = `garantia_vencer:${g.id}`;
+    keysVigentes.add(key);
+    const dias = Math.ceil((new Date(g.fecha_vencimiento).getTime() - Date.now()) / 86400000);
+    await crearNotificacion({
+      tipo: 'garantia_por_vencer',
+      severidad: dias <= 7 ? 'warning' : 'info',
+      titulo: 'Garantía por vencer',
+      mensaje: `${g.numero} de ${g.cliente_nombre || 'cliente'} (${g.producto_nombre || g.producto_codigo}) vence en ${dias} día(s)`,
+      entidadTipo: 'garantia',
+      entidadId: g.id,
+      entidadCodigo: g.numero,
+      dedupKey: key,
+      metadata: { dias_restantes: dias, fecha_vencimiento: g.fecha_vencimiento },
+    });
+  }
+  await cerrarNotificacionesObsoletas('garantia_vencer:', keysVigentes);
 }
 
 // WMS: tareas de putaway que llevan más de 1 día pendientes

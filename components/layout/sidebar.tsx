@@ -33,6 +33,7 @@ import {
   Zap,
   ChevronDown,
   MessageCircle,
+  Users,
   Menu,
   X,
   Sun,
@@ -136,6 +137,9 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'taller', label: t('modules.workshop'), icon: Wrench, permission: 'canViewTaller' },
         { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
         { id: 'facturacion', label: 'Facturación electrónica', icon: FileText },
+        { id: 'tickets', label: 'Tickets soporte', icon: MessageCircle },
+        { id: 'garantias', label: 'Garantías', icon: Shield },
+        { id: 'clientes_360', label: 'Cliente 360°', icon: Users },
         { id: 'bom', label: t('modules.bom'), icon: Boxes, permission: 'canViewBOM' },
         { id: 'ensamblajes', label: t('modules.assemblies'), icon: Wrench, permission: 'canViewBOM' },
       ]

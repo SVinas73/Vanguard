@@ -48,6 +48,9 @@ const BOMManager            = dynamic(() => import('@/components/bom/BOMManager'
 const AssemblyDashboard     = dynamic(() => import('@/components/assembly/AssemblyDashboard'),                                   { loading: ModuleLoader });
 const ApprovalsInbox        = dynamic(() => import('@/components/approvals/ApprovalsInbox'),                                     { loading: ModuleLoader });
 const FacturasElectronicas  = dynamic(() => import('@/components/facturacion/FacturasElectronicas'),                             { loading: ModuleLoader });
+const TicketsModule         = dynamic(() => import('@/components/tickets/TicketsModule'),                                        { loading: ModuleLoader });
+const GarantiasModule       = dynamic(() => import('@/components/garantias/GarantiasModule'),                                    { loading: ModuleLoader });
+const HistorialCliente      = dynamic(() => import('@/components/clientes/HistorialCliente'),                                    { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -800,6 +803,21 @@ export default function HomePage() {
         {/* ==================== FACTURACIÓN ELECTRÓNICA ==================== */}
         {activeTab === 'facturacion' && (
           <FacturasElectronicas />
+        )}
+
+        {/* ==================== TICKETS DE SOPORTE ==================== */}
+        {activeTab === 'tickets' && (
+          <TicketsModule />
+        )}
+
+        {/* ==================== GARANTÍAS ==================== */}
+        {activeTab === 'garantias' && (
+          <GarantiasModule />
+        )}
+
+        {/* ==================== HISTORIAL CLIENTE 360 ==================== */}
+        {activeTab === 'clientes_360' && (
+          <HistorialCliente />
         )}
 
         {/* ==================== INTEGRACIONES ==================== */}
