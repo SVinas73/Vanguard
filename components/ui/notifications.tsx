@@ -31,6 +31,9 @@ const TIPO_ICON: Record<TipoNotificacion, React.ElementType> = {
   orden_sin_entregar: Truck,
   putaway_pendiente: Archive,
   picking_sin_asignar: Target,
+  ticket_sla_breached: AlertTriangle,
+  ticket_critico: AlertTriangle,
+  garantia_por_vencer: FileWarning,
   sistema: Info,
 };
 

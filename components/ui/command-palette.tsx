@@ -94,6 +94,12 @@ const COMMANDS: Command[] = [
   // ----- Navegación: Control -----
   { id: 'nav-aprobaciones', label: 'Ir a Aprobaciones', icon: Shield, category: 'Navegación',
     keywords: ['inbox', 'pendientes'], action: { type: 'navigate', tab: 'aprobaciones' } },
+  { id: 'nav-tickets', label: 'Ir a Tickets de Soporte', icon: MessageCircle, category: 'Navegación',
+    keywords: ['soporte', 'reclamo', 'consulta', 'sla'], action: { type: 'navigate', tab: 'tickets' } },
+  { id: 'nav-garantias', label: 'Ir a Garantías', icon: ShieldCheck, category: 'Navegación',
+    keywords: ['garantia', 'cobertura'], action: { type: 'navigate', tab: 'garantias' } },
+  { id: 'nav-clientes-360', label: 'Ir a Cliente 360°', icon: Users, category: 'Navegación',
+    keywords: ['historial', 'cliente'], action: { type: 'navigate', tab: 'clientes_360' } },
   { id: 'nav-seriales', label: 'Ir a Seriales', icon: QrCode, category: 'Navegación',
     action: { type: 'navigate', tab: 'seriales' } },
   { id: 'nav-trazabilidad', label: 'Ir a Trazabilidad', icon: GitBranch, category: 'Navegación',
