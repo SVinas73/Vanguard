@@ -9,6 +9,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { cn, formatCurrency } from '@/lib/utils';
 import { registrarAuditoria } from '@/lib/audit';
+import { DocumentImporter } from '@/components/import/DocumentImporter';
 import { crearRecepcionWmsDesdeCompra } from '@/lib/wms-bridge';
 import { Product } from '@/types';
 
@@ -857,6 +858,34 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
               <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg">
                 <X className="h-5 w-5 text-slate-400" />
               </button>
+            </div>
+
+            {/* Importar factura con IA — autocompleta el form */}
+            <div className="mb-4">
+              <DocumentImporter
+                tipo="invoice"
+                uploadLabel="Arrastrá una factura del proveedor para autocompletar"
+                onExtracted={(datos) => {
+                  // Match con proveedor existente por nombre / RUT
+                  const provMatch = proveedores.find(p =>
+                    (p.nombre || '').toLowerCase().includes((datos.proveedor?.nombre || '').toLowerCase().slice(0, 6))
+                  );
+                  setNewOrden(prev => ({
+                    ...prev,
+                    proveedorId: provMatch?.id || prev.proveedorId,
+                    notas: [
+                      datos.numero_factura ? `Factura ref: ${datos.numero_factura}` : '',
+                      datos.notas || '',
+                    ].filter(Boolean).join(' · ') || prev.notas,
+                    items: (datos.items || []).map((it: any) => ({
+                      productoCodigo: it.codigo || '',
+                      cantidad: Number(it.cantidad) || 1,
+                      costoUnitario: Number(it.precio_unitario) || 0,
+                    })),
+                  }));
+                  toast.success('Factura procesada', `${datos.items?.length || 0} ítems pre-cargados. Revisá y guardá.`);
+                }}
+              />
             </div>
 
             <div className="space-y-4">
