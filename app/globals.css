@@ -746,3 +746,96 @@ tr:hover td {
 .tab-content-enter {
   animation: fadeIn 0.2s ease-out;
 }
+/* ============================================
+   FOCUS MODE — Modo anti-estrés
+   ============================================ */
+
+/* Cuando está activo, ocultamos sidebar + header + footers
+   no esenciales. El módulo activo queda centrado y limpio. */
+
+.focus-mode aside {
+  /* sidebar lateral (Sidebar component usa <aside>) */
+  display: none !important;
+}
+
+.focus-mode .lg\:ml-\[68px\],
+.focus-mode .lg\:ml-\[240px\] {
+  margin-left: 0 !important;
+}
+
+.focus-mode .focus-mode-hide {
+  display: none !important;
+}
+
+/* Centramos y limitamos el ancho del contenido principal */
+.focus-mode main > div,
+.focus-mode main > section {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Reducimos saturación de elementos secundarios para
+   bajar ruido visual */
+.focus-mode .text-slate-500 {
+  color: rgba(120, 130, 145, 0.7);
+}
+
+.focus-mode header.focus-mode-hide,
+.focus-mode footer.focus-mode-hide {
+  display: none !important;
+}
+
+/* Animación suave de entrada al focus */
+.focus-mode main {
+  animation: focusEnter 250ms ease-out;
+}
+
+@keyframes focusEnter {
+  from {
+    opacity: 0.7;
+    transform: scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ============================================
+   MICRO-INTERACCIONES + ANIMACIONES SUAVES
+   ============================================ */
+
+/* Animación reusable para modales/popovers que entran */
+.animate-in {
+  animation-duration: 150ms;
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: vgFadeIn;
+}
+
+.zoom-in-95 {
+  animation-name: vgZoomIn95;
+}
+
+@keyframes vgFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes vgZoomIn95 {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.duration-150 { animation-duration: 150ms; }
+.duration-200 { animation-duration: 200ms; }
+
+/* Hover suave en tablas/listas */
+.row-hover:hover {
+  background-color: rgba(30, 41, 59, 0.4);
+  transform: translateY(-1px);
+  transition: all 120ms ease-out;
+}

@@ -9,6 +9,9 @@ import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/com
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
+import { CommandPalette, useCommandPalette, type CommandAction } from '@/components/ui/command-palette';
+import { useFocusMode, FocusModeToggle, FocusModeBanner } from '@/components/ui/focus-mode';
+import MiDia from '@/components/dashboard/MiDia';
 import { AIStatusBadge } from '@/components/ai';
 import { ProductImage } from '@/components/productos';
 
@@ -120,6 +123,41 @@ export default function HomePage() {
       }
     }
   }, []);
+
+  // ===== Sprint D: Command Palette + Focus Mode =====
+  const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
+  const { enabled: focusEnabled, toggle: toggleFocus } = useFocusMode();
+
+  const askAI = useCallback((prompt: string) => {
+    // Disparamos un evento custom que el ChatbotWidget escucha:
+    // abre el chat y rellena el input con el prompt.
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('vg:ask-ai', { detail: { prompt } }));
+    }
+  }, []);
+
+  const handleCommand = useCallback((action: CommandAction) => {
+    switch (action.type) {
+      case 'navigate':
+        handleTabChange(action.tab);
+        break;
+      case 'navigate-sub':
+        setActiveTab(action.tab);
+        if (action.tab === 'comercial') {
+          setComercialSubTab(action.subTab as ComercialSubTab);
+        }
+        break;
+      case 'chat':
+        askAI(action.prompt);
+        break;
+      case 'modal':
+        if (action.modal === 'focus-toggle') toggleFocus();
+        break;
+      case 'external':
+        if (typeof window !== 'undefined') window.open(action.url, '_blank');
+        break;
+    }
+  }, [handleTabChange, askAI, toggleFocus]);
 
   // Persistent filters
   useEffect(() => {
@@ -553,6 +591,9 @@ export default function HomePage() {
         {/* ==================== DASHBOARD ==================== */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
+            {/* "Mi Día" — vista personal anti-estrés */}
+            <MiDia onNavigate={handleTabChange} onAskAI={askAI} />
+
             {/* Welcome Header + Period Selector + Refresh */}
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="flex-1 min-w-0">
@@ -1123,6 +1164,13 @@ export default function HomePage() {
 
       {/* Chatbot IA */}
       <ChatbotWidget />
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onAction={handleCommand}
+      />
+      <FocusModeToggle enabled={focusEnabled} onToggle={toggleFocus} />
+      <FocusModeBanner enabled={focusEnabled} />
 
       {/* Indicador offline */}
       <OfflineIndicator />
