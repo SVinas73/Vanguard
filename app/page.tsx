@@ -33,7 +33,7 @@ const QMSModule             = dynamic(() => import('@/components/qms').then(m =>
 const ProyectosDashboard    = dynamic(() => import('@/components/proyectos').then(m => ({ default: m.ProyectosDashboard })),     { loading: ModuleLoader });
 const StockDashboard        = dynamic(() => import('@/components/stock').then(m => ({ default: m.StockDashboard })),             { loading: ModuleLoader });
 const ImportCSV             = dynamic(() => import('@/components/import').then(m => ({ default: m.ImportCSV })),                 { loading: ModuleLoader });
-const IntegracionesDashboard = dynamic(() => import('@/components/integraciones').then(m => ({ default: m.IntegracionesDashboard })), { loading: ModuleLoader });
+const IntegracionesDashboard = dynamic(() => import('@/components/integraciones/IntegracionesModule'), { loading: ModuleLoader });
 const TallerEnterprise      = dynamic(() => import('@/components/taller'),                                                       { loading: ModuleLoader });
 const AuditLogPanel         = dynamic(() => import('@/components/audit').then(m => ({ default: m.AuditLogPanel })),              { loading: ModuleLoader });
 const ReportsEnterprise     = dynamic(() => import('@/components/reports').then(m => ({ default: m.ReportsEnterprise })),        { loading: ModuleLoader });

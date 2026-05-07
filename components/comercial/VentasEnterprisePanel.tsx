@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { cn, formatCurrency } from '@/lib/utils';
 import { registrarAuditoria } from '@/lib/audit';
 import { crearPickingWmsDesdeVenta } from '@/lib/wms-bridge';
+import { emitirEvento } from '@/lib/api-gateway/webhooks';
 import { Product } from '@/types';
 
 // ============================================
@@ -564,6 +565,20 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
             cantidadSolicitada: it.cantidad,
           })),
           creadoPor: userEmail,
+        });
+      }
+
+      // Emitir evento para webhooks externos (Slack, Make, etc)
+      const eventoNombre =
+        nuevoEstado === 'confirmada' ? 'orden_venta.confirmada' :
+        nuevoEstado === 'entregada'  ? 'orden_venta.entregada' :
+        nuevoEstado === 'cancelada'  ? 'orden_venta.cancelada' : null;
+      if (eventoNombre) {
+        void emitirEvento(eventoNombre, {
+          id: orden.id, numero: orden.numero,
+          total: orden.total, cliente_id: orden.clienteId,
+          cliente_nombre: orden.cliente?.nombre,
+          estado_anterior: orden.estado, estado_nuevo: nuevoEstado,
         });
       }
 
