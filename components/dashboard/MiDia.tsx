@@ -6,6 +6,7 @@ import {
   TrendingUp, ShoppingCart, Truck, Wrench, Package,
   Sparkles, ArrowRight, RefreshCw,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -62,6 +63,7 @@ const STATS_VACIAS: DiaStats = {
 };
 
 export default function MiDia({ onNavigate, onAskAI }: MiDiaProps) {
+  const { t } = useTranslation();
   const { user } = useAuth(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DiaStats>(STATS_VACIAS);
@@ -176,15 +178,16 @@ export default function MiDia({ onNavigate, onAskAI }: MiDiaProps) {
   };
 
   const hora = new Date().getHours();
-  const saludo =
-    hora < 6  ? `Madrugaste, ${nombre}` :
-    hora < 12 ? `Buen día, ${nombre}` :
-    hora < 19 ? `Buenas tardes, ${nombre}` :
-                `Buenas noches, ${nombre}`;
+  const saludoKey =
+    hora < 6  ? 'miDia.earlyMorning' :
+    hora < 12 ? 'miDia.morning' :
+    hora < 19 ? 'miDia.afternoon' :
+                'miDia.evening';
+  const saludo = `${t(saludoKey)}, ${nombre}`;
   const SaludoIcon = hora < 6 || hora >= 19 ? Coffee : Sun;
 
   // Calcular cuántas cards "urgentes" hay
-  const cards = construirCards(stats, rol, onNavigate, onAskAI);
+  const cards = construirCards(stats, rol, onNavigate, onAskAI, t);
   const cardsUrgentes = cards.filter(c => c.urgente);
 
   if (loading) {
@@ -222,7 +225,7 @@ export default function MiDia({ onNavigate, onAskAI }: MiDiaProps) {
         <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-6 text-center">
           <CheckCircle className="h-10 w-10 text-emerald-400 mx-auto mb-3" />
           <h3 className="text-lg font-semibold text-slate-100">
-            Día tranquilo · todo bajo control
+            {t('miDia.quietDay')}
           </h3>
           <p className="text-sm text-slate-400 mt-1 max-w-md mx-auto">
             No hay alertas críticas, vencimientos ni tareas urgentes. Buen momento para
@@ -280,7 +283,8 @@ interface CardData {
 function construirCards(
   stats: DiaStats, rol: string,
   onNavigate?: (tab: TabType, subTab?: string) => void,
-  onAskAI?: (prompt: string) => void
+  onAskAI?: (prompt: string) => void,
+  t: (key: string) => string = (k) => k,
 ): CardData[] {
   const cards: CardData[] = [];
   const nav = (tab: TabType, sub?: string) => () => onNavigate?.(tab, sub);
@@ -288,7 +292,7 @@ function construirCards(
   // Aprobaciones (admin)
   if (rol === 'admin' && stats.aprobaciones_pendientes > 0) {
     cards.push({
-      titulo: 'Aprobaciones pendientes',
+      titulo: t('miDia.pendingApprovals'),
       valor: String(stats.aprobaciones_pendientes),
       detalle: 'NC/ND, comisiones, ajustes esperando tu firma',
       icon: AlertTriangle, color: 'text-violet-300', bg: 'bg-violet-500/10 border-violet-500/30',
@@ -300,7 +304,7 @@ function construirCards(
   // CxC vencidas (admin/vendedor)
   if (['admin', 'vendedor'].includes(rol) && stats.cxc_vencidas > 0) {
     cards.push({
-      titulo: 'Cuentas por cobrar vencidas',
+      titulo: t('miDia.overdueAR'),
       valor: String(stats.cxc_vencidas),
       detalle: `${formatCurrency(stats.cxc_total_vencido)} adeudado`,
       icon: AlertTriangle, color: 'text-red-300', bg: 'bg-red-500/10 border-red-500/30',
@@ -334,9 +338,10 @@ function construirCards(
   }
 
   // Picking sin asignar (bodeguero/admin)
+  // (detalle traducido via t('miDia.pickingUnassigned'))
   if (['admin', 'bodeguero'].includes(rol) && stats.picking_sin_asignar > 0) {
     cards.push({
-      titulo: 'Picking sin asignar',
+      titulo: t('miDia.pickingUnassigned'),
       valor: String(stats.picking_sin_asignar),
       detalle: `de ${stats.picking_pendiente} pendientes`,
       icon: Target, color: 'text-purple-300', bg: 'bg-purple-500/10 border-purple-500/30',
