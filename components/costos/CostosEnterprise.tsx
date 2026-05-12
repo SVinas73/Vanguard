@@ -17,6 +17,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
+import { valuarInventarioSync } from '@/lib/inventory-valuation';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart as RechartsPie, Pie, Cell,
@@ -556,11 +557,27 @@ export default function CostosEnterprise() {
   // ============================================
 
   const metricas = useMemo(() => {
-    // Valor total del inventario (FIFO - por lotes)
-    const valorInventarioFIFO = lotes.reduce(
-      (sum, l) => sum + l.cantidad_disponible * l.costo_unitario,
-      0
+    // Valor total del inventario (FIFO + fallback costo promedio).
+    // Usa la lib unificada que comparte con el Dashboard, para que
+    // ambas pantallas muestren EXACTAMENTE el mismo número.
+    const valuacion = valuarInventarioSync(
+      productos.map(p => ({
+        codigo: p.codigo,
+        descripcion: p.descripcion,
+        stock: p.stock,
+        stockMinimo: (p as any).stockMinimo,
+        costoPromedio: p.costoPromedio || p.costo || 0,
+        categoria: p.categoria,
+        almacenId: (p as any).almacenId,
+        almacen: (p as any).almacen,
+      })),
+      lotes.map(l => ({
+        codigo: l.codigo,
+        cantidad_disponible: l.cantidad_disponible,
+        costo_unitario: l.costo_unitario,
+      })),
     );
+    const valorInventarioFIFO = valuacion.total;
 
     // Valor a precio de venta
     const valorVenta = productos.reduce(
