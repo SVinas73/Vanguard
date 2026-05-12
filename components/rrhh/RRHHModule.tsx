@@ -6,6 +6,7 @@ import {
   Cake, UserCheck, UserX, Coffee, AlertCircle, MapPin,
   Briefcase, Mail, Phone, RefreshCw, Filter,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { useWmsToast } from '@/components/wms/useWmsToast';
@@ -18,24 +19,34 @@ import {
   type RRHHMetricas, type Asistencia,
 } from '@/lib/rrhh';
 
-const ESTADO_CONFIG: Record<EstadoEmpleado, { label: string; bg: string; color: string }> = {
-  activo:     { label: 'Activo',      bg: 'bg-emerald-500/15', color: 'text-emerald-300' },
-  licencia:   { label: 'En licencia', bg: 'bg-amber-500/15',   color: 'text-amber-300' },
-  suspendido: { label: 'Suspendido',  bg: 'bg-orange-500/15',  color: 'text-orange-300' },
-  baja:       { label: 'Baja',        bg: 'bg-slate-500/15',   color: 'text-slate-400' },
+const ESTADO_STYLE: Record<EstadoEmpleado, { bg: string; color: string }> = {
+  activo:     { bg: 'bg-emerald-500/15', color: 'text-emerald-300' },
+  licencia:   { bg: 'bg-amber-500/15',   color: 'text-amber-300' },
+  suspendido: { bg: 'bg-orange-500/15',  color: 'text-orange-300' },
+  baja:       { bg: 'bg-slate-500/15',   color: 'text-slate-400' },
 };
 
-const TIPO_SOLICITUD_LABEL: Record<TipoSolicitud, string> = {
-  vacaciones:      'Vacaciones',
-  licencia_medica: 'Licencia médica',
-  personal:        'Día personal',
-  estudio:         'Estudio',
-  otro:            'Otro',
+// Mapeo de tipo solicitud → key i18n
+const TIPO_SOLICITUD_KEY: Record<TipoSolicitud, string> = {
+  vacaciones:      'rrhh.vacation',
+  licencia_medica: 'rrhh.medicalLeave',
+  personal:        'rrhh.personalDay',
+  estudio:         'rrhh.study',
+  otro:            'rrhh.other',
+};
+
+// Mapeo estado empleado → key i18n
+const ESTADO_KEY: Record<EstadoEmpleado, string> = {
+  activo:     'rrhh.statusActive',
+  licencia:   'rrhh.statusOnLeave',
+  suspendido: 'rrhh.statusSuspended',
+  baja:       'rrhh.statusTerminated',
 };
 
 type Vista = 'dashboard' | 'empleados' | 'asistencia' | 'solicitudes';
 
 export default function RRHHModule() {
+  const { t } = useTranslation();
   const { user } = useAuth(false);
   const toast = useWmsToast();
   const [vista, setVista] = useState<Vista>('dashboard');
@@ -102,7 +113,7 @@ export default function RRHHModule() {
 
   const onCrearEmpleado = async () => {
     if (!formEmp.nombre || !formEmp.apellido || !formEmp.cargo || !formEmp.area) {
-      toast.warning('Completá nombre, apellido, cargo y área');
+      toast.warning(t('rrhh.completeFields'));
       return;
     }
     const ok = await crearEmpleado({
@@ -119,33 +130,33 @@ export default function RRHHModule() {
       jornada: formEmp.jornada,
     }, user?.email || 'sistema');
     if (ok) {
-      toast.success(`${formEmp.nombre} ${formEmp.apellido} agregado al equipo`);
+      toast.success(`${formEmp.nombre} ${formEmp.apellido} ${t('rrhh.addedToTeam')}`);
       setShowFormEmpleado(false);
       setFormEmp({ ...formEmp, nombre: '', apellido: '', cargo: '', dni: '', user_email: '', telefono: '', email_personal: '', sueldo_base: '', fecha_nacimiento: '' });
       loadAll();
     } else {
-      toast.error('No se pudo crear el empleado');
+      toast.error(t('rrhh.cantCreate'));
     }
   };
 
   const onDarBaja = async (e: Empleado) => {
-    if (!confirm(`¿Dar de baja a ${e.nombre} ${e.apellido}?`)) return;
+    if (!confirm(`${t('rrhh.confirmTerminate')} ${e.nombre} ${e.apellido}?`)) return;
     const ok = await darDeBaja(e.id, user?.email || 'sistema');
-    if (ok) { toast.success('Empleado dado de baja'); loadAll(); }
-    else    toast.error('No se pudo dar de baja');
+    if (ok) { toast.success(t('rrhh.employeeTerminated')); loadAll(); }
+    else    toast.error(t('rrhh.cantTerminate'));
   };
 
   // ===== Asistencia =====
   const onFichar = async (empleadoId: string, tipo: 'entrada' | 'salida') => {
     const ok = tipo === 'entrada' ? await fichadaEntrada(empleadoId) : await fichadaSalida(empleadoId);
-    if (ok) { toast.success(`Fichada de ${tipo} registrada`); loadAll(); }
-    else    toast.error('No se pudo fichar');
+    if (ok) { toast.success(t('rrhh.clockSuccess', { tipo })); loadAll(); }
+    else    toast.error(t('rrhh.cantClock'));
   };
 
   // ===== Solicitudes =====
   const onCrearSolicitud = async () => {
     if (!formSol.empleadoId || !formSol.fechaInicio || !formSol.fechaFin) {
-      toast.warning('Completá empleado y fechas');
+      toast.warning(t('rrhh.completeEmpDates'));
       return;
     }
     const s = await crearSolicitud({
@@ -156,26 +167,26 @@ export default function RRHHModule() {
       motivo: formSol.motivo || undefined,
     }, user?.email || 'sistema');
     if (s) {
-      toast.success('Solicitud enviada');
+      toast.success(t('rrhh.requestSent'));
       setShowFormSolicitud(false);
       loadAll();
     } else {
-      toast.error('No se pudo crear la solicitud');
+      toast.error(t('rrhh.cantSendRequest'));
     }
   };
 
   const onAprobar = async (s: Solicitud) => {
     const ok = await aprobarSolicitud(s.id, user?.email || 'sistema');
-    if (ok) { toast.success('Solicitud aprobada'); loadAll(); }
-    else    toast.error('No se pudo aprobar');
+    if (ok) { toast.success(t('rrhh.requestApproved')); loadAll(); }
+    else    toast.error(t('rrhh.cantApprove'));
   };
 
   const onRechazar = async (s: Solicitud) => {
-    const motivo = prompt('Motivo del rechazo (visible al empleado):');
+    const motivo = prompt(t('rrhh.rejectReason'));
     if (!motivo) return;
     const ok = await rechazarSolicitud(s.id, user?.email || 'sistema', motivo);
-    if (ok) { toast.success('Solicitud rechazada'); loadAll(); }
-    else    toast.error('No se pudo rechazar');
+    if (ok) { toast.success(t('rrhh.requestRejected')); loadAll(); }
+    else    toast.error(t('rrhh.cantReject'));
   };
 
   // =========================================
@@ -191,11 +202,11 @@ export default function RRHHModule() {
               <Users className="h-5 w-5 text-violet-300" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-100">Recursos Humanos</h1>
-              <p className="text-xs text-slate-500">Equipo, asistencia y licencias</p>
+              <h1 className="text-xl font-bold text-slate-100">{t('rrhh.title')}</h1>
+              <p className="text-xs text-slate-500">{t('rrhh.subtitle')}</p>
             </div>
           </div>
-          <button onClick={loadAll} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200" title="Refrescar">
+          <button onClick={loadAll} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200" title={t('wmsModule.refresh')}>
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           </button>
         </div>
@@ -203,21 +214,21 @@ export default function RRHHModule() {
         {/* Tabs */}
         <div className="px-6 flex gap-1 -mb-px overflow-x-auto">
           {([
-            { id: 'dashboard',   label: 'Dashboard', icon: Users },
-            { id: 'empleados',   label: 'Equipo',    icon: Briefcase },
-            { id: 'asistencia',  label: 'Asistencia', icon: Clock },
-            { id: 'solicitudes', label: 'Solicitudes', icon: Calendar },
-          ] as const).map(t => {
-            const Ic = t.icon;
-            const active = vista === t.id;
+            { id: 'dashboard',   label: t('rrhh.dashboard'),  icon: Users },
+            { id: 'empleados',   label: t('rrhh.team'),       icon: Briefcase },
+            { id: 'asistencia',  label: t('rrhh.attendance'), icon: Clock },
+            { id: 'solicitudes', label: t('rrhh.requests'),   icon: Calendar },
+          ] as const).map(tab => {
+            const Ic = tab.icon;
+            const active = vista === tab.id;
             return (
-              <button key={t.id} onClick={() => setVista(t.id)}
+              <button key={tab.id} onClick={() => setVista(tab.id)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
                   active ? 'border-violet-500 text-violet-300' : 'border-transparent text-slate-400 hover:text-slate-200',
                 )}>
-                <Ic className="h-4 w-4" />{t.label}
-                {t.id === 'solicitudes' && (metricas?.solicitudesPendientes ?? 0) > 0 && (
+                <Ic className="h-4 w-4" />{tab.label}
+                {tab.id === 'solicitudes' && (metricas?.solicitudesPendientes ?? 0) > 0 && (
                   <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">
                     {metricas?.solicitudesPendientes}
                   </span>
@@ -233,10 +244,10 @@ export default function RRHHModule() {
         {vista === 'dashboard' && metricas && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <KPI icon={Users}        label="Total"        value={metricas.totalEmpleados} accent="violet" />
-              <KPI icon={UserCheck}    label="Activos"      value={metricas.activos}        accent="emerald" />
-              <KPI icon={Coffee}       label="En licencia"  value={metricas.enLicencia}     accent="amber" />
-              <KPI icon={UserX}        label="Bajas"        value={metricas.bajas}          accent="slate" />
+              <KPI icon={Users}        label={t('rrhh.total')}    value={metricas.totalEmpleados} accent="violet" />
+              <KPI icon={UserCheck}    label={t('rrhh.active')}   value={metricas.activos}        accent="emerald" />
+              <KPI icon={Coffee}       label={t('rrhh.onLeave')}  value={metricas.enLicencia}     accent="amber" />
+              <KPI icon={UserX}        label={t('rrhh.terminated')} value={metricas.bajas}        accent="slate" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -244,11 +255,11 @@ export default function RRHHModule() {
               <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Cake className="h-4 w-4 text-pink-300" />
-                  <h3 className="text-sm font-semibold text-slate-100">Cumpleaños este mes</h3>
+                  <h3 className="text-sm font-semibold text-slate-100">{t('rrhh.birthdaysThisMonth')}</h3>
                   <span className="ml-auto text-xs text-slate-500">{metricas.cumpleanieros.length}</span>
                 </div>
                 {metricas.cumpleanieros.length === 0 ? (
-                  <p className="text-xs text-slate-500">Nadie cumple este mes.</p>
+                  <p className="text-xs text-slate-500">{t('rrhh.nobodyBirthday')}</p>
                 ) : (
                   <ul className="space-y-2">
                     {metricas.cumpleanieros.map(e => (
@@ -270,10 +281,10 @@ export default function RRHHModule() {
               <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Briefcase className="h-4 w-4 text-blue-300" />
-                  <h3 className="text-sm font-semibold text-slate-100">Equipo por área</h3>
+                  <h3 className="text-sm font-semibold text-slate-100">{t('rrhh.teamByArea')}</h3>
                 </div>
                 {Object.keys(metricas.porArea).length === 0 ? (
-                  <p className="text-xs text-slate-500">Sin empleados activos aún.</p>
+                  <p className="text-xs text-slate-500">{t('rrhh.noActiveEmployees')}</p>
                 ) : (
                   <div className="space-y-2">
                     {Object.entries(metricas.porArea).sort((a, b) => b[1] - a[1]).map(([area, n]) => {
@@ -296,9 +307,9 @@ export default function RRHHModule() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <KPI icon={Clock}      label="Fichados hoy"       value={metricas.fichadosHoy}          accent="cyan" />
-              <KPI icon={Calendar}   label="Solicitudes pend."  value={metricas.solicitudesPendientes} accent="amber" />
-              <KPI icon={AlertCircle} label="% asistencia hoy"  value={`${metricas.activos > 0 ? Math.round((metricas.fichadosHoy / metricas.activos) * 100) : 0}%`} accent="emerald" />
+              <KPI icon={Clock}      label={t('rrhh.checkedInToday')}  value={metricas.fichadosHoy}          accent="cyan" />
+              <KPI icon={Calendar}   label={t('rrhh.pendingRequests')} value={metricas.solicitudesPendientes} accent="amber" />
+              <KPI icon={AlertCircle} label={t('rrhh.attendancePct')}  value={`${metricas.activos > 0 ? Math.round((metricas.fichadosHoy / metricas.activos) * 100) : 0}%`} accent="emerald" />
             </div>
           </div>
         )}
@@ -310,23 +321,23 @@ export default function RRHHModule() {
               <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                 <input value={search} onChange={e => setSearch(e.target.value)}
-                  placeholder="Buscar por nombre, cargo o legajo..."
+                  placeholder={t('rrhh.searchPlaceholder')}
                   className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-violet-500" />
               </div>
               <select value={filtroArea} onChange={e => setFiltroArea(e.target.value)}
                 className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-200">
-                <option value="todas">Todas las áreas</option>
+                <option value="todas">{t('rrhh.allAreas')}</option>
                 {areasUnicas.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
               <button onClick={() => setShowFormEmpleado(true)}
                 className="px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm flex items-center gap-2">
-                <Plus className="h-4 w-4" /> Nuevo empleado
+                <Plus className="h-4 w-4" /> {t('rrhh.newEmployee')}
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {empleadosFiltrados.map(e => {
-                const cfg = ESTADO_CONFIG[e.estado];
+                const cfg = ESTADO_STYLE[e.estado];
                 return (
                   <div key={e.id} className="p-4 rounded-xl border border-slate-800 bg-slate-900/40 hover:border-slate-700 transition-colors">
                     <div className="flex items-start gap-3">
@@ -336,24 +347,24 @@ export default function RRHHModule() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="text-sm font-semibold text-slate-100 truncate">{e.nombre} {e.apellido}</h4>
-                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', cfg.bg, cfg.color)}>{cfg.label}</span>
+                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', cfg.bg, cfg.color)}>{t(ESTADO_KEY[e.estado])}</span>
                         </div>
                         <p className="text-xs text-slate-400 truncate">{e.cargo}</p>
-                        <p className="text-[11px] text-slate-500 capitalize">{e.area} · ingreso {new Date(e.fecha_ingreso).toLocaleDateString('es-UY')}</p>
+                        <p className="text-[11px] text-slate-500 capitalize">{e.area} · {t('rrhh.admission')} {new Date(e.fecha_ingreso).toLocaleDateString('es-UY')}</p>
                       </div>
                     </div>
                     <div className="mt-3 pt-3 border-t border-slate-800 flex items-center gap-2 text-[11px] text-slate-500">
                       {e.telefono && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{e.telefono}</span>}
                       {e.email_personal && <span className="flex items-center gap-1 truncate"><Mail className="h-3 w-3" />{e.email_personal}</span>}
                       {(e.solicitudes_pendientes ?? 0) > 0 && (
-                        <span className="ml-auto px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-medium">{e.solicitudes_pendientes} pend.</span>
+                        <span className="ml-auto px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-medium">{e.solicitudes_pendientes} {t('rrhh.statusPending').toLowerCase()}.</span>
                       )}
                     </div>
                     <div className="mt-2 flex gap-2">
-                      <button onClick={() => onFichar(e.id, 'entrada')} className="flex-1 px-2 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 rounded text-xs font-medium">Entrada</button>
-                      <button onClick={() => onFichar(e.id, 'salida')}  className="flex-1 px-2 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 rounded text-xs font-medium">Salida</button>
+                      <button onClick={() => onFichar(e.id, 'entrada')} className="flex-1 px-2 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 rounded text-xs font-medium">{t('rrhh.clockIn')}</button>
+                      <button onClick={() => onFichar(e.id, 'salida')}  className="flex-1 px-2 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 rounded text-xs font-medium">{t('rrhh.clockOut')}</button>
                       {e.estado !== 'baja' && (
-                        <button onClick={() => onDarBaja(e)} className="px-2 py-1.5 bg-slate-800 hover:bg-red-600/20 text-slate-400 hover:text-red-300 rounded text-xs">Baja</button>
+                        <button onClick={() => onDarBaja(e)} className="px-2 py-1.5 bg-slate-800 hover:bg-red-600/20 text-slate-400 hover:text-red-300 rounded text-xs">{t('rrhh.terminate')}</button>
                       )}
                     </div>
                   </div>
@@ -361,7 +372,7 @@ export default function RRHHModule() {
               })}
               {empleadosFiltrados.length === 0 && (
                 <div className="col-span-full text-center py-12 text-sm text-slate-500">
-                  No hay empleados que coincidan con los filtros.
+                  {t('rrhh.noEmployeesFilter')}
                 </div>
               )}
             </div>
@@ -371,16 +382,16 @@ export default function RRHHModule() {
         {/* ===== ASISTENCIA ===== */}
         {vista === 'asistencia' && (
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-slate-200">Asistencia de hoy ({new Date().toLocaleDateString('es-UY')})</h2>
+            <h2 className="text-sm font-semibold text-slate-200">{t('rrhh.attendanceOfToday')} ({new Date().toLocaleDateString('es-UY')})</h2>
             <div className="rounded-xl border border-slate-800 overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-slate-900/60 text-xs uppercase text-slate-500">
                   <tr>
-                    <th className="text-left px-4 py-2">Empleado</th>
-                    <th className="text-left px-4 py-2">Área</th>
-                    <th className="text-left px-4 py-2">Entrada</th>
-                    <th className="text-left px-4 py-2">Salida</th>
-                    <th className="text-left px-4 py-2">Trabajado</th>
+                    <th className="text-left px-4 py-2">{t('rrhh.employee')}</th>
+                    <th className="text-left px-4 py-2">{t('rrhh.area')}</th>
+                    <th className="text-left px-4 py-2">{t('rrhh.entryTime')}</th>
+                    <th className="text-left px-4 py-2">{t('rrhh.exitTime')}</th>
+                    <th className="text-left px-4 py-2">{t('rrhh.worked')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
@@ -412,9 +423,9 @@ export default function RRHHModule() {
         {vista === 'solicitudes' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-200">Solicitudes ({solicitudes.length})</h2>
+              <h2 className="text-sm font-semibold text-slate-200">{t('rrhh.requests')} ({solicitudes.length})</h2>
               <button onClick={() => setShowFormSolicitud(true)} className="px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm flex items-center gap-2">
-                <Plus className="h-4 w-4" /> Nueva solicitud
+                <Plus className="h-4 w-4" /> {t('rrhh.newRequest')}
               </button>
             </div>
             <div className="space-y-2">
@@ -425,29 +436,34 @@ export default function RRHHModule() {
                   s.estado === 'rechazada' ? 'bg-red-500/15 text-red-300' :
                   s.estado === 'cancelada' ? 'bg-slate-500/15 text-slate-400' :
                                              'bg-amber-500/15 text-amber-300';
+                const estadoKey =
+                  s.estado === 'aprobada'  ? 'rrhh.statusApproved' :
+                  s.estado === 'rechazada' ? 'rrhh.statusRejected' :
+                  s.estado === 'cancelada' ? 'rrhh.statusCancelled' :
+                                             'rrhh.statusPending';
                 return (
                   <div key={s.id} className="p-4 rounded-xl border border-slate-800 bg-slate-900/40">
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-semibold text-slate-100">{emp ? `${emp.nombre} ${emp.apellido}` : 'Empleado'}</span>
-                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', statusColor)}>{s.estado}</span>
+                          <span className="text-sm font-semibold text-slate-100">{emp ? `${emp.nombre} ${emp.apellido}` : t('rrhh.employee')}</span>
+                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', statusColor)}>{t(estadoKey)}</span>
                           <span className="text-xs text-slate-500">·</span>
-                          <span className="text-xs text-violet-300">{TIPO_SOLICITUD_LABEL[s.tipo]}</span>
+                          <span className="text-xs text-violet-300">{t(TIPO_SOLICITUD_KEY[s.tipo])}</span>
                         </div>
                         <p className="text-xs text-slate-400 mt-1">
                           {new Date(s.fecha_inicio).toLocaleDateString('es-UY')} → {new Date(s.fecha_fin).toLocaleDateString('es-UY')}
-                          {' · '}{s.dias_solicitados} día{s.dias_solicitados !== 1 ? 's' : ''}
+                          {' · '}{s.dias_solicitados} {s.dias_solicitados !== 1 ? t('rrhh.days') : t('rrhh.day')}
                         </p>
                         {s.motivo && <p className="text-xs text-slate-500 mt-1 italic">"{s.motivo}"</p>}
                         {s.estado !== 'pendiente' && s.observaciones_aprobacion && (
-                          <p className="text-[11px] text-slate-500 mt-1">Resolución: {s.observaciones_aprobacion}</p>
+                          <p className="text-[11px] text-slate-500 mt-1">{t('rrhh.resolution')}: {s.observaciones_aprobacion}</p>
                         )}
                       </div>
                       {s.estado === 'pendiente' && (
                         <div className="flex gap-1.5">
-                          <button onClick={() => onAprobar(s)} className="px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 rounded text-xs font-medium">Aprobar</button>
-                          <button onClick={() => onRechazar(s)} className="px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-300 rounded text-xs font-medium">Rechazar</button>
+                          <button onClick={() => onAprobar(s)} className="px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 rounded text-xs font-medium">{t('rrhh.approve')}</button>
+                          <button onClick={() => onRechazar(s)} className="px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-300 rounded text-xs font-medium">{t('rrhh.reject')}</button>
                         </div>
                       )}
                     </div>
@@ -455,7 +471,7 @@ export default function RRHHModule() {
                 );
               })}
               {solicitudes.length === 0 && (
-                <div className="text-center py-12 text-sm text-slate-500">Sin solicitudes registradas.</div>
+                <div className="text-center py-12 text-sm text-slate-500">{t('rrhh.noRequests')}</div>
               )}
             </div>
           </div>
@@ -464,22 +480,22 @@ export default function RRHHModule() {
 
       {/* ===== MODAL NUEVO EMPLEADO ===== */}
       {showFormEmpleado && (
-        <Modal onClose={() => setShowFormEmpleado(false)} title="Nuevo empleado">
+        <Modal onClose={() => setShowFormEmpleado(false)} title={t('rrhh.newEmployee')}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Nombre *"  value={formEmp.nombre}    onChange={v => setFormEmp({ ...formEmp, nombre: v })} />
-            <Field label="Apellido *"value={formEmp.apellido}  onChange={v => setFormEmp({ ...formEmp, apellido: v })} />
-            <Field label="Cargo *"   value={formEmp.cargo}     onChange={v => setFormEmp({ ...formEmp, cargo: v })} />
-            <Field label="Área *"    value={formEmp.area}      onChange={v => setFormEmp({ ...formEmp, area: v })} />
-            <Field label="DNI"       value={formEmp.dni}       onChange={v => setFormEmp({ ...formEmp, dni: v })} />
-            <Field label="Email login (opcional)" value={formEmp.user_email} onChange={v => setFormEmp({ ...formEmp, user_email: v })} />
-            <Field label="Teléfono"  value={formEmp.telefono}  onChange={v => setFormEmp({ ...formEmp, telefono: v })} />
-            <Field label="Email personal" value={formEmp.email_personal} onChange={v => setFormEmp({ ...formEmp, email_personal: v })} />
-            <Field label="Fecha ingreso *" type="date" value={formEmp.fecha_ingreso} onChange={v => setFormEmp({ ...formEmp, fecha_ingreso: v })} />
-            <Field label="Fecha nacimiento" type="date" value={formEmp.fecha_nacimiento} onChange={v => setFormEmp({ ...formEmp, fecha_nacimiento: v })} />
-            <Field label="Sueldo base" type="number" value={formEmp.sueldo_base} onChange={v => setFormEmp({ ...formEmp, sueldo_base: v })} />
+            <Field label={`${t('rrhh.name')} *`}     value={formEmp.nombre}    onChange={v => setFormEmp({ ...formEmp, nombre: v })} />
+            <Field label={`${t('rrhh.surname')} *`}  value={formEmp.apellido}  onChange={v => setFormEmp({ ...formEmp, apellido: v })} />
+            <Field label={`${t('rrhh.position')} *`} value={formEmp.cargo}     onChange={v => setFormEmp({ ...formEmp, cargo: v })} />
+            <Field label={`${t('rrhh.areaLabel')} *`}value={formEmp.area}      onChange={v => setFormEmp({ ...formEmp, area: v })} />
+            <Field label={t('rrhh.dni')}             value={formEmp.dni}       onChange={v => setFormEmp({ ...formEmp, dni: v })} />
+            <Field label={t('rrhh.loginEmail')}      value={formEmp.user_email} onChange={v => setFormEmp({ ...formEmp, user_email: v })} />
+            <Field label={t('rrhh.phone')}           value={formEmp.telefono}  onChange={v => setFormEmp({ ...formEmp, telefono: v })} />
+            <Field label={t('rrhh.personalEmail')}   value={formEmp.email_personal} onChange={v => setFormEmp({ ...formEmp, email_personal: v })} />
+            <Field label={`${t('rrhh.dateOfAdmission')} *`} type="date" value={formEmp.fecha_ingreso} onChange={v => setFormEmp({ ...formEmp, fecha_ingreso: v })} />
+            <Field label={t('rrhh.dateOfBirth')}     type="date" value={formEmp.fecha_nacimiento} onChange={v => setFormEmp({ ...formEmp, fecha_nacimiento: v })} />
+            <Field label={t('rrhh.baseSalary')}      type="number" value={formEmp.sueldo_base} onChange={v => setFormEmp({ ...formEmp, sueldo_base: v })} />
             <div className="col-span-2 flex gap-3 mt-2">
-              <button onClick={onCrearEmpleado} className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium">Crear empleado</button>
-              <button onClick={() => setShowFormEmpleado(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+              <button onClick={onCrearEmpleado} className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium">{t('rrhh.createEmployee')}</button>
+              <button onClick={() => setShowFormEmpleado(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">{t('wmsModule.cancel')}</button>
             </div>
           </div>
         </Modal>
@@ -487,34 +503,34 @@ export default function RRHHModule() {
 
       {/* ===== MODAL NUEVA SOLICITUD ===== */}
       {showFormSolicitud && (
-        <Modal onClose={() => setShowFormSolicitud(false)} title="Nueva solicitud">
+        <Modal onClose={() => setShowFormSolicitud(false)} title={t('rrhh.newRequest')}>
           <div className="space-y-3">
-            <label className="text-xs text-slate-400">Empleado
+            <label className="text-xs text-slate-400">{t('rrhh.employee')}
               <select value={formSol.empleadoId} onChange={e => setFormSol({ ...formSol, empleadoId: e.target.value })}
                 className="w-full mt-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-200">
-                <option value="">Seleccionar...</option>
+                <option value="">{t('common.select')}</option>
                 {empleados.filter(e => e.estado === 'activo').map(e => (
                   <option key={e.id} value={e.id}>{e.nombre} {e.apellido} ({e.area})</option>
                 ))}
               </select>
             </label>
-            <label className="text-xs text-slate-400">Tipo
+            <label className="text-xs text-slate-400">{t('rrhh.type')}
               <select value={formSol.tipo} onChange={e => setFormSol({ ...formSol, tipo: e.target.value as TipoSolicitud })}
                 className="w-full mt-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-200">
-                {Object.entries(TIPO_SOLICITUD_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                {Object.entries(TIPO_SOLICITUD_KEY).map(([k, key]) => <option key={k} value={k}>{t(key)}</option>)}
               </select>
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Desde *" type="date" value={formSol.fechaInicio} onChange={v => setFormSol({ ...formSol, fechaInicio: v })} />
-              <Field label="Hasta *" type="date" value={formSol.fechaFin}    onChange={v => setFormSol({ ...formSol, fechaFin: v })} />
+              <Field label={`${t('rrhh.from')} *`} type="date" value={formSol.fechaInicio} onChange={v => setFormSol({ ...formSol, fechaInicio: v })} />
+              <Field label={`${t('rrhh.to')} *`}   type="date" value={formSol.fechaFin}    onChange={v => setFormSol({ ...formSol, fechaFin: v })} />
             </div>
-            <label className="text-xs text-slate-400">Motivo (opcional)
+            <label className="text-xs text-slate-400">{t('rrhh.reason')}
               <textarea value={formSol.motivo} onChange={e => setFormSol({ ...formSol, motivo: e.target.value })} rows={3}
                 className="w-full mt-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-200" />
             </label>
             <div className="flex gap-3 mt-2">
-              <button onClick={onCrearSolicitud} className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium">Enviar solicitud</button>
-              <button onClick={() => setShowFormSolicitud(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+              <button onClick={onCrearSolicitud} className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium">{t('rrhh.send')}</button>
+              <button onClick={() => setShowFormSolicitud(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">{t('wmsModule.cancel')}</button>
             </div>
           </div>
         </Modal>

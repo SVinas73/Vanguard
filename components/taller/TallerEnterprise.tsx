@@ -13,7 +13,8 @@ import {
   UserCheck, Banknote, CreditCard, PackageCheck, Truck as TruckIcon,
   RotateCcw, Archive, Star, Flag, Timer, Zap, Box, Cog,
   ClipboardCheck, ShoppingCart, BadgeCheck, CircleDot, Circle,
-  GripVertical, Layers, LayoutGrid, List, Kanban, Cpu
+  GripVertical, Layers, LayoutGrid, List, Kanban, Cpu,
+  Loader2, ShieldCheck,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
@@ -24,6 +25,10 @@ import {
   consumirReservasPorOrigen,
   getStockDisponible,
 } from '@/lib/stock-reservations';
+import {
+  buscarGarantiaParaTaller, reclamarGarantia,
+  type GarantiaLookupResultado,
+} from '@/lib/garantias';
 import MantenimientoPredictivo from './MantenimientoPredictivo';
 
 // ============================================
@@ -97,6 +102,7 @@ interface OrdenTrabajo {
   esGarantia: boolean;
   facturaGarantia?: string;
   fechaCompra?: string;
+  garantiaId?: string | null;        // FK validada por lookup
   
   // Problema reportado
   problemaReportado: string;
@@ -474,10 +480,31 @@ export default function TallerEnterprise() {
     esGarantia: false,
     facturaGarantia: '',
     fechaCompra: '',
-    
+    garantiaId: null as string | null,
+
     // Problema
     problemaReportado: '',
   });
+
+  // Estado del lookup de garantía
+  const [garantiaLookup, setGarantiaLookup] = useState<GarantiaLookupResultado | null>(null);
+  const [validandoGarantia, setValidandoGarantia] = useState(false);
+
+  const validarGarantia = useCallback(async () => {
+    if (!ingresoForm.facturaGarantia && !ingresoForm.serie) return;
+    setValidandoGarantia(true);
+    const res = await buscarGarantiaParaTaller({
+      factura: ingresoForm.facturaGarantia,
+      serial: ingresoForm.serie,
+    });
+    setGarantiaLookup(res);
+    if (res.ok) {
+      setIngresoForm(prev => ({ ...prev, garantiaId: res.garantia.id }));
+    } else {
+      setIngresoForm(prev => ({ ...prev, garantiaId: null }));
+    }
+    setValidandoGarantia(false);
+  }, [ingresoForm.facturaGarantia, ingresoForm.serie]);
 
   // Form de diagnóstico
   const [diagnosticoForm, setDiagnosticoForm] = useState({
@@ -597,6 +624,7 @@ export default function TallerEnterprise() {
         estado: o.estado,
         esGarantia: o.es_garantia || false,
         facturaGarantia: o.factura_garantia,
+        garantiaId: o.garantia_id || null,
         fechaCompra: o.fecha_compra,
         problemaReportado: o.problema_reportado,
         diagnostico: o.diagnostico,
@@ -733,6 +761,7 @@ export default function TallerEnterprise() {
         es_garantia: ingresoForm.esGarantia,
         factura_garantia: ingresoForm.esGarantia ? ingresoForm.facturaGarantia : null,
         fecha_compra: ingresoForm.esGarantia ? ingresoForm.fechaCompra : null,
+        garantia_id: ingresoForm.esGarantia ? ingresoForm.garantiaId : null,
         problema_reportado: ingresoForm.problemaReportado,
         cliente_notificado: false,
         facturado: false,
@@ -812,6 +841,18 @@ export default function TallerEnterprise() {
           'cotizacion_taller',
           orden.id,
           'OT cancelada',
+          user?.email || ''
+        );
+      }
+
+      // Si la orden pasa a reparación y es por garantía válida,
+      // marcamos la garantía como reclamada (idempotente: si ya está
+      // reclamada, la función devuelve false sin error).
+      if (nuevoEstado === 'en_reparacion' && orden.esGarantia && orden.garantiaId) {
+        await reclamarGarantia(
+          orden.garantiaId,
+          `Reparación en taller (OT ${orden.numero}): ${orden.problemaReportado}`,
+          null,
           user?.email || ''
         );
       }
@@ -1350,8 +1391,10 @@ export default function TallerEnterprise() {
       esGarantia: false,
       facturaGarantia: '',
       fechaCompra: '',
+      garantiaId: null,
       problemaReportado: '',
     });
+    setGarantiaLookup(null);
   };
 
   // ============================================
@@ -1847,26 +1890,96 @@ export default function TallerEnterprise() {
                 </div>
 
                 {ingresoForm.esGarantia && (
-                  <div className="grid grid-cols-2 gap-3 mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                    <div>
-                      <label className="block text-sm text-emerald-400 mb-1">Nº Factura de Compra</label>
-                      <input
-                        type="text"
-                        value={ingresoForm.facturaGarantia}
-                        onChange={(e) => setIngresoForm({ ...ingresoForm, facturaGarantia: e.target.value })}
-                        placeholder="FAC-123456"
-                        className="w-full px-3 py-2 bg-slate-800 border border-emerald-500/30 rounded-xl text-slate-100"
-                      />
+                  <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm text-emerald-400 mb-1">Nº Factura de Compra</label>
+                        <input
+                          type="text"
+                          value={ingresoForm.facturaGarantia}
+                          onChange={(e) => {
+                            setIngresoForm({ ...ingresoForm, facturaGarantia: e.target.value, garantiaId: null });
+                            setGarantiaLookup(null);
+                          }}
+                          placeholder="FAC-123456"
+                          className="w-full px-3 py-2 bg-slate-800 border border-emerald-500/30 rounded-xl text-slate-100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-emerald-400 mb-1">Fecha de Compra</label>
+                        <input
+                          type="date"
+                          value={ingresoForm.fechaCompra}
+                          onChange={(e) => setIngresoForm({ ...ingresoForm, fechaCompra: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-800 border border-emerald-500/30 rounded-xl text-slate-100"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm text-emerald-400 mb-1">Fecha de Compra</label>
-                      <input
-                        type="date"
-                        value={ingresoForm.fechaCompra}
-                        onChange={(e) => setIngresoForm({ ...ingresoForm, fechaCompra: e.target.value })}
-                        className="w-full px-3 py-2 bg-slate-800 border border-emerald-500/30 rounded-xl text-slate-100"
-                      />
+
+                    {/* Lookup de garantía */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={validarGarantia}
+                        disabled={validandoGarantia || (!ingresoForm.facturaGarantia && !ingresoForm.serie)}
+                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                      >
+                        {validandoGarantia ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Validando...
+                          </>
+                        ) : (
+                          <>
+                            <Search className="h-4 w-4" />
+                            Validar garantía
+                          </>
+                        )}
+                      </button>
+                      <span className="text-xs text-emerald-400/60">
+                        Busca por factura o número de serie ({ingresoForm.serie || '—'})
+                      </span>
                     </div>
+
+                    {/* Resultado del lookup */}
+                    {garantiaLookup && (
+                      garantiaLookup.ok ? (
+                        <div className="p-3 rounded-lg bg-emerald-500/15 border border-emerald-500/40">
+                          <div className="flex items-center gap-2 mb-2">
+                            <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                            <span className="text-sm font-semibold text-emerald-200">
+                              Garantía válida — {garantiaLookup.garantia.numero}
+                            </span>
+                            <span className="ml-auto text-xs px-2 py-0.5 rounded bg-emerald-500/30 text-emerald-100 font-bold">
+                              {garantiaLookup.diasRestantes} días restantes
+                            </span>
+                          </div>
+                          <div className="text-xs text-emerald-300/80 space-y-0.5">
+                            <div>Producto: <span className="text-emerald-100">{garantiaLookup.garantia.producto_codigo} — {garantiaLookup.garantia.producto_nombre || ''}</span></div>
+                            {garantiaLookup.garantia.serial_numero && <div>Serial: <span className="font-mono text-emerald-100">{garantiaLookup.garantia.serial_numero}</span></div>}
+                            <div>Vence: <span className="text-emerald-100">{new Date(garantiaLookup.garantia.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-UY')}</span></div>
+                            {garantiaLookup.garantia.cobertura && <div className="italic mt-1">"{garantiaLookup.garantia.cobertura}"</div>}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                          <div className="flex items-center gap-2 mb-1">
+                            <AlertTriangle className="h-4 w-4 text-red-300" />
+                            <span className="text-sm font-semibold text-red-200">
+                              {garantiaLookup.razon === 'no_encontrada' && 'No se encontró garantía'}
+                              {garantiaLookup.razon === 'vencida' && 'Garantía vencida'}
+                              {garantiaLookup.razon === 'reclamada' && 'Garantía ya reclamada'}
+                              {garantiaLookup.razon === 'anulada' && 'Garantía anulada'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-red-300/80">
+                            {garantiaLookup.razon === 'no_encontrada'
+                              ? 'No hay garantía registrada con esa factura o serial. Verificá los datos o creala desde el módulo de Garantías.'
+                              : 'No se puede usar esta garantía para una orden de taller. Si el cliente reclama igual, asegurate de cobrar la reparación.'}
+                          </p>
+                        </div>
+                      )
+                    )}
                   </div>
                 )}
 
@@ -2268,9 +2381,22 @@ export default function TallerEnterprise() {
                     {TIPO_ORDEN_CONFIG[ordenSeleccionada.tipoOrden].icon}
                     <span className="font-medium">{TIPO_ORDEN_CONFIG[ordenSeleccionada.tipoOrden].label}</span>
                   </div>
-                  {ordenSeleccionada.esGarantia && ordenSeleccionada.facturaGarantia && (
-                    <div className="text-xs mt-1 text-slate-400">
-                      Factura: {ordenSeleccionada.facturaGarantia}
+                  {ordenSeleccionada.esGarantia && (
+                    <div className="text-xs mt-1 text-slate-400 space-y-0.5">
+                      {ordenSeleccionada.facturaGarantia && (
+                        <div>Factura: {ordenSeleccionada.facturaGarantia}</div>
+                      )}
+                      {ordenSeleccionada.garantiaId ? (
+                        <div className="flex items-center gap-1 text-emerald-300">
+                          <ShieldCheck className="h-3 w-3" />
+                          Garantía validada
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 text-amber-300">
+                          <AlertTriangle className="h-3 w-3" />
+                          Garantía sin validar
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

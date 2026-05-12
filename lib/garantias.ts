@@ -151,6 +151,54 @@ export async function verificarGarantia(args: {
   return (data as Garantia) || null;
 }
 
+// =====================================================
+// Resultado del lookup desde Taller
+// =====================================================
+export type GarantiaLookupResultado =
+  | { ok: true; garantia: Garantia; diasRestantes: number }
+  | { ok: false; razon: 'no_encontrada' | 'vencida' | 'reclamada' | 'anulada'; garantia?: Garantia };
+
+/**
+ * Lookup flexible para Taller: busca por factura (orden_venta_numero) y/o
+ * serial. Devuelve un resultado tipado con el motivo de rechazo si no
+ * está vigente — así la UI puede explicarlo al usuario.
+ */
+export async function buscarGarantiaParaTaller(args: {
+  factura?: string;
+  serial?: string;
+  productoCodigo?: string;
+}): Promise<GarantiaLookupResultado> {
+  const { factura, serial, productoCodigo } = args;
+  if (!factura && !serial && !productoCodigo) {
+    return { ok: false, razon: 'no_encontrada' };
+  }
+
+  let q = supabase.from('garantias').select('*');
+  // OR entre los criterios disponibles — preferimos serial si lo hay
+  if (serial)               q = q.eq('serial_numero', serial);
+  else if (factura)         q = q.eq('orden_venta_numero', factura);
+  else if (productoCodigo)  q = q.eq('producto_codigo', productoCodigo);
+
+  q = q.order('fecha_vencimiento', { ascending: false }).limit(1);
+  const { data } = await q.maybeSingle();
+  const g = data as Garantia | null;
+
+  if (!g) return { ok: false, razon: 'no_encontrada' };
+
+  // Validar estado
+  if (g.estado === 'anulada')   return { ok: false, razon: 'anulada', garantia: g };
+  if (g.estado === 'reclamada') return { ok: false, razon: 'reclamada', garantia: g };
+
+  // Validar vigencia
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const venc = new Date(g.fecha_vencimiento + 'T00:00:00');
+  if (venc < hoy) return { ok: false, razon: 'vencida', garantia: g };
+
+  const diasRestantes = Math.ceil((venc.getTime() - hoy.getTime()) / 86400000);
+  return { ok: true, garantia: g, diasRestantes };
+}
+
 /**
  * Devuelve garantías que vencen en los próximos N días.
  * Útil para el scanner de notificaciones.

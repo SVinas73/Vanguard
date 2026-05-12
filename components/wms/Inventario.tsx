@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { Product, Almacen } from '@/types';
 import { registrarAuditoria } from '@/lib/audit';
@@ -74,6 +75,7 @@ type VistaStock = 'por_producto' | 'por_ubicacion' | 'alertas';
 // ============================================
 
 export default function Inventario() {
+  const { t } = useTranslation();
   const { user } = useAuth(false);
   const toast = useWmsToast();
   const [loading, setLoading] = useState(true);
@@ -570,20 +572,20 @@ export default function Inventario() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-slate-200">{stats.totalProductos}</div>
-              <div className="text-xs text-slate-400">Productos</div>
+              <div className="text-xs text-slate-400">{t('wmsModule.products')}</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-slate-200">{stats.totalUbicaciones}</div>
-              <div className="text-xs text-slate-400">Ubicaciones</div>
+              <div className="text-xs text-slate-400">{t('wmsModule.locations')}</div>
             </div>
             <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-blue-400">{stats.totalUnidades.toLocaleString()}</div>
-              <div className="text-xs text-blue-400">Unidades</div>
+              <div className="text-xs text-blue-400">{t('wmsModule.units')}</div>
             </div>
             {stats.bajoStock > 0 && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
                 <div className="text-2xl font-bold text-red-400">{stats.bajoStock}</div>
-                <div className="text-xs text-red-400">Bajo Stock</div>
+                <div className="text-xs text-red-400">{t('wmsModule.lowStock')}</div>
               </div>
             )}
           </div>
@@ -607,7 +609,7 @@ export default function Inventario() {
                 onChange={(e) => setAlmacenFiltro(e.target.value)}
                 className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
               >
-                <option value="todos">Todos los almacenes</option>
+                <option value="todos">{t('wmsModule.allWarehouses')}</option>
                 {almacenes.map(a => (
                   <option key={a.id} value={a.id}>{a.nombre}</option>
                 ))}
@@ -618,7 +620,7 @@ export default function Inventario() {
                 onChange={(e) => setCategoriaFiltro(e.target.value)}
                 className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100"
               >
-                <option value="todas">Todas las categorías</option>
+                <option value="todas">{t('wmsModule.allCategories')}</option>
                 {categorias.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
@@ -637,7 +639,7 @@ export default function Inventario() {
                   onChange={(e) => setMostrarSoloBajoStock(e.target.checked)}
                   className="rounded border-slate-600"
                 />
-                <span className="text-sm text-slate-300">Solo bajo stock</span>
+                <span className="text-sm text-slate-300">{t('wmsModule.onlyLowStock')}</span>
               </label>
             </div>
           </div>
@@ -774,23 +776,23 @@ export default function Inventario() {
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
               <ClipboardList className="h-6 w-6 text-blue-400" />
-              Conteos de Inventario
+              {t('wmsModule.cycleCounts')}
             </h3>
-            
+
             <div className="flex gap-2">
               <button
                 onClick={() => handleIniciarConteo('ciclico')}
                 disabled={saving}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium"
               >
-                Conteo Cíclico
+                {t('wmsModule.cycleCount')}
               </button>
               <button
                 onClick={() => handleIniciarConteo('completo')}
                 disabled={saving}
                 className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-sm font-medium"
               >
-                Conteo Completo
+                {t('wmsModule.fullCount')}
               </button>
             </div>
           </div>
