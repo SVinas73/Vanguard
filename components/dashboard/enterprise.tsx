@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valuation';
 
 // ============================================
 // TYPES
@@ -868,44 +869,46 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
   movements: any[];
   onCategoryClick: (category: string) => void;
 }) {
+  // Valuación unificada: FIFO sobre lotes (fuente de verdad) + fallback
+  // a costo promedio. Misma lógica que el Centro de Costos.
+  const [valuacion, setValuacion] = useState<ResultadoValuacion | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    valuarInventario({
+      productos: products.map((p: any) => ({
+        codigo: p.codigo,
+        descripcion: p.descripcion,
+        stock: p.stock,
+        stockMinimo: p.stockMinimo,
+        costoPromedio: p.costoPromedio || 0,
+        categoria: p.categoria,
+        almacenId: p.almacenId,
+        almacen: p.almacen,
+      })),
+    }).then(r => { if (!cancelled) setValuacion(r); });
+    return () => { cancelled = true; };
+  }, [products]);
+
   const data = useMemo(() => {
     const CATEGORY_COLORS: Record<string, string> = {
       'Estación de Servicio': '#3d9a5f', 'Ferretería': '#4a7fb5',
       'Papelería': '#836ba0', 'Ediltor': '#c8872e',
     };
 
-    // VALOR DEL INVENTARIO — base estricta de COSTO (no precio de venta).
-    // Si no hay costo_promedio, el producto no aporta al valor pero se cuenta
-    // como "sin costo" para alertar al usuario sobre calidad de datos.
-    const valorProducto = (p: any) => p.stock * (p.costoPromedio || 0);
-    const totalValue = products.reduce((sum, p) => sum + valorProducto(p), 0);
-    const sinCosto = products.filter((p) => p.stock > 0 && (!p.costoPromedio || p.costoPromedio <= 0)).length;
-    const sinAlmacen = products.filter((p) => !p.almacenId).length;
-
-    const categoryMap: Record<string, number> = {};
-    products.forEach((p) => { categoryMap[p.categoria] = (categoryMap[p.categoria] ?? 0) + valorProducto(p); });
-    const categorias = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([nombre, valor], i) => ({
-      nombre, valor,
-      porcentaje: totalValue > 0 ? Math.round((valor / totalValue) * 100) : 0,
-      color: CATEGORY_COLORS[nombre] ?? ['#3d9a5f','#4a7fb5','#836ba0','#c8872e','#b5547a'][i % 5],
+    const totalValue = valuacion?.total ?? 0;
+    const categorias = (valuacion?.porCategoria ?? []).slice(0, 5).map((c, i) => ({
+      nombre: c.nombre,
+      valor: c.valor,
+      porcentaje: totalValue > 0 ? Math.round((c.valor / totalValue) * 100) : 0,
+      color: CATEGORY_COLORS[c.nombre] ?? ['#3d9a5f','#4a7fb5','#836ba0','#c8872e','#b5547a'][i % 5],
     }));
 
-    // DESGLOSE POR ALMACÉN
-    const almacenAcc = new Map<string, AlmacenBreakdown>();
-    const SIN_ALMACEN_KEY = '__sin_almacen__';
-    products.forEach((p) => {
-      const id = p.almacenId || SIN_ALMACEN_KEY;
-      const a = p.almacen;
-      const nombre = a?.nombre ?? (id === SIN_ALMACEN_KEY ? 'Sin almacén asignado' : 'Almacén desconocido');
-      const codigo = a?.codigo ?? (id === SIN_ALMACEN_KEY ? '—' : '');
-      const cur = almacenAcc.get(id) ?? { id, nombre, codigo, productos: 0, unidades: 0, valor: 0, criticos: 0 };
-      cur.productos += 1;
-      cur.unidades += p.stock || 0;
-      cur.valor    += valorProducto(p);
-      if (p.stock <= (p.stockMinimo ?? 0)) cur.criticos += 1;
-      almacenAcc.set(id, cur);
-    });
-    const almacenes = Array.from(almacenAcc.values()).sort((a, b) => b.valor - a.valor);
+    const almacenes = valuacion?.porAlmacen ?? [];
+
+    // Mapa codigo → valor por producto, para reusar en inmovilizados y tendencia
+    const valorPorCodigo = new Map<string, number>();
+    (valuacion?.porProducto ?? []).forEach(vp => valorPorCodigo.set(vp.codigo, vp.valor));
+    const valorProducto = (p: any) => valorPorCodigo.get(p.codigo) ?? 0;
 
     // CAPITAL INMOVILIZADO — productos sin movimiento en 60 días
     const sixtyDaysAgo = new Date(); sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
@@ -913,18 +916,26 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
     const inmovilizados = products.filter((p) => !activeCodes.has(p.codigo) && p.stock > 0);
     const capitalInmovilizado = inmovilizados.reduce((sum, p) => sum + valorProducto(p), 0);
 
-    // VALOR 30 DÍAS ATRÁS — para tendencia. Reconstruimos a partir del neto.
+    // VALOR 30 DÍAS ATRÁS — tendencia. Usamos valor unitario implícito por producto
+    // (valor / stock) para aproximar. Si stock=0, no contribuye.
     const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const productCostMap = new Map(products.map((p) => [p.codigo, p.costoPromedio || 0]));
+    const costoUnitMap = new Map<string, number>();
+    (valuacion?.porProducto ?? []).forEach(vp => {
+      const unit = vp.unidades > 0 ? vp.valor / vp.unidades : 0;
+      costoUnitMap.set(vp.codigo, unit);
+    });
     let netValueChange = 0;
     movements.forEach((m) => {
       if (new Date(m.timestamp) >= thirtyDaysAgo) {
-        const cost = productCostMap.get(m.codigo) ?? 0;
+        const cost = costoUnitMap.get(m.codigo) ?? 0;
         if (m.tipo === 'entrada') netValueChange += m.cantidad * cost;
         else                       netValueChange -= m.cantidad * cost;
       }
     });
     const prev30d = totalValue - netValueChange;
+
+    const sinCosto = valuacion?.calidad.sinValuar ?? 0;
+    const sinAlmacen = products.filter((p) => !p.almacenId).length;
 
     return {
       total: totalValue,
@@ -936,7 +947,7 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
       sinCosto,
       sinAlmacen,
     };
-  }, [products, movements]);
+  }, [valuacion, products, movements]);
   return <InventoryValuePanel data={data} />;
 }
 
