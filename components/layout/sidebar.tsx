@@ -103,7 +103,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
     main: true,
     operations: true,
     postSales: true,
-    people: false,
+    people: true,
     analysis: true,
     control: false,
     config: false,
@@ -160,7 +160,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
     {
       key: 'people',
       title: t('nav.people') || 'Personal',
-      defaultOpen: false,
+      defaultOpen: true,
       items: [
         { id: 'rrhh', label: t('modules.hr') || 'Recursos Humanos', icon: Users },
       ]
