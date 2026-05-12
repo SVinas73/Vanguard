@@ -7,6 +7,7 @@ import {
   Hourglass, ArrowUpRight, ArrowDownRight,
   type LucideIcon,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // ============================================
 // TYPES
@@ -30,12 +31,27 @@ interface Categoria {
   color: string;
 }
 
+interface AlmacenBreakdown {
+  id: string;
+  nombre: string;
+  codigo: string;
+  productos: number;
+  unidades: number;
+  valor: number;
+  criticos: number;
+}
+
 interface ValorInventarioData {
   total: number;
   prev30d: number;
   categorias: Categoria[];
   capitalInmovilizado: number;
   productosInmovilizados: number;
+  // Desglose por almacén — null = sin almacén asignado
+  almacenes: AlmacenBreakdown[];
+  // Productos con problemas de data quality
+  sinCosto: number;       // costo_promedio = 0 → no aportan al valor
+  sinAlmacen: number;     // sin almacen_id asignado
 }
 
 type AlertLevel = 'critical' | 'warning' | 'low';
@@ -290,8 +306,11 @@ interface InventoryValuePanelProps {
 }
 
 function InventoryValuePanel({ data }: InventoryValuePanelProps) {
-  const trend = ((data.total - data.prev30d) / data.prev30d * 100).toFixed(1);
+  const trend = data.prev30d > 0
+    ? ((data.total - data.prev30d) / data.prev30d * 100).toFixed(1)
+    : '0.0';
   const isUp = parseFloat(trend) >= 0;
+  const hayProblemasDatos = data.sinCosto > 0 || data.sinAlmacen > 0;
 
   return (
     <div className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-800">
@@ -367,6 +386,47 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
           ))}
         </div>
 
+        {/* Desglose por almacén */}
+        {data.almacenes.length > 0 && (
+          <div className="mb-5 p-3.5 rounded-xl" style={{ background: 'rgba(74,127,181,0.05)', border: '1px solid rgba(74,127,181,0.15)' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Package size={13} className="text-blue-400" />
+              <span className="text-xs font-medium text-blue-300">Desglose por almacén</span>
+              <span className="ml-auto text-[10px] text-blue-400/50">{data.almacenes.length} almac{data.almacenes.length === 1 ? 'én' : 'enes'}</span>
+            </div>
+            <div className="space-y-2">
+              {data.almacenes.map((a) => {
+                const pct = data.total > 0 ? Math.round((a.valor / data.total) * 100) : 0;
+                const esSinAlmacen = a.id === '__sin_almacen__';
+                return (
+                  <div key={a.id} className="text-xs">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={cn('font-medium', esSinAlmacen ? 'text-amber-300' : 'text-slate-200')}>
+                        {a.codigo !== '—' && a.codigo !== '' && <span className="text-slate-500 mr-1.5">{a.codigo}</span>}
+                        {a.nombre}
+                      </span>
+                      <span className="font-mono text-slate-300">
+                        ${(a.valor / 1000).toFixed(1)}k <span className="text-slate-500">· {pct}%</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                      <span>{a.productos} productos</span>
+                      <span>·</span>
+                      <span>{a.unidades.toLocaleString('es-UY')} unid.</span>
+                      {a.criticos > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="text-amber-400">{a.criticos} críticos</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Inmovilizado */}
         <div className="p-3.5 rounded-xl" style={{ background: 'rgba(200,135,46,0.06)', border: '1px solid rgba(200,135,46,0.12)' }}>
           <div className="flex items-center justify-between">
@@ -379,10 +439,30 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
             </div>
             <div className="text-right">
               <div className="text-sm font-bold text-amber-300">${data.capitalInmovilizado.toLocaleString()}</div>
-              <div className="text-[10px] text-amber-400/50">{((data.capitalInmovilizado / data.total) * 100).toFixed(0)}% del total</div>
+              <div className="text-[10px] text-amber-400/50">
+                {data.total > 0 ? ((data.capitalInmovilizado / data.total) * 100).toFixed(0) : 0}% del total
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Calidad de datos — sólo aparece si hay problemas */}
+        {hayProblemasDatos && (
+          <div className="mt-3 p-3 rounded-xl text-[11px]" style={{ background: 'rgba(201,68,68,0.05)', border: '1px solid rgba(201,68,68,0.15)' }}>
+            <div className="flex items-center gap-2 mb-1.5">
+              <AlertTriangle size={12} className="text-red-400" />
+              <span className="font-medium text-red-300">Calidad de datos</span>
+            </div>
+            <ul className="space-y-0.5 text-red-400/70">
+              {data.sinCosto > 0 && (
+                <li>{data.sinCosto} producto(s) con stock pero sin costo promedio — no valúan</li>
+              )}
+              {data.sinAlmacen > 0 && (
+                <li>{data.sinAlmacen} producto(s) sin almacén asignado</li>
+              )}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -793,39 +873,69 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
       'Estación de Servicio': '#3d9a5f', 'Ferretería': '#4a7fb5',
       'Papelería': '#836ba0', 'Ediltor': '#c8872e',
     };
-    const totalValue = products.reduce((sum, p) => sum + p.stock * (p.costoPromedio ?? p.precio), 0);
+
+    // VALOR DEL INVENTARIO — base estricta de COSTO (no precio de venta).
+    // Si no hay costo_promedio, el producto no aporta al valor pero se cuenta
+    // como "sin costo" para alertar al usuario sobre calidad de datos.
+    const valorProducto = (p: any) => p.stock * (p.costoPromedio || 0);
+    const totalValue = products.reduce((sum, p) => sum + valorProducto(p), 0);
+    const sinCosto = products.filter((p) => p.stock > 0 && (!p.costoPromedio || p.costoPromedio <= 0)).length;
+    const sinAlmacen = products.filter((p) => !p.almacenId).length;
+
     const categoryMap: Record<string, number> = {};
-    products.forEach((p) => { categoryMap[p.categoria] = (categoryMap[p.categoria] ?? 0) + p.stock * (p.costoPromedio ?? p.precio); });
+    products.forEach((p) => { categoryMap[p.categoria] = (categoryMap[p.categoria] ?? 0) + valorProducto(p); });
     const categorias = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([nombre, valor], i) => ({
       nombre, valor,
       porcentaje: totalValue > 0 ? Math.round((valor / totalValue) * 100) : 0,
       color: CATEGORY_COLORS[nombre] ?? ['#3d9a5f','#4a7fb5','#836ba0','#c8872e','#b5547a'][i % 5],
     }));
+
+    // DESGLOSE POR ALMACÉN
+    const almacenAcc = new Map<string, AlmacenBreakdown>();
+    const SIN_ALMACEN_KEY = '__sin_almacen__';
+    products.forEach((p) => {
+      const id = p.almacenId || SIN_ALMACEN_KEY;
+      const a = p.almacen;
+      const nombre = a?.nombre ?? (id === SIN_ALMACEN_KEY ? 'Sin almacén asignado' : 'Almacén desconocido');
+      const codigo = a?.codigo ?? (id === SIN_ALMACEN_KEY ? '—' : '');
+      const cur = almacenAcc.get(id) ?? { id, nombre, codigo, productos: 0, unidades: 0, valor: 0, criticos: 0 };
+      cur.productos += 1;
+      cur.unidades += p.stock || 0;
+      cur.valor    += valorProducto(p);
+      if (p.stock <= (p.stockMinimo ?? 0)) cur.criticos += 1;
+      almacenAcc.set(id, cur);
+    });
+    const almacenes = Array.from(almacenAcc.values()).sort((a, b) => b.valor - a.valor);
+
+    // CAPITAL INMOVILIZADO — productos sin movimiento en 60 días
     const sixtyDaysAgo = new Date(); sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
     const activeCodes = new Set(movements.filter((m) => new Date(m.timestamp) >= sixtyDaysAgo).map((m) => m.codigo));
     const inmovilizados = products.filter((p) => !activeCodes.has(p.codigo) && p.stock > 0);
-    const capitalInmovilizado = inmovilizados.reduce((sum, p) => sum + p.stock * (p.costoPromedio ?? p.precio), 0);
+    const capitalInmovilizado = inmovilizados.reduce((sum, p) => sum + valorProducto(p), 0);
 
-    // Calculate real prev30d: current value + net of last 30 days movements
-    // If entries came in (value went up), the previous value was lower
-    // If exits went out (value went down), the previous value was higher
+    // VALOR 30 DÍAS ATRÁS — para tendencia. Reconstruimos a partir del neto.
     const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const productCostMap = new Map(products.map((p) => [p.codigo, p.costoPromedio ?? p.precio]));
+    const productCostMap = new Map(products.map((p) => [p.codigo, p.costoPromedio || 0]));
     let netValueChange = 0;
     movements.forEach((m) => {
       if (new Date(m.timestamp) >= thirtyDaysAgo) {
         const cost = productCostMap.get(m.codigo) ?? 0;
-        if (m.tipo === 'entrada') {
-          netValueChange += m.cantidad * cost;
-        } else {
-          netValueChange -= m.cantidad * cost;
-        }
+        if (m.tipo === 'entrada') netValueChange += m.cantidad * cost;
+        else                       netValueChange -= m.cantidad * cost;
       }
     });
-    // prev30d = current value - net change from last 30 days
     const prev30d = totalValue - netValueChange;
 
-    return { total: totalValue, prev30d: prev30d > 0 ? prev30d : 0, categorias, capitalInmovilizado, productosInmovilizados: inmovilizados.length };
+    return {
+      total: totalValue,
+      prev30d: prev30d > 0 ? prev30d : 0,
+      categorias,
+      capitalInmovilizado,
+      productosInmovilizados: inmovilizados.length,
+      almacenes,
+      sinCosto,
+      sinAlmacen,
+    };
   }, [products, movements]);
   return <InventoryValuePanel data={data} />;
 }

@@ -52,6 +52,7 @@ const ApprovalsInbox        = dynamic(() => import('@/components/approvals/Appro
 const FacturasElectronicas  = dynamic(() => import('@/components/facturacion/FacturasElectronicas'),                             { loading: ModuleLoader });
 const TicketsModule         = dynamic(() => import('@/components/tickets/TicketsModule'),                                        { loading: ModuleLoader });
 const GarantiasModule       = dynamic(() => import('@/components/garantias/GarantiasModule'),                                    { loading: ModuleLoader });
+const RRHHModule            = dynamic(() => import('@/components/rrhh/RRHHModule'),                                                { loading: ModuleLoader });
 const HistorialCliente      = dynamic(() => import('@/components/clientes/HistorialCliente'),                                    { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
@@ -842,6 +843,11 @@ export default function HomePage() {
         {/* ==================== GARANTÍAS ==================== */}
         {activeTab === 'garantias' && (
           <GarantiasModule />
+        )}
+
+        {/* ==================== RRHH ==================== */}
+        {activeTab === 'rrhh' && (
+          <RRHHModule />
         )}
 
         {/* ==================== HISTORIAL CLIENTE 360 ==================== */}

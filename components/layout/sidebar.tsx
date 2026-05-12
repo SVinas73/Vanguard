@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
+import { Logo } from '@/components/ui/Logo';
 import { NotificacionesBell } from '@/components/proyectos/NotificacionesBell';
 import { ChatBadge } from '@/components/chat';
 
@@ -82,7 +83,8 @@ interface NavItem {
 }
 
 interface NavSection {
-  title: string;
+  key: string;        // estable, independiente del idioma
+  title: string;     // traducido
   items: NavItem[];
   defaultOpen?: boolean;
 }
@@ -98,11 +100,13 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    'Principal': true,
-    'Operaciones': true,
-    'Análisis': true,
-    'Control & Seguimiento': false,
-    'Configuración': false,
+    main: true,
+    operations: true,
+    postSales: true,
+    people: false,
+    analysis: true,
+    control: false,
+    config: false,
   });
 
   // Configuración de roles - colores más sutiles
@@ -118,6 +122,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
   // Navegación organizada por secciones
   const navigation: NavSection[] = [
     {
+      key: 'main',
       title: t('nav.main') || 'Principal',
       defaultOpen: true,
       items: [
@@ -125,26 +130,43 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'stock', label: t('nav.stock'), icon: Package },
         { id: 'movimientos', label: t('nav.movements'), icon: ArrowLeftRight },
         { id: 'chat', label: t('modules.messages'), icon: MessageCircle },
-        
       ]
     },
     {
+      key: 'operations',
       title: t('nav.operations') || 'Operaciones',
       defaultOpen: true,
       items: [
         { id: 'comercial', label: t('modules.comercial'), icon: DollarSign, permission: 'canViewComercial' },
         { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
-        { id: 'taller', label: t('modules.workshop'), icon: Wrench, permission: 'canViewTaller' },
         { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
-        { id: 'facturacion', label: 'Facturación electrónica', icon: FileText },
-        { id: 'tickets', label: 'Tickets soporte', icon: MessageCircle },
-        { id: 'garantias', label: 'Garantías', icon: Shield },
-        { id: 'clientes_360', label: 'Cliente 360°', icon: Users },
+        { id: 'facturacion', label: t('nav.invoicing') || 'Facturación electrónica', icon: FileText },
+        { id: 'clientes_360', label: t('modules.customers360') || 'Cliente 360°', icon: Users },
         { id: 'bom', label: t('modules.bom'), icon: Boxes, permission: 'canViewBOM' },
         { id: 'ensamblajes', label: t('modules.assemblies'), icon: Wrench, permission: 'canViewBOM' },
       ]
     },
     {
+      key: 'postSales',
+      title: t('nav.postSales') || 'Post-venta',
+      defaultOpen: true,
+      items: [
+        { id: 'taller', label: t('modules.workshop'), icon: Wrench, permission: 'canViewTaller' },
+        { id: 'garantias', label: t('modules.warranties') || 'Garantías', icon: Shield },
+        { id: 'tickets', label: t('modules.tickets') || 'Tickets soporte', icon: MessageCircle },
+        { id: 'rma', label: t('modules.returns'), icon: RotateCcw, permission: 'canViewRMA' },
+      ]
+    },
+    {
+      key: 'people',
+      title: t('nav.people') || 'Personal',
+      defaultOpen: false,
+      items: [
+        { id: 'rrhh', label: t('modules.hr') || 'Recursos Humanos', icon: Users },
+      ]
+    },
+    {
+      key: 'analysis',
       title: t('nav.analysis') || 'Análisis',
       defaultOpen: true,
       items: [
@@ -154,18 +176,19 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       ]
     },
     {
+      key: 'control',
       title: t('nav.controlTracking', 'Control & Seguimiento'),
       defaultOpen: false,
       items: [
-        { id: 'aprobaciones', label: 'Aprobaciones', icon: Shield },
+        { id: 'aprobaciones', label: t('nav.approvals') || 'Aprobaciones', icon: Shield },
         { id: 'seriales', label: t('modules.serials'), icon: QrCode, permission: 'canViewSeriales' },
         { id: 'trazabilidad', label: t('modules.traceability'), icon: GitBranch, permission: 'canViewSeriales' },
-        { id: 'rma', label: t('modules.returns'), icon: RotateCcw, permission: 'canViewRMA' },
         { id: 'qms', label: t('modules.quality'), icon: Shield, permission: 'canViewQMS' },
         { id: 'auditoria', label: t('nav.audit'), icon: Shield, permission: 'canViewAudit' },
       ]
     },
     {
+      key: 'config',
       title: t('nav.config') || 'Configuración',
       defaultOpen: false,
       items: [
@@ -174,8 +197,8 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
     },
   ];
 
-  const toggleSection = (title: string) => {
-    setOpenSections(prev => ({ ...prev, [title]: !prev[title] }));
+  const toggleSection = (key: string) => {
+    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const checkPermission = (item: NavItem): boolean => {
@@ -217,9 +240,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         'flex items-center gap-3 h-16 px-4 border-b border-slate-800',
         collapsed && 'justify-center px-2'
       )}>
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-          <span className="text-white font-bold text-sm">V</span>
-        </div>
+        <Logo size={32} />
         {!collapsed && (
           <div className="flex-1 min-w-0">
             <h1 className="text-[15px] font-semibold text-white tracking-tight">
@@ -240,14 +261,14 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-2">
         {navigation.map((section) => {
-          const isOpen = openSections[section.title] ?? section.defaultOpen;
-          
+          const isOpen = openSections[section.key] ?? section.defaultOpen;
+
           return (
-            <div key={section.title} className="mb-1">
+            <div key={section.key} className="mb-1">
               {/* Section header */}
               {!collapsed && (
                 <button
-                  onClick={() => toggleSection(section.title)}
+                  onClick={() => toggleSection(section.key)}
                   className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-medium text-slate-500 uppercase tracking-wider hover:text-slate-400 transition-colors"
                 >
                   <span>{section.title}</span>

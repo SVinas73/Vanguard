@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -84,11 +85,10 @@ export default function LoginPage() {
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold">
-            <span className="text-emerald-400">Vanguard</span>
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">Sistema de Gestión de Inventarios</p>
+        <div className="flex flex-col items-center mb-8">
+          <Logo size={64} />
+          <h1 className="text-2xl font-bold mt-3 text-slate-100">Vanguard</h1>
+          <p className="text-slate-500 text-sm mt-1">Sistema de Gestión Inteligente</p>
         </div>
 
         {/* Card */}
