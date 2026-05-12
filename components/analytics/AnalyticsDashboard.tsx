@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Product, Movement, StockPrediction } from '@/types';
 import { cn, formatCurrency, formatNumber } from '@/lib/utils';
 import { Card } from '@/components/ui';
+import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valuation';
 import {
   AreaChart,
   Area,
@@ -114,6 +115,26 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
   const [period, setPeriod] = useState<PeriodType>('month');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
+  // Valuación unificada — misma fuente de verdad que Dashboard y Costos.
+  // Mientras carga muestra 0 (no pestañea entre cálculos viejo/nuevo).
+  const [valuacion, setValuacion] = useState<ResultadoValuacion | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    valuarInventario({
+      productos: products.map((p: any) => ({
+        codigo: p.codigo,
+        descripcion: p.descripcion,
+        stock: p.stock,
+        stockMinimo: p.stockMinimo,
+        costoPromedio: p.costoPromedio || 0,
+        categoria: p.categoria,
+        almacenId: p.almacenId,
+        almacen: p.almacen,
+      })),
+    }).then(r => { if (!cancelled) setValuacion(r); });
+    return () => { cancelled = true; };
+  }, [products]);
+
   // ============================================
   // CÁLCULOS Y MÉTRICAS
   // ============================================
@@ -144,7 +165,10 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
   // KPIs principales
   const kpis = useMemo(() => {
     const totalProducts = products.length;
-    const totalValue = products.reduce((sum, p) => sum + (p.stock * p.precio), 0);
+    // VALOR DEL INVENTARIO — viene de la lib unificada (FIFO + fallback).
+    // Antes usábamos stock × precio_venta, lo que confundía valor de stock
+    // con potencial de venta.
+    const totalValue = valuacion?.total ?? 0;
     const avgCost = products.reduce((sum, p) => sum + (p.costoPromedio || 0), 0) / totalProducts || 0;
     
     const productsAtRisk = products.filter(p => {
@@ -181,7 +205,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
       productsNoMovement,
       movementsCount: filteredMovements.length,
     };
-  }, [products, predictions, filteredMovements, period]);
+  }, [products, predictions, filteredMovements, period, valuacion]);
 
   // Análisis ABC
   const abcAnalysis = useMemo(() => {
@@ -273,7 +297,14 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
     return data;
   }, [movements, period]);
 
-  // Datos por categoría
+  // Datos por categoría — valor en COSTO (no precio de venta) para que
+  // coincida con el KPI total y con Dashboard/Costos.
+  const valorPorCodigo = useMemo(() => {
+    const m = new Map<string, number>();
+    (valuacion?.porProducto ?? []).forEach(vp => m.set(vp.codigo, vp.valor));
+    return m;
+  }, [valuacion]);
+
   const categoryData = useMemo(() => {
     const categories: Record<string, { value: number; stock: number; products: number }> = {};
 
@@ -281,7 +312,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
       if (!categories[p.categoria]) {
         categories[p.categoria] = { value: 0, stock: 0, products: 0 };
       }
-      categories[p.categoria].value += p.stock * p.precio;
+      categories[p.categoria].value += valorPorCodigo.get(p.codigo) ?? 0;
       categories[p.categoria].stock += p.stock;
       categories[p.categoria].products += 1;
     });
@@ -289,7 +320,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
     return Object.entries(categories)
       .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.value - a.value);
-  }, [products]);
+  }, [products, valorPorCodigo]);
 
   // Insights automáticos
   const insights = useMemo(() => {

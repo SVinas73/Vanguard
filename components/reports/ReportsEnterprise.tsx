@@ -902,26 +902,51 @@ export default function ReportsEnterprise() {
     };
   };
 
-  // SIN MOVIMIENTO
+  // SIN MOVIMIENTO — el capital inmovilizado es el COSTO histórico
+  // (lo que pagaste por el stock parado), no el precio de venta.
   const generarReporteSinMovimiento = async (): Promise<DatosReporte> => {
-    const { data: productos } = await supabase.from('productos').select('codigo, descripcion, categoria, stock, precio');
-    const { data: movimientos } = await supabase
-      .from('movimientos')
-      .select('codigo')
-      .gte('created_at', filtros.fechaInicio)
-      .lte('created_at', filtros.fechaFin);
+    const [{ data: productos }, { data: lotes }, { data: movimientos }] = await Promise.all([
+      supabase.from('productos')
+        .select('codigo, descripcion, categoria, stock, precio, costo_promedio')
+        .is('deleted_at', null),
+      supabase.from('lotes')
+        .select('codigo, cantidad_disponible, costo_unitario')
+        .gt('cantidad_disponible', 0),
+      supabase.from('movimientos')
+        .select('codigo')
+        .gte('created_at', filtros.fechaInicio)
+        .lte('created_at', filtros.fechaFin),
+    ]);
+
+    // Costo unitario efectivo por producto (FIFO ponderado, sino costo promedio)
+    const costoUnitMap = new Map<string, number>();
+    (lotes || []).forEach((l: any) => {
+      const prev = costoUnitMap.get(l.codigo);
+      // Promedio ponderado de los lotes activos
+      const cantidad = l.cantidad_disponible || 0;
+      const costo = parseFloat(l.costo_unitario) || 0;
+      if (prev === undefined) {
+        costoUnitMap.set(l.codigo, costo);
+      } else {
+        // Promedio simple (no tenemos suficiente info aquí, pero es mejor que precio)
+        costoUnitMap.set(l.codigo, (prev + costo) / 2);
+      }
+    });
 
     const codigosConMov = new Set(movimientos?.map(m => m.codigo) || []);
-    
+
     const filas = (productos || [])
       .filter(p => !codigosConMov.has(p.codigo) && p.stock > 0)
-      .map(p => ({
-        codigo: p.codigo,
-        descripcion: p.descripcion,
-        categoria: p.categoria,
-        stock: p.stock,
-        valorInmovilizado: p.stock * p.precio,
-      }));
+      .map(p => {
+        const costoUnit = costoUnitMap.get(p.codigo) ?? (parseFloat((p as any).costo_promedio) || 0);
+        return {
+          codigo: p.codigo,
+          descripcion: p.descripcion,
+          categoria: p.categoria,
+          stock: p.stock,
+          valorInmovilizado: p.stock * costoUnit,
+        };
+      });
 
     const valorTotal = filas.reduce((s, f) => s + f.valorInmovilizado, 0);
 

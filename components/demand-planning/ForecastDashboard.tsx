@@ -80,10 +80,11 @@ export default function ForecastDashboard() {
     setError(null);
     
     try {
-      // 1. Cargar productos de Supabase
+      // 1. Cargar productos de Supabase (excluyendo borrados)
       const { data: productosData } = await supabase
         .from('productos')
         .select('*')
+        .is('deleted_at', null)
         .order('descripcion');
       
       if (productosData) {
