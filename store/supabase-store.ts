@@ -146,6 +146,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     }
     
     // Query con timeout y reintentos
+    // IMPORTANTE: filtrar deleted_at IS NULL para no contar borrados
     const { data, error, timedOut } = await safeQuery<any[]>(
       () => supabase
         .from('productos')
@@ -153,6 +154,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
           *,
           almacen:almacenes(id, codigo, nombre)
         `)
+        .is('deleted_at', null)
         .order('codigo'),
       { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
     );

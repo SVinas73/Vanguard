@@ -11,6 +11,8 @@ import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
 import { CommandPalette, useCommandPalette, type CommandAction } from '@/components/ui/command-palette';
 import { useFocusMode, FocusModeToggle, FocusModeBanner } from '@/components/ui/focus-mode';
+import { useStressDetector, setDeteccionStressDeshabilitada } from '@/hooks/useStressDetector';
+import StressPrompt from '@/components/ui/StressPrompt';
 import MiDia from '@/components/dashboard/MiDia';
 import { AIStatusBadge } from '@/components/ai';
 import { ProductImage } from '@/components/productos';
@@ -50,6 +52,7 @@ const ApprovalsInbox        = dynamic(() => import('@/components/approvals/Appro
 const FacturasElectronicas  = dynamic(() => import('@/components/facturacion/FacturasElectronicas'),                             { loading: ModuleLoader });
 const TicketsModule         = dynamic(() => import('@/components/tickets/TicketsModule'),                                        { loading: ModuleLoader });
 const GarantiasModule       = dynamic(() => import('@/components/garantias/GarantiasModule'),                                    { loading: ModuleLoader });
+const RRHHModule            = dynamic(() => import('@/components/rrhh/RRHHModule'),                                                { loading: ModuleLoader });
 const HistorialCliente      = dynamic(() => import('@/components/clientes/HistorialCliente'),                                    { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
@@ -125,11 +128,38 @@ export default function HomePage() {
         setComercialSubTab('dashboard');
       }
     }
+    // Emitimos para alimentar el detector de estrés (cuenta
+    // cambios de tab en los últimos 5 minutos como señal de
+    // frenesí navegando).
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('vg:tab-change', { detail: { tab } }));
+    }
   }, []);
 
   // ===== Sprint D: Command Palette + Focus Mode =====
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
-  const { enabled: focusEnabled, toggle: toggleFocus } = useFocusMode();
+  const { enabled: focusEnabled, toggle: toggleFocus, setEnabled: setFocusEnabled } = useFocusMode();
+
+  // ===== Modo anti-estrés inteligente =====
+  // Detecta sobrecarga (notificaciones, aprobaciones, tickets
+  // SLA, comportamiento) y sugiere activar Focus Mode. NUNCA
+  // se activa solo — siempre pide confirmación al usuario.
+  const {
+    score: stressScore,
+    debeMostrarPrompt: mostrarStressPrompt,
+    marcarComoMostrado,
+    marcarComoIgnorado,
+  } = useStressDetector({
+    usuarioEmail: user?.email || '',
+    rol: user?.rol || '',
+    // Si Focus Mode YA está activo, no insistimos
+    habilitado: !!user?.email && !focusEnabled,
+  });
+
+  const activarFocusDesdeStress = useCallback(() => {
+    setFocusEnabled(true);
+    marcarComoMostrado();
+  }, [setFocusEnabled, marcarComoMostrado]);
 
   const askAI = useCallback((prompt: string) => {
     // Disparamos un evento custom que el ChatbotWidget escucha:
@@ -815,6 +845,11 @@ export default function HomePage() {
           <GarantiasModule />
         )}
 
+        {/* ==================== RRHH ==================== */}
+        {activeTab === 'rrhh' && (
+          <RRHHModule />
+        )}
+
         {/* ==================== HISTORIAL CLIENTE 360 ==================== */}
         {activeTab === 'clientes_360' && (
           <HistorialCliente />
@@ -1189,6 +1224,18 @@ export default function HomePage() {
       />
       <FocusModeToggle enabled={focusEnabled} onToggle={toggleFocus} />
       <FocusModeBanner enabled={focusEnabled} />
+      {stressScore && (
+        <StressPrompt
+          score={stressScore}
+          visible={mostrarStressPrompt}
+          onActivar={activarFocusDesdeStress}
+          onDespues={marcarComoIgnorado}
+          onDeshabilitar={() => {
+            setDeteccionStressDeshabilitada(true);
+            marcarComoIgnorado();
+          }}
+        />
+      )}
 
       {/* Indicador offline */}
       <OfflineIndicator />

@@ -6,7 +6,7 @@ const resources = {
     translation: {
       header: { subtitle: 'Sistema de Gestión de Inventarios', logout: 'Cerrar sesión' },
       roles: { admin: 'Admin', seller: 'Vendedor', warehouse: 'Bodeguero', operator: 'Operador' },
-      nav: { main: 'Principal', dashboard: 'Dashboard', stock: 'Stock', movements: 'Transacciones de Movimientos', operations: 'Operaciones', purchases: 'Compras', sales: 'Ventas', warehouses: 'Almacenes', analysis: 'Análisis', analytics: 'Analytics IA', reports: 'Reportes', costs: 'Costos', config: 'Configuración', integrations: 'Integraciones', audit: 'Auditoría', controlTracking: 'Control & Seguimiento' },
+      nav: { main: 'Principal', dashboard: 'Dashboard', stock: 'Stock', movements: 'Transacciones de Movimientos', operations: 'Operaciones', purchases: 'Compras', sales: 'Ventas', warehouses: 'Almacenes', analysis: 'Análisis', analytics: 'Analytics IA', reports: 'Reportes', costs: 'Costos', config: 'Configuración', integrations: 'Integraciones', audit: 'Auditoría', controlTracking: 'Control & Seguimiento', postSales: 'Post-venta', people: 'Personal', approvals: 'Aprobaciones', invoicing: 'Facturación electrónica' },
       greetings: {
         morning: 'Buenos días',
         afternoon: 'Buenas tardes',
@@ -56,6 +56,8 @@ const resources = {
         returns: 'Devoluciones', bom: 'BOM', assemblies: 'Ensamblajes',
         inventory: 'Inventario', operations: 'Operaciones', analysis: 'Análisis',
         control: 'Control', config: 'Configuración', home: 'Inicio', chat: 'Chat',
+        warranties: 'Garantías', tickets: 'Tickets soporte', hr: 'Recursos Humanos',
+        customers360: 'Cliente 360°',
       },
       // Theme
       theme: { lightMode: 'Modo Claro', darkMode: 'Modo Oscuro' },
@@ -348,7 +350,7 @@ const resources = {
     translation: {
       header: { subtitle: 'Inventory Management System', logout: 'Log out' },
       roles: { admin: 'Admin', seller: 'Seller', warehouse: 'Warehouse', operator: 'Operator' },
-      nav: { main: 'Main', dashboard: 'Dashboard', stock: 'Stock', movements: 'Movement Transactions', operations: 'Operations', purchases: 'Purchases', sales: 'Sales', warehouses: 'Warehouses', analysis: 'Analysis', analytics: 'AI Analytics', reports: 'Reports', costs: 'Costs', config: 'Configuration', integrations: 'Integrations', audit: 'Audit', controlTracking: 'Control & Tracking' },
+      nav: { main: 'Main', dashboard: 'Dashboard', stock: 'Stock', movements: 'Movement Transactions', operations: 'Operations', purchases: 'Purchases', sales: 'Sales', warehouses: 'Warehouses', analysis: 'Analysis', analytics: 'AI Analytics', reports: 'Reports', costs: 'Costs', config: 'Configuration', integrations: 'Integrations', audit: 'Audit', controlTracking: 'Control & Tracking', postSales: 'After-sales', people: 'People', approvals: 'Approvals', invoicing: 'E-Invoicing' },
       greetings: {
         morning: 'Good morning',
         afternoon: 'Good afternoon',
@@ -397,6 +399,8 @@ const resources = {
         returns: 'Returns', bom: 'BOM', assemblies: 'Assemblies',
         inventory: 'Inventory', operations: 'Operations', analysis: 'Analysis',
         control: 'Control', config: 'Settings', home: 'Home', chat: 'Chat',
+        warranties: 'Warranties', tickets: 'Support tickets', hr: 'Human Resources',
+        customers360: 'Customer 360°',
       },
       theme: { lightMode: 'Light Mode', darkMode: 'Dark Mode' },
       notifications: {
@@ -655,7 +659,7 @@ const resources = {
     translation: {
       header: { subtitle: 'Sistema de Gestão de Inventário', logout: 'Sair' },
       roles: { admin: 'Admin', seller: 'Vendedor', warehouse: 'Armazém', operator: 'Operador' },
-      nav: { main: 'Principal', dashboard: 'Painel', stock: 'Estoque', movements: 'Movimentos', operations: 'Operações', purchases: 'Compras', sales: 'Vendas', warehouses: 'Armazéns', analysis: 'Análise', analytics: 'Analytics IA', reports: 'Relatórios', costs: 'Custos', config: 'Config', integrations: 'Integrações', audit: 'Auditoria', controlTracking: 'Controle & Rastreamento' },
+      nav: { main: 'Principal', dashboard: 'Painel', stock: 'Estoque', movements: 'Movimentos', operations: 'Operações', purchases: 'Compras', sales: 'Vendas', warehouses: 'Armazéns', analysis: 'Análise', analytics: 'Analytics IA', reports: 'Relatórios', costs: 'Custos', config: 'Config', integrations: 'Integrações', audit: 'Auditoria', controlTracking: 'Controle & Rastreamento', postSales: 'Pós-venda', people: 'Pessoal', approvals: 'Aprovações', invoicing: 'Faturação eletrônica' },
       greetings: {
         morning: 'Bom dia',
         afternoon: 'Boa tarde',
@@ -704,6 +708,8 @@ const resources = {
         returns: 'Devoluções', bom: 'BOM', assemblies: 'Montagens',
         inventory: 'Inventário', operations: 'Operações', analysis: 'Análise',
         control: 'Controle', config: 'Configurações', home: 'Início', chat: 'Chat',
+        warranties: 'Garantias', tickets: 'Tickets de suporte', hr: 'Recursos Humanos',
+        customers360: 'Cliente 360°',
       },
       theme: { lightMode: 'Modo Claro', darkMode: 'Modo Escuro' },
       notifications: {

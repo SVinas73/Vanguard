@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { AIStatusIndicator } from '@/components/analytics';
 import { LanguageSelector } from '@/components/ui/language-selector';
+import { Logo } from '@/components/ui/Logo';
 import { NotificacionesBell } from '@/components/proyectos/NotificacionesBell';
 
 import { cn } from '@/lib/utils';
@@ -29,15 +30,10 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img 
-              src="/vang.png" 
-              alt="Vanguard" 
-              className="w-10 h-10 object-contain rounded-lg"
-              style={{ backgroundColor: '#020617' }}
-            />
+            <Logo size={40} />
             <div>
               <h1 className="text-lg font-semibold tracking-tight">
-                Vanguard<span className="text-emerald-400"></span>
+                Vanguard
               </h1>
               <p className="text-xs text-slate-500">{t('header.subtitle') || 'Sistema de Gestión de Inventarios'}</p>
             </div>
