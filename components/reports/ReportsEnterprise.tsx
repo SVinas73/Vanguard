@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { valuarInventarioSync } from '@/lib/inventory-valuation';
+import { exportarReporteExcel, exportarReportePDF } from '@/lib/export-reportes';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart as RechartsPie, Pie, Cell,
@@ -518,7 +520,7 @@ export default function ReportsEnterprise() {
         supabase.from('almacenes').select('id, nombre').eq('activo', true),
         supabase.from('proveedores').select('id, nombre').eq('activo', true).order('nombre'),
         supabase.from('clientes').select('id, nombre').eq('activo', true).order('nombre'),
-        supabase.from('productos').select('categoria').order('categoria'),
+        supabase.from('productos').select('categoria').is('deleted_at', null).order('categoria'),
       ]);
 
       if (almRes.data) setAlmacenes(almRes.data);
@@ -686,32 +688,58 @@ export default function ReportsEnterprise() {
   // GENERADORES ESPECÍFICOS
   // ============================================
 
-  // VALORIZACIÓN DE STOCK
+  // VALORIZACIÓN DE STOCK — usa la lib unificada (FIFO + fallback)
   const generarReporteValorizacion = async (): Promise<DatosReporte> => {
-    let query = supabase.from('productos').select('codigo, descripcion, categoria, stock, precio, costo_promedio');
-    if (filtros.categoriaProducto) query = query.eq('categoria', filtros.categoriaProducto);
+    let prodQuery = supabase.from('productos')
+      .select(`codigo, descripcion, categoria, stock, stock_minimo, costo_promedio,
+               almacen_id, almacen:almacenes(id, codigo, nombre)`)
+      .is('deleted_at', null);
+    if (filtros.categoriaProducto) prodQuery = prodQuery.eq('categoria', filtros.categoriaProducto);
+    const { data: productos } = await prodQuery.order('descripcion');
 
-    const { data } = await query.order('descripcion');
-    const productos = data || [];
+    const { data: lotes } = await supabase.from('lotes')
+      .select('codigo, cantidad_disponible, costo_unitario')
+      .gt('cantidad_disponible', 0);
 
-    const filas = productos.map(p => ({
-      codigo: p.codigo,
-      descripcion: p.descripcion,
-      categoria: p.categoria,
-      stock: p.stock,
-      costoUnitario: p.costo_promedio || p.precio,
-      valorTotal: p.stock * (p.costo_promedio || p.precio),
-    }));
+    const valuacion = valuarInventarioSync(
+      (productos || []).map((p: any) => ({
+        codigo: p.codigo,
+        descripcion: p.descripcion,
+        stock: p.stock || 0,
+        stockMinimo: p.stock_minimo || 0,
+        costoPromedio: parseFloat(p.costo_promedio) || 0,
+        categoria: p.categoria,
+        almacenId: p.almacen_id,
+        almacen: p.almacen,
+      })),
+      (lotes || []).map((l: any) => ({
+        codigo: l.codigo,
+        cantidad_disponible: l.cantidad_disponible || 0,
+        costo_unitario: parseFloat(l.costo_unitario) || 0,
+      })),
+    );
 
-    const valorTotal = filas.reduce((sum, f) => sum + f.valorTotal, 0);
+    // Mapa producto → su valuación
+    const valuMap = new Map(valuacion.porProducto.map(vp => [vp.codigo, vp]));
+
+    const filas = (productos || []).map((p: any) => {
+      const vp = valuMap.get(p.codigo);
+      const costoUnit = vp && vp.unidades > 0 ? vp.valor / vp.unidades : 0;
+      return {
+        codigo: p.codigo,
+        descripcion: p.descripcion,
+        categoria: p.categoria,
+        stock: p.stock,
+        costoUnitario: costoUnit,
+        valorTotal: vp?.valor ?? 0,
+        fuente: vp?.fuente === 'fifo' ? 'FIFO' : vp?.fuente === 'promedio' ? 'Costo prom.' : '—',
+      };
+    });
+
+    const valorTotal = valuacion.total;
     const totalItems = filas.reduce((sum, f) => sum + f.stock, 0);
 
-    // Datos para gráfico por categoría
-    const porCategoria: Record<string, number> = {};
-    filas.forEach(f => {
-      porCategoria[f.categoria || 'Sin categoría'] = (porCategoria[f.categoria || 'Sin categoría'] || 0) + f.valorTotal;
-    });
-    const graficoData = Object.entries(porCategoria).map(([name, value]) => ({ name, value }));
+    const graficoData = valuacion.porCategoria.map(c => ({ name: c.nombre, value: c.valor }));
 
     return {
       titulo: 'Valorización de Stock',
@@ -723,9 +751,10 @@ export default function ReportsEnterprise() {
         { key: 'stock', label: 'Stock', tipo: 'numero' },
         { key: 'costoUnitario', label: 'Costo Unit.', tipo: 'moneda' },
         { key: 'valorTotal', label: 'Valor Total', tipo: 'moneda' },
+        { key: 'fuente', label: 'Método' },
       ],
       filas,
-      totales: { valorTotal, totalItems },
+      totales: { totalItems, valorTotal },
       graficoData,
       graficoTipo: 'pie',
       kpis: [
@@ -736,13 +765,47 @@ export default function ReportsEnterprise() {
     };
   };
 
-  // ANÁLISIS ABC
+  // ANÁLISIS ABC — usa la lib unificada para que el ranking refleje
+  // valor REAL (FIFO) y no precio de venta.
   const generarReporteABC = async (): Promise<DatosReporte> => {
-    const { data } = await supabase.from('productos').select('codigo, descripcion, categoria, stock, precio, costo_promedio');
-    const productos = (data || []).map(p => ({
-      ...p,
-      valorTotal: p.stock * (p.costo_promedio || p.precio),
-    })).sort((a, b) => b.valorTotal - a.valorTotal);
+    const [{ data: rawProds }, { data: lotes }] = await Promise.all([
+      supabase.from('productos')
+        .select('codigo, descripcion, categoria, stock, stock_minimo, costo_promedio')
+        .is('deleted_at', null),
+      supabase.from('lotes')
+        .select('codigo, cantidad_disponible, costo_unitario')
+        .gt('cantidad_disponible', 0),
+    ]);
+
+    const valuacion = valuarInventarioSync(
+      (rawProds || []).map((p: any) => ({
+        codigo: p.codigo,
+        descripcion: p.descripcion,
+        stock: p.stock || 0,
+        stockMinimo: p.stock_minimo || 0,
+        costoPromedio: parseFloat(p.costo_promedio) || 0,
+        categoria: p.categoria,
+      })),
+      (lotes || []).map((l: any) => ({
+        codigo: l.codigo,
+        cantidad_disponible: l.cantidad_disponible || 0,
+        costo_unitario: parseFloat(l.costo_unitario) || 0,
+      })),
+    );
+
+    const prodMap = new Map((rawProds || []).map((p: any) => [p.codigo, p]));
+    const productos = valuacion.porProducto
+      .map(vp => {
+        const p: any = prodMap.get(vp.codigo);
+        return {
+          codigo: vp.codigo,
+          descripcion: p?.descripcion ?? vp.codigo,
+          categoria: p?.categoria,
+          stock: vp.unidades,
+          valorTotal: vp.valor,
+        };
+      })
+      .sort((a, b) => b.valorTotal - a.valorTotal);
 
     const valorTotal = productos.reduce((sum, p) => sum + p.valorTotal, 0);
     let acumulado = 0;
@@ -800,53 +863,69 @@ export default function ReportsEnterprise() {
   };
 
   // STOCK POR ALMACÉN
+  // STOCK POR ALMACÉN — usa el desglose por almacén de la lib unificada
+  // (los lotes no tienen almacen_id; el almacén viene del producto).
   const generarReporteStockAlmacen = async (): Promise<DatosReporte> => {
-    const { data: lotes } = await supabase
-      .from('lotes')
-      .select('producto_codigo, cantidad_disponible, almacen_id, almacenes(nombre)')
-      .gt('cantidad_disponible', 0);
+    const [{ data: rawProds }, { data: lotes }] = await Promise.all([
+      supabase.from('productos')
+        .select(`codigo, descripcion, categoria, stock, stock_minimo, costo_promedio,
+                 almacen_id, almacen:almacenes(id, codigo, nombre)`)
+        .is('deleted_at', null),
+      supabase.from('lotes')
+        .select('codigo, cantidad_disponible, costo_unitario')
+        .gt('cantidad_disponible', 0),
+    ]);
 
-    const { data: productos } = await supabase.from('productos').select('codigo, descripcion, precio');
-    const prodMap = new Map(productos?.map(p => [p.codigo, p]) || []);
+    const valuacion = valuarInventarioSync(
+      (rawProds || []).map((p: any) => ({
+        codigo: p.codigo,
+        descripcion: p.descripcion,
+        stock: p.stock || 0,
+        stockMinimo: p.stock_minimo || 0,
+        costoPromedio: parseFloat(p.costo_promedio) || 0,
+        categoria: p.categoria,
+        almacenId: p.almacen_id,
+        almacen: p.almacen,
+      })),
+      (lotes || []).map((l: any) => ({
+        codigo: l.codigo,
+        cantidad_disponible: l.cantidad_disponible || 0,
+        costo_unitario: parseFloat(l.costo_unitario) || 0,
+      })),
+    );
 
-    const porAlmacen: Record<string, { items: number; valor: number }> = {};
-    
-    (lotes || []).forEach((l: any) => {
-      const almacen = l.almacenes?.nombre || 'Sin almacén';
-      const prod = prodMap.get(l.producto_codigo);
-      const valor = l.cantidad_disponible * (prod?.precio || 0);
-      
-      if (!porAlmacen[almacen]) porAlmacen[almacen] = { items: 0, valor: 0 };
-      porAlmacen[almacen].items += l.cantidad_disponible;
-      porAlmacen[almacen].valor += valor;
-    });
-
-    const filas = Object.entries(porAlmacen).map(([almacen, data]) => ({
-      almacen,
-      items: data.items,
-      valor: data.valor,
+    const filas = valuacion.porAlmacen.map(a => ({
+      almacen: a.nombre,
+      codigo: a.codigo,
+      productos: a.productos,
+      items: a.unidades,
+      criticos: a.criticos,
+      valor: a.valor,
     }));
 
     const graficoData = filas.map(f => ({ name: f.almacen, value: f.valor }));
+    const totalItems = filas.reduce((s, f) => s + f.items, 0);
+    const valorTotal = filas.reduce((s, f) => s + f.valor, 0);
 
     return {
       titulo: 'Stock por Almacén',
+      subtitulo: `${filas.length} almacenes · ${formatNumber(totalItems)} unidades totales`,
       columnas: [
+        { key: 'codigo', label: 'Código' },
         { key: 'almacen', label: 'Almacén' },
-        { key: 'items', label: 'Items', tipo: 'numero' },
+        { key: 'productos', label: 'Productos', tipo: 'numero' },
+        { key: 'items', label: 'Unidades', tipo: 'numero' },
+        { key: 'criticos', label: 'Críticos', tipo: 'numero' },
         { key: 'valor', label: 'Valor', tipo: 'moneda' },
       ],
       filas,
-      totales: {
-        totalItems: filas.reduce((s, f) => s + f.items, 0),
-        valorTotal: filas.reduce((s, f) => s + f.valor, 0),
-      },
+      totales: { totalItems, valorTotal },
       graficoData,
       graficoTipo: 'pie',
       kpis: [
         { label: 'Almacenes', valor: filas.length, color: 'purple' },
-        { label: 'Total Items', valor: formatNumber(filas.reduce((s, f) => s + f.items, 0)), color: 'cyan' },
-        { label: 'Valor Total', valor: formatCurrency(filas.reduce((s, f) => s + f.valor, 0)), color: 'emerald' },
+        { label: 'Total Items', valor: formatNumber(totalItems), color: 'cyan' },
+        { label: 'Valor Total', valor: formatCurrency(valorTotal), color: 'emerald' },
       ],
     };
   };
@@ -856,6 +935,7 @@ export default function ReportsEnterprise() {
     const { data } = await supabase
       .from('productos')
       .select('codigo, descripcion, categoria, stock, stock_minimo, precio')
+      .is('deleted_at', null)
       .gt('stock_minimo', 0);
 
     const filas = (data || [])
@@ -1523,7 +1603,7 @@ export default function ReportsEnterprise() {
       .select('codigo, cantidad_disponible, costo_unitario, fecha_compra')
       .gt('cantidad_disponible', 0);
 
-    const { data: productos } = await supabase.from('productos').select('codigo, descripcion, categoria');
+    const { data: productos } = await supabase.from('productos').select('codigo, descripcion, categoria').is('deleted_at', null);
     const prodMap = new Map((productos || []).map(p => [p.codigo, p]));
     const ahora = Date.now();
 
@@ -1760,7 +1840,7 @@ export default function ReportsEnterprise() {
     const { data } = await supabase.from('ordenes_venta_detalle').select('producto_codigo, cantidad, precio_unitario, subtotal, orden:ordenes_venta(fecha_orden, estado)')
       .gte('orden.fecha_orden', filtros.fechaInicio).lte('orden.fecha_orden', filtros.fechaFin);
 
-    const { data: productos } = await supabase.from('productos').select('codigo, descripcion, costo_promedio');
+    const { data: productos } = await supabase.from('productos').select('codigo, descripcion, costo_promedio').is('deleted_at', null);
     const costoMap = new Map((productos || []).map(p => [p.codigo, { desc: p.descripcion, costo: p.costo_promedio || 0 }]));
 
     const porProd: Record<string, { ingresos: number; costos: number; unidades: number }> = {};
@@ -1847,7 +1927,7 @@ export default function ReportsEnterprise() {
     const { data } = await supabase.from('ensamblaje_componentes').select('producto_codigo, cantidad_usada, costo_unitario, ensamblaje:ensamblajes(fecha_inicio, estado)')
       .gte('ensamblaje.fecha_inicio', filtros.fechaInicio).lte('ensamblaje.fecha_inicio', filtros.fechaFin);
 
-    const { data: productos } = await supabase.from('productos').select('codigo, descripcion');
+    const { data: productos } = await supabase.from('productos').select('codigo, descripcion').is('deleted_at', null);
     const prodMap = new Map((productos || []).map(p => [p.codigo, p.descripcion]));
 
     const porMaterial: Record<string, { cantidad: number; costo: number }> = {};
@@ -2129,8 +2209,36 @@ export default function ReportsEnterprise() {
 
   const exportarExcel = async () => {
     if (!datosReporte) return;
-    toast.warning('Exportando...', 'Generando archivo Excel');
-    exportarCSV();
+    try {
+      exportarReporteExcel({
+        titulo: datosReporte.titulo,
+        subtitulo: datosReporte.subtitulo,
+        columnas: datosReporte.columnas,
+        filas: datosReporte.filas,
+        kpis: datosReporte.kpis?.map(k => ({ label: k.label, valor: k.valor })),
+        totales: datosReporte.totales,
+      });
+      toast.success('Excel exportado');
+    } catch (e: any) {
+      toast.error('Error al exportar Excel', e.message);
+    }
+  };
+
+  const exportarPDF = async () => {
+    if (!datosReporte) return;
+    try {
+      await exportarReportePDF({
+        titulo: datosReporte.titulo,
+        subtitulo: datosReporte.subtitulo,
+        columnas: datosReporte.columnas,
+        filas: datosReporte.filas,
+        kpis: datosReporte.kpis?.map(k => ({ label: k.label, valor: k.valor })),
+        totales: datosReporte.totales,
+      });
+      toast.success('PDF exportado');
+    } catch (e: any) {
+      toast.error('Error al exportar PDF', e.message);
+    }
   };
 
   // ============================================
@@ -2165,14 +2273,24 @@ export default function ReportsEnterprise() {
           <div className="flex gap-2">
             <button
               onClick={exportarCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm"
+              title="Exportar como CSV"
             >
               <Download className="h-4 w-4" />
               CSV
             </button>
             <button
+              onClick={exportarPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600/80 hover:bg-red-500 text-white rounded-xl text-sm"
+              title="Exportar como PDF"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </button>
+            <button
               onClick={exportarExcel}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm"
+              title="Exportar como Excel"
             >
               <FileSpreadsheet className="h-4 w-4" />
               Excel
@@ -2487,17 +2605,17 @@ export default function ReportsEnterprise() {
                           <span className="font-normal text-slate-500 ml-2">• {datosReporte.subtitulo}</span>
                         )}
                       </h4>
-                      <span className="text-xs text-slate-500">{datosReporte.filas.length} registros</span>
+                      <span className="text-xs text-slate-500">{datosReporte.filas.length.toLocaleString('es-UY')} registros</span>
                     </div>
-                    <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
-                      <table className="w-full">
-                        <thead className="bg-slate-800/50 sticky top-0">
+                    <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-800/70 sticky top-0 backdrop-blur-sm z-10">
                           <tr>
                             {datosReporte.columnas.map(col => (
-                              <th 
-                                key={col.key} 
-                                className={`px-4 py-3 text-xs font-medium text-slate-400 uppercase ${
-                                  col.tipo === 'numero' || col.tipo === 'moneda' || col.tipo === 'porcentaje' 
+                              <th
+                                key={col.key}
+                                className={`px-4 py-3 text-[11px] font-semibold text-slate-300 uppercase tracking-wider whitespace-nowrap ${
+                                  col.tipo === 'numero' || col.tipo === 'moneda' || col.tipo === 'porcentaje'
                                     ? 'text-right' : 'text-left'
                                 }`}
                               >
@@ -2509,60 +2627,61 @@ export default function ReportsEnterprise() {
                         <tbody className="divide-y divide-slate-800/50">
                           {datosReporte.filas.length === 0 ? (
                             <tr>
-                              <td colSpan={datosReporte.columnas.length} className="px-4 py-8 text-center text-slate-500">
-                                Sin datos para mostrar
+                              <td colSpan={datosReporte.columnas.length} className="px-4 py-12 text-center text-slate-500">
+                                Sin datos para mostrar con los filtros actuales.
                               </td>
                             </tr>
                           ) : (
                             datosReporte.filas.map((fila, idx) => (
-                              <tr key={idx} className="hover:bg-slate-800/30">
+                              <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
                                 {datosReporte.columnas.map(col => {
-                                  let valor = fila[col.key];
-                                  let className = 'px-4 py-3 text-sm ';
+                                  const raw = fila[col.key];
+                                  let display: any = raw;
+                                  let cls = 'px-4 py-2.5 ';
+                                  // El cell de descripción / nombre lleva ancho controlado
+                                  const isLong = col.key === 'descripcion' || col.key === 'nombre';
+                                  if (isLong) cls += 'max-w-[280px] truncate text-slate-200 ';
 
                                   if (col.tipo === 'moneda') {
-                                    valor = formatCurrency(valor || 0);
-                                    className += 'text-right text-emerald-400 font-mono';
+                                    display = formatCurrency(Number(raw) || 0);
+                                    cls += 'text-right text-emerald-300 font-mono tabular-nums';
                                   } else if (col.tipo === 'numero') {
-                                    valor = formatNumber(valor || 0);
-                                    className += 'text-right text-slate-300 font-mono';
+                                    display = formatNumber(Number(raw) || 0);
+                                    cls += 'text-right text-slate-200 font-mono tabular-nums';
                                   } else if (col.tipo === 'porcentaje') {
-                                    valor = formatPercent(valor || 0);
-                                    className += 'text-right text-cyan-400 font-mono';
+                                    display = formatPercent(Number(raw) || 0);
+                                    cls += 'text-right text-cyan-300 font-mono tabular-nums';
                                   } else if (col.tipo === 'fecha') {
-                                    valor = valor ? formatDate(valor) : '-';
-                                    className += 'text-slate-400';
-                                  } else {
-                                    className += 'text-slate-300';
+                                    display = raw ? formatDate(raw) : '—';
+                                    cls += 'text-slate-400 whitespace-nowrap';
+                                  } else if (!isLong) {
+                                    cls += 'text-slate-300';
                                   }
 
-                                  // Colores especiales para ciertas columnas
+                                  // Colores especiales por columna
                                   if (col.key === 'clasificacion') {
-                                    if (valor === 'A') className = 'px-4 py-3 text-sm text-emerald-400 font-bold';
-                                    else if (valor === 'B') className = 'px-4 py-3 text-sm text-amber-400 font-bold';
-                                    else if (valor === 'C') className = 'px-4 py-3 text-sm text-red-400 font-bold';
+                                    cls = 'px-4 py-2.5 text-center font-bold';
+                                    if (raw === 'A') cls += ' text-emerald-300';
+                                    else if (raw === 'B') cls += ' text-amber-300';
+                                    else if (raw === 'C') cls += ' text-red-300';
                                   }
-                                  if (col.key === 'estado') {
-                                    if (['completado', 'completada', 'entregada', 'aprobado'].includes(valor)) {
-                                      className = 'px-4 py-3 text-sm text-emerald-400';
-                                    } else if (['pendiente', 'solicitada', 'borrador'].includes(valor)) {
-                                      className = 'px-4 py-3 text-sm text-amber-400';
-                                    } else if (['rechazado', 'rechazada', 'cancelada'].includes(valor)) {
-                                      className = 'px-4 py-3 text-sm text-red-400';
+                                  if (col.key === 'estado' || col.key === 'fuente') {
+                                    const v = String(raw || '').toLowerCase();
+                                    if (['completado', 'completada', 'entregada', 'aprobado', 'fifo'].includes(v)) {
+                                      cls = 'px-4 py-2.5 text-emerald-300';
+                                    } else if (['pendiente', 'solicitada', 'borrador', 'costo prom.'].includes(v)) {
+                                      cls = 'px-4 py-2.5 text-amber-300';
+                                    } else if (['rechazado', 'rechazada', 'cancelada', '—'].includes(v)) {
+                                      cls = 'px-4 py-2.5 text-red-300';
                                     }
                                   }
-                                  if (col.key === 'diferencia' && valor < 0) {
-                                    className = 'px-4 py-3 text-sm text-right text-red-400 font-mono';
-                                  }
-                                  if (col.key === 'variacion') {
-                                    const numVal = parseFloat(String(valor).replace('%', ''));
-                                    if (numVal > 5) className = 'px-4 py-3 text-sm text-right text-red-400 font-mono';
-                                    else if (numVal < -5) className = 'px-4 py-3 text-sm text-right text-emerald-400 font-mono';
+                                  if (col.key === 'diferencia' && Number(raw) < 0) {
+                                    cls = 'px-4 py-2.5 text-right text-red-300 font-mono tabular-nums';
                                   }
 
                                   return (
-                                    <td key={col.key} className={className}>
-                                      {valor ?? '-'}
+                                    <td key={col.key} className={cls} title={isLong ? String(raw ?? '') : undefined}>
+                                      {display ?? '—'}
                                     </td>
                                   );
                                 })}
@@ -2570,19 +2689,39 @@ export default function ReportsEnterprise() {
                             ))
                           )}
                         </tbody>
-                        {datosReporte.totales && (
-                          <tfoot className="bg-slate-800/50 border-t border-slate-700">
+                        {datosReporte.totales && Object.keys(datosReporte.totales).length > 0 && (
+                          <tfoot className="bg-slate-800/70 border-t-2 border-slate-700 sticky bottom-0 backdrop-blur-sm">
                             <tr>
-                              <td colSpan={datosReporte.columnas.length - Object.keys(datosReporte.totales).length} className="px-4 py-3 text-sm font-semibold text-slate-400">
-                                TOTALES
-                              </td>
-                              {Object.entries(datosReporte.totales).map(([key, val]) => (
-                                <td key={key} className="px-4 py-3 text-sm font-bold text-right text-emerald-400 font-mono">
-                                  {typeof val === 'number' && key.toLowerCase().includes('valor') 
-                                    ? formatCurrency(val) 
-                                    : formatNumber(val)}
-                                </td>
-                              ))}
+                              {(() => {
+                                const totalKeys = Object.keys(datosReporte.totales!);
+                                const numericCols = datosReporte.columnas
+                                  .map((c, i) => ({ c, i }))
+                                  .filter(({ c }) => c.tipo === 'numero' || c.tipo === 'moneda');
+                                // Mapear cada total a su columna numérica (de derecha a izquierda)
+                                const totalByColIdx = new Map<number, { key: string; val: number }>();
+                                totalKeys.reverse().forEach((k, idx) => {
+                                  const ncol = numericCols[numericCols.length - 1 - idx];
+                                  if (ncol) totalByColIdx.set(ncol.i, { key: k, val: datosReporte.totales![k] });
+                                });
+                                return datosReporte.columnas.map((col, i) => {
+                                  const t = totalByColIdx.get(i);
+                                  if (t) {
+                                    const isMoneda = col.tipo === 'moneda';
+                                    return (
+                                      <td key={col.key} className="px-4 py-3 text-right font-bold font-mono tabular-nums text-emerald-300">
+                                        {isMoneda ? formatCurrency(t.val) : formatNumber(t.val)}
+                                      </td>
+                                    );
+                                  }
+                                  // primera columna lleva el label "TOTALES"
+                                  if (i === 0) return (
+                                    <td key={col.key} className="px-4 py-3 font-semibold text-slate-300 uppercase tracking-wider text-xs">
+                                      Totales
+                                    </td>
+                                  );
+                                  return <td key={col.key} className="px-4 py-3"></td>;
+                                });
+                              })()}
                             </tr>
                           </tfoot>
                         )}
