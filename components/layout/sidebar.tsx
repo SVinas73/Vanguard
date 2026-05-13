@@ -112,9 +112,9 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
   // Configuración de roles - colores más sutiles
   const rolConfig: Record<string, { label: string; color: string; bg: string }> = {
     admin: { label: 'Admin', color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-    vendedor: { label: t('roles.seller') || 'Vendedor', color: 'text-zinc-300', bg: 'bg-zinc-800' },
-    bodeguero: { label: t('roles.warehouse') || 'Bodeguero', color: 'text-zinc-300', bg: 'bg-zinc-800' },
-    operador: { label: t('roles.operator') || 'Operador', color: 'text-zinc-300', bg: 'bg-zinc-800' },
+    vendedor: { label: t('roles.seller') || 'Vendedor', color: 'text-slate-300', bg: 'bg-slate-800' },
+    bodeguero: { label: t('roles.warehouse') || 'Bodeguero', color: 'text-slate-300', bg: 'bg-slate-800' },
+    operador: { label: t('roles.operator') || 'Operador', color: 'text-slate-300', bg: 'bg-slate-800' },
   };
 
   const currentRol = rolConfig[rol] || rolConfig.vendedor;
@@ -211,7 +211,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       {/* Mobile hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
         aria-label="Open menu"
       >
         <Menu size={20} />
@@ -228,7 +228,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
     <aside
       className={cn(
         'fixed left-0 top-0 h-screen flex flex-col transition-transform duration-300 lg:transition-all lg:duration-200 z-[60]',
-        'bg-zinc-950 border-r border-zinc-800',
+        'bg-slate-950 border-r border-slate-800',
         collapsed ? 'w-[68px]' : 'w-[240px]',
         mobileOpen ? 'translate-x-0' : '-translate-x-full',
         'lg:translate-x-0'
@@ -236,20 +236,20 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
     >
       {/* Logo */}
       <div className={cn(
-        'flex items-center gap-3 h-16 px-4 border-b border-zinc-800',
+        'flex items-center gap-3 h-16 px-4 border-b border-slate-800',
         collapsed && 'justify-center px-2'
       )}>
         <Logo size={28} />
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <h1 className="text-[14px] font-semibold text-zinc-100 tracking-tight">
+            <h1 className="text-[14px] font-semibold text-slate-100 tracking-tight">
               Vanguard
             </h1>
           </div>
         )}
         <button
           onClick={() => setMobileOpen(false)}
-          className="lg:hidden p-1.5 rounded-md hover:bg-zinc-900 text-zinc-500 hover:text-zinc-100 transition-colors"
+          className="lg:hidden p-1.5 rounded-md hover:bg-slate-900 text-slate-500 hover:text-slate-100 transition-colors"
           aria-label="Close menu"
         >
           <X size={18} />
@@ -266,7 +266,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
               {!collapsed && (
                 <button
                   onClick={() => toggleSection(section.key)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-medium text-zinc-500 uppercase tracking-[0.08em] hover:text-zinc-300 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-medium text-slate-500 uppercase tracking-[0.08em] hover:text-slate-300 transition-colors"
                 >
                   <span>{section.title}</span>
                   <ChevronDown
@@ -297,10 +297,10 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                       className={cn(
                         'w-full flex items-center gap-3 px-3 py-1.5 rounded-md transition-colors duration-150 group relative',
                         isActive
-                          ? 'bg-zinc-900 text-zinc-100'
+                          ? 'bg-slate-900 text-slate-100'
                           : hasPermission
-                            ? 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60'
-                            : 'text-zinc-700 cursor-not-allowed',
+                            ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/60'
+                            : 'text-slate-700 cursor-not-allowed',
                         collapsed && 'justify-center px-2'
                       )}
                     >
@@ -330,13 +330,13 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                           )}
 
                           {!hasPermission && (
-                            <Lock size={11} className="text-zinc-700" />
+                            <Lock size={11} className="text-slate-700" />
                           )}
                         </>
                       )}
 
                       {collapsed && (
-                        <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 text-zinc-100 text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
+                        <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-slate-100 text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
                           {item.label}
                           {item.badge && (
                             <span className="ml-1.5 text-indigo-400">{item.badge}</span>
@@ -354,13 +354,13 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
 
       {/* Footer */}
       <div className={cn(
-        'border-t border-zinc-800 p-2 space-y-1',
+        'border-t border-slate-800 p-2 space-y-1',
         collapsed && 'px-1.5'
       )}>
         <button
           onClick={toggleTheme}
           className={cn(
-            'w-full flex items-center gap-3 px-3 py-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60 transition-colors',
+            'w-full flex items-center gap-3 px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-900/60 transition-colors',
             collapsed && 'justify-center px-2'
           )}
           title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -378,27 +378,27 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
 
         {user && (
           <div className={cn(
-            'flex items-center gap-3 p-2 mt-1 rounded-md border-t border-zinc-800/60 pt-3',
+            'flex items-center gap-3 p-2 mt-1 rounded-md border-t border-slate-800/60 pt-3',
             collapsed && 'justify-center p-2 border-t-0 pt-2'
           )}>
-            <div className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold bg-zinc-800 text-zinc-200 ring-1 ring-inset ring-zinc-700">
+            <div className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold bg-slate-800 text-slate-200 ring-1 ring-inset ring-slate-700">
               {(user.nombre || user.email || 'U').charAt(0).toUpperCase()}
             </div>
 
             {!collapsed && (
               <>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-zinc-100 truncate">
+                  <p className="text-[13px] font-medium text-slate-100 truncate">
                     {user.nombre || user.email?.split('@')[0]}
                   </p>
-                  <p className="text-[11px] text-zinc-500">
+                  <p className="text-[11px] text-slate-500">
                     {currentRol.label}
                   </p>
                 </div>
 
                 <button
                   onClick={signOut}
-                  className="p-1.5 rounded-md hover:bg-zinc-900 text-zinc-500 hover:text-red-400 transition-colors"
+                  className="p-1.5 rounded-md hover:bg-slate-900 text-slate-500 hover:text-red-400 transition-colors"
                   title={t('header.logout') || 'Cerrar sesión'}
                 >
                   <LogOut size={14} />
@@ -413,8 +413,8 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       <button
         onClick={() => setCollapsed(!collapsed)}
         className={cn(
-          'absolute -right-3 top-[64px] w-6 h-6 bg-zinc-900 border border-zinc-800 rounded-full',
-          'flex items-center justify-center text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800 transition-colors'
+          'absolute -right-3 top-[64px] w-6 h-6 bg-slate-900 border border-slate-800 rounded-full',
+          'flex items-center justify-center text-slate-500 hover:text-slate-100 hover:bg-slate-800 transition-colors'
         )}
       >
         {collapsed ? <ChevronRight size={11} /> : <ChevronLeft size={11} />}
@@ -435,10 +435,10 @@ interface TopBarProps {
 
 export function TopBar({ title, children }: TopBarProps) {
   return (
-    <header className="h-14 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm flex items-center justify-between px-6">
+    <header className="h-14 border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm flex items-center justify-between px-6">
       <div>
         {title && (
-          <h1 className="text-sm font-semibold text-zinc-100 tracking-tight">{title}</h1>
+          <h1 className="text-sm font-semibold text-slate-100 tracking-tight">{title}</h1>
         )}
       </div>
       <div className="flex items-center gap-3">
@@ -463,7 +463,7 @@ export function AppLayout({ children, activeTab, onTabChange, permissions }: App
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-slate-950">
       <Sidebar 
         activeTab={activeTab} 
         onTabChange={onTabChange}
