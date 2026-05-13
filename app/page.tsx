@@ -411,7 +411,7 @@ export default function HomePage() {
   // Mostrar loading mientras verifica autenticación
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-emerald-400">{t('common.loading')}</div>
       </div>
     );
@@ -429,7 +429,7 @@ export default function HomePage() {
   // Mostrar loading mientras carga los datos del store
   if (!isInitialized || storeLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="inline-flex h-12 w-12 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent"></div>
           <div className="text-emerald-400">{t('common.loadingData', 'Cargando inventario...')}</div>
@@ -590,7 +590,7 @@ export default function HomePage() {
   // ============================================
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-zinc-950 text-slate-100">
       <Sidebar 
         activeTab={activeTab} 
         onTabChange={handleTabChange}

@@ -16,55 +16,54 @@ export function Header() {
   const { user, signOut, rol } = useAuth(false);
 
   const rolConfig = {
-    admin: { label: 'Admin', color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: Shield },
-    vendedor: { label: t('roles.seller') || 'Vendedor', color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: ShoppingCart },
-    bodeguero: { label: t('roles.warehouse') || 'Bodeguero', color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Package },
-    operador: { label: t('roles.operator') || 'Operador', color: 'text-purple-400', bg: 'bg-purple-500/20', icon: User },
+    admin: { label: 'Admin', icon: Shield },
+    vendedor: { label: t('roles.seller') || 'Vendedor', icon: ShoppingCart },
+    bodeguero: { label: t('roles.warehouse') || 'Bodeguero', icon: Package },
+    operador: { label: t('roles.operator') || 'Operador', icon: User },
   };
 
   const currentRol = rolConfig[rol] || rolConfig.vendedor;
   const RolIcon = currentRol.icon;
 
   return (
-    <header className="border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4">
+    <header className="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 py-3.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Logo size={40} />
+          <div className="flex items-center gap-3">
+            <Logo size={32} />
             <div>
-              <h1 className="text-lg font-semibold tracking-tight">
+              <h1 className="text-sm font-semibold text-zinc-100 tracking-tight leading-none">
                 Vanguard
               </h1>
-              <p className="text-xs text-slate-500">{t('header.subtitle') || 'Sistema de Gestión de Inventarios'}</p>
+              <p className="text-[11px] text-zinc-500 mt-1">
+                {t('header.subtitle') || 'Sistema de Gestión Inteligente'}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <AIStatusIndicator />
-
             <NotificacionesBell />
-            
             <LanguageSelector />
-            
+
             {user && (
-              <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                <User size={16} className="text-slate-400" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{user.nombre || user.email}</span>
-                  <span className={cn(
-                    'text-xs flex items-center gap-1',
-                    currentRol.color
-                  )}>
+              <div className="flex items-center gap-2.5 pl-3 border-l border-zinc-800">
+                <div className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold bg-zinc-800 text-zinc-200 ring-1 ring-inset ring-zinc-700">
+                  {(user.nombre || user.email || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div className="flex flex-col leading-tight">
+                  <span className="text-[13px] font-medium text-zinc-100">{user.nombre || user.email?.split('@')[0]}</span>
+                  <span className="text-[11px] text-zinc-500 flex items-center gap-1">
                     <RolIcon size={10} />
                     {currentRol.label}
                   </span>
                 </div>
                 <button
                   onClick={signOut}
-                  className="p-1 rounded hover:bg-slate-700/50 text-slate-400 hover:text-red-400 transition-colors"
+                  className="p-1.5 rounded-md hover:bg-zinc-900 text-zinc-500 hover:text-red-400 transition-colors"
                   title={t('header.logout') || 'Cerrar sesión'}
                 >
-                  <LogOut size={16} />
+                  <LogOut size={14} />
                 </button>
               </div>
             )}
