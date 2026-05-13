@@ -459,11 +459,11 @@ tr:hover td {
 .light-mode .bg-slate-900\/95 { background-color: rgba(240,242,246,0.97) !important; }
 .light-mode .bg-slate-900\/90 { background-color: rgba(240,242,246,0.95) !important; }
 .light-mode .bg-slate-900\/80 { background-color: rgba(240,242,246,0.9) !important; }
-.light-mode .bg-slate-900\/50, .light-mode .bg-slate-900\/30 { background-color: rgba(240,242,246,0.7) !important; }
+.light-mode .bg-slate-900\/60, .light-mode .bg-slate-900\/50, .light-mode .bg-slate-900\/40, .light-mode .bg-slate-900\/30, .light-mode .bg-slate-900\/20 { background-color: rgba(240,242,246,0.7) !important; }
 .light-mode .bg-slate-800 { background-color: #ffffff !important; }
 .light-mode .bg-slate-800\/95 { background-color: rgba(255,255,255,0.97) !important; }
-.light-mode .bg-slate-800\/80 { background-color: rgba(255,255,255,0.9) !important; }
-.light-mode .bg-slate-800\/50, .light-mode .bg-slate-800\/30, .light-mode .bg-slate-800\/20 { background-color: rgba(255,255,255,0.6) !important; }
+.light-mode .bg-slate-800\/80, .light-mode .bg-slate-800\/70 { background-color: rgba(255,255,255,0.9) !important; }
+.light-mode .bg-slate-800\/60, .light-mode .bg-slate-800\/50, .light-mode .bg-slate-800\/40, .light-mode .bg-slate-800\/30, .light-mode .bg-slate-800\/20 { background-color: rgba(255,255,255,0.6) !important; }
 .light-mode .bg-slate-700 { background-color: #e5e8ed !important; }
 .light-mode .bg-slate-700\/50, .light-mode .bg-slate-700\/30, .light-mode .bg-slate-700\/20 { background-color: rgba(229,232,237,0.5) !important; }
 .light-mode .bg-slate-600 { background-color: #d1d5de !important; }
@@ -524,6 +524,30 @@ tr:hover td {
 .light-mode .bg-blue-600 { background-color: #2d5480 !important; }
 .light-mode .hover\:bg-blue-500:hover { background-color: #3b6a99 !important; }
 .light-mode .bg-blue-600\/10 { background-color: rgba(45,84,128,0.08) !important; }
+
+/* ---- INDIGO (color de marca nuevo) ---- */
+.light-mode .bg-indigo-600 { background-color: #4f46e5 !important; }
+.light-mode .hover\:bg-indigo-500:hover { background-color: #6366f1 !important; }
+.light-mode .text-indigo-300, .light-mode .text-indigo-400, .light-mode .text-indigo-500 { color: #4338ca !important; }
+.light-mode .bg-indigo-500\/10, .light-mode .bg-indigo-500\/20 { background-color: rgba(79,70,229,0.08) !important; }
+.light-mode .ring-indigo-500\/20, .light-mode .ring-indigo-500\/30 { --tw-ring-color: rgba(79,70,229,0.25) !important; }
+.light-mode .border-indigo-500\/20, .light-mode .border-indigo-500\/30 { border-color: rgba(79,70,229,0.3) !important; }
+
+/* ---- Hover states extra (rieles del rediseño) ---- */
+.light-mode .hover\:bg-slate-800\/40:hover, .light-mode .hover\:bg-slate-800\/60:hover { background-color: rgba(240,242,246,0.8) !important; }
+.light-mode .hover\:bg-slate-900\/60:hover { background-color: rgba(229,232,237,0.6) !important; }
+
+/* ---- Rings & status — completar coverage ---- */
+.light-mode .ring-green-500\/20, .light-mode .ring-green-500\/30 { --tw-ring-color: rgba(42,122,69,0.3) !important; }
+.light-mode .ring-red-500\/20, .light-mode .ring-red-500\/30 { --tw-ring-color: rgba(179,48,48,0.3) !important; }
+.light-mode .ring-amber-500\/20, .light-mode .ring-amber-500\/30 { --tw-ring-color: rgba(154,101,32,0.3) !important; }
+.light-mode .bg-green-500\/10 { background-color: rgba(42,122,69,0.1) !important; }
+.light-mode .text-green-300, .light-mode .text-green-400 { color: #2a7a45 !important; }
+.light-mode .text-red-300 { color: #b33030 !important; }
+.light-mode .text-amber-300 { color: #9a6520 !important; }
+.light-mode .border-red-500\/20 { border-color: rgba(179,48,48,0.25) !important; }
+.light-mode .border-red-500\/30 { border-color: rgba(179,48,48,0.35) !important; }
+.light-mode .bg-red-500\/5 { background-color: rgba(179,48,48,0.05) !important; }
 
 /* ---- Inline styles override (via attribute selectors) ---- */
 .light-mode [style*="background"][style*="#1"] { filter: none; }
