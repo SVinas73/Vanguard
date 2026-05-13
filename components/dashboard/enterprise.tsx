@@ -245,17 +245,17 @@ interface KPICardProps {
 }
 
 function KPICard({ label, value, prevValue, suffix, icon, sparkData, description }: KPICardProps) {
-  // Stripe-style: zinc + indigo + verde/rojo solo para deltas.
-  // El color ya no se elige por prop — todo es zinc.
+  // Stripe-style: slate + indigo + verde/rojo solo para deltas.
+  // El color ya no se elige por prop — todo es neutro.
   const delta = prevValue ? ((Number(value) - prevValue) / prevValue * 100) : null;
   const isPositive = delta !== null && delta >= 0;
 
   return (
-    <div className="group rounded-xl bg-zinc-900/40 border border-zinc-800 p-5 transition-colors hover:border-zinc-700">
+    <div className="group rounded-xl bg-slate-900/40 border border-slate-800 p-5 transition-colors hover:border-slate-700">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-zinc-500">{icon}</span>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-zinc-500">{label}</span>
+          <span className="text-slate-500">{icon}</span>
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
         </div>
         {sparkData && <SparkLine data={sparkData} color="#a1a1aa" width={56} height={20} />}
       </div>
@@ -263,12 +263,12 @@ function KPICard({ label, value, prevValue, suffix, icon, sparkData, description
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-semibold tracking-tight text-zinc-50 tabular-nums">
+            <span className="text-3xl font-semibold tracking-tight text-slate-50 tabular-nums">
               {typeof value === 'number' ? value.toLocaleString('es-UY') : value}
             </span>
-            {suffix && <span className="text-sm font-medium text-zinc-400">{suffix}</span>}
+            {suffix && <span className="text-sm font-medium text-slate-400">{suffix}</span>}
           </div>
-          {description && <p className="text-[11px] mt-1.5 text-zinc-500">{description}</p>}
+          {description && <p className="text-[11px] mt-1.5 text-slate-500">{description}</p>}
         </div>
 
         {delta !== null && Number.isFinite(delta) && (
@@ -301,12 +301,12 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
   const hayProblemasDatos = data.sinCosto > 0 || data.sinAlmacen > 0;
 
   return (
-    <div className="rounded-xl bg-zinc-900/40 border border-zinc-800 p-6">
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">Valor del Inventario</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">Capital total en stock</p>
+          <h3 className="text-sm font-semibold text-slate-100 tracking-tight">Valor del Inventario</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Capital total en stock</p>
         </div>
         {Number.isFinite(trend) && trend !== 0 && (
           <span className={cn(
@@ -322,10 +322,10 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
       {/* Big number */}
       <div className="mb-6">
         <div className="flex items-baseline gap-4">
-          <span className="text-4xl font-semibold text-zinc-50 tabular-nums tracking-tight">
+          <span className="text-4xl font-semibold text-slate-50 tabular-nums tracking-tight">
             ${data.total.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
           </span>
-          <div className="text-xs text-zinc-500">
+          <div className="text-xs text-slate-500">
             vs 30 días: <span className="tabular-nums">${data.prev30d.toLocaleString('es-UY', { minimumFractionDigits: 0 })}</span>
           </div>
         </div>
@@ -334,24 +334,24 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
       {/* Category breakdown */}
       {data.categorias.length > 0 && (
         <div className="mb-6">
-          <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-zinc-500 mb-3">
+          <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500 mb-3">
             Por categoría
           </div>
           <div className="space-y-3">
             {data.categorias.map((cat: Categoria) => (
               <div key={cat.nombre} className="group">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-zinc-300">{cat.nombre}</span>
+                  <span className="text-xs text-slate-300">{cat.nombre}</span>
                   <div className="flex items-center gap-3 tabular-nums">
-                    <span className="text-xs font-medium text-zinc-200">
+                    <span className="text-xs font-medium text-slate-200">
                       ${cat.valor.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
                     </span>
-                    <span className="text-[11px] text-zinc-500 w-9 text-right">{cat.porcentaje}%</span>
+                    <span className="text-[11px] text-slate-500 w-9 text-right">{cat.porcentaje}%</span>
                   </div>
                 </div>
-                <div className="h-1 rounded-full overflow-hidden bg-zinc-800">
+                <div className="h-1 rounded-full overflow-hidden bg-slate-800">
                   <div
-                    className="h-full bg-zinc-400 rounded-full transition-all duration-500"
+                    className="h-full bg-slate-400 rounded-full transition-all duration-500"
                     style={{ width: `${cat.porcentaje}%` }}
                   />
                 </div>
@@ -363,12 +363,12 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
 
       {/* Desglose por almacén */}
       {data.almacenes.length > 0 && (
-        <div className="mb-6 pt-6 border-t border-zinc-800/60">
+        <div className="mb-6 pt-6 border-t border-slate-800/60">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-zinc-500">
+            <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500">
               Por almacén
             </div>
-            <span className="text-[10px] text-zinc-600 tabular-nums">
+            <span className="text-[10px] text-slate-600 tabular-nums">
               {data.almacenes.length} {data.almacenes.length === 1 ? 'almacén' : 'almacenes'}
             </span>
           </div>
@@ -379,24 +379,24 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
               return (
                 <div key={a.id}>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className={cn('text-xs font-medium', esSinAlmacen ? 'text-amber-300' : 'text-zinc-200')}>
+                    <span className={cn('text-xs font-medium', esSinAlmacen ? 'text-amber-300' : 'text-slate-200')}>
                       {a.codigo !== '—' && a.codigo !== '' && (
-                        <span className="text-zinc-600 mr-1.5 font-mono">{a.codigo}</span>
+                        <span className="text-slate-600 mr-1.5 font-mono">{a.codigo}</span>
                       )}
                       {a.nombre}
                     </span>
-                    <span className="text-xs text-zinc-300 tabular-nums">
+                    <span className="text-xs text-slate-300 tabular-nums">
                       ${a.valor.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
-                      <span className="text-zinc-600 ml-2">· {pct}%</span>
+                      <span className="text-slate-600 ml-2">· {pct}%</span>
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-[10px] text-zinc-500 tabular-nums">
+                  <div className="flex items-center gap-2 text-[10px] text-slate-500 tabular-nums">
                     <span>{a.productos} productos</span>
-                    <span className="text-zinc-700">·</span>
+                    <span className="text-slate-700">·</span>
                     <span>{a.unidades.toLocaleString('es-UY')} unidades</span>
                     {a.criticos > 0 && (
                       <>
-                        <span className="text-zinc-700">·</span>
+                        <span className="text-slate-700">·</span>
                         <span className="text-amber-400">{a.criticos} críticos</span>
                       </>
                     )}
@@ -409,20 +409,20 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
       )}
 
       {/* Inmovilizado */}
-      <div className="pt-6 border-t border-zinc-800/60">
+      <div className="pt-6 border-t border-slate-800/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Hourglass size={14} className="text-zinc-500" strokeWidth={1.75} />
+            <Hourglass size={14} className="text-slate-500" strokeWidth={1.75} />
             <div>
-              <div className="text-xs font-medium text-zinc-200">Capital inmovilizado</div>
-              <div className="text-[11px] text-zinc-500">{data.productosInmovilizados} productos sin movimiento (60d)</div>
+              <div className="text-xs font-medium text-slate-200">Capital inmovilizado</div>
+              <div className="text-[11px] text-slate-500">{data.productosInmovilizados} productos sin movimiento (60d)</div>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-sm font-semibold text-zinc-100 tabular-nums">
+            <div className="text-sm font-semibold text-slate-100 tabular-nums">
               ${data.capitalInmovilizado.toLocaleString('es-UY')}
             </div>
-            <div className="text-[11px] text-zinc-500 tabular-nums">
+            <div className="text-[11px] text-slate-500 tabular-nums">
               {data.total > 0 ? ((data.capitalInmovilizado / data.total) * 100).toFixed(0) : 0}% del total
             </div>
           </div>
@@ -438,7 +438,7 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
               Calidad de datos
             </span>
           </div>
-          <ul className="space-y-0.5 text-[11px] text-zinc-400">
+          <ul className="space-y-0.5 text-[11px] text-slate-400">
             {data.sinCosto > 0 && (
               <li>{data.sinCosto} producto(s) con stock pero sin costo promedio — no valúan</li>
             )}
@@ -471,7 +471,7 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
   const levelTone: Record<AlertLevel, { text: string; Icon: typeof XCircle; label: string }> = {
     critical: { text: 'text-red-400',    Icon: XCircle,       label: 'Sin stock' },
     warning:  { text: 'text-amber-400',  Icon: AlertCircle,   label: 'Stock bajo' },
-    low:      { text: 'text-zinc-400',   Icon: AlertTriangle, label: 'Atención' },
+    low:      { text: 'text-slate-400',   Icon: AlertTriangle, label: 'Atención' },
   };
 
   const filters = [
@@ -482,12 +482,12 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
   ];
 
   return (
-    <div className="rounded-xl bg-zinc-900/40 border border-zinc-800 p-6">
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
       {/* Header */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">Alertas de Stock</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">Productos que requieren atención</p>
+          <h3 className="text-sm font-semibold text-slate-100 tracking-tight">Alertas de Stock</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Productos que requieren atención</p>
         </div>
         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/10 text-red-300 ring-1 ring-inset ring-red-500/20 tabular-nums">
           {alertas.total}
@@ -495,7 +495,7 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
       </div>
 
       {/* Filter pills */}
-      <div className="flex gap-1 mb-4 border-b border-zinc-800 -mx-6 px-6">
+      <div className="flex gap-1 mb-4 border-b border-slate-800 -mx-6 px-6">
         {filters.map(f => {
           const active = activeFilter === f.key;
           return (
@@ -505,12 +505,12 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
               className={cn(
                 'inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors',
                 active
-                  ? 'border-indigo-500 text-zinc-100'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-300',
+                  ? 'border-indigo-500 text-slate-100'
+                  : 'border-transparent text-slate-500 hover:text-slate-300',
               )}
             >
               <span>{f.label}</span>
-              <span className="tabular-nums text-zinc-600">{f.count}</span>
+              <span className="tabular-nums text-slate-600">{f.count}</span>
             </button>
           );
         })}
@@ -519,7 +519,7 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
       {/* Alert items */}
       <div className="space-y-1 max-h-[280px] overflow-y-auto -mx-2">
         {filteredItems.length === 0 ? (
-          <div className="text-center py-8 text-xs text-zinc-500">
+          <div className="text-center py-8 text-xs text-slate-500">
             Sin alertas en este filtro.
           </div>
         ) : (
@@ -529,15 +529,15 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
             return (
               <div
                 key={item.codigo}
-                className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-md hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-md hover:bg-slate-800/60 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <IconComp size={14} className={cn('flex-shrink-0', cfg.text)} strokeWidth={2} />
                   <div className="min-w-0">
-                    <div className="font-medium text-[13px] text-zinc-100 truncate">{item.descripcion}</div>
-                    <div className="text-[11px] text-zinc-500 tabular-nums">
-                      <span className="font-mono text-zinc-600">{item.codigo}</span>
-                      <span className="mx-1.5 text-zinc-700">·</span>
+                    <div className="font-medium text-[13px] text-slate-100 truncate">{item.descripcion}</div>
+                    <div className="text-[11px] text-slate-500 tabular-nums">
+                      <span className="font-mono text-slate-600">{item.codigo}</span>
+                      <span className="mx-1.5 text-slate-700">·</span>
                       <span className={cfg.text}>
                         {item.stock === 0 ? 'Sin stock' : `${item.stock} / ${item.stockMin} mín`}
                       </span>
@@ -585,14 +585,14 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
   ];
 
   return (
-    <div className="rounded-xl bg-zinc-900/40 border border-zinc-800 p-6">
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">Productos Más Consumidos</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">Ranking por unidades salidas</p>
+          <h3 className="text-sm font-semibold text-slate-100 tracking-tight">Productos Más Consumidos</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Ranking por unidades salidas</p>
         </div>
 
-        <div className="flex gap-0.5 p-0.5 rounded-md bg-zinc-900 border border-zinc-800">
+        <div className="flex gap-0.5 p-0.5 rounded-md bg-slate-900 border border-slate-800">
           {periods.map((p: PeriodOption) => (
             <button
               key={p.key}
@@ -600,8 +600,8 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
               className={cn(
                 'px-2.5 py-1 rounded text-[11px] font-medium transition-colors',
                 period === p.key
-                  ? 'bg-zinc-800 text-zinc-100'
-                  : 'text-zinc-500 hover:text-zinc-300',
+                  ? 'bg-slate-800 text-slate-100'
+                  : 'text-slate-500 hover:text-slate-300',
               )}
             >
               {p.label}
@@ -624,7 +624,7 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
                 <div className="w-5 text-center">
                   <span className={cn(
                     'text-[11px] font-medium tabular-nums',
-                    i < 3 ? 'text-zinc-300' : 'text-zinc-600',
+                    i < 3 ? 'text-slate-300' : 'text-slate-600',
                   )}>
                     {i + 1}
                   </span>
@@ -632,9 +632,9 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5 gap-3">
-                    <span className="text-[13px] text-zinc-100 truncate">{item.descripcion}</span>
+                    <span className="text-[13px] text-slate-100 truncate">{item.descripcion}</span>
                     <div className="flex items-center gap-2.5 flex-shrink-0 tabular-nums">
-                      <span className="text-sm font-semibold text-zinc-100 font-mono">{item.cantidad}</span>
+                      <span className="text-sm font-semibold text-slate-100 font-mono">{item.cantidad}</span>
                       {Number.isFinite(delta) && delta !== 0 && (
                         <span className={cn(
                           'text-[11px] font-medium',
@@ -646,9 +646,9 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
                     </div>
                   </div>
 
-                  <div className="h-1 rounded-full overflow-hidden bg-zinc-800">
+                  <div className="h-1 rounded-full overflow-hidden bg-slate-800">
                     <div
-                      className="h-full bg-zinc-400 rounded-full transition-all duration-500"
+                      className="h-full bg-slate-400 rounded-full transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -678,18 +678,18 @@ function InsightsPanel({ insights }: InsightsPanelProps) {
   };
 
   return (
-    <div className="rounded-xl bg-zinc-900/40 border border-zinc-800 p-6">
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-100 tracking-tight flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-slate-100 tracking-tight flex items-center gap-2">
             Insights
             <span className="px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider rounded bg-indigo-500/10 text-indigo-300 ring-1 ring-inset ring-indigo-500/20">
               AI
             </span>
           </h3>
-          <p className="text-xs text-zinc-500 mt-0.5">Lo que necesitás saber ahora</p>
+          <p className="text-xs text-slate-500 mt-0.5">Lo que necesitás saber ahora</p>
         </div>
-        <Brain size={14} className="text-zinc-600" strokeWidth={1.75} />
+        <Brain size={14} className="text-slate-600" strokeWidth={1.75} />
       </div>
 
       <div className="space-y-2 -mx-2">
@@ -699,13 +699,13 @@ function InsightsPanel({ insights }: InsightsPanelProps) {
           return (
             <div
               key={i}
-              className="group px-3 py-3 rounded-lg hover:bg-zinc-800/40 transition-colors cursor-pointer"
+              className="group px-3 py-3 rounded-lg hover:bg-slate-800/40 transition-colors cursor-pointer"
             >
               <div className="flex items-start gap-3">
                 <IconComp size={14} className={cn('flex-shrink-0 mt-0.5', tone.text)} strokeWidth={2} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium text-zinc-100 mb-0.5">{insight.titulo}</div>
-                  <p className="text-xs text-zinc-400 leading-relaxed">{insight.descripcion}</p>
+                  <div className="text-[13px] font-medium text-slate-100 mb-0.5">{insight.titulo}</div>
+                  <p className="text-xs text-slate-400 leading-relaxed">{insight.descripcion}</p>
                   <button className="mt-2 text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors inline-flex items-center gap-1">
                     {insight.accion} <ArrowRight size={11} />
                   </button>
@@ -739,42 +739,42 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
   }, [actividad]);
 
   return (
-    <div className="rounded-xl bg-zinc-900/40 border border-zinc-800 p-6">
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">Actividad Reciente</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">Últimos movimientos de inventario</p>
+          <h3 className="text-sm font-semibold text-slate-100 tracking-tight">Actividad Reciente</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Últimos movimientos de inventario</p>
         </div>
-        <Activity size={14} className="text-zinc-600" strokeWidth={1.75} />
+        <Activity size={14} className="text-slate-600" strokeWidth={1.75} />
       </div>
 
       <div className="space-y-4 max-h-[360px] overflow-y-auto -mx-2">
         {groupedByTime.map(([time, items]: [string, ActividadItem[]]) => (
           <div key={time}>
             <div className="flex items-center gap-2 mb-2 px-2">
-              <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-zinc-500">
+              <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500">
                 hace {time}
               </span>
-              <div className="h-px flex-1 bg-zinc-800/60" />
+              <div className="h-px flex-1 bg-slate-800/60" />
             </div>
 
             <div>
               {items.map((item: ActividadItem, i: number) => (
                 <div
                   key={`${item.descripcion}-${i}`}
-                  className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-zinc-800/40 transition-colors"
+                  className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-800/40 transition-colors"
                 >
                   <span className={cn(
                     'inline-flex items-center justify-center w-7 h-7 rounded-md text-[11px] font-mono font-semibold tabular-nums flex-shrink-0',
                     item.tipo === 'entrada'
                       ? 'bg-green-500/10 text-green-300 ring-1 ring-inset ring-green-500/20'
-                      : 'bg-zinc-800 text-zinc-300 ring-1 ring-inset ring-zinc-700',
+                      : 'bg-slate-800 text-slate-300 ring-1 ring-inset ring-slate-700',
                   )}>
                     {item.tipo === 'entrada' ? '+' : '−'}{item.cantidad}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13px] text-zinc-100 truncate">{item.descripcion}</div>
-                    <div className="text-[11px] text-zinc-500">{item.usuario}</div>
+                    <div className="text-[13px] text-slate-100 truncate">{item.descripcion}</div>
+                    <div className="text-[11px] text-slate-500">{item.usuario}</div>
                   </div>
                 </div>
               ))}

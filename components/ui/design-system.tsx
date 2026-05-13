@@ -8,15 +8,15 @@ import { TrendingUp, TrendingDown, type LucideIcon } from 'lucide-react';
 // Design System — Stripe-style corporate
 // =====================================================
 // Paleta:
-//   - Neutros: zinc-*  (fondo zinc-950, surface zinc-900)
+//   - Neutros: slate-*  (fondo slate-950, surface slate-900)
 //   - Marca:   indigo-600 (único acento "vivo")
-//   - Sem.:    green-500 (éxito), red-500 (error), amber-500 (warning, raro)
+//   - Sem.:    green-400 (éxito), red-400 (error), amber-400 (warning, raro)
 //
 // Reglas:
 //   - Hierarchy via tipografía y whitespace, NO colores
-//   - Cards planas (sin fondos coloreados)
-//   - Sin emojis, sin glow, sin gradientes saturados
-//   - tabular-nums en todos los números
+//   - Cards planas (sin fondos coloreados decorativos)
+//   - Compatible con el sistema de light-mode existente (CSS overrides
+//     de las clases slate-* en globals.css)
 // =====================================================
 
 // ─────────────────────────────────────────────────────
@@ -32,9 +32,9 @@ export function Card({
 }: CardProps) {
   const padMap = { none: '', sm: 'p-4', md: 'p-6', lg: 'p-8' };
   const variants = {
-    default: 'bg-zinc-900/40 border border-zinc-800',
-    subtle:  'bg-zinc-900/20 border border-zinc-800/50',
-    outline: 'bg-transparent border border-zinc-800',
+    default: 'bg-slate-900/40 border border-slate-800',
+    subtle:  'bg-slate-900/20 border border-slate-800/50',
+    outline: 'bg-transparent border border-slate-800',
   };
   return (
     <div className={cn('rounded-xl', variants[variant], padMap[padding], className)} {...rest}>
@@ -57,9 +57,9 @@ export function CardHeader({
   return (
     <div className={cn('flex items-start justify-between gap-4 mb-5', className)}>
       <div className="min-w-0">
-        <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">{title}</h3>
+        <h3 className="text-sm font-semibold text-slate-100 tracking-tight">{title}</h3>
         {description && (
-          <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
+          <p className="text-xs text-slate-500 mt-0.5">{description}</p>
         )}
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
@@ -89,22 +89,22 @@ export function KPI({
 
   return (
     <div className={cn(
-      'group rounded-xl bg-zinc-900/40 border border-zinc-800 p-5 transition-colors',
-      'hover:border-zinc-700',
+      'group rounded-xl bg-slate-900/40 border border-slate-800 p-5 transition-colors',
+      'hover:border-slate-700',
       className,
     )}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
           {label}
         </span>
-        {Icon && <Icon className="h-3.5 w-3.5 text-zinc-600" strokeWidth={2} />}
+        {Icon && <Icon className="h-3.5 w-3.5 text-slate-600" strokeWidth={2} />}
       </div>
 
       {loading ? (
-        <div className="h-8 w-32 bg-zinc-800 rounded animate-pulse" />
+        <div className="h-8 w-32 bg-slate-800 rounded animate-pulse" />
       ) : (
         <div className="flex items-baseline gap-3 flex-wrap">
-          <span className="text-3xl font-semibold text-zinc-50 tabular-nums tracking-tight">
+          <span className="text-3xl font-semibold text-slate-50 tabular-nums tracking-tight">
             {value}
           </span>
           {hasDelta && (
@@ -120,7 +120,7 @@ export function KPI({
       )}
 
       {(hint || deltaLabel) && (
-        <p className="text-xs text-zinc-500 mt-2">
+        <p className="text-xs text-slate-500 mt-2">
           {hint}{hint && deltaLabel ? ' · ' : ''}{deltaLabel}
         </p>
       )}
@@ -143,7 +143,7 @@ export function Badge({
   className?: string;
 }) {
   const tones: Record<BadgeTone, string> = {
-    neutral: 'bg-zinc-800 text-zinc-300 ring-zinc-700/50',
+    neutral: 'bg-slate-800 text-slate-300 ring-slate-700/50',
     brand:   'bg-indigo-500/10 text-indigo-300 ring-indigo-500/30',
     success: 'bg-green-500/10 text-green-300 ring-green-500/30',
     warning: 'bg-amber-500/10 text-amber-300 ring-amber-500/30',
@@ -179,12 +179,12 @@ export function Section({
         <div className="flex items-end justify-between gap-4">
           <div>
             {title && (
-              <h2 className="text-lg font-semibold text-zinc-100 tracking-tight">
+              <h2 className="text-lg font-semibold text-slate-100 tracking-tight">
                 {title}
               </h2>
             )}
             {description && (
-              <p className="text-sm text-zinc-500 mt-1">{description}</p>
+              <p className="text-sm text-slate-500 mt-1">{description}</p>
             )}
           </div>
           {action}
@@ -210,8 +210,8 @@ export function Button({
 }: BtnProps) {
   const variants = {
     primary:   'bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm',
-    secondary: 'bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700',
-    ghost:     'bg-transparent hover:bg-zinc-800 text-zinc-300',
+    secondary: 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700',
+    ghost:     'bg-transparent hover:bg-slate-800 text-slate-300',
     danger:    'bg-red-600/90 hover:bg-red-500 text-white',
   };
   const sizes = {
@@ -247,13 +247,13 @@ export function EmptyState({
   return (
     <div className="text-center py-12 px-6">
       {Icon && (
-        <div className="inline-flex p-3 rounded-full bg-zinc-900 border border-zinc-800 mb-4">
-          <Icon className="h-5 w-5 text-zinc-500" />
+        <div className="inline-flex p-3 rounded-full bg-slate-900 border border-slate-800 mb-4">
+          <Icon className="h-5 w-5 text-slate-500" />
         </div>
       )}
-      <h3 className="text-sm font-medium text-zinc-300">{title}</h3>
+      <h3 className="text-sm font-medium text-slate-300">{title}</h3>
       {description && (
-        <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">{description}</p>
+        <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">{description}</p>
       )}
       {action && <div className="mt-5">{action}</div>}
     </div>
@@ -264,5 +264,5 @@ export function EmptyState({
 // DIVIDER — separador horizontal
 // ─────────────────────────────────────────────────────
 export function Divider({ className }: { className?: string }) {
-  return <div className={cn('h-px bg-zinc-800', className)} />;
+  return <div className={cn('h-px bg-slate-800', className)} />;
 }
