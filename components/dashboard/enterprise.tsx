@@ -244,55 +244,42 @@ interface KPICardProps {
   description?: string;
 }
 
-function KPICard({ label, value, prevValue, suffix, icon, color, sparkData, description }: KPICardProps) {
-  const delta = prevValue ? ((Number(value) - prevValue) / prevValue * 100).toFixed(1) : null;
-  const isPositive = delta !== null && parseFloat(delta) >= 0;
-
-  const colorMap: Record<KPIColor, ColorConfig> = {
-    emerald: { bg: 'rgba(61,154,95,0.08)', border: 'rgba(61,154,95,0.15)', text: '#3d9a5f', accent: '#4aaa73' },
-    cyan: { bg: 'rgba(74,127,181,0.08)', border: 'rgba(74,127,181,0.15)', text: '#4a7fb5', accent: '#6b8baa' },
-    rose: { bg: 'rgba(201,68,68,0.08)', border: 'rgba(201,68,68,0.15)', text: '#c94444', accent: '#cc5555' },
-    violet: { bg: 'rgba(107,84,136,0.08)', border: 'rgba(107,84,136,0.15)', text: '#6b5488', accent: '#836ba0' },
-  };
-
-  const c = colorMap[color];
+function KPICard({ label, value, prevValue, suffix, icon, sparkData, description }: KPICardProps) {
+  // Stripe-style: zinc + indigo + verde/rojo solo para deltas.
+  // El color ya no se elige por prop — todo es zinc.
+  const delta = prevValue ? ((Number(value) - prevValue) / prevValue * 100) : null;
+  const isPositive = delta !== null && delta >= 0;
 
   return (
-    <div
-      className="relative group rounded-xl overflow-hidden transition-all duration-300 bg-slate-900 border border-slate-800 hover:border-slate-700"
-    >
-      <div className="hidden" />
+    <div className="group rounded-xl bg-zinc-900/40 border border-zinc-800 p-5 transition-colors hover:border-zinc-700">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-zinc-500">{icon}</span>
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-zinc-500">{label}</span>
+        </div>
+        {sparkData && <SparkLine data={sparkData} color="#a1a1aa" width={56} height={20} />}
+      </div>
 
-      <div className="relative p-5">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg" style={{ background: c.bg }}>
-              <span style={{ color: c.text }}>{icon}</span>
-            </div>
-            <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'rgba(148,163,184,0.8)' }}>{label}</span>
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-3xl font-semibold tracking-tight text-zinc-50 tabular-nums">
+              {typeof value === 'number' ? value.toLocaleString('es-UY') : value}
+            </span>
+            {suffix && <span className="text-sm font-medium text-zinc-400">{suffix}</span>}
           </div>
-          {sparkData && <SparkLine data={sparkData} color={c.text} width={60} height={24} />}
+          {description && <p className="text-[11px] mt-1.5 text-zinc-500">{description}</p>}
         </div>
 
-        <div className="flex items-end justify-between">
-          <div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-bold tracking-tight text-white">{typeof value === 'number' ? value.toLocaleString() : value}</span>
-              {suffix && <span className="text-sm font-medium" style={{ color: c.text }}>{suffix}</span>}
-            </div>
-            {description && <p className="text-[11px] mt-1" style={{ color: 'rgba(148,163,184,0.6)' }}>{description}</p>}
-          </div>
-
-          {delta !== null && (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold" style={{
-              background: isPositive ? 'rgba(61,154,95,0.12)' : 'rgba(201,68,68,0.12)',
-              color: isPositive ? '#4aaa73' : '#cc5555',
-            }}>
-              <span>{isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}</span>
-              <span>{Math.abs(parseFloat(delta))}%</span>
-            </div>
-          )}
-        </div>
+        {delta !== null && Number.isFinite(delta) && (
+          <span className={cn(
+            'inline-flex items-center gap-0.5 text-xs font-medium tabular-nums flex-shrink-0',
+            isPositive ? 'text-green-400' : 'text-red-400',
+          )}>
+            {isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+            {Math.abs(delta).toFixed(1)}%
+          </span>
+        )}
       </div>
     </div>
   );
@@ -308,163 +295,159 @@ interface InventoryValuePanelProps {
 
 function InventoryValuePanel({ data }: InventoryValuePanelProps) {
   const trend = data.prev30d > 0
-    ? ((data.total - data.prev30d) / data.prev30d * 100).toFixed(1)
-    : '0.0';
-  const isUp = parseFloat(trend) >= 0;
+    ? ((data.total - data.prev30d) / data.prev30d * 100)
+    : 0;
+  const isUp = trend >= 0;
   const hayProblemasDatos = data.sinCosto > 0 || data.sinAlmacen > 0;
 
   return (
-    <div className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-800">
-      <div className="hidden" />
-      <div className="hidden" />
-
-      <div className="relative p-6">
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl" style={{ background: 'rgba(61,154,95,0.12)' }}>
-              <DollarSign size={18} style={{ color: '#3d9a5f' }} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-200 text-sm">Valor del Inventario</h3>
-              <p className="text-[11px]" style={{ color: 'rgba(148,163,184,0.5)' }}>Capital total en stock</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold" style={{
-            background: isUp ? 'rgba(61,154,95,0.1)' : 'rgba(201,68,68,0.1)',
-            color: isUp ? '#4aaa73' : '#cc5555',
-          }}>
-            <span>{isUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}</span>
-            <span>{trend}%</span>
-          </div>
+    <div className="rounded-xl bg-zinc-900/40 border border-zinc-800 p-6">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">Valor del Inventario</h3>
+          <p className="text-xs text-zinc-500 mt-0.5">Capital total en stock</p>
         </div>
-
-        {/* Big number + donut */}
-        <div className="flex items-center gap-6 mb-6">
-          <div className="flex-1">
-            <div className="text-4xl font-bold text-white tracking-tight" style={{ fontFeatureSettings: "'tnum'" }}>
-              ${data.total.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
-            </div>
-            <div className="text-xs mt-1" style={{ color: 'rgba(148,163,184,0.5)' }}>
-              vs 30 días: ${data.prev30d.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
-            </div>
-          </div>
-          <div className="relative">
-            <MiniDonut
-              segments={data.categorias.map((cat: Categoria) => ({ percent: cat.porcentaje, color: cat.color }))}
-              size={72}
-              strokeWidth={8}
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[10px] font-bold text-slate-300">{data.categorias.length}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Category breakdown */}
-        <div className="space-y-2.5 mb-5">
-          {data.categorias.map((cat: Categoria) => (
-            <div key={cat.nombre} className="group cursor-pointer">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ background: cat.color }} />
-                  <span className="text-xs text-slate-400 group-hover:text-slate-200 transition-colors">{cat.nombre}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono font-medium text-slate-300">${(cat.valor / 1000).toFixed(1)}k</span>
-                  <span className="text-[10px] text-slate-500 w-8 text-right">{cat.porcentaje}%</span>
-                </div>
-              </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                <div
-                  className="h-full rounded-full transition-all duration-700 group-hover:opacity-80"
-                  style={{
-                    width: `${cat.porcentaje}%`,
-                    background: `linear-gradient(90deg, ${cat.color}, ${cat.color}88)`,
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Desglose por almacén */}
-        {data.almacenes.length > 0 && (
-          <div className="mb-5 p-3.5 rounded-xl" style={{ background: 'rgba(74,127,181,0.05)', border: '1px solid rgba(74,127,181,0.15)' }}>
-            <div className="flex items-center gap-2 mb-3">
-              <Package size={13} className="text-blue-400" />
-              <span className="text-xs font-medium text-blue-300">Desglose por almacén</span>
-              <span className="ml-auto text-[10px] text-blue-400/50">{data.almacenes.length} almac{data.almacenes.length === 1 ? 'én' : 'enes'}</span>
-            </div>
-            <div className="space-y-2">
-              {data.almacenes.map((a) => {
-                const pct = data.total > 0 ? Math.round((a.valor / data.total) * 100) : 0;
-                const esSinAlmacen = a.id === '__sin_almacen__';
-                return (
-                  <div key={a.id} className="text-xs">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={cn('font-medium', esSinAlmacen ? 'text-amber-300' : 'text-slate-200')}>
-                        {a.codigo !== '—' && a.codigo !== '' && <span className="text-slate-500 mr-1.5">{a.codigo}</span>}
-                        {a.nombre}
-                      </span>
-                      <span className="font-mono text-slate-300">
-                        ${(a.valor / 1000).toFixed(1)}k <span className="text-slate-500">· {pct}%</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                      <span>{a.productos} productos</span>
-                      <span>·</span>
-                      <span>{a.unidades.toLocaleString('es-UY')} unid.</span>
-                      {a.criticos > 0 && (
-                        <>
-                          <span>·</span>
-                          <span className="text-amber-400">{a.criticos} críticos</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Inmovilizado */}
-        <div className="p-3.5 rounded-xl" style={{ background: 'rgba(200,135,46,0.06)', border: '1px solid rgba(200,135,46,0.12)' }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Hourglass size={14} className="text-amber-400" />
-              <div>
-                <div className="text-xs font-medium text-amber-400">Capital inmovilizado</div>
-                <div className="text-[10px] text-amber-400/50">{data.productosInmovilizados} productos sin movimiento (60d)</div>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm font-bold text-amber-300">${data.capitalInmovilizado.toLocaleString()}</div>
-              <div className="text-[10px] text-amber-400/50">
-                {data.total > 0 ? ((data.capitalInmovilizado / data.total) * 100).toFixed(0) : 0}% del total
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Calidad de datos — sólo aparece si hay problemas */}
-        {hayProblemasDatos && (
-          <div className="mt-3 p-3 rounded-xl text-[11px]" style={{ background: 'rgba(201,68,68,0.05)', border: '1px solid rgba(201,68,68,0.15)' }}>
-            <div className="flex items-center gap-2 mb-1.5">
-              <AlertTriangle size={12} className="text-red-400" />
-              <span className="font-medium text-red-300">Calidad de datos</span>
-            </div>
-            <ul className="space-y-0.5 text-red-400/70">
-              {data.sinCosto > 0 && (
-                <li>{data.sinCosto} producto(s) con stock pero sin costo promedio — no valúan</li>
-              )}
-              {data.sinAlmacen > 0 && (
-                <li>{data.sinAlmacen} producto(s) sin almacén asignado</li>
-              )}
-            </ul>
-          </div>
+        {Number.isFinite(trend) && trend !== 0 && (
+          <span className={cn(
+            'inline-flex items-center gap-0.5 text-xs font-medium tabular-nums',
+            isUp ? 'text-green-400' : 'text-red-400',
+          )}>
+            {isUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+            {Math.abs(trend).toFixed(1)}%
+          </span>
         )}
       </div>
+
+      {/* Big number */}
+      <div className="mb-6">
+        <div className="flex items-baseline gap-4">
+          <span className="text-4xl font-semibold text-zinc-50 tabular-nums tracking-tight">
+            ${data.total.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
+          </span>
+          <div className="text-xs text-zinc-500">
+            vs 30 días: <span className="tabular-nums">${data.prev30d.toLocaleString('es-UY', { minimumFractionDigits: 0 })}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Category breakdown */}
+      {data.categorias.length > 0 && (
+        <div className="mb-6">
+          <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-zinc-500 mb-3">
+            Por categoría
+          </div>
+          <div className="space-y-3">
+            {data.categorias.map((cat: Categoria) => (
+              <div key={cat.nombre} className="group">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs text-zinc-300">{cat.nombre}</span>
+                  <div className="flex items-center gap-3 tabular-nums">
+                    <span className="text-xs font-medium text-zinc-200">
+                      ${cat.valor.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
+                    </span>
+                    <span className="text-[11px] text-zinc-500 w-9 text-right">{cat.porcentaje}%</span>
+                  </div>
+                </div>
+                <div className="h-1 rounded-full overflow-hidden bg-zinc-800">
+                  <div
+                    className="h-full bg-zinc-400 rounded-full transition-all duration-500"
+                    style={{ width: `${cat.porcentaje}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Desglose por almacén */}
+      {data.almacenes.length > 0 && (
+        <div className="mb-6 pt-6 border-t border-zinc-800/60">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-zinc-500">
+              Por almacén
+            </div>
+            <span className="text-[10px] text-zinc-600 tabular-nums">
+              {data.almacenes.length} {data.almacenes.length === 1 ? 'almacén' : 'almacenes'}
+            </span>
+          </div>
+          <div className="space-y-2.5">
+            {data.almacenes.map((a) => {
+              const pct = data.total > 0 ? Math.round((a.valor / data.total) * 100) : 0;
+              const esSinAlmacen = a.id === '__sin_almacen__';
+              return (
+                <div key={a.id}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className={cn('text-xs font-medium', esSinAlmacen ? 'text-amber-300' : 'text-zinc-200')}>
+                      {a.codigo !== '—' && a.codigo !== '' && (
+                        <span className="text-zinc-600 mr-1.5 font-mono">{a.codigo}</span>
+                      )}
+                      {a.nombre}
+                    </span>
+                    <span className="text-xs text-zinc-300 tabular-nums">
+                      ${a.valor.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
+                      <span className="text-zinc-600 ml-2">· {pct}%</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-zinc-500 tabular-nums">
+                    <span>{a.productos} productos</span>
+                    <span className="text-zinc-700">·</span>
+                    <span>{a.unidades.toLocaleString('es-UY')} unidades</span>
+                    {a.criticos > 0 && (
+                      <>
+                        <span className="text-zinc-700">·</span>
+                        <span className="text-amber-400">{a.criticos} críticos</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Inmovilizado */}
+      <div className="pt-6 border-t border-zinc-800/60">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Hourglass size={14} className="text-zinc-500" strokeWidth={1.75} />
+            <div>
+              <div className="text-xs font-medium text-zinc-200">Capital inmovilizado</div>
+              <div className="text-[11px] text-zinc-500">{data.productosInmovilizados} productos sin movimiento (60d)</div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-sm font-semibold text-zinc-100 tabular-nums">
+              ${data.capitalInmovilizado.toLocaleString('es-UY')}
+            </div>
+            <div className="text-[11px] text-zinc-500 tabular-nums">
+              {data.total > 0 ? ((data.capitalInmovilizado / data.total) * 100).toFixed(0) : 0}% del total
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Calidad de datos — solo si hay problemas */}
+      {hayProblemasDatos && (
+        <div className="mt-4 p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+          <div className="flex items-center gap-2 mb-1.5">
+            <AlertTriangle size={11} className="text-red-400" strokeWidth={2} />
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-red-300">
+              Calidad de datos
+            </span>
+          </div>
+          <ul className="space-y-0.5 text-[11px] text-zinc-400">
+            {data.sinCosto > 0 && (
+              <li>{data.sinCosto} producto(s) con stock pero sin costo promedio — no valúan</li>
+            )}
+            {data.sinAlmacen > 0 && (
+              <li>{data.sinAlmacen} producto(s) sin almacén asignado</li>
+            )}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -484,110 +467,100 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
     ? alertas.items
     : alertas.items.filter((item: AlertaItem) => item.nivel === activeFilter);
 
-  const levelConfig: Record<AlertLevel, LevelConfig> = {
-    critical: { color: '#c94444', bg: 'rgba(201,68,68,0.08)', border: 'rgba(201,68,68,0.2)', label: 'Sin stock', Icon: XCircle },
-    warning: { color: '#c8872e', bg: 'rgba(200,135,46,0.08)', border: 'rgba(200,135,46,0.2)', label: 'Stock bajo', Icon: AlertCircle },
-    low: { color: '#b89a2e', bg: 'rgba(184,154,46,0.08)', border: 'rgba(184,154,46,0.2)', label: 'Atención', Icon: AlertTriangle },
+  // Tono semántico por nivel — solo color en el texto del estado, NO en fondos.
+  const levelTone: Record<AlertLevel, { text: string; Icon: typeof XCircle; label: string }> = {
+    critical: { text: 'text-red-400',    Icon: XCircle,       label: 'Sin stock' },
+    warning:  { text: 'text-amber-400',  Icon: AlertCircle,   label: 'Stock bajo' },
+    low:      { text: 'text-zinc-400',   Icon: AlertTriangle, label: 'Atención' },
   };
 
-  const filters: FilterOption[] = [
-    { key: 'all', label: 'Todas', count: alertas.total },
-    { key: 'critical', label: 'Críticas', count: alertas.criticas, color: '#c94444' },
-    { key: 'warning', label: 'Alerta', count: alertas.advertencias, color: '#c8872e' },
-    { key: 'low', label: 'Bajas', count: alertas.bajas, color: '#b89a2e' },
+  const filters = [
+    { key: 'all',      label: 'Todas',    count: alertas.total },
+    { key: 'critical', label: 'Críticas', count: alertas.criticas },
+    { key: 'warning',  label: 'Alerta',   count: alertas.advertencias },
+    { key: 'low',      label: 'Bajas',    count: alertas.bajas },
   ];
 
   return (
-    <div className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-800">
-      <div className="hidden" />
-
-      <div className="relative p-6">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl" style={{ background: 'rgba(201,68,68,0.12)' }}>
-              <ShieldAlert size={18} style={{ color: '#c94444' }} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-200 text-sm">Alertas de Stock</h3>
-              <p className="text-[11px]" style={{ color: 'rgba(148,163,184,0.5)' }}>Productos que requieren atención</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold" style={{ background: 'rgba(201,68,68,0.1)', color: '#cc5555' }}>
-            {alertas.total}
-          </div>
+    <div className="rounded-xl bg-zinc-900/40 border border-zinc-800 p-6">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">Alertas de Stock</h3>
+          <p className="text-xs text-zinc-500 mt-0.5">Productos que requieren atención</p>
         </div>
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/10 text-red-300 ring-1 ring-inset ring-red-500/20 tabular-nums">
+          {alertas.total}
+        </span>
+      </div>
 
-        {/* Filter pills */}
-        <div className="flex gap-1.5 mb-4">
-          {filters.map((f: FilterOption) => (
+      {/* Filter pills */}
+      <div className="flex gap-1 mb-4 border-b border-zinc-800 -mx-6 px-6">
+        {filters.map(f => {
+          const active = activeFilter === f.key;
+          return (
             <button
               key={f.key}
               onClick={() => setActiveFilter(f.key)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-              style={{
-                background: activeFilter === f.key ? (f.color ? `${f.color}18` : 'rgba(255,255,255,0.08)') : 'rgba(255,255,255,0.03)',
-                color: activeFilter === f.key ? (f.color || '#e2e8f0') : 'rgba(148,163,184,0.6)',
-                border: `1px solid ${activeFilter === f.key ? (f.color ? `${f.color}30` : 'rgba(255,255,255,0.1)') : 'transparent'}`,
-              }}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors',
+                active
+                  ? 'border-indigo-500 text-zinc-100'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-300',
+              )}
             >
               <span>{f.label}</span>
-              <span className="font-bold">{f.count}</span>
+              <span className="tabular-nums text-zinc-600">{f.count}</span>
             </button>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
-        {/* Alert items */}
-        <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(51,65,85,0.5) transparent' }}>
-          {filteredItems.map((item: AlertaItem) => {
-            const cfg = levelConfig[item.nivel];
+      {/* Alert items */}
+      <div className="space-y-1 max-h-[280px] overflow-y-auto -mx-2">
+        {filteredItems.length === 0 ? (
+          <div className="text-center py-8 text-xs text-zinc-500">
+            Sin alertas en este filtro.
+          </div>
+        ) : (
+          filteredItems.map((item: AlertaItem) => {
+            const cfg = levelTone[item.nivel];
             const IconComp = cfg.Icon;
             return (
               <div
                 key={item.codigo}
-                className="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all hover:border-slate-700"
-                style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
+                className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-md hover:bg-zinc-800/60 transition-colors cursor-pointer"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="flex-shrink-0"><IconComp size={15} style={{ color: cfg.color }} /></span>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <IconComp size={14} className={cn('flex-shrink-0', cfg.text)} strokeWidth={2} />
                   <div className="min-w-0">
-                    <div className="font-medium text-sm text-slate-200 truncate">{item.descripcion}</div>
-                    <div className="text-[11px]" style={{ color: 'rgba(148,163,184,0.5)' }}>
-                      {item.codigo} · <span style={{ color: cfg.color }}>
-                        {item.stock === 0 ? 'Sin stock' : `${item.stock} / ${item.stockMin} min`}
+                    <div className="font-medium text-[13px] text-zinc-100 truncate">{item.descripcion}</div>
+                    <div className="text-[11px] text-zinc-500 tabular-nums">
+                      <span className="font-mono text-zinc-600">{item.codigo}</span>
+                      <span className="mx-1.5 text-zinc-700">·</span>
+                      <span className={cfg.text}>
+                        {item.stock === 0 ? 'Sin stock' : `${item.stock} / ${item.stockMin} mín`}
                       </span>
                     </div>
                   </div>
                 </div>
                 {item.dias !== null && (
-                  <div className="flex items-center gap-1.5 flex-shrink-0 ml-3">
-                    <span className="text-xs font-mono font-bold" style={{ color: cfg.color }}>
-                      {item.dias === 0 ? 'HOY' : `${item.dias}d`}
-                    </span>
-                  </div>
+                  <span className={cn('text-[11px] font-mono font-medium tabular-nums flex-shrink-0', cfg.text)}>
+                    {item.dias === 0 ? 'HOY' : `${item.dias}d`}
+                  </span>
                 )}
               </div>
             );
-          })}
-        </div>
-
-        {filteredItems.length < alertas.total && (
-          <button className="w-full mt-3 py-2 rounded-lg text-xs font-medium transition-all" style={{ color: 'rgba(148,163,184,0.5)' }}>
-            Ver {alertas.total - filteredItems.length} alertas más
-          </button>
+          })
         )}
-
-        {/* CTA */}
-        <button className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-[1.01]" style={{
-          background: 'linear-gradient(135deg, rgba(61,154,95,0.15), rgba(6,182,212,0.15))',
-          border: '1px solid rgba(61,154,95,0.2)',
-          color: '#4aaa73',
-        }}>
-          <PackagePlus size={16} />
-          <span>Crear orden de compra</span>
-          <ArrowRight size={16} />
-        </button>
       </div>
+
+      {/* CTA */}
+      <button className="w-full mt-4 inline-flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors">
+        <PackagePlus size={14} />
+        Crear orden de compra
+        <ArrowRight size={14} />
+      </button>
     </div>
   );
 }
@@ -611,106 +584,79 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
     { key: 'año', label: '1y' },
   ];
 
-  const catColors: Record<string, string> = {
-    'Estación': '#3d9a5f',
-    'Ferretería': '#4a7fb5',
-    'Papelería': '#836ba0',
-  };
-
   return (
-    <div className="relative rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.8))', border: '1px solid rgba(51,65,85,0.3)' }}>
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 10% 80%, rgba(6,182,212,0.04), transparent 60%)' }} />
-
-      <div className="relative p-6">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl" style={{ background: 'rgba(6,182,212,0.12)' }}>
-              <BarChart3 size={18} className="text-cyan-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-200 text-sm">Productos Más Consumidos</h3>
-              <p className="text-[11px]" style={{ color: 'rgba(148,163,184,0.5)' }}>Ranking por unidades salidas</p>
-            </div>
-          </div>
-
-          {/* Period selector */}
-          <div className="flex gap-0.5 p-0.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
-            {periods.map((p: PeriodOption) => (
-              <button
-                key={p.key}
-                onClick={() => setPeriod(p.key)}
-                className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
-                style={{
-                  background: period === p.key ? 'rgba(6,182,212,0.15)' : 'transparent',
-                  color: period === p.key ? '#6b8baa' : 'rgba(148,163,184,0.5)',
-                }}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+    <div className="rounded-xl bg-zinc-900/40 border border-zinc-800 p-6">
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">Productos Más Consumidos</h3>
+          <p className="text-xs text-zinc-500 mt-0.5">Ranking por unidades salidas</p>
         </div>
 
-        {/* Product rows */}
-        <div className="space-y-3">
-          {data.map((item: ConsumoItem, i: number) => {
-            const pct = (item.cantidad / maxVal) * 100;
-            const delta = ((item.cantidad - item.prevCantidad) / item.prevCantidad * 100).toFixed(0);
-            const isUp = parseFloat(delta) >= 0;
-            const barColor = catColors[item.categoria] || '#64748b';
+        <div className="flex gap-0.5 p-0.5 rounded-md bg-zinc-900 border border-zinc-800">
+          {periods.map((p: PeriodOption) => (
+            <button
+              key={p.key}
+              onClick={() => setPeriod(p.key)}
+              className={cn(
+                'px-2.5 py-1 rounded text-[11px] font-medium transition-colors',
+                period === p.key
+                  ? 'bg-zinc-800 text-zinc-100'
+                  : 'text-zinc-500 hover:text-zinc-300',
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-            return (
-              <div key={item.codigo} className="group cursor-pointer">
-                <div className="flex items-center gap-3">
-                  {/* Rank */}
-                  <div className="w-5 text-center">
-                    <span className="text-[11px] font-bold" style={{ color: i < 3 ? '#6b8baa' : 'rgba(148,163,184,0.3)' }}>
-                      {i + 1}
-                    </span>
+      <div className="space-y-3.5">
+        {data.map((item: ConsumoItem, i: number) => {
+          const pct = (item.cantidad / maxVal) * 100;
+          const delta = item.prevCantidad > 0
+            ? ((item.cantidad - item.prevCantidad) / item.prevCantidad * 100)
+            : 0;
+          const isUp = delta >= 0;
+
+          return (
+            <div key={item.codigo} className="group">
+              <div className="flex items-center gap-3">
+                <div className="w-5 text-center">
+                  <span className={cn(
+                    'text-[11px] font-medium tabular-nums',
+                    i < 3 ? 'text-zinc-300' : 'text-zinc-600',
+                  )}>
+                    {i + 1}
+                  </span>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1.5 gap-3">
+                    <span className="text-[13px] text-zinc-100 truncate">{item.descripcion}</span>
+                    <div className="flex items-center gap-2.5 flex-shrink-0 tabular-nums">
+                      <span className="text-sm font-semibold text-zinc-100 font-mono">{item.cantidad}</span>
+                      {Number.isFinite(delta) && delta !== 0 && (
+                        <span className={cn(
+                          'text-[11px] font-medium',
+                          isUp ? 'text-green-400' : 'text-red-400',
+                        )}>
+                          {isUp ? '+' : ''}{delta.toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm text-slate-200 font-medium truncate group-hover:text-white transition-colors">
-                          {item.descripcion}
-                        </span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0" style={{
-                          background: `${barColor}15`,
-                          color: `${barColor}cc`,
-                        }}>
-                          {item.categoria}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2.5 flex-shrink-0 ml-3">
-                        <span className="text-sm font-bold text-white font-mono">{item.cantidad}</span>
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded" style={{
-                          background: isUp ? 'rgba(61,154,95,0.1)' : 'rgba(201,68,68,0.1)',
-                          color: isUp ? '#4aaa73' : '#cc5555',
-                        }}>
-                          {isUp ? '+' : ''}{delta}%
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Bar */}
-                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                      <div
-                        className="h-full rounded-full transition-all duration-700 group-hover:opacity-90"
-                        style={{
-                          width: `${pct}%`,
-                          background: `linear-gradient(90deg, ${barColor}cc, ${barColor}44)`,
-                        }}
-                      />
-                    </div>
+                  <div className="h-1 rounded-full overflow-hidden bg-zinc-800">
+                    <div
+                      className="h-full bg-zinc-400 rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -725,54 +671,49 @@ interface InsightsPanelProps {
 }
 
 function InsightsPanel({ insights }: InsightsPanelProps) {
-  const typeConfig: Record<InsightTipo, InsightConfig> = {
-    urgente: { color: '#c94444', bg: 'rgba(201,68,68,0.06)', border: 'rgba(201,68,68,0.15)', Icon: Flame },
-    tendencia: { color: '#3d9a5f', bg: 'rgba(61,154,95,0.06)', border: 'rgba(61,154,95,0.15)', Icon: TrendingUp },
-    alerta: { color: '#c8872e', bg: 'rgba(200,135,46,0.06)', border: 'rgba(200,135,46,0.15)', Icon: AlertCircle },
+  const typeTone: Record<InsightTipo, { text: string; Icon: typeof Flame }> = {
+    urgente:   { text: 'text-red-400',   Icon: Flame },
+    tendencia: { text: 'text-green-400', Icon: TrendingUp },
+    alerta:    { text: 'text-amber-400', Icon: AlertCircle },
   };
 
   return (
-    <div className="relative rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.8))', border: '1px solid rgba(51,65,85,0.3)' }}>
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(107,84,136,0.05), transparent 60%)' }} />
-
-      <div className="relative p-6">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="p-2.5 rounded-xl" style={{ background: 'rgba(107,84,136,0.12)' }}>
-            <Brain size={18} className="text-violet-400" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-200 text-sm flex items-center gap-2">
-              Insights
-              <span className="px-1.5 py-0.5 text-[9px] font-bold rounded" style={{ background: 'rgba(107,84,136,0.15)', color: '#836ba0' }}>AI</span>
-            </h3>
-            <p className="text-[11px]" style={{ color: 'rgba(148,163,184,0.5)' }}>Lo que necesitás saber ahora</p>
-          </div>
+    <div className="rounded-xl bg-zinc-900/40 border border-zinc-800 p-6">
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-100 tracking-tight flex items-center gap-2">
+            Insights
+            <span className="px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider rounded bg-indigo-500/10 text-indigo-300 ring-1 ring-inset ring-indigo-500/20">
+              AI
+            </span>
+          </h3>
+          <p className="text-xs text-zinc-500 mt-0.5">Lo que necesitás saber ahora</p>
         </div>
+        <Brain size={14} className="text-zinc-600" strokeWidth={1.75} />
+      </div>
 
-        <div className="space-y-3">
-          {insights.map((insight: InsightItem, i: number) => {
-            const cfg = typeConfig[insight.tipo];
-            const IconComp = cfg.Icon;
-            return (
-              <div
-                key={i}
-                className="p-4 rounded-xl cursor-pointer transition-all hover:scale-[1.01]"
-                style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
-              >
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 mt-0.5"><IconComp size={18} style={{ color: cfg.color }} /></span>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm text-slate-200 mb-1">{insight.titulo}</div>
-                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(148,163,184,0.7)' }}>{insight.descripcion}</p>
-                    <button className="mt-2.5 text-xs font-semibold flex items-center gap-1 transition-colors" style={{ color: cfg.color }}>
-                      {insight.accion} <ArrowRight size={12} />
-                    </button>
-                  </div>
+      <div className="space-y-2 -mx-2">
+        {insights.map((insight: InsightItem, i: number) => {
+          const tone = typeTone[insight.tipo];
+          const IconComp = tone.Icon;
+          return (
+            <div
+              key={i}
+              className="group px-3 py-3 rounded-lg hover:bg-zinc-800/40 transition-colors cursor-pointer"
+            >
+              <div className="flex items-start gap-3">
+                <IconComp size={14} className={cn('flex-shrink-0 mt-0.5', tone.text)} strokeWidth={2} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-medium text-zinc-100 mb-0.5">{insight.titulo}</div>
+                  <p className="text-xs text-zinc-400 leading-relaxed">{insight.descripcion}</p>
+                  <button className="mt-2 text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors inline-flex items-center gap-1">
+                    {insight.accion} <ArrowRight size={11} />
+                  </button>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -798,62 +739,48 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
   }, [actividad]);
 
   return (
-    <div className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-800">
-      <div className="relative p-6">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="p-2.5 rounded-lg bg-slate-800">
-            <Activity size={18} className="text-slate-400" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-200 text-sm">Actividad Reciente</h3>
-            <p className="text-[11px]" style={{ color: 'rgba(148,163,184,0.5)' }}>Últimos movimientos de inventario</p>
-          </div>
+    <div className="rounded-xl bg-zinc-900/40 border border-zinc-800 p-6">
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">Actividad Reciente</h3>
+          <p className="text-xs text-zinc-500 mt-0.5">Últimos movimientos de inventario</p>
         </div>
+        <Activity size={14} className="text-zinc-600" strokeWidth={1.75} />
+      </div>
 
-        <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(51,65,85,0.5) transparent' }}>
-          {groupedByTime.map(([time, items]: [string, ActividadItem[]]) => (
-            <div key={time}>
-              {/* Time label */}
-              <div className="flex items-center gap-2 mb-2">
-                <div className="h-px flex-1" style={{ background: 'rgba(51,65,85,0.3)' }} />
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(148,163,184,0.5)' }}>
-                  hace {time}
-                </span>
-                <div className="h-px flex-1" style={{ background: 'rgba(51,65,85,0.3)' }} />
-              </div>
-
-              {/* Items */}
-              <div className="space-y-1.5">
-                {items.map((item: ActividadItem, i: number) => (
-                  <div
-                    key={`${item.descripcion}-${i}`}
-                    className="flex items-center justify-between p-2.5 rounded-xl transition-all hover:scale-[1.005]"
-                    style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(51,65,85,0.2)' }}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0" style={{
-                        background: item.tipo === 'entrada' ? 'rgba(61,154,95,0.12)' : 'rgba(201,68,68,0.12)',
-                        color: item.tipo === 'entrada' ? '#4aaa73' : '#cc5555',
-                      }}>
-                        {item.tipo === 'entrada' ? '+' : '\u2212'}{item.cantidad}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm text-slate-200 truncate">{item.descripcion}</div>
-                        <div className="text-[10px]" style={{ color: 'rgba(148,163,184,0.4)' }}>{item.usuario}</div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] flex-shrink-0 ml-2 px-2 py-0.5 rounded" style={{
-                      background: item.tipo === 'entrada' ? 'rgba(61,154,95,0.08)' : 'rgba(201,68,68,0.08)',
-                      color: item.tipo === 'entrada' ? 'rgba(74,170,115,0.6)' : 'rgba(204,85,85,0.6)',
-                    }}>
-                      {item.tipo}
-                    </span>
-                  </div>
-                ))}
-              </div>
+      <div className="space-y-4 max-h-[360px] overflow-y-auto -mx-2">
+        {groupedByTime.map(([time, items]: [string, ActividadItem[]]) => (
+          <div key={time}>
+            <div className="flex items-center gap-2 mb-2 px-2">
+              <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-zinc-500">
+                hace {time}
+              </span>
+              <div className="h-px flex-1 bg-zinc-800/60" />
             </div>
-          ))}
-        </div>
+
+            <div>
+              {items.map((item: ActividadItem, i: number) => (
+                <div
+                  key={`${item.descripcion}-${i}`}
+                  className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-zinc-800/40 transition-colors"
+                >
+                  <span className={cn(
+                    'inline-flex items-center justify-center w-7 h-7 rounded-md text-[11px] font-mono font-semibold tabular-nums flex-shrink-0',
+                    item.tipo === 'entrada'
+                      ? 'bg-green-500/10 text-green-300 ring-1 ring-inset ring-green-500/20'
+                      : 'bg-zinc-800 text-zinc-300 ring-1 ring-inset ring-zinc-700',
+                  )}>
+                    {item.tipo === 'entrada' ? '+' : '−'}{item.cantidad}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] text-zinc-100 truncate">{item.descripcion}</div>
+                    <div className="text-[11px] text-zinc-500">{item.usuario}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
