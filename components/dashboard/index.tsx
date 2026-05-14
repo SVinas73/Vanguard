@@ -611,7 +611,7 @@ export function InsightsPanel({
               AI
             </span>
           </h3>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-xs text-slate-500">
             {t('dashboard.insightsSubtitle', 'Lo que necesitás saber ahora')}
           </p>
         </div>
@@ -641,7 +641,7 @@ export function InsightsPanel({
                   </span>
                   <ArrowRight size={11} className="text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0" />
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
                   {insight.descripcion}
                 </p>
               </div>

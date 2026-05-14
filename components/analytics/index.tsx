@@ -338,7 +338,7 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
                     <div className="font-medium text-sm">{product.descripcion}</div>
                     <div className="text-xs text-slate-500 flex items-center gap-2">
                       {product.codigo}
-                      <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', config.bg, config.color)}>
+                      <span className={cn('px-1.5 py-0.5 rounded text-xs font-medium', config.bg, config.color)}>
                         {config.label}
                       </span>
                     </div>
@@ -518,7 +518,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
               key={p}
               onClick={() => setPeriod(p)}
               className={cn(
-                'px-2.5 py-1 rounded text-[11px] font-medium transition-colors',
+                'px-2.5 py-1 rounded text-xs font-medium transition-colors',
                 period === p
                   ? 'bg-slate-800 text-slate-100'
                   : 'text-slate-500 hover:text-slate-300',
@@ -635,7 +635,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
               <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <Package size={12} className="text-slate-500" />
-                  <span className="text-[11px] text-slate-500">{t('analytics.currentStock', 'Stock actual')}</span>
+                  <span className="text-xs text-slate-500">{t('analytics.currentStock', 'Stock actual')}</span>
                 </div>
                 <div
                   className="text-xl font-bold font-mono"
@@ -643,24 +643,24 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                 >
                   {selectedProduct.stock}
                 </div>
-                <div className="text-[10px] text-slate-600">{t('stock.minStock', 'Mín')}: {selectedProduct.stockMinimo}</div>
+                <div className="text-xs text-slate-600">{t('stock.minStock', 'Mín')}: {selectedProduct.stockMinimo}</div>
               </div>
 
               <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <BarChart3 size={12} className="text-slate-500" />
-                  <span className="text-[11px] text-slate-500">{t('analytics.consumption', 'Consumo')}</span>
+                  <span className="text-xs text-slate-500">{t('analytics.consumption', 'Consumo')}</span>
                 </div>
                 <div className="text-xl font-bold font-mono text-cyan-400">
                   {selectedProduct.consumoTotal}
                 </div>
-                <div className="text-[10px] text-slate-600">{selectedProduct.consumoDiario}/{t('analytics.dayAvg', 'día prom.')}</div>
+                <div className="text-xs text-slate-600">{selectedProduct.consumoDiario}/{t('analytics.dayAvg', 'día prom.')}</div>
               </div>
 
               <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <Clock size={12} className="text-slate-500" />
-                  <span className="text-[11px] text-slate-500">{t('analytics.daysLeft', 'Días restantes')}</span>
+                  <span className="text-xs text-slate-500">{t('analytics.daysLeft', 'Días restantes')}</span>
                 </div>
                 <div
                   className="text-xl font-bold font-mono"
@@ -673,18 +673,18 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                 >
                   {selectedProduct.diasRestantes ?? '∞'}
                 </div>
-                <div className="text-[10px] text-slate-600">{t('analytics.estimatedCurrentRate', 'al ritmo actual')}</div>
+                <div className="text-xs text-slate-600">{t('analytics.estimatedCurrentRate', 'al ritmo actual')}</div>
               </div>
 
               <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <DollarSign size={12} className="text-slate-500" />
-                  <span className="text-[11px] text-slate-500">{t('stock.salePrice', 'Precio')}</span>
+                  <span className="text-xs text-slate-500">{t('stock.salePrice', 'Precio')}</span>
                 </div>
                 <div className="text-xl font-bold font-mono text-violet-400">
                   ${selectedProduct.precio.toLocaleString('es-UY')}
                 </div>
-                <div className="text-[10px] text-slate-600">{t('common.perUnit', 'por unidad')}</div>
+                <div className="text-xs text-slate-600">{t('common.perUnit', 'por unidad')}</div>
               </div>
             </div>
 
@@ -708,7 +708,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                     >
                       <div className="flex items-center gap-2">
                         <span
-                          className="text-[10px] px-2 py-0.5 rounded font-medium"
+                          className="text-xs px-2 py-0.5 rounded font-medium"
                           style={{
                             background: mov.tipo === 'entrada' ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
                             color: mov.tipo === 'entrada' ? '#4aaa73' : '#cc5555',
