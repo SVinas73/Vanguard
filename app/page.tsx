@@ -712,6 +712,13 @@ export default function HomePage() {
               predictions={predictions}
               onNavigate={(tab) => handleTabChange(tab as TabType)}
             />
+
+            {/* Paneles de IA — predicciones, anomalías, asociaciones */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <AIPredictionsPanel />
+              <AIAnomaliesPanel />
+              <AIAssociationsPanel />
+            </div>
           </div>
         )}
 
