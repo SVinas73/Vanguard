@@ -502,31 +502,27 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl" style={{ background: 'rgba(6,182,212,0.12)' }}>
-            <BarChart3 size={18} className="text-cyan-400" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-200 text-sm">
-              {t('analytics.topConsumed', 'Productos Más Consumidos')}
-            </h3>
-            <p className="text-[11px] text-slate-500">
-              {t('analytics.rankByUnitsOut', 'Ranking por unidades salidas')} · {periodConfig[period].fullLabel}
-            </p>
-          </div>
+        <div>
+          <h3 className="text-sm font-semibold text-slate-100 tracking-tight">
+            {t('analytics.topConsumed', 'Productos más consumidos')}
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Ranking por unidades salidas · {periodConfig[period].fullLabel}
+          </p>
         </div>
 
         {/* Period selector */}
-        <div className="flex gap-0.5 p-0.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="flex gap-0.5 p-0.5 rounded-md bg-slate-900 border border-slate-800">
           {(Object.keys(periodConfig) as PeriodFilter[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
-              style={{
-                background: period === p ? 'rgba(6,182,212,0.15)' : 'transparent',
-                color: period === p ? '#6b8baa' : 'rgba(148,163,184,0.5)',
-              }}
+              className={cn(
+                'px-2.5 py-1 rounded text-[11px] font-medium transition-colors',
+                period === p
+                  ? 'bg-slate-800 text-slate-100'
+                  : 'text-slate-500 hover:text-slate-300',
+              )}
             >
               {periodConfig[p].label}
             </button>
@@ -534,86 +530,48 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
         </div>
       </div>
 
-      {/* Chart */}
+      {/* Lista compacta sin barras */}
       {chartData.length === 0 ? (
-        <div className="py-12 text-center rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(51,65,85,0.2)' }}>
-          <Package size={32} className="mx-auto mb-2 text-slate-600" />
-          <p className="text-sm text-slate-500">{t('analytics.noConsumptionData', 'Sin datos de consumo en este período')}</p>
+        <div className="py-10 text-center text-xs text-slate-500">
+          {t('analytics.noConsumptionData', 'Sin datos de consumo en este período')}
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="-mx-2">
           {chartData.map((item, i: number) => {
-            const pct = (item.cantidad / maxValue) * 100;
             const delta = item.prevCantidad > 0
-              ? ((item.cantidad - item.prevCantidad) / item.prevCantidad * 100).toFixed(0)
+              ? ((item.cantidad - item.prevCantidad) / item.prevCantidad * 100)
               : null;
-            const isUp = delta !== null && parseFloat(delta) >= 0;
-            const barColor = getCatColor(item.categoria);
+            const isUp = delta !== null && delta >= 0;
 
             return (
-              <div
+              <button
                 key={item.codigo}
-                className="group cursor-pointer"
+                type="button"
                 onClick={() => handleBarClick(item.codigo)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-800/40 transition-colors text-left"
               >
-                <div className="flex items-center gap-3">
-                  {/* Rank number */}
-                  <div className="w-5 text-center flex-shrink-0">
-                    <span
-                      className="text-[11px] font-bold"
-                      style={{ color: i < 3 ? '#6b8baa' : 'rgba(148,163,184,0.3)' }}
-                    >
-                      {i + 1}
-                    </span>
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm text-slate-200 font-medium truncate group-hover:text-white transition-colors">
-                          {item.descripcion}
-                        </span>
-                        <span
-                          className="text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0"
-                          style={{
-                            background: `${barColor}15`,
-                            color: `${barColor}cc`,
-                          }}
-                        >
-                          {item.categoria}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2.5 flex-shrink-0 ml-3">
-                        <span className="text-sm font-bold text-white font-mono">{item.cantidad}</span>
-                        {delta !== null && (
-                          <span
-                            className="text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5"
-                            style={{
-                              background: isUp ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
-                              color: isUp ? '#4aaa73' : '#cc5555',
-                            }}
-                          >
-                            {isUp ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-                            {isUp ? '+' : ''}{delta}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Bar */}
-                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                      <div
-                        className="h-full rounded-full transition-all duration-700 group-hover:opacity-90"
-                        style={{
-                          width: `${Math.max(pct, 3)}%`,
-                          background: `linear-gradient(90deg, ${barColor}cc, ${barColor}44)`,
-                        }}
-                      />
-                    </div>
-                  </div>
+                <span className={cn(
+                  'w-5 text-center text-[11px] font-medium tabular-nums flex-shrink-0',
+                  i < 3 ? 'text-slate-300' : 'text-slate-600',
+                )}>
+                  {i + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] text-slate-100 truncate">{item.descripcion}</div>
+                  <div className="text-[11px] text-slate-500 truncate">{item.categoria}</div>
                 </div>
-              </div>
+                <div className="flex items-center gap-3 tabular-nums flex-shrink-0">
+                  <span className="text-sm font-semibold text-slate-100 font-mono">{item.cantidad}</span>
+                  {delta !== null && Number.isFinite(delta) && (
+                    <span className={cn(
+                      'text-[11px] font-medium w-12 text-right',
+                      isUp ? 'text-green-400' : 'text-red-400',
+                    )}>
+                      {isUp ? '+' : ''}{delta.toFixed(0)}%
+                    </span>
+                  )}
+                </div>
+              </button>
             );
           })}
         </div>
