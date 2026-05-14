@@ -88,8 +88,8 @@ export function Donut({
       {(centerLabel || centerValue) && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
-            {centerLabel && <div className="text-[10px] uppercase tracking-wider text-slate-500">{centerLabel}</div>}
-            {centerValue && <div className="text-xl font-semibold text-slate-50 tabular-nums">{centerValue}</div>}
+            {centerLabel && <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold">{centerLabel}</div>}
+            {centerValue && <div className="text-2xl font-bold text-slate-50 tabular-nums mt-0.5">{centerValue}</div>}
           </div>
         </div>
       )}
@@ -189,10 +189,10 @@ export function Gauge({
         <circle cx={cx} cy={cy} r={4} fill="#e2e8f0" />
       </svg>
       <div className="mt-1">
-        <div className="text-lg font-semibold text-slate-100 tabular-nums">
+        <div className="text-2xl font-bold text-slate-100 tabular-nums">
           {valueFormatter ? valueFormatter(value) : value.toLocaleString('es-UY')}
         </div>
-        {label && <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>}
+        {label && <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold mt-0.5">{label}</div>}
       </div>
     </div>
   );
@@ -236,7 +236,7 @@ export function KpiStat({
               <Icon className={cn('h-4 w-4', a.text)} />
             </span>
           )}
-          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-400">
+          <span className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-300">
             {label}
           </span>
         </div>
@@ -252,7 +252,7 @@ export function KpiStat({
         </span>
         {delta && Number.isFinite(delta.value) && delta.value !== 0 && (
           <span className={cn(
-            'inline-flex items-center gap-0.5 text-sm font-semibold tabular-nums',
+            'inline-flex items-center gap-0.5 text-base font-semibold tabular-nums',
             isUp ? 'text-emerald-400' : 'text-red-400',
           )}>
             {isUp ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
@@ -262,7 +262,7 @@ export function KpiStat({
       </div>
 
       {sublabel && (
-        <p className="text-xs text-slate-500 mt-2.5">{sublabel}</p>
+        <p className="text-sm text-slate-400 mt-3">{sublabel}</p>
       )}
     </div>
   );
@@ -333,7 +333,7 @@ export function DataTable<T extends Record<string, any>>({
               <th
                 key={col.key}
                 className={cn(
-                  'px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400',
+                  'px-3 py-2.5 text-xs font-bold uppercase tracking-[0.08em] text-slate-300',
                   col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
                 )}
               >

@@ -256,7 +256,7 @@ function KPICard({ label, value, prevValue, suffix, icon, sparkData, description
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-slate-500">{icon}</span>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
+          <span className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
         </div>
         {sparkData && <SparkLine data={sparkData} color="#a1a1aa" width={56} height={20} />}
       </div>
@@ -269,7 +269,7 @@ function KPICard({ label, value, prevValue, suffix, icon, sparkData, description
             </span>
             {suffix && <span className="text-sm font-medium text-slate-400">{suffix}</span>}
           </div>
-          {description && <p className="text-[11px] mt-1.5 text-slate-500">{description}</p>}
+          {description && <p className="text-xs mt-1.5 text-slate-500">{description}</p>}
         </div>
 
         {delta !== null && Number.isFinite(delta) && (
@@ -322,8 +322,8 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
       {/* Header — título más grande y profesional */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-lg font-bold text-slate-100 tracking-tight">Valor del Inventario</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Capital total en stock · Valuación FIFO</p>
+          <h3 className="text-xl font-bold text-slate-100 tracking-tight">Valor del Inventario</h3>
+          <p className="text-sm text-slate-400 mt-0.5">Capital total en stock · Valuación FIFO</p>
         </div>
         {Number.isFinite(trend) && trend !== 0 && (
           <span className={cn(
@@ -339,41 +339,41 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
       {/* Hero: valor BIG + donut grande */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-6 items-center mb-6">
         <div>
-          <div className="text-xs uppercase tracking-[0.08em] text-slate-500 mb-2 font-semibold">Total en stock</div>
+          <div className="text-sm uppercase tracking-[0.08em] text-slate-400 mb-2 font-bold">Total en stock</div>
           {/* Valor 6xl — el protagonista del card */}
           <div className="text-6xl font-bold text-slate-50 tabular-nums tracking-tight leading-none">
             {fmtMoneyFull(data.total)}
           </div>
-          <div className="text-sm text-slate-500 mt-3 tabular-nums">
-            vs 30 días: <span className="text-slate-300 font-medium">{fmtMoneyFull(data.prev30d)}</span>
+          <div className="text-base text-slate-400 mt-3 tabular-nums">
+            vs 30 días: <span className="text-slate-200 font-semibold">{fmtMoneyFull(data.prev30d)}</span>
           </div>
 
           {/* 3 mini KPIs — bigger */}
           <div className="mt-5 grid grid-cols-3 gap-3">
-            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-3">
-              <div className="text-[10px] uppercase tracking-[0.08em] text-slate-500 font-semibold">Inmovilizado</div>
-              <div className="text-xl font-bold text-amber-300 tabular-nums mt-1">
+            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-4">
+              <div className="text-xs uppercase tracking-[0.08em] text-slate-400 font-bold">Inmovilizado</div>
+              <div className="text-2xl font-bold text-amber-300 tabular-nums mt-1.5">
                 {fmtMoney(data.capitalInmovilizado)}
               </div>
-              <div className="text-[10px] text-slate-500 tabular-nums mt-0.5">
+              <div className="text-xs text-slate-500 tabular-nums mt-1">
                 {data.productosInmovilizados} prod · 60d
               </div>
             </div>
-            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-3">
-              <div className="text-[10px] uppercase tracking-[0.08em] text-slate-500 font-semibold">Categorías</div>
-              <div className="text-xl font-bold text-slate-100 tabular-nums mt-1">
+            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-4">
+              <div className="text-xs uppercase tracking-[0.08em] text-slate-400 font-bold">Categorías</div>
+              <div className="text-2xl font-bold text-slate-100 tabular-nums mt-1.5">
                 {data.categorias.length}
               </div>
-              <div className="text-[10px] text-slate-500 truncate mt-0.5">
+              <div className="text-xs text-slate-500 truncate mt-1">
                 {data.categorias[0]?.nombre ?? '—'}
               </div>
             </div>
-            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-3">
-              <div className="text-[10px] uppercase tracking-[0.08em] text-slate-500 font-semibold">Almacenes</div>
-              <div className="text-xl font-bold text-slate-100 tabular-nums mt-1">
+            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-4">
+              <div className="text-xs uppercase tracking-[0.08em] text-slate-400 font-bold">Almacenes</div>
+              <div className="text-2xl font-bold text-slate-100 tabular-nums mt-1.5">
                 {data.almacenes.length}
               </div>
-              <div className="text-[10px] text-slate-500 truncate mt-0.5">
+              <div className="text-xs text-slate-500 truncate mt-1">
                 {data.almacenes[0]?.nombre ?? '—'}
               </div>
             </div>
@@ -391,11 +391,11 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
                 centerValue={String(data.categorias.length)}
                 valueFormatter={fmtMoneyFull}
               />
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-4 text-xs">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 text-sm">
                 {donutData.slice(0, 6).map(d => (
-                  <div key={d.name} className="flex items-center gap-1.5 min-w-0">
-                    <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: d.color }} />
-                    <span className="text-slate-300 truncate">{d.name}</span>
+                  <div key={d.name} className="flex items-center gap-2 min-w-0">
+                    <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: d.color }} />
+                    <span className="text-slate-300 truncate font-medium">{d.name}</span>
                   </div>
                 ))}
               </div>
@@ -408,10 +408,10 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
       {data.almacenes.length > 1 && (
         <div className="pt-5 border-t border-slate-800/60">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-slate-200 tracking-tight">
+            <span className="text-base font-bold text-slate-200 tracking-tight">
               Top almacenes por valor
             </span>
-            <span className="text-xs text-slate-500 tabular-nums">
+            <span className="text-sm text-slate-400 tabular-nums">
               {data.almacenes.length} en total
             </span>
           </div>
@@ -426,8 +426,8 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
 
       {/* Calidad de datos compacta */}
       {hayProblemasDatos && (
-        <div className="mt-3 pt-3 border-t border-slate-800/60 flex items-start gap-2 text-[11px] text-slate-400">
-          <AlertTriangle size={11} className="text-red-400 mt-0.5 flex-shrink-0" strokeWidth={2} />
+        <div className="mt-4 pt-4 border-t border-slate-800/60 flex items-start gap-2 text-sm text-slate-400">
+          <AlertTriangle size={14} className="text-red-400 mt-0.5 flex-shrink-0" strokeWidth={2} />
           <span>
             {data.sinCosto > 0 && <span>{data.sinCosto} sin costo · </span>}
             {data.sinAlmacen > 0 && <span>{data.sinAlmacen} sin almacén</span>}
@@ -521,7 +521,7 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
                   <IconComp size={14} className={cn('flex-shrink-0', cfg.text)} strokeWidth={2} />
                   <div className="min-w-0">
                     <div className="font-medium text-[13px] text-slate-100 truncate">{item.descripcion}</div>
-                    <div className="text-[11px] text-slate-500 tabular-nums">
+                    <div className="text-xs text-slate-500 tabular-nums">
                       <span className="font-mono text-slate-600">{item.codigo}</span>
                       <span className="mx-1.5 text-slate-700">·</span>
                       <span className={cfg.text}>
@@ -531,7 +531,7 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
                   </div>
                 </div>
                 {item.dias !== null && (
-                  <span className={cn('text-[11px] font-mono font-medium tabular-nums flex-shrink-0', cfg.text)}>
+                  <span className={cn('text-xs font-mono font-medium tabular-nums flex-shrink-0', cfg.text)}>
                     {item.dias === 0 ? 'HOY' : `${item.dias}d`}
                   </span>
                 )}
@@ -584,7 +584,7 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
               key={p.key}
               onClick={() => setPeriod(p.key)}
               className={cn(
-                'px-2.5 py-1 rounded text-[11px] font-medium transition-colors',
+                'px-2.5 py-1 rounded text-xs font-medium transition-colors',
                 period === p.key
                   ? 'bg-slate-800 text-slate-100'
                   : 'text-slate-500 hover:text-slate-300',
@@ -609,7 +609,7 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
               <div className="flex items-center gap-3">
                 <div className="w-5 text-center">
                   <span className={cn(
-                    'text-[11px] font-medium tabular-nums',
+                    'text-xs font-medium tabular-nums',
                     i < 3 ? 'text-slate-300' : 'text-slate-600',
                   )}>
                     {i + 1}
@@ -623,7 +623,7 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
                       <span className="text-sm font-semibold text-slate-100 font-mono">{item.cantidad}</span>
                       {Number.isFinite(delta) && delta !== 0 && (
                         <span className={cn(
-                          'text-[11px] font-medium',
+                          'text-xs font-medium',
                           isUp ? 'text-green-400' : 'text-red-400',
                         )}>
                           {isUp ? '+' : ''}{delta.toFixed(0)}%
@@ -738,7 +738,7 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
         {groupedByTime.map(([time, items]: [string, ActividadItem[]]) => (
           <div key={time}>
             <div className="flex items-center gap-2 mb-2 px-2">
-              <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500">
+              <span className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">
                 hace {time}
               </span>
               <div className="h-px flex-1 bg-slate-800/60" />
@@ -751,7 +751,7 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
                   className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-800/40 transition-colors"
                 >
                   <span className={cn(
-                    'inline-flex items-center justify-center w-7 h-7 rounded-md text-[11px] font-mono font-semibold tabular-nums flex-shrink-0',
+                    'inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-mono font-semibold tabular-nums flex-shrink-0',
                     item.tipo === 'entrada'
                       ? 'bg-green-500/10 text-green-300 ring-1 ring-inset ring-green-500/20'
                       : 'bg-slate-800 text-slate-300 ring-1 ring-inset ring-slate-700',
@@ -760,7 +760,7 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[13px] text-slate-100 truncate">{item.descripcion}</div>
-                    <div className="text-[11px] text-slate-500">{item.usuario}</div>
+                    <div className="text-xs text-slate-500">{item.usuario}</div>
                   </div>
                 </div>
               ))}

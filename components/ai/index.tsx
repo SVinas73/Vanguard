@@ -141,7 +141,7 @@ function PanelShell({
 
         {/* Footer */}
         {footer && (
-          <div className="mt-4 pt-3 text-[11px] text-slate-500 border-t border-slate-800/60">
+          <div className="mt-4 pt-3 text-xs text-slate-500 border-t border-slate-800/60">
             {footer}
           </div>
         )}
@@ -293,11 +293,11 @@ export function AIPredictionsPanel() {
                       {producto.descripcion}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-mono text-slate-500">
+                      <span className="text-xs font-mono text-slate-500">
                         {producto.codigo}
                       </span>
                       <span className={cn(
-                        'text-[10px] px-1.5 py-0.5 rounded font-semibold',
+                        'text-xs px-1.5 py-0.5 rounded font-semibold',
                         sev.bgClass, sev.textClass,
                       )}>
                         {sev.label}
@@ -308,7 +308,7 @@ export function AIPredictionsPanel() {
                     <div className={cn('text-base font-bold font-mono tabular-nums', sev.textClass)}>
                       {producto.dias_restantes.toFixed(0)}d
                     </div>
-                    <div className="text-[10px] text-slate-500 tabular-nums">
+                    <div className="text-xs text-slate-500 tabular-nums">
                       {producto.consumo_diario.toFixed(1)}/día
                     </div>
                   </div>
@@ -435,19 +435,19 @@ export function AIAnomaliesPanel() {
                       {anomaly.descripcion}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] text-slate-500 tabular-nums">
+                      <span className="text-xs text-slate-500 tabular-nums">
                         {anomaly.tipo}: {anomaly.cantidad} uds
                       </span>
                     </div>
                   </div>
                   <span className={cn(
-                    'text-[10px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0',
+                    'text-xs px-1.5 py-0.5 rounded font-semibold flex-shrink-0',
                     sev.bgClass, sev.textClass,
                   )}>
                     {sev.label}
                   </span>
                 </div>
-                <p className="text-[11px] leading-relaxed mb-2 text-slate-400">
+                <p className="text-xs leading-relaxed mb-2 text-slate-400">
                   {anomaly.razon}
                 </p>
                 <div className="flex items-center gap-2">
@@ -457,7 +457,7 @@ export function AIAnomaliesPanel() {
                       style={{ width: `${scoreWidth}%`, opacity: 0.5 }}
                     />
                   </div>
-                  <span className="text-[10px] font-mono tabular-nums text-slate-500">
+                  <span className="text-xs font-mono tabular-nums text-slate-500">
                     {(anomaly.anomaly_score * 100).toFixed(0)}%
                   </span>
                 </div>
@@ -564,7 +564,7 @@ export function AIAssociationsPanel() {
                     <div className="text-xs font-medium text-cyan-300 truncate">
                       {rule.si_compran[0]?.descripcion || rule.si_compran[0]?.codigo}
                     </div>
-                    <div className="text-[10px] font-mono">
+                    <div className="text-xs font-mono">
                       {rule.si_compran[0]?.codigo}
                     </div>
                   </div>
@@ -573,7 +573,7 @@ export function AIAssociationsPanel() {
                     <div className="text-xs font-medium text-emerald-300 truncate">
                       {rule.tambien_compran[0]?.descripcion || rule.tambien_compran[0]?.codigo}
                     </div>
-                    <div className="text-[10px] font-mono">
+                    <div className="text-xs font-mono">
                       {rule.tambien_compran[0]?.codigo}
                     </div>
                   </div>
@@ -596,7 +596,7 @@ export function AIAssociationsPanel() {
                     />
                   </div>
                   <span
-                    className="text-[10px] font-mono font-semibold"
+                    className="text-xs font-mono font-semibold"
                     style={{ color: '#6b8baa' }}
                   >
                     {confidenceWidth}%
@@ -606,7 +606,7 @@ export function AIAssociationsPanel() {
                 {/* Interpretation */}
                 {rule.interpretacion && (
                   <p
-                    className="text-[10px] mt-1.5 leading-relaxed text-slate-500"
+                    className="text-xs mt-1.5 leading-relaxed text-slate-500"
                   >
                     {rule.interpretacion}
                   </p>
