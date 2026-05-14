@@ -500,13 +500,13 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {/* Header — más grande, ejecutivo */}
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-slate-100 tracking-tight">
+          <h3 className="text-lg font-bold text-slate-100 tracking-tight">
             {t('analytics.topConsumed', 'Productos más consumidos')}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-sm text-slate-500 mt-0.5">
             Ranking por unidades salidas · {periodConfig[period].fullLabel}
           </p>
         </div>
@@ -537,14 +537,14 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-slate-800">
-          <table className="w-full text-sm">
+          <table className="w-full">
             <thead className="bg-slate-800/60">
               <tr>
-                <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 w-8">#</th>
-                <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Producto</th>
-                <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Categoría</th>
-                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Unidades</th>
-                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">vs ant.</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.08em] text-slate-400 w-10">#</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.08em] text-slate-400">Producto</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.08em] text-slate-400">Categoría</th>
+                <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-[0.08em] text-slate-400">Unidades</th>
+                <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-[0.08em] text-slate-400">vs ant.</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
@@ -559,10 +559,10 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                     onClick={() => handleBarClick(item.codigo)}
                     className="cursor-pointer hover:bg-slate-800/40 transition-colors"
                   >
-                    <td className="px-3 py-2">
+                    <td className="px-4 py-3">
                       <span className={cn(
-                        'inline-flex items-center justify-center w-5 h-5 rounded-md text-[11px] font-semibold tabular-nums',
-                        i === 0 ? 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/25' :
+                        'inline-flex items-center justify-center w-7 h-7 rounded-md text-sm font-bold tabular-nums',
+                        i === 0 ? 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/30' :
                         i === 1 ? 'bg-slate-700/40 text-slate-200 ring-1 ring-inset ring-slate-600/40' :
                         i === 2 ? 'bg-orange-700/20 text-orange-300 ring-1 ring-inset ring-orange-700/30' :
                         'text-slate-500',
@@ -570,22 +570,22 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                         {i + 1}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-[13px] text-slate-100 max-w-[260px] truncate">{item.descripcion}</td>
-                    <td className="px-3 py-2 text-[11px] text-slate-500 truncate">{item.categoria}</td>
-                    <td className="px-3 py-2 text-right text-sm font-semibold text-slate-100 tabular-nums">
+                    <td className="px-4 py-3 text-sm font-medium text-slate-100 max-w-[320px] truncate">{item.descripcion}</td>
+                    <td className="px-4 py-3 text-xs text-slate-500 truncate">{item.categoria}</td>
+                    <td className="px-4 py-3 text-right text-base font-bold text-slate-100 tabular-nums">
                       {item.cantidad.toLocaleString('es-UY')}
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
+                    <td className="px-4 py-3 text-right tabular-nums">
                       {delta !== null && Number.isFinite(delta) ? (
                         <span className={cn(
-                          'inline-flex items-center gap-0.5 text-[11px] font-medium',
+                          'inline-flex items-center gap-1 text-sm font-semibold',
                           isUp ? 'text-emerald-400' : 'text-red-400',
                         )}>
-                          {isUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                          {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                           {Math.abs(delta).toFixed(0)}%
                         </span>
                       ) : (
-                        <span className="text-[11px] text-slate-600">—</span>
+                        <span className="text-xs text-slate-600">—</span>
                       )}
                     </td>
                   </tr>

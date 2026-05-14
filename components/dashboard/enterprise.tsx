@@ -318,62 +318,63 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
   const fmtMoneyFull = (v: number) => `$${v.toLocaleString('es-UY', { minimumFractionDigits: 0 })}`;
 
   return (
-    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-5">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
+      {/* Header — título más grande y profesional */}
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-slate-100 tracking-tight">Valor del Inventario</h3>
-          <p className="text-[11px] text-slate-500">Capital total en stock · Valuación FIFO</p>
+          <h3 className="text-lg font-bold text-slate-100 tracking-tight">Valor del Inventario</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Capital total en stock · Valuación FIFO</p>
         </div>
         {Number.isFinite(trend) && trend !== 0 && (
           <span className={cn(
-            'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium tabular-nums ring-1 ring-inset',
+            'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-semibold tabular-nums ring-1 ring-inset',
             isUp ? 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/20' : 'bg-red-500/10 text-red-300 ring-red-500/20',
           )}>
-            {isUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+            {isUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
             {Math.abs(trend).toFixed(1)}%
           </span>
         )}
       </div>
 
-      {/* Hero: valor + donut grande */}
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-6 items-center mb-5">
+      {/* Hero: valor BIG + donut grande */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-6 items-center mb-6">
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Total</div>
-          <div className="text-4xl font-semibold text-slate-50 tabular-nums tracking-tight leading-none">
+          <div className="text-xs uppercase tracking-[0.08em] text-slate-500 mb-2 font-semibold">Total en stock</div>
+          {/* Valor 6xl — el protagonista del card */}
+          <div className="text-6xl font-bold text-slate-50 tabular-nums tracking-tight leading-none">
             {fmtMoneyFull(data.total)}
           </div>
-          <div className="text-[11px] text-slate-500 mt-2 tabular-nums">
-            vs 30 días: <span className="text-slate-300">{fmtMoneyFull(data.prev30d)}</span>
+          <div className="text-sm text-slate-500 mt-3 tabular-nums">
+            vs 30 días: <span className="text-slate-300 font-medium">{fmtMoneyFull(data.prev30d)}</span>
           </div>
 
-          {/* Mini KPIs inline: inmovilizado + categorías + almacenes */}
-          <div className="mt-4 grid grid-cols-3 gap-3">
-            <div className="rounded-md bg-slate-900/60 border border-slate-800 p-2.5">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500">Inmovilizado</div>
-              <div className="text-sm font-semibold text-amber-300 tabular-nums mt-0.5">
+          {/* 3 mini KPIs — bigger */}
+          <div className="mt-5 grid grid-cols-3 gap-3">
+            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-3">
+              <div className="text-[10px] uppercase tracking-[0.08em] text-slate-500 font-semibold">Inmovilizado</div>
+              <div className="text-xl font-bold text-amber-300 tabular-nums mt-1">
                 {fmtMoney(data.capitalInmovilizado)}
               </div>
-              <div className="text-[10px] text-slate-500 tabular-nums">
+              <div className="text-[10px] text-slate-500 tabular-nums mt-0.5">
                 {data.productosInmovilizados} prod · 60d
               </div>
             </div>
-            <div className="rounded-md bg-slate-900/60 border border-slate-800 p-2.5">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500">Categorías</div>
-              <div className="text-sm font-semibold text-slate-100 tabular-nums mt-0.5">
+            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-3">
+              <div className="text-[10px] uppercase tracking-[0.08em] text-slate-500 font-semibold">Categorías</div>
+              <div className="text-xl font-bold text-slate-100 tabular-nums mt-1">
                 {data.categorias.length}
               </div>
-              <div className="text-[10px] text-slate-500 truncate">
-                {data.categorias[0]?.nombre ?? '—'} líder
+              <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                {data.categorias[0]?.nombre ?? '—'}
               </div>
             </div>
-            <div className="rounded-md bg-slate-900/60 border border-slate-800 p-2.5">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500">Almacenes</div>
-              <div className="text-sm font-semibold text-slate-100 tabular-nums mt-0.5">
+            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-3">
+              <div className="text-[10px] uppercase tracking-[0.08em] text-slate-500 font-semibold">Almacenes</div>
+              <div className="text-xl font-bold text-slate-100 tabular-nums mt-1">
                 {data.almacenes.length}
               </div>
-              <div className="text-[10px] text-slate-500 truncate">
-                {data.almacenes[0]?.nombre ?? '—'} #1
+              <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                {data.almacenes[0]?.nombre ?? '—'}
               </div>
             </div>
           </div>
@@ -385,16 +386,16 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
             <div className="flex flex-col items-center">
               <Donut
                 data={donutData}
-                size={180}
+                size={220}
                 centerLabel="Categorías"
                 centerValue={String(data.categorias.length)}
                 valueFormatter={fmtMoneyFull}
               />
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-3 text-[11px]">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-4 text-xs">
                 {donutData.slice(0, 6).map(d => (
                   <div key={d.name} className="flex items-center gap-1.5 min-w-0">
-                    <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: d.color }} />
-                    <span className="text-slate-400 truncate">{d.name}</span>
+                    <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: d.color }} />
+                    <span className="text-slate-300 truncate">{d.name}</span>
                   </div>
                 ))}
               </div>
@@ -405,18 +406,18 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
 
       {/* Almacenes como barras horizontales */}
       {data.almacenes.length > 1 && (
-        <div className="pt-4 border-t border-slate-800/60">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">
+        <div className="pt-5 border-t border-slate-800/60">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-slate-200 tracking-tight">
               Top almacenes por valor
             </span>
-            <span className="text-[10px] text-slate-500 tabular-nums">
+            <span className="text-xs text-slate-500 tabular-nums">
               {data.almacenes.length} en total
             </span>
           </div>
           <HorizontalBars
             data={almacenesBarData}
-            height={Math.max(140, almacenesBarData.length * 32)}
+            height={Math.max(160, almacenesBarData.length * 36)}
             valueFormatter={fmtMoney}
             color="#6366f1"
           />

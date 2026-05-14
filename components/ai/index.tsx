@@ -24,10 +24,10 @@ import {
 // SHARED STYLES
 // ============================================
 
-const panelBase = {
-  background: 'linear-gradient(135deg, rgba(30,33,40,0.95), rgba(24,27,35,0.9))',
-  border: '1px solid rgba(46,50,61,0.6)',
-} as const;
+// Clases Tailwind para compatibilidad con light-mode (los CSS overrides
+// catchean slate-*). Antes usaba style={{ background: linear-gradient(...) }}
+// inline, lo que rompía el modo claro.
+const panelClasses = 'bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors';
 
 const panelHoverGlow = (color: string) => ({
   background: `radial-gradient(ellipse at 50% 0%, ${color}, transparent 70%)`,
@@ -102,56 +102,36 @@ function PanelShell({
   children,
 }: PanelShellProps) {
   return (
-    <div
-      className="relative rounded-2xl overflow-hidden group transition-all duration-300 hover:scale-[1.01]"
-      style={panelBase}
-    >
-      {/* Top glow on hover */}
-      <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-        style={panelHoverGlow(`${accentColor}08`)}
-      />
-
+    <div className={cn('relative rounded-xl overflow-hidden group', panelClasses)}>
       {/* Accent line at top */}
       <div
-        className="absolute top-0 left-0 right-0 h-px"
-        style={{
-          background: `linear-gradient(90deg, transparent, ${accentColor}40, transparent)`,
-        }}
+        className="absolute top-0 left-0 right-0 h-0.5"
+        style={{ background: accentColor }}
       />
 
       <div className="relative p-5">
-        {/* Header */}
+        {/* Header — título más grande y ejecutivo */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <div
-              className="p-2 rounded-xl"
-              style={{ background: `${accentColor}12` }}
+              className="inline-flex p-2 rounded-lg"
+              style={{ background: `${accentColor}1A` }}
             >
-              <Icon size={16} style={{ color: accentColor }} />
+              <Icon size={18} style={{ color: accentColor }} />
             </div>
-            <div>
-              <h3
-                className="text-sm font-semibold"
-                style={{ color: accentColor }}
-              >
-                {title}
-              </h3>
-            </div>
+            <h3 className="text-base font-semibold text-slate-100 tracking-tight">
+              {title}
+            </h3>
           </div>
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="p-1.5 rounded-lg transition-all"
-            style={{ background: 'rgba(255,255,255,0.03)' }}
+            className="p-1.5 rounded-md hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-colors"
           >
             {loading ? (
               <Loader2 size={14} className="animate-spin" style={{ color: accentColor }} />
             ) : (
-              <RefreshCw
-                size={14}
-                className="text-slate-500 hover:text-slate-300 transition-colors"
-              />
+              <RefreshCw size={14} />
             )}
           </button>
         </div>
@@ -161,13 +141,7 @@ function PanelShell({
 
         {/* Footer */}
         {footer && (
-          <div
-            className="mt-4 pt-3 text-[11px]"
-            style={{
-              borderTop: '1px solid rgba(46,50,61,0.4)',
-              color: 'rgba(148,163,184,0.4)',
-            }}
-          >
+          <div className="mt-4 pt-3 text-[11px] text-slate-500 border-t border-slate-800/60">
             {footer}
           </div>
         )}
@@ -181,9 +155,12 @@ function PanelShell({
 // ============================================
 
 interface SeverityStyle {
-  color: string;
-  bg: string;
-  border: string;
+  /** clase Tailwind para texto (color principal) — compat light/dark mode */
+  textClass: string;
+  /** clase Tailwind para fondo del badge */
+  bgClass: string;
+  /** clase Tailwind para borde de la card */
+  borderClass: string;
   label: string;
 }
 
@@ -192,30 +169,30 @@ function getUrgencyStyle(urgencia: string, t: (key: string) => string): Severity
     case 'critica':
     case 'alta':
       return {
-        color: '#c94444',
-        bg: 'rgba(201,68,68,0.08)',
-        border: 'rgba(201,68,68,0.15)',
+        textClass: 'text-red-400',
+        bgClass: 'bg-red-500/10',
+        borderClass: 'border-red-500/20',
         label: t('alerts.critical'),
       };
     case 'media':
       return {
-        color: '#c8872e',
-        bg: 'rgba(200,135,46,0.08)',
-        border: 'rgba(200,135,46,0.15)',
+        textClass: 'text-amber-400',
+        bgClass: 'bg-amber-500/10',
+        borderClass: 'border-amber-500/20',
         label: t('alerts.medium'),
       };
     case 'baja':
       return {
-        color: '#cc9a40',
-        bg: 'rgba(204,154,64,0.08)',
-        border: 'rgba(204,154,64,0.15)',
+        textClass: 'text-amber-300',
+        bgClass: 'bg-amber-500/5',
+        borderClass: 'border-amber-500/15',
         label: t('alerts.low'),
       };
     default:
       return {
-        color: '#94a3b8',
-        bg: 'rgba(148,163,184,0.08)',
-        border: 'rgba(148,163,184,0.15)',
+        textClass: 'text-slate-400',
+        bgClass: 'bg-slate-800/30',
+        borderClass: 'border-slate-700/30',
         label: urgencia,
       };
   }
@@ -285,13 +262,7 @@ export function AIPredictionsPanel() {
       }
     >
       {error && (
-        <div
-          className="p-3 rounded-lg text-sm mb-3"
-          style={{
-            background: 'rgba(201,68,68,0.08)',
-            color: '#cc5555',
-          }}
-        >
+        <div className="p-3 rounded-lg text-sm mb-3 bg-red-500/10 text-red-300 border border-red-500/20">
           {error}
         </div>
       )}
@@ -314,46 +285,38 @@ export function AIPredictionsPanel() {
             return (
               <div
                 key={producto.codigo}
-                className="p-3 rounded-xl transition-all hover:scale-[1.01]"
-                style={{ background: sev.bg, border: `1px solid ${sev.border}` }}
+                className={cn('p-3 rounded-lg border transition-colors', sev.bgClass, sev.borderClass)}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="min-w-0 flex-1 mr-2">
-                    <div className="font-medium text-sm text-slate-200 truncate">
+                    <div className="font-medium text-sm text-slate-100 truncate">
                       {producto.descripcion}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] font-mono" style={{ color: 'rgba(148,163,184,0.5)' }}>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-mono text-slate-500">
                         {producto.codigo}
                       </span>
-                      <span
-                        className="text-[9px] px-1.5 py-0.5 rounded font-semibold"
-                        style={{ background: sev.bg, color: sev.color }}
-                      >
+                      <span className={cn(
+                        'text-[10px] px-1.5 py-0.5 rounded font-semibold',
+                        sev.bgClass, sev.textClass,
+                      )}>
                         {sev.label}
                       </span>
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-sm font-bold font-mono" style={{ color: sev.color }}>
+                    <div className={cn('text-base font-bold font-mono tabular-nums', sev.textClass)}>
                       {producto.dias_restantes.toFixed(0)}d
                     </div>
-                    <div className="text-[10px]" style={{ color: 'rgba(148,163,184,0.4)' }}>
+                    <div className="text-[10px] text-slate-500 tabular-nums">
                       {producto.consumo_diario.toFixed(1)}/día
                     </div>
                   </div>
                 </div>
-                {/* Mini progress bar — days remaining visual */}
-                <div
-                  className="h-1 rounded-full overflow-hidden"
-                  style={{ background: 'rgba(255,255,255,0.03)' }}
-                >
+                <div className="h-1 rounded-full overflow-hidden bg-slate-800/30">
                   <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${daysBarWidth}%`,
-                      background: `linear-gradient(90deg, ${sev.color}, ${sev.color}44)`,
-                    }}
+                    className={cn('h-full rounded-full transition-all duration-700', sev.textClass.replace('text-', 'bg-'))}
+                    style={{ width: `${daysBarWidth}%`, opacity: 0.5 }}
                   />
                 </div>
               </div>
@@ -362,8 +325,8 @@ export function AIPredictionsPanel() {
         </div>
       ) : (
         <div className="text-center py-10">
-          <TrendingUp size={24} className="mx-auto mb-2" style={{ color: 'rgba(148,163,184,0.2)' }} />
-          <p className="text-xs" style={{ color: 'rgba(148,163,184,0.4)' }}>
+          <TrendingUp size={24} className="mx-auto mb-2" />
+          <p className="text-xs text-slate-500">
             {t('ai.noCriticalProducts')}
           </p>
         </div>
@@ -441,13 +404,7 @@ export function AIAnomaliesPanel() {
       }
     >
       {error && (
-        <div
-          className="p-3 rounded-lg text-sm mb-3"
-          style={{
-            background: 'rgba(201,68,68,0.08)',
-            color: '#cc5555',
-          }}
-        >
+        <div className="p-3 rounded-lg text-sm mb-3 bg-red-500/10 text-red-300 border border-red-500/20">
           {error}
         </div>
       )}
@@ -470,51 +427,37 @@ export function AIAnomaliesPanel() {
             return (
               <div
                 key={`${anomaly.id}-${index}`}
-                className="p-3 rounded-xl transition-all hover:scale-[1.01]"
-                style={{ background: sev.bg, border: `1px solid ${sev.border}` }}
+                className={cn('p-3 rounded-lg border transition-colors', sev.bgClass, sev.borderClass)}
               >
-                <div className="flex items-start justify-between mb-1.5">
+                <div className="flex items-start justify-between mb-2">
                   <div className="min-w-0 flex-1 mr-2">
-                    <div className="font-medium text-sm text-slate-200 truncate">
+                    <div className="font-medium text-sm text-slate-100 truncate">
                       {anomaly.descripcion}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px]" style={{ color: 'rgba(148,163,184,0.4)' }}>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] text-slate-500 tabular-nums">
                         {anomaly.tipo}: {anomaly.cantidad} uds
                       </span>
                     </div>
                   </div>
-                  <span
-                    className="text-[9px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0"
-                    style={{ background: sev.bg, color: sev.color }}
-                  >
+                  <span className={cn(
+                    'text-[10px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0',
+                    sev.bgClass, sev.textClass,
+                  )}>
                     {sev.label}
                   </span>
                 </div>
-                <p
-                  className="text-[11px] leading-relaxed mb-2"
-                  style={{ color: 'rgba(148,163,184,0.5)' }}
-                >
+                <p className="text-[11px] leading-relaxed mb-2 text-slate-400">
                   {anomaly.razon}
                 </p>
-                {/* Anomaly score bar */}
                 <div className="flex items-center gap-2">
-                  <div
-                    className="flex-1 h-1 rounded-full overflow-hidden"
-                    style={{ background: 'rgba(255,255,255,0.03)' }}
-                  >
+                  <div className="flex-1 h-1 rounded-full overflow-hidden bg-slate-800/30">
                     <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${scoreWidth}%`,
-                        background: `linear-gradient(90deg, ${sev.color}, ${sev.color}44)`,
-                      }}
+                      className={cn('h-full rounded-full', sev.textClass.replace('text-', 'bg-'))}
+                      style={{ width: `${scoreWidth}%`, opacity: 0.5 }}
                     />
                   </div>
-                  <span
-                    className="text-[9px] font-mono"
-                    style={{ color: 'rgba(148,163,184,0.3)' }}
-                  >
+                  <span className="text-[10px] font-mono tabular-nums text-slate-500">
                     {(anomaly.anomaly_score * 100).toFixed(0)}%
                   </span>
                 </div>
@@ -524,8 +467,8 @@ export function AIAnomaliesPanel() {
         </div>
       ) : (
         <div className="text-center py-10">
-          <Activity size={24} className="mx-auto mb-2" style={{ color: 'rgba(148,163,184,0.2)' }} />
-          <p className="text-xs" style={{ color: 'rgba(148,163,184,0.4)' }}>
+          <Activity size={24} className="mx-auto mb-2" />
+          <p className="text-xs text-slate-500">
             {t('ai.noAnomalies')}
           </p>
         </div>
@@ -594,13 +537,7 @@ export function AIAssociationsPanel() {
       }
     >
       {error && (
-        <div
-          className="p-3 rounded-lg text-sm mb-3"
-          style={{
-            background: 'rgba(201,68,68,0.08)',
-            color: '#cc5555',
-          }}
-        >
+        <div className="p-3 rounded-lg text-sm mb-3 bg-red-500/10 text-red-300 border border-red-500/20">
           {error}
         </div>
       )}
@@ -619,11 +556,7 @@ export function AIAssociationsPanel() {
             return (
               <div
                 key={index}
-                className="p-3 rounded-xl transition-all hover:scale-[1.01]"
-                style={{
-                  background: 'rgba(6,182,212,0.04)',
-                  border: '1px solid rgba(6,182,212,0.1)',
-                }}
+                className="p-3 rounded-lg border border-cyan-500/15 bg-cyan-500/5 transition-colors"
               >
                 {/* Association flow */}
                 <div className="flex items-center gap-2 mb-2">
@@ -631,16 +564,16 @@ export function AIAssociationsPanel() {
                     <div className="text-xs font-medium text-cyan-300 truncate">
                       {rule.si_compran[0]?.descripcion || rule.si_compran[0]?.codigo}
                     </div>
-                    <div className="text-[10px] font-mono" style={{ color: 'rgba(148,163,184,0.3)' }}>
+                    <div className="text-[10px] font-mono">
                       {rule.si_compran[0]?.codigo}
                     </div>
                   </div>
-                  <ArrowRight size={14} style={{ color: 'rgba(6,182,212,0.4)' }} className="flex-shrink-0" />
+                  <ArrowRight size={14} className="flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-medium text-emerald-300 truncate">
                       {rule.tambien_compran[0]?.descripcion || rule.tambien_compran[0]?.codigo}
                     </div>
-                    <div className="text-[10px] font-mono" style={{ color: 'rgba(148,163,184,0.3)' }}>
+                    <div className="text-[10px] font-mono">
                       {rule.tambien_compran[0]?.codigo}
                     </div>
                   </div>
@@ -648,12 +581,11 @@ export function AIAssociationsPanel() {
 
                 {/* Confidence bar */}
                 <div className="flex items-center gap-2">
-                  <span className="text-[9px]" style={{ color: 'rgba(148,163,184,0.4)' }}>
+                  <span className="text-[9px] text-slate-500">
                     {t('common.confidence', 'Confianza')}
                   </span>
                   <div
-                    className="flex-1 h-1 rounded-full overflow-hidden"
-                    style={{ background: 'rgba(255,255,255,0.03)' }}
+                    className="flex-1 h-1 rounded-full overflow-hidden bg-slate-800/30"
                   >
                     <div
                       className="h-full rounded-full"
@@ -674,8 +606,7 @@ export function AIAssociationsPanel() {
                 {/* Interpretation */}
                 {rule.interpretacion && (
                   <p
-                    className="text-[10px] mt-1.5 leading-relaxed"
-                    style={{ color: 'rgba(148,163,184,0.4)' }}
+                    className="text-[10px] mt-1.5 leading-relaxed text-slate-500"
                   >
                     {rule.interpretacion}
                   </p>
@@ -686,8 +617,8 @@ export function AIAssociationsPanel() {
         </div>
       ) : (
         <div className="text-center py-10">
-          <ShoppingCart size={24} className="mx-auto mb-2" style={{ color: 'rgba(148,163,184,0.2)' }} />
-          <p className="text-xs" style={{ color: 'rgba(148,163,184,0.4)' }}>
+          <ShoppingCart size={24} className="mx-auto mb-2" />
+          <p className="text-xs text-slate-500">
             {t('ai.noAssociations')}
           </p>
         </div>
