@@ -300,13 +300,18 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
   const isUp = trend >= 0;
   const hayProblemasDatos = data.sinCosto > 0 || data.sinAlmacen > 0;
 
+  // Si hay >5 almacenes (raro pero posible), agrupamos resto en "Otros"
+  const topAlmacenes = data.almacenes.slice(0, 5);
+  const restoAlmacenes = data.almacenes.slice(5);
+  const valorResto = restoAlmacenes.reduce((s, a) => s + a.valor, 0);
+
   return (
-    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-5">
+      {/* Header + trend en una línea */}
+      <div className="flex items-center justify-between mb-3">
         <div>
           <h3 className="text-sm font-semibold text-slate-100 tracking-tight">Valor del Inventario</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Capital total en stock</p>
+          <p className="text-[11px] text-slate-500">Capital total en stock</p>
         </div>
         {Number.isFinite(trend) && trend !== 0 && (
           <span className={cn(
@@ -319,133 +324,115 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
         )}
       </div>
 
-      {/* Big number */}
-      <div className="mb-6">
-        <div className="flex items-baseline gap-4">
-          <span className="text-4xl font-semibold text-slate-50 tabular-nums tracking-tight">
+      {/* Layout 2 columnas: big number + donut+leyenda */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 mb-4">
+        {/* Columna izquierda: valor grande + capital inmovilizado */}
+        <div>
+          <div className="text-3xl font-semibold text-slate-50 tabular-nums tracking-tight leading-none">
             ${data.total.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
-          </span>
-          <div className="text-xs text-slate-500">
-            vs 30 días: <span className="tabular-nums">${data.prev30d.toLocaleString('es-UY', { minimumFractionDigits: 0 })}</span>
           </div>
-        </div>
-      </div>
+          <div className="text-[11px] text-slate-500 mt-1.5 tabular-nums">
+            vs 30 días: ${data.prev30d.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
+          </div>
 
-      {/* Category breakdown */}
-      {data.categorias.length > 0 && (
-        <div className="mb-6">
-          <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500 mb-3">
-            Por categoría
-          </div>
-          <div className="space-y-3">
-            {data.categorias.map((cat: Categoria) => (
-              <div key={cat.nombre} className="group">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-slate-300">{cat.nombre}</span>
-                  <div className="flex items-center gap-3 tabular-nums">
-                    <span className="text-xs font-medium text-slate-200">
-                      ${cat.valor.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
-                    </span>
-                    <span className="text-[11px] text-slate-500 w-9 text-right">{cat.porcentaje}%</span>
+          {/* Capital inmovilizado inline */}
+          {data.capitalInmovilizado > 0 && (
+            <div className="mt-3 flex items-center gap-2 text-[11px]">
+              <Hourglass size={11} className="text-amber-400" strokeWidth={2} />
+              <span className="text-slate-400">
+                <span className="font-medium text-slate-200 tabular-nums">
+                  ${data.capitalInmovilizado.toLocaleString('es-UY')}
+                </span>
+                {' '}inmovilizado · {data.productosInmovilizados} productos sin mov. 60d
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Columna derecha: donut + leyenda inline */}
+        {data.categorias.length > 0 && (
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <MiniDonut
+                segments={data.categorias.map((cat: Categoria) => ({
+                  percent: cat.porcentaje,
+                  color: cat.color,
+                }))}
+                size={88}
+                strokeWidth={10}
+              />
+              <div className="absolute inset-0 flex items-center justify-center text-center">
+                <div>
+                  <div className="text-[10px] text-slate-500 leading-none">Categorías</div>
+                  <div className="text-sm font-semibold text-slate-100 tabular-nums leading-tight mt-0.5">
+                    {data.categorias.length}
                   </div>
                 </div>
-                <div className="h-1 rounded-full overflow-hidden bg-slate-800">
-                  <div
-                    className="h-full bg-slate-400 rounded-full transition-all duration-500"
-                    style={{ width: `${cat.porcentaje}%` }}
-                  />
-                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Desglose por almacén */}
-      {data.almacenes.length > 0 && (
-        <div className="mb-6 pt-6 border-t border-slate-800/60">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500">
-              Por almacén
             </div>
+            <ul className="space-y-1 text-[11px] min-w-[120px]">
+              {data.categorias.slice(0, 5).map((cat: Categoria) => (
+                <li key={cat.nombre} className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cat.color }} />
+                  <span className="text-slate-300 truncate flex-1">{cat.nombre}</span>
+                  <span className="text-slate-500 tabular-nums">{cat.porcentaje}%</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Almacenes — solo si hay más de 1 */}
+      {data.almacenes.length > 1 && (
+        <div className="pt-3 border-t border-slate-800/60">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500">
+              Por almacén
+            </span>
             <span className="text-[10px] text-slate-600 tabular-nums">
               {data.almacenes.length} {data.almacenes.length === 1 ? 'almacén' : 'almacenes'}
             </span>
           </div>
-          <div className="space-y-2.5">
-            {data.almacenes.map((a) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1.5">
+            {topAlmacenes.map((a) => {
               const pct = data.total > 0 ? Math.round((a.valor / data.total) * 100) : 0;
               const esSinAlmacen = a.id === '__sin_almacen__';
               return (
-                <div key={a.id}>
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className={cn('text-xs font-medium', esSinAlmacen ? 'text-amber-300' : 'text-slate-200')}>
-                      {a.codigo !== '—' && a.codigo !== '' && (
-                        <span className="text-slate-600 mr-1.5 font-mono">{a.codigo}</span>
-                      )}
-                      {a.nombre}
-                    </span>
-                    <span className="text-xs text-slate-300 tabular-nums">
-                      ${a.valor.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
-                      <span className="text-slate-600 ml-2">· {pct}%</span>
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500 tabular-nums">
-                    <span>{a.productos} productos</span>
-                    <span className="text-slate-700">·</span>
-                    <span>{a.unidades.toLocaleString('es-UY')} unidades</span>
-                    {a.criticos > 0 && (
-                      <>
-                        <span className="text-slate-700">·</span>
-                        <span className="text-amber-400">{a.criticos} críticos</span>
-                      </>
-                    )}
-                  </div>
+                <div key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
+                  <span className={cn(
+                    'truncate flex-1',
+                    esSinAlmacen ? 'text-amber-300' : 'text-slate-200',
+                  )}>
+                    {a.nombre}
+                  </span>
+                  <span className="text-slate-300 tabular-nums flex-shrink-0">
+                    ${a.valor.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
+                    <span className="text-slate-600 ml-1.5">·{pct}%</span>
+                  </span>
                 </div>
               );
             })}
+            {restoAlmacenes.length > 0 && (
+              <div className="flex items-center justify-between gap-2 text-[11px]">
+                <span className="text-slate-500 truncate flex-1">+ {restoAlmacenes.length} más</span>
+                <span className="text-slate-500 tabular-nums">
+                  ${valorResto.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Inmovilizado */}
-      <div className="pt-6 border-t border-slate-800/60">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Hourglass size={14} className="text-slate-500" strokeWidth={1.75} />
-            <div>
-              <div className="text-xs font-medium text-slate-200">Capital inmovilizado</div>
-              <div className="text-[11px] text-slate-500">{data.productosInmovilizados} productos sin movimiento (60d)</div>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm font-semibold text-slate-100 tabular-nums">
-              ${data.capitalInmovilizado.toLocaleString('es-UY')}
-            </div>
-            <div className="text-[11px] text-slate-500 tabular-nums">
-              {data.total > 0 ? ((data.capitalInmovilizado / data.total) * 100).toFixed(0) : 0}% del total
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Calidad de datos — solo si hay problemas */}
+      {/* Calidad de datos — solo si hay problemas, ahora compacto */}
       {hayProblemasDatos && (
-        <div className="mt-4 p-3 rounded-lg bg-red-500/5 border border-red-500/20">
-          <div className="flex items-center gap-2 mb-1.5">
-            <AlertTriangle size={11} className="text-red-400" strokeWidth={2} />
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-red-300">
-              Calidad de datos
-            </span>
-          </div>
-          <ul className="space-y-0.5 text-[11px] text-slate-400">
-            {data.sinCosto > 0 && (
-              <li>{data.sinCosto} producto(s) con stock pero sin costo promedio — no valúan</li>
-            )}
-            {data.sinAlmacen > 0 && (
-              <li>{data.sinAlmacen} producto(s) sin almacén asignado</li>
-            )}
-          </ul>
+        <div className="mt-3 pt-3 border-t border-slate-800/60 flex items-start gap-2 text-[11px] text-slate-400">
+          <AlertTriangle size={11} className="text-red-400 mt-0.5 flex-shrink-0" strokeWidth={2} />
+          <span>
+            {data.sinCosto > 0 && <span>{data.sinCosto} sin costo · </span>}
+            {data.sinAlmacen > 0 && <span>{data.sinAlmacen} sin almacén</span>}
+          </span>
         </div>
       )}
     </div>
