@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valuation';
+import { Donut, HorizontalBars, CHART_COLORS } from '@/components/ui/charts-bi';
 
 // ============================================
 // TYPES
@@ -300,23 +301,34 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
   const isUp = trend >= 0;
   const hayProblemasDatos = data.sinCosto > 0 || data.sinAlmacen > 0;
 
-  // Si hay >5 almacenes (raro pero posible), agrupamos resto en "Otros"
-  const topAlmacenes = data.almacenes.slice(0, 5);
-  const restoAlmacenes = data.almacenes.slice(5);
-  const valorResto = restoAlmacenes.reduce((s, a) => s + a.valor, 0);
+  // Datos para donut chart (categorías)
+  const donutData = data.categorias.slice(0, 6).map((cat, i) => ({
+    name: cat.nombre,
+    value: cat.valor,
+    color: CHART_COLORS[i % CHART_COLORS.length],
+  }));
+
+  // Top almacenes en barras horizontales
+  const almacenesBarData = data.almacenes.slice(0, 6).map(a => ({
+    name: a.id === '__sin_almacen__' ? 'Sin asignar' : a.nombre,
+    value: a.valor,
+  }));
+
+  const fmtMoney = (v: number) => `$${(v / 1000).toFixed(1)}k`;
+  const fmtMoneyFull = (v: number) => `$${v.toLocaleString('es-UY', { minimumFractionDigits: 0 })}`;
 
   return (
     <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-5">
-      {/* Header + trend en una línea */}
-      <div className="flex items-center justify-between mb-3">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-semibold text-slate-100 tracking-tight">Valor del Inventario</h3>
-          <p className="text-[11px] text-slate-500">Capital total en stock</p>
+          <p className="text-[11px] text-slate-500">Capital total en stock · Valuación FIFO</p>
         </div>
         {Number.isFinite(trend) && trend !== 0 && (
           <span className={cn(
-            'inline-flex items-center gap-0.5 text-xs font-medium tabular-nums',
-            isUp ? 'text-green-400' : 'text-red-400',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium tabular-nums ring-1 ring-inset',
+            isUp ? 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/20' : 'bg-red-500/10 text-red-300 ring-red-500/20',
           )}>
             {isUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
             {Math.abs(trend).toFixed(1)}%
@@ -324,108 +336,94 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
         )}
       </div>
 
-      {/* Layout 2 columnas: big number + donut+leyenda */}
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 mb-4">
-        {/* Columna izquierda: valor grande + capital inmovilizado */}
+      {/* Hero: valor + donut grande */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-6 items-center mb-5">
         <div>
-          <div className="text-3xl font-semibold text-slate-50 tabular-nums tracking-tight leading-none">
-            ${data.total.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
+          <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Total</div>
+          <div className="text-4xl font-semibold text-slate-50 tabular-nums tracking-tight leading-none">
+            {fmtMoneyFull(data.total)}
           </div>
-          <div className="text-[11px] text-slate-500 mt-1.5 tabular-nums">
-            vs 30 días: ${data.prev30d.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
+          <div className="text-[11px] text-slate-500 mt-2 tabular-nums">
+            vs 30 días: <span className="text-slate-300">{fmtMoneyFull(data.prev30d)}</span>
           </div>
 
-          {/* Capital inmovilizado inline */}
-          {data.capitalInmovilizado > 0 && (
-            <div className="mt-3 flex items-center gap-2 text-[11px]">
-              <Hourglass size={11} className="text-amber-400" strokeWidth={2} />
-              <span className="text-slate-400">
-                <span className="font-medium text-slate-200 tabular-nums">
-                  ${data.capitalInmovilizado.toLocaleString('es-UY')}
-                </span>
-                {' '}inmovilizado · {data.productosInmovilizados} productos sin mov. 60d
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Columna derecha: donut + leyenda inline */}
-        {data.categorias.length > 0 && (
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <MiniDonut
-                segments={data.categorias.map((cat: Categoria) => ({
-                  percent: cat.porcentaje,
-                  color: cat.color,
-                }))}
-                size={88}
-                strokeWidth={10}
-              />
-              <div className="absolute inset-0 flex items-center justify-center text-center">
-                <div>
-                  <div className="text-[10px] text-slate-500 leading-none">Categorías</div>
-                  <div className="text-sm font-semibold text-slate-100 tabular-nums leading-tight mt-0.5">
-                    {data.categorias.length}
-                  </div>
-                </div>
+          {/* Mini KPIs inline: inmovilizado + categorías + almacenes */}
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            <div className="rounded-md bg-slate-900/60 border border-slate-800 p-2.5">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500">Inmovilizado</div>
+              <div className="text-sm font-semibold text-amber-300 tabular-nums mt-0.5">
+                {fmtMoney(data.capitalInmovilizado)}
+              </div>
+              <div className="text-[10px] text-slate-500 tabular-nums">
+                {data.productosInmovilizados} prod · 60d
               </div>
             </div>
-            <ul className="space-y-1 text-[11px] min-w-[120px]">
-              {data.categorias.slice(0, 5).map((cat: Categoria) => (
-                <li key={cat.nombre} className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cat.color }} />
-                  <span className="text-slate-300 truncate flex-1">{cat.nombre}</span>
-                  <span className="text-slate-500 tabular-nums">{cat.porcentaje}%</span>
-                </li>
-              ))}
-            </ul>
+            <div className="rounded-md bg-slate-900/60 border border-slate-800 p-2.5">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500">Categorías</div>
+              <div className="text-sm font-semibold text-slate-100 tabular-nums mt-0.5">
+                {data.categorias.length}
+              </div>
+              <div className="text-[10px] text-slate-500 truncate">
+                {data.categorias[0]?.nombre ?? '—'} líder
+              </div>
+            </div>
+            <div className="rounded-md bg-slate-900/60 border border-slate-800 p-2.5">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500">Almacenes</div>
+              <div className="text-sm font-semibold text-slate-100 tabular-nums mt-0.5">
+                {data.almacenes.length}
+              </div>
+              <div className="text-[10px] text-slate-500 truncate">
+                {data.almacenes[0]?.nombre ?? '—'} #1
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Donut grande con leyenda */}
+        {donutData.length > 0 && (
+          <div className="flex items-center justify-center">
+            <div className="flex flex-col items-center">
+              <Donut
+                data={donutData}
+                size={180}
+                centerLabel="Categorías"
+                centerValue={String(data.categorias.length)}
+                valueFormatter={fmtMoneyFull}
+              />
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-3 text-[11px]">
+                {donutData.slice(0, 6).map(d => (
+                  <div key={d.name} className="flex items-center gap-1.5 min-w-0">
+                    <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: d.color }} />
+                    <span className="text-slate-400 truncate">{d.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Almacenes — solo si hay más de 1 */}
+      {/* Almacenes como barras horizontales */}
       {data.almacenes.length > 1 && (
-        <div className="pt-3 border-t border-slate-800/60">
+        <div className="pt-4 border-t border-slate-800/60">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500">
-              Por almacén
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">
+              Top almacenes por valor
             </span>
-            <span className="text-[10px] text-slate-600 tabular-nums">
-              {data.almacenes.length} {data.almacenes.length === 1 ? 'almacén' : 'almacenes'}
+            <span className="text-[10px] text-slate-500 tabular-nums">
+              {data.almacenes.length} en total
             </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1.5">
-            {topAlmacenes.map((a) => {
-              const pct = data.total > 0 ? Math.round((a.valor / data.total) * 100) : 0;
-              const esSinAlmacen = a.id === '__sin_almacen__';
-              return (
-                <div key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
-                  <span className={cn(
-                    'truncate flex-1',
-                    esSinAlmacen ? 'text-amber-300' : 'text-slate-200',
-                  )}>
-                    {a.nombre}
-                  </span>
-                  <span className="text-slate-300 tabular-nums flex-shrink-0">
-                    ${a.valor.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
-                    <span className="text-slate-600 ml-1.5">·{pct}%</span>
-                  </span>
-                </div>
-              );
-            })}
-            {restoAlmacenes.length > 0 && (
-              <div className="flex items-center justify-between gap-2 text-[11px]">
-                <span className="text-slate-500 truncate flex-1">+ {restoAlmacenes.length} más</span>
-                <span className="text-slate-500 tabular-nums">
-                  ${valorResto.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
-                </span>
-              </div>
-            )}
-          </div>
+          <HorizontalBars
+            data={almacenesBarData}
+            height={Math.max(140, almacenesBarData.length * 32)}
+            valueFormatter={fmtMoney}
+            color="#6366f1"
+          />
         </div>
       )}
 
-      {/* Calidad de datos — solo si hay problemas, ahora compacto */}
+      {/* Calidad de datos compacta */}
       {hayProblemasDatos && (
         <div className="mt-3 pt-3 border-t border-slate-800/60 flex items-start gap-2 text-[11px] text-slate-400">
           <AlertTriangle size={11} className="text-red-400 mt-0.5 flex-shrink-0" strokeWidth={2} />

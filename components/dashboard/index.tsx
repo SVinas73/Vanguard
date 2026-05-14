@@ -4,6 +4,7 @@ import React, { useMemo, useState, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Product, Movement, StockPrediction } from '@/types';
+import { KpiStat, type KpiAccent } from '@/components/ui/charts-bi';
 import {
   Package,
   RefreshCw,
@@ -367,16 +368,16 @@ export function StatsGrid({ stats, products, movements }: StatsGridProps) {
     return result;
   }, [movements]);
 
-  // Map stat colors to KPI colors
-  const colorMapping: Record<string, KPIColor> = {
+  // Map stat colors to KPI accents
+  const accentMap: Record<string, KpiAccent> = {
     emerald: 'emerald',
     cyan: 'cyan',
-    amber: 'rose',
+    amber: 'amber',
     purple: 'violet',
-    red: 'rose',
-    slate: 'cyan',
-    blue: 'cyan',
-    pink: 'rose',
+    red: 'red',
+    slate: 'slate',
+    blue: 'indigo',
+    pink: 'red',
   };
 
   return (
@@ -387,74 +388,23 @@ export function StatsGrid({ stats, products, movements }: StatsGridProps) {
       )}
     >
       {stats.map((stat, i: number) => {
-        const kpiColor = colorMapping[stat.color] || 'emerald';
-        const c = COLOR_MAP[kpiColor];
+        const accent: KpiAccent = accentMap[stat.color] || 'indigo';
         const spark = sparklines[i];
+        // Extract icon as LucideIcon (the stats array passes <Icon size=.. />)
+        const iconElement = stat.icon as any;
+        const IconComponent = iconElement?.type;
 
         return (
-          <div
+          <KpiStat
             key={i}
-            className="relative group rounded-xl overflow-hidden transition-all duration-200 bg-slate-900 border border-slate-800 hover:border-slate-700"
-          >
-
-            <div className="relative p-5">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg" style={{ background: c.bg }}>
-                    <span style={{ color: c.text }}>{stat.icon}</span>
-                  </div>
-                  <span
-                    className="text-xs font-medium uppercase tracking-wider"
-                    style={{ color: 'rgba(148,163,184,0.8)' }}
-                  >
-                    {stat.label}
-                  </span>
-                </div>
-                {spark && spark.length >= 2 && (
-                  <SparkLine data={spark} color={c.text} width={56} height={22} />
-                )}
-              </div>
-
-              <div className="flex items-end justify-between">
-                <div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-3xl font-bold tracking-tight text-white">
-                      {stat.value}
-                    </span>
-                  </div>
-                  {stat.subtitle && (
-                    <p
-                      className="text-[11px] mt-1"
-                      style={{ color: 'rgba(148,163,184,0.6)' }}
-                    >
-                      {stat.subtitle}
-                    </p>
-                  )}
-                </div>
-
-                {stat.trend && (
-                  <div
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold"
-                    style={{
-                      background:
-                        stat.trend.value >= 0
-                          ? 'rgba(61,154,95,0.08)'
-                          : 'rgba(201,68,68,0.08)',
-                      color:
-                        stat.trend.value >= 0 ? '#3d9a5f' : '#c94444',
-                    }}
-                  >
-                    {stat.trend.value >= 0 ? (
-                      <ArrowUpRight size={12} />
-                    ) : (
-                      <ArrowDownRight size={12} />
-                    )}
-                    <span>{Math.abs(stat.trend.value)}%</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+            label={stat.label}
+            value={stat.value}
+            sublabel={stat.subtitle}
+            icon={IconComponent}
+            accent={accent}
+            delta={stat.trend ? { value: stat.trend.value, label: stat.trend.label } : undefined}
+            sparkData={spark}
+          />
         );
       })}
     </div>

@@ -530,50 +530,69 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
         </div>
       </div>
 
-      {/* Lista compacta sin barras */}
+      {/* Tabla densa estilo BI */}
       {chartData.length === 0 ? (
         <div className="py-10 text-center text-xs text-slate-500">
           {t('analytics.noConsumptionData', 'Sin datos de consumo en este período')}
         </div>
       ) : (
-        <div className="-mx-2">
-          {chartData.map((item, i: number) => {
-            const delta = item.prevCantidad > 0
-              ? ((item.cantidad - item.prevCantidad) / item.prevCantidad * 100)
-              : null;
-            const isUp = delta !== null && delta >= 0;
-
-            return (
-              <button
-                key={item.codigo}
-                type="button"
-                onClick={() => handleBarClick(item.codigo)}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-800/40 transition-colors text-left"
-              >
-                <span className={cn(
-                  'w-5 text-center text-[11px] font-medium tabular-nums flex-shrink-0',
-                  i < 3 ? 'text-slate-300' : 'text-slate-600',
-                )}>
-                  {i + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] text-slate-100 truncate">{item.descripcion}</div>
-                  <div className="text-[11px] text-slate-500 truncate">{item.categoria}</div>
-                </div>
-                <div className="flex items-center gap-3 tabular-nums flex-shrink-0">
-                  <span className="text-sm font-semibold text-slate-100 font-mono">{item.cantidad}</span>
-                  {delta !== null && Number.isFinite(delta) && (
-                    <span className={cn(
-                      'text-[11px] font-medium w-12 text-right',
-                      isUp ? 'text-green-400' : 'text-red-400',
-                    )}>
-                      {isUp ? '+' : ''}{delta.toFixed(0)}%
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+        <div className="overflow-hidden rounded-lg border border-slate-800">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-800/60">
+              <tr>
+                <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 w-8">#</th>
+                <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Producto</th>
+                <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Categoría</th>
+                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Unidades</th>
+                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">vs ant.</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {chartData.map((item, i: number) => {
+                const delta = item.prevCantidad > 0
+                  ? ((item.cantidad - item.prevCantidad) / item.prevCantidad * 100)
+                  : null;
+                const isUp = delta !== null && delta >= 0;
+                return (
+                  <tr
+                    key={item.codigo}
+                    onClick={() => handleBarClick(item.codigo)}
+                    className="cursor-pointer hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="px-3 py-2">
+                      <span className={cn(
+                        'inline-flex items-center justify-center w-5 h-5 rounded-md text-[11px] font-semibold tabular-nums',
+                        i === 0 ? 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/25' :
+                        i === 1 ? 'bg-slate-700/40 text-slate-200 ring-1 ring-inset ring-slate-600/40' :
+                        i === 2 ? 'bg-orange-700/20 text-orange-300 ring-1 ring-inset ring-orange-700/30' :
+                        'text-slate-500',
+                      )}>
+                        {i + 1}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-[13px] text-slate-100 max-w-[260px] truncate">{item.descripcion}</td>
+                    <td className="px-3 py-2 text-[11px] text-slate-500 truncate">{item.categoria}</td>
+                    <td className="px-3 py-2 text-right text-sm font-semibold text-slate-100 tabular-nums">
+                      {item.cantidad.toLocaleString('es-UY')}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {delta !== null && Number.isFinite(delta) ? (
+                        <span className={cn(
+                          'inline-flex items-center gap-0.5 text-[11px] font-medium',
+                          isUp ? 'text-emerald-400' : 'text-red-400',
+                        )}>
+                          {isUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                          {Math.abs(delta).toFixed(0)}%
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-slate-600">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
