@@ -592,8 +592,9 @@ export function InsightsPanel({
     const slowMovers = products.filter(
       (p: Product) => p.stock > 0 && !recentCodes.has(p.codigo)
     );
+    // Valuación al COSTO (no precio de venta). Si no hay costo, no valúa.
     const slowValue = slowMovers.reduce(
-      (sum: number, p: Product) => sum + p.stock * (p.costoPromedio || p.precio),
+      (sum: number, p: Product) => sum + p.stock * (p.costoPromedio || 0),
       0
     );
 
@@ -640,118 +641,63 @@ export function InsightsPanel({
     return result.slice(0, 4);
   }, [products, movements, predictions, t]);
 
-  const typeConfig: Record<InsightType, InsightConfig> = {
-    urgente: {
-      color: '#c94444',
-      bg: 'rgba(201,68,68,0.04)',
-      border: 'rgba(201,68,68,0.10)',
-      Icon: Flame,
-    },
-    tendencia: {
-      color: '#3d9a5f',
-      bg: 'rgba(61,154,95,0.04)',
-      border: 'rgba(61,154,95,0.10)',
-      Icon: TrendingUp,
-    },
-    alerta: {
-      color: '#c8872e',
-      bg: 'rgba(200,135,46,0.04)',
-      border: 'rgba(200,135,46,0.10)',
-      Icon: AlertCircle,
-    },
-    oportunidad: {
-      color: '#4a7fb5',
-      bg: 'rgba(74,127,181,0.04)',
-      border: 'rgba(74,127,181,0.10)',
-      Icon: Zap,
-    },
+  // Solo color en el ícono — fila compacta, sin cards con fondo
+  const typeTone: Record<InsightType, { text: string; Icon: typeof Flame }> = {
+    urgente:     { text: 'text-red-400',   Icon: Flame },
+    tendencia:   { text: 'text-green-400', Icon: TrendingUp },
+    alerta:      { text: 'text-amber-400', Icon: AlertCircle },
+    oportunidad: { text: 'text-indigo-400', Icon: Zap },
   };
 
   if (insights.length === 0) return null;
 
   return (
-    <div
-      className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-800"
-    >
-      <div className="p-6">
-        <div className="flex items-center gap-3 mb-5">
-          <div
-            className="p-2.5 rounded-lg bg-slate-800"
-          >
-            <Brain size={18} className="text-slate-400" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-200 text-sm flex items-center gap-2">
-              {t('dashboard.insights', 'Insights')}
-              <span
-                className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-800 text-slate-400"
-              >
-                AI
-              </span>
-            </h3>
-            <p
-              className="text-[11px]"
-              style={{ color: 'rgba(148,163,184,0.5)' }}
-            >
-              {t('dashboard.insightsSubtitle', 'Lo que necesitás saber ahora')}
-            </p>
-          </div>
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-100 tracking-tight flex items-center gap-2">
+            {t('dashboard.insights', 'Insights')}
+            <span className="px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider rounded bg-indigo-500/10 text-indigo-300 ring-1 ring-inset ring-indigo-500/20">
+              AI
+            </span>
+          </h3>
+          <p className="text-[11px] text-slate-500">
+            {t('dashboard.insightsSubtitle', 'Lo que necesitás saber ahora')}
+          </p>
         </div>
+        <Brain size={14} className="text-slate-600" strokeWidth={1.75} />
+      </div>
 
-        <div className="space-y-3">
-          {insights.map((insight: Insight, i: number) => {
-            const cfg = typeConfig[insight.tipo];
-            const IconComp = cfg.Icon;
-            return (
-              <div
-                key={i}
-                className="p-4 rounded-lg cursor-pointer transition-all hover:brightness-110"
-                style={{
-                  background: cfg.bg,
-                  border: `1px solid ${cfg.border}`,
-                }}
-              >
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 mt-0.5">
-                    <IconComp size={18} style={{ color: cfg.color }} />
+      <div className="-mx-2">
+        {insights.map((insight: Insight, i: number) => {
+          const tone = typeTone[insight.tipo];
+          const IconComp = tone.Icon;
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                if (insight.tipo === 'urgente') onNavigate?.('compras');
+                else if (insight.tipo === 'alerta') onNavigate?.('stock');
+                else onNavigate?.('analytics');
+              }}
+              className="w-full text-left flex items-start gap-3 px-3 py-2.5 rounded-md hover:bg-slate-800/40 transition-colors group"
+            >
+              <IconComp size={14} className={cn('flex-shrink-0 mt-0.5', tone.text)} strokeWidth={2} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[13px] font-medium text-slate-100">
+                    {insight.titulo}
                   </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-semibold text-sm text-slate-200 mb-1">
-                        {insight.titulo}
-                      </div>
-                      {insight.metric && (
-                        <span
-                          className="text-xs font-bold font-mono px-1.5 py-0.5 rounded flex-shrink-0"
-                          style={{ background: cfg.bg, color: cfg.color }}
-                        >
-                          {insight.metric}
-                        </span>
-                      )}
-                    </div>
-                    <p
-                      className="text-xs leading-relaxed"
-                      style={{ color: 'rgba(148,163,184,0.7)' }}
-                    >
-                      {insight.descripcion}
-                    </p>
-                    <button
-                      className="mt-2.5 text-xs font-semibold flex items-center gap-1 transition-colors hover:opacity-80"
-                      style={{ color: cfg.color }}
-                      onClick={() => {
-                        if (insight.tipo === 'urgente') onNavigate?.('compras');
-                        else if (insight.tipo === 'alerta') onNavigate?.('stock');
-                        else onNavigate?.('analytics');
-                      }}
-                    >
-                      {insight.accion} <ArrowRight size={12} />
-                    </button>
-                  </div>
+                  <ArrowRight size={11} className="text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0" />
                 </div>
+                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                  {insight.descripcion}
+                </p>
               </div>
-            );
-          })}
-        </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

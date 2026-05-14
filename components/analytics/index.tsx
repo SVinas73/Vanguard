@@ -446,7 +446,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
 
     const sorted = Object.entries(currentMap)
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 10);
+      .slice(0, 5);
 
     const data = sorted.map(([codigo, cantidad]) => {
       const product = products.find((p: Product) => p.codigo === codigo);
