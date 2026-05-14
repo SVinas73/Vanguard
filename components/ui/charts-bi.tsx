@@ -28,16 +28,19 @@ export const CHART_COLORS = [
   '#f43f5e', // rose
 ];
 
+// Tooltip de Recharts. Usamos CSS vars (--background/--content) que el
+// theme provider sobreescribe en light-mode, así no queda hardcoded.
 const TooltipStyle = {
   contentStyle: {
-    background: '#0f172a',
-    border: '1px solid #334155',
+    background: 'var(--background, #0f172a)',
+    border: '1px solid var(--surface-border, #334155)',
     borderRadius: '8px',
     fontSize: '12px',
     padding: '8px 12px',
+    color: 'var(--content, #e2e8f0)',
   } as React.CSSProperties,
-  labelStyle: { color: '#cbd5e1', fontWeight: 500 } as React.CSSProperties,
-  itemStyle: { color: '#e2e8f0' } as React.CSSProperties,
+  labelStyle: { color: 'var(--content-secondary, #cbd5e1)', fontWeight: 500 } as React.CSSProperties,
+  itemStyle: { color: 'var(--content, #e2e8f0)' } as React.CSSProperties,
 };
 
 // =====================================================
@@ -108,18 +111,18 @@ export function HorizontalBars({
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 4 }}>
-        <CartesianGrid horizontal={false} stroke="#1e293b" strokeDasharray="3 3" />
+        <CartesianGrid horizontal={false} stroke="currentColor" strokeOpacity={0.08} strokeDasharray="3 3" />
         <XAxis
           type="number"
-          tick={{ fill: '#64748b', fontSize: 10 }}
-          axisLine={{ stroke: '#334155' }}
+          tick={{ fill: 'currentColor', fontSize: 10, opacity: 0.5 }}
+          axisLine={{ stroke: 'currentColor', opacity: 0.2 }}
           tickLine={false}
           tickFormatter={valueFormatter}
         />
         <YAxis
           type="category"
           dataKey="name"
-          tick={{ fill: '#cbd5e1', fontSize: 11 }}
+          tick={{ fill: 'currentColor', fontSize: 11, opacity: 0.8 }}
           axisLine={false}
           tickLine={false}
           width={100}
@@ -225,40 +228,41 @@ export function KpiStat({
   const isUp = (delta?.value ?? 0) >= 0;
 
   return (
-    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-5">
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2.5">
           {Icon && (
-            <span className={cn('inline-flex p-1.5 rounded-md ring-1 ring-inset', a.bg, a.ring)}>
-              <Icon className={cn('h-3.5 w-3.5', a.text)} />
+            <span className={cn('inline-flex p-2 rounded-md ring-1 ring-inset', a.bg, a.ring)}>
+              <Icon className={cn('h-4 w-4', a.text)} />
             </span>
           )}
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">
+          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-400">
             {label}
           </span>
         </div>
         {sparkData && sparkData.length > 1 && (
-          <Sparkline data={sparkData} color={a.text.includes('emerald') ? '#10b981' : a.text.includes('red') ? '#ef4444' : '#6366f1'} width={64} height={22} />
+          <Sparkline data={sparkData} color={a.text.includes('emerald') ? '#10b981' : a.text.includes('red') ? '#ef4444' : '#6366f1'} width={72} height={28} />
         )}
       </div>
 
-      <div className="flex items-baseline gap-3 mt-1">
-        <span className="text-3xl font-semibold text-slate-50 tabular-nums tracking-tight leading-none">
+      {/* Valor BIG - 5xl ejecutivo */}
+      <div className="flex items-baseline gap-3 mt-2">
+        <span className="text-5xl font-bold text-slate-50 tabular-nums tracking-tight leading-none">
           {value}
         </span>
         {delta && Number.isFinite(delta.value) && delta.value !== 0 && (
           <span className={cn(
-            'inline-flex items-center gap-0.5 text-xs font-medium tabular-nums',
+            'inline-flex items-center gap-0.5 text-sm font-semibold tabular-nums',
             isUp ? 'text-emerald-400' : 'text-red-400',
           )}>
-            {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+            {isUp ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
             {Math.abs(delta.value).toFixed(1)}%
           </span>
         )}
       </div>
 
       {sublabel && (
-        <p className="text-[11px] text-slate-500 mt-1.5">{sublabel}</p>
+        <p className="text-xs text-slate-500 mt-2.5">{sublabel}</p>
       )}
     </div>
   );
