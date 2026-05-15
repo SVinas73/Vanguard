@@ -291,10 +291,11 @@ function KPICard({ label, value, prevValue, suffix, icon, sparkData, description
 // ============================================
 
 interface InventoryValuePanelProps {
+  periodLabel?: string;
   data: ValorInventarioData;
 }
 
-function InventoryValuePanel({ data }: InventoryValuePanelProps) {
+function InventoryValuePanel({ data, periodLabel = '30 días' }: InventoryValuePanelProps) {
   const trend = data.prev30d > 0
     ? ((data.total - data.prev30d) / data.prev30d * 100)
     : 0;
@@ -345,7 +346,7 @@ function InventoryValuePanel({ data }: InventoryValuePanelProps) {
             {fmtMoneyFull(data.total)}
           </div>
           <div className="text-base text-slate-400 mt-3 tabular-nums">
-            vs 30 días: <span className="text-slate-200 font-semibold">{fmtMoneyFull(data.prev30d)}</span>
+            vs {periodLabel}: <span className="text-slate-200 font-semibold">{fmtMoneyFull(data.prev30d)}</span>
           </div>
 
           {/* 3 mini KPIs — bigger */}
@@ -777,10 +778,13 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
 // PUBLIC EXPORTS para page.tsx
 // ============================================
 
-export function InventoryValueCard({ products, movements, onCategoryClick }: {
+export function InventoryValueCard({ products, movements, onCategoryClick, periodDays = 30, periodLabel = '30 días' }: {
   products: any[];
   movements: any[];
   onCategoryClick: (category: string) => void;
+  /** Cuántos días atrás comparar (viene del PeriodSelector del dashboard) */
+  periodDays?: number;
+  periodLabel?: string;
 }) {
   // Valuación unificada: FIFO sobre lotes (fuente de verdad) + fallback
   // a costo promedio. Misma lógica que el Centro de Costos.
@@ -829,9 +833,9 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
     const inmovilizados = products.filter((p) => !activeCodes.has(p.codigo) && p.stock > 0);
     const capitalInmovilizado = inmovilizados.reduce((sum, p) => sum + valorProducto(p), 0);
 
-    // VALOR 30 DÍAS ATRÁS — tendencia. Usamos valor unitario implícito por producto
-    // (valor / stock) para aproximar. Si stock=0, no contribuye.
-    const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // VALOR EN EL PERÍODO ANTERIOR — tendencia. Usamos valor unitario implícito
+    // por producto (valor / stock). Ventana = periodDays (controlado por el selector).
+    const periodStart = new Date(Date.now() - periodDays * 86400000);
     const costoUnitMap = new Map<string, number>();
     (valuacion?.porProducto ?? []).forEach(vp => {
       const unit = vp.unidades > 0 ? vp.valor / vp.unidades : 0;
@@ -839,7 +843,7 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
     });
     let netValueChange = 0;
     movements.forEach((m) => {
-      if (new Date(m.timestamp) >= thirtyDaysAgo) {
+      if (new Date(m.timestamp) >= periodStart) {
         const cost = costoUnitMap.get(m.codigo) ?? 0;
         if (m.tipo === 'entrada') netValueChange += m.cantidad * cost;
         else                       netValueChange -= m.cantidad * cost;
@@ -860,8 +864,8 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
       sinCosto,
       sinAlmacen,
     };
-  }, [valuacion, products, movements]);
-  return <InventoryValuePanel data={data} />;
+  }, [valuacion, products, movements, periodDays]);
+  return <InventoryValuePanel data={data} periodLabel={periodLabel} />;
 }
 
 export function StockAlertsPanel({ products, predictions, onProductClick, onCreatePurchaseOrder }: {

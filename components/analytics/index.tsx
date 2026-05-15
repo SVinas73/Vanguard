@@ -386,6 +386,8 @@ interface ProductDetail {
 interface ConsumptionChartProps {
   movements: Movement[];
   products: Product[];
+  /** Si se provee, se usa este período en vez del state interno. Acepta 7d/30d/90d/1a. */
+  fixedPeriod?: '7d' | '30d' | '90d' | '1a';
 }
 
 // Category color mapping
@@ -403,9 +405,18 @@ function getCatColor(categoria: string): string {
   return CATEGORY_COLORS[categoria] || FALLBACK_COLORS[Math.abs(categoria.split('').reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0)) % FALLBACK_COLORS.length];
 }
 
-export function ConsumptionChart({ movements, products }: ConsumptionChartProps) {
+export function ConsumptionChart({ movements, products, fixedPeriod }: ConsumptionChartProps) {
   const { t } = useTranslation();
-  const [period, setPeriod] = useState<PeriodFilter>('mes');
+  // Si recibe fixedPeriod del dashboard, lo usa; sino mantiene state interno.
+  const externalPeriod: PeriodFilter | null =
+    fixedPeriod === '7d' ? 'semana'
+    : fixedPeriod === '90d' ? 'semestre'   // 90d ≈ semestre en nuestro mapping
+    : fixedPeriod === '1a' ? 'año'
+    : fixedPeriod === '30d' ? 'mes'
+    : null;
+  const [internalPeriod, setInternalPeriod] = useState<PeriodFilter>('mes');
+  const period: PeriodFilter = externalPeriod ?? internalPeriod;
+  const setPeriod = setInternalPeriod;
   const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null);
 
   const periodConfig: Record<PeriodFilter, { label: string; fullLabel: string; days: number }> = {
@@ -512,7 +523,8 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
           </p>
         </div>
 
-        {/* Period selector */}
+        {/* Period selector — solo si NO viene controlado desde afuera */}
+        {!externalPeriod && (
         <div className="flex gap-0.5 p-0.5 rounded-md bg-slate-900 border border-slate-800">
           {(Object.keys(periodConfig) as PeriodFilter[]).map((p) => (
             <button
@@ -529,6 +541,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
             </button>
           ))}
         </div>
+        )}
       </div>
 
       {/* Visual: donut chart con leyenda + tabla detallada */}
