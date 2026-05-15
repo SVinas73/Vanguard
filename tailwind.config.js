@@ -274,7 +274,7 @@ module.exports = {
 
       // Typography — professional system fonts
       fontFamily: {
-        sans: ['IBM Plex Sans', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Public Sans', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Consolas', 'monospace'],
       },
 
