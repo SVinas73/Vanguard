@@ -7,10 +7,10 @@
    ============================================ */
 
 /* Google Fonts - Inter para UI, JetBrains para código */
-/* IBM Plex Sans — fuente corporate enterprise (la oficial de IBM).
-   Más sobria y profesional, ideal para sistemas de gestión.
+/* Public Sans — fuente oficial del US Web Design System.
+   Diseñada para uso institucional: muy legible, sobria, profesional.
    JetBrains Mono se mantiene para code. */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   /* Base colors — warm dark grays */
@@ -78,7 +78,7 @@ html {
 }
 
 body {
-  font-family: 'IBM Plex Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Public Sans', 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--background);
   color: var(--content);
   line-height: 1.5;
