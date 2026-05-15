@@ -560,6 +560,32 @@ tr:hover td {
 .light-mode ::-webkit-scrollbar-thumb:hover { background: #a0a8b4; }
 .light-mode { scrollbar-color: #c0c7d0 transparent; }
 
+/* ---- Botones secundarios: texto blanco sobre bg-slate-700/800 queda
+        invisible en light mode (el fondo se vuelve claro). Forzamos
+        contraste: si el botón usa bg-slate-700/800 y text-white o
+        text-slate-100/200, lo bajamos a oscuro en light. ---- */
+.light-mode button.bg-slate-700,
+.light-mode button.bg-slate-800,
+.light-mode .bg-slate-700.text-white,
+.light-mode .bg-slate-800.text-white,
+.light-mode .bg-slate-700.text-slate-100,
+.light-mode .bg-slate-800.text-slate-100,
+.light-mode .bg-slate-700.text-slate-200,
+.light-mode .bg-slate-800.text-slate-200 {
+  color: #1a2030 !important;
+}
+
+/* Hover variant para los mismos botones */
+.light-mode .hover\:bg-slate-700:hover,
+.light-mode .hover\:bg-slate-800:hover {
+  color: #1a2030 !important;
+}
+
+/* ---- Texto chico genérico: forzar tamaño legible en clases arbitrary
+        que el usuario haya hardcodeado fuera de la escala Tailwind ---- */
+.text-\[10px\] { font-size: 0.8125rem !important; line-height: 1.15rem !important; }
+.text-\[11px\] { font-size: 0.8125rem !important; line-height: 1.15rem !important; }
+
 /* ---- Forms — inputs readable ---- */
 .light-mode input, .light-mode textarea, .light-mode select {
   background-color: #ffffff !important;
