@@ -588,7 +588,7 @@ export function InsightsPanel({
       }
     }
 
-    return result.slice(0, 4);
+    return result.slice(0, 6);
   }, [products, movements, predictions, t]);
 
   // Solo color en el ícono — fila compacta, sin cards con fondo
@@ -649,6 +649,28 @@ export function InsightsPanel({
           );
         })}
       </div>
+
+      {/* Mini stats footer — llena el espacio si hay pocos insights */}
+      {insights.length <= 3 && (
+        <div className="mt-4 pt-4 border-t border-slate-800/60 grid grid-cols-3 gap-3">
+          <div className="text-center">
+            <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Productos</div>
+            <div className="text-2xl font-bold text-slate-100 tabular-nums mt-1">{products.length}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Sin Stock</div>
+            <div className="text-2xl font-bold text-red-300 tabular-nums mt-1">
+              {products.filter((p: Product) => p.stock === 0).length}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Críticos</div>
+            <div className="text-2xl font-bold text-amber-300 tabular-nums mt-1">
+              {products.filter((p: Product) => p.stock > 0 && p.stock <= p.stockMinimo).length}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
