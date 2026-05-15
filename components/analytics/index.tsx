@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Product, Movement, StockPrediction } from '@/types';
 import { CategoryBadge } from '@/components/productos';
-import { HorizontalBars } from '@/components/ui/charts-bi';
+import { Donut, CHART_COLORS } from '@/components/ui/charts-bi';
 import { 
   CheckCircle, 
   AlertTriangle, 
@@ -531,23 +531,41 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
         </div>
       </div>
 
-      {/* Visual: barras horizontales arriba, tabla detallada abajo */}
+      {/* Visual: donut chart con leyenda + tabla detallada */}
       {chartData.length === 0 ? (
         <div className="py-10 text-center text-sm text-slate-500">
           {t('analytics.noConsumptionData', 'Sin datos de consumo en este período')}
         </div>
       ) : (
-      <>
-        {/* Gráfica de barras */}
         <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
-          <HorizontalBars
-            data={chartData.map(d => ({ name: d.descripcion, value: d.cantidad }))}
-            height={Math.max(180, chartData.length * 36)}
-            valueFormatter={(v) => v.toLocaleString('es-UY')}
-            color="#6366f1"
-          />
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <Donut
+              data={chartData.map((d, i) => ({
+                name: d.descripcion,
+                value: d.cantidad,
+                color: CHART_COLORS[i % CHART_COLORS.length],
+              }))}
+              size={200}
+              centerLabel="Total"
+              centerValue={chartData.reduce((s, d) => s + d.cantidad, 0).toLocaleString('es-UY')}
+              valueFormatter={(v) => `${v.toLocaleString('es-UY')} uds`}
+            />
+            <div className="flex-1 w-full space-y-2.5">
+              {chartData.map((d, i) => {
+                const total = chartData.reduce((s, x) => s + x.cantidad, 0);
+                const pct = total > 0 ? (d.cantidad / total * 100) : 0;
+                return (
+                  <div key={d.codigo} className="flex items-center gap-3">
+                    <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                    <span className="flex-1 text-sm text-slate-200 font-medium truncate">{d.descripcion}</span>
+                    <span className="text-sm font-semibold text-slate-100 tabular-nums">{d.cantidad.toLocaleString('es-UY')}</span>
+                    <span className="text-xs text-slate-500 tabular-nums w-12 text-right">{pct.toFixed(1)}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      </>
       )}
       {chartData.length > 0 && (
         <div className="overflow-hidden rounded-lg border border-slate-800">
