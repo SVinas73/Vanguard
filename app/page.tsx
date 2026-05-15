@@ -700,18 +700,20 @@ export default function HomePage() {
               days={periodDays}
             />
 
-            {/* Top consumidos (lista compacta sin barras) */}
-            <div className="rounded-xl p-6 bg-slate-900/40 border border-slate-800">
-              <ConsumptionChart movements={dashboardMovements} products={dashboardProducts} />
+            {/* Top consumidos + Insights — lado a lado (60/40) */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              <div className="lg:col-span-3 rounded-xl p-6 bg-slate-900/40 border border-slate-800">
+                <ConsumptionChart movements={dashboardMovements} products={dashboardProducts} />
+              </div>
+              <div className="lg:col-span-2">
+                <InsightsPanel
+                  products={dashboardProducts}
+                  movements={dashboardMovements}
+                  predictions={predictions}
+                  onNavigate={(tab) => handleTabChange(tab as TabType)}
+                />
+              </div>
             </div>
-
-            {/* Insights IA */}
-            <InsightsPanel
-              products={dashboardProducts}
-              movements={dashboardMovements}
-              predictions={predictions}
-              onNavigate={(tab) => handleTabChange(tab as TabType)}
-            />
 
             {/* Paneles de IA — predicciones, anomalías, asociaciones */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

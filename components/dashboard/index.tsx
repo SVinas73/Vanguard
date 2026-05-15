@@ -602,20 +602,20 @@ export function InsightsPanel({
   if (insights.length === 0) return null;
 
   return (
-    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-5">
-      <div className="flex items-center justify-between mb-3">
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-slate-100 tracking-tight flex items-center gap-2">
+          <h3 className="text-xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
             {t('dashboard.insights', 'Insights')}
-            <span className="px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider rounded bg-indigo-500/10 text-indigo-300 ring-1 ring-inset ring-indigo-500/20">
+            <span className="px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-indigo-500/10 text-indigo-300 ring-1 ring-inset ring-indigo-500/20">
               AI
             </span>
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-400 mt-0.5">
             {t('dashboard.insightsSubtitle', 'Lo que necesitás saber ahora')}
           </p>
         </div>
-        <Brain size={14} className="text-slate-600" strokeWidth={1.75} />
+        <Brain size={18} className="text-slate-500" strokeWidth={1.75} />
       </div>
 
       <div className="-mx-2">
@@ -631,17 +631,17 @@ export function InsightsPanel({
                 else if (insight.tipo === 'alerta') onNavigate?.('stock');
                 else onNavigate?.('analytics');
               }}
-              className="w-full text-left flex items-start gap-3 px-3 py-2.5 rounded-md hover:bg-slate-800/40 transition-colors group"
+              className="w-full text-left flex items-start gap-3 px-3 py-3.5 rounded-md hover:bg-slate-800/40 transition-colors group"
             >
-              <IconComp size={14} className={cn('flex-shrink-0 mt-0.5', tone.text)} strokeWidth={2} />
+              <IconComp size={18} className={cn('flex-shrink-0 mt-0.5', tone.text)} strokeWidth={2} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[13px] font-medium text-slate-100">
+                  <span className="text-base font-semibold text-slate-100">
                     {insight.titulo}
                   </span>
-                  <ArrowRight size={11} className="text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0" />
+                  <ArrowRight size={14} className="text-slate-500 group-hover:text-slate-300 transition-colors flex-shrink-0" />
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                <p className="text-sm text-slate-400 mt-1 line-clamp-2">
                   {insight.descripcion}
                 </p>
               </div>
