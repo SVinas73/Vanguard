@@ -285,8 +285,15 @@ export default function HomePage() {
     setLastRefresh(new Date());
   }, [fetchProducts, fetchMovements, refreshPredictions]);
 
-  // Period days mapping
-  const periodDays = dashboardPeriod === '7d' ? 7 : dashboardPeriod === '90d' ? 90 : 30;
+  // Period days mapping — fuente única de período para todo el dashboard
+  const periodDays = dashboardPeriod === '7d' ? 7
+    : dashboardPeriod === '90d' ? 90
+    : dashboardPeriod === '1a' ? 365
+    : 30;
+  const periodLabel = dashboardPeriod === '7d' ? '7 días'
+    : dashboardPeriod === '90d' ? '90 días'
+    : dashboardPeriod === '1a' ? '1 año'
+    : '30 días';
 
   // Filtered products with semantic search
   const filteredProducts = useMemo(() => {
@@ -323,42 +330,43 @@ export default function HomePage() {
     const stockBajoSinAgotados = filteredProducts.filter(p => p.stock > 0 && p.stockMinimo > 0 && p.stock <= p.stockMinimo).length;
     const agotados = filteredProducts.filter(p => p.stock === 0).length;
 
-    const today = new Date();
-    const todayMovements = filteredMovements.filter(
-      (m) => new Date(m.timestamp).toDateString() === today.toDateString()
-    ).length;
+    // Ventanas según el período del dashboard
+    const now = Date.now();
+    const periodStart = new Date(now - periodDays * 86400000);
+    const prevPeriodStart = new Date(now - periodDays * 2 * 86400000);
 
-    // ROTACIÓN — días de inventario reales.
-    // Antes dividía siempre por 30 aunque el histórico fuera menor → infla días.
-    // Ahora calcula el rango efectivo desde el primer movimiento (max 30 días).
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const movementsInPeriod = filteredMovements.filter(
+      (m) => new Date(m.timestamp) >= periodStart
+    );
+    const movementsInPrevPeriod = filteredMovements.filter(
+      (m) => {
+        const t = new Date(m.timestamp);
+        return t >= prevPeriodStart && t < periodStart;
+      }
+    );
 
-    const salesLast30 = filteredMovements
-      .filter(m => m.tipo === 'salida' && new Date(m.timestamp) >= thirtyDaysAgo);
+    // ROTACIÓN — días de inventario reales en la ventana seleccionada.
+    const salesInPeriod = movementsInPeriod.filter(m => m.tipo === 'salida');
 
     let avgRotation = 0;
     let dailyAvgSales = 0;
-    if (salesLast30.length > 0) {
-      const oldest = salesLast30.reduce((min, m) => {
+    if (salesInPeriod.length > 0) {
+      const oldest = salesInPeriod.reduce((min, m) => {
         const t = new Date(m.timestamp).getTime();
         return t < min ? t : min;
-      }, Date.now());
-      const daysSpan = Math.max(1, Math.min(30, Math.ceil((Date.now() - oldest) / 86400000)));
-      const totalSales = salesLast30.reduce((sum, m) => sum + m.cantidad, 0);
+      }, now);
+      const daysSpan = Math.max(1, Math.min(periodDays, Math.ceil((now - oldest) / 86400000)));
+      const totalSales = salesInPeriod.reduce((sum, m) => sum + m.cantidad, 0);
       dailyAvgSales = totalSales / daysSpan;
       const totalStock = filteredProducts.reduce((sum, p) => sum + p.stock, 0);
       avgRotation = dailyAvgSales > 0 ? Math.round(totalStock / dailyAvgSales) : 0;
     }
 
-    // Trend movs hoy vs ayer
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayMovements = filteredMovements.filter(
-      (m) => new Date(m.timestamp).toDateString() === yesterday.toDateString()
-    ).length;
-    const movementTrend = yesterdayMovements > 0
-      ? { value: Math.round(((todayMovements - yesterdayMovements) / yesterdayMovements) * 100), label: 'vs ayer' }
+    // Trend: movimientos en período vs período anterior
+    const movsCount = movementsInPeriod.length;
+    const prevMovsCount = movementsInPrevPeriod.length;
+    const movementTrend = prevMovsCount > 0
+      ? { value: Math.round(((movsCount - prevMovsCount) / prevMovsCount) * 100), label: `vs ${periodLabel} ant.` }
       : undefined;
 
     return [
@@ -374,7 +382,7 @@ export default function HomePage() {
         value: avgRotation > 0 ? `${avgRotation}d` : '—',
         icon: <TrendingUp size={24} />,
         color: 'cyan',
-        subtitle: dailyAvgSales > 0 ? `${dailyAvgSales.toFixed(1)} unid/día` : 'Sin ventas en 30 días',
+        subtitle: dailyAvgSales > 0 ? `${dailyAvgSales.toFixed(1)} unid/día (${periodLabel})` : `Sin ventas en ${periodLabel}`,
       },
       {
         label: t('dashboard.lowStock', 'Stock Bajo'),
@@ -384,14 +392,14 @@ export default function HomePage() {
         subtitle: agotados > 0 ? `+ ${agotados} agotados` : 'Sin agotados',
       },
       {
-        label: t('dashboard.movementsToday', 'Movimientos Hoy'),
-        value: todayMovements.toString(),
+        label: `Movimientos · ${periodLabel}`,
+        value: movsCount.toString(),
         icon: <ArrowLeftRight size={24} />,
         color: 'purple',
         trend: movementTrend,
       },
     ];
-  }, [products, movements, t, dashboardAlmacenId]);
+  }, [products, movements, t, dashboardAlmacenId, periodDays, periodLabel]);
 
   // Productos / movimientos filtrados por almacén — usados en cards del dashboard
   const dashboardProducts = useMemo(() => {
@@ -687,6 +695,8 @@ export default function HomePage() {
             <InventoryValueCard
               products={dashboardProducts}
               movements={dashboardMovements}
+              periodDays={periodDays}
+              periodLabel={periodLabel}
               onCategoryClick={(category: string) => {
                 setSelectedCategory(category);
                 handleTabChange('stock');
@@ -703,7 +713,11 @@ export default function HomePage() {
             {/* Top consumidos + Insights — lado a lado (60/40) */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
               <div className="lg:col-span-3 rounded-xl p-6 bg-slate-900/40 border border-slate-800">
-                <ConsumptionChart movements={dashboardMovements} products={dashboardProducts} />
+                <ConsumptionChart
+                  movements={dashboardMovements}
+                  products={dashboardProducts}
+                  fixedPeriod={dashboardPeriod as '7d' | '30d' | '90d' | '1a'}
+                />
               </div>
               <div className="lg:col-span-2">
                 <InsightsPanel

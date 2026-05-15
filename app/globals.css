@@ -7,9 +7,10 @@
    ============================================ */
 
 /* Google Fonts - Inter para UI, JetBrains para código */
-/* Geist — fuente sans elegante de Vercel. Usada por Linear, Vercel, Replit.
-   Más profesional/contemporánea que Inter. Mantiene JetBrains Mono para code. */
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+/* IBM Plex Sans — fuente corporate enterprise (la oficial de IBM).
+   Más sobria y profesional, ideal para sistemas de gestión.
+   JetBrains Mono se mantiene para code. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   /* Base colors — warm dark grays */
@@ -77,7 +78,7 @@ html {
 }
 
 body {
-  font-family: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'IBM Plex Sans', 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--background);
   color: var(--content);
   line-height: 1.5;
