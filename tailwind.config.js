@@ -273,6 +273,21 @@ module.exports = {
       },
 
       // Typography — professional system fonts
+      // Tipografía — escala subida para mejor legibilidad
+      // (text-xs y text-sm un punto más arriba que default)
+      fontSize: {
+        'xs':   ['0.8125rem', { lineHeight: '1.15rem' }],   // 13px (era 12)
+        'sm':   ['0.9375rem', { lineHeight: '1.375rem' }],  // 15px (era 14)
+        'base': ['1rem',      { lineHeight: '1.5rem' }],    // 16px
+        'lg':   ['1.125rem',  { lineHeight: '1.625rem' }],  // 18px
+        'xl':   ['1.25rem',   { lineHeight: '1.75rem' }],   // 20px
+        '2xl':  ['1.5rem',    { lineHeight: '2rem' }],
+        '3xl':  ['1.875rem',  { lineHeight: '2.25rem' }],
+        '4xl':  ['2.25rem',   { lineHeight: '2.5rem' }],
+        '5xl':  ['3rem',      { lineHeight: '1' }],
+        '6xl':  ['3.75rem',   { lineHeight: '1' }],
+      },
+
       fontFamily: {
         sans: ['Public Sans', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Consolas', 'monospace'],
