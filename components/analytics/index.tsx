@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Product, Movement, StockPrediction } from '@/types';
 import { CategoryBadge } from '@/components/productos';
+import { HorizontalBars } from '@/components/ui/charts-bi';
 import { 
   CheckCircle, 
   AlertTriangle, 
@@ -530,12 +531,25 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
         </div>
       </div>
 
-      {/* Tabla densa estilo BI */}
+      {/* Visual: barras horizontales arriba, tabla detallada abajo */}
       {chartData.length === 0 ? (
-        <div className="py-10 text-center text-xs text-slate-500">
+        <div className="py-10 text-center text-sm text-slate-500">
           {t('analytics.noConsumptionData', 'Sin datos de consumo en este período')}
         </div>
       ) : (
+      <>
+        {/* Gráfica de barras */}
+        <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+          <HorizontalBars
+            data={chartData.map(d => ({ name: d.descripcion, value: d.cantidad }))}
+            height={Math.max(180, chartData.length * 36)}
+            valueFormatter={(v) => v.toLocaleString('es-UY')}
+            color="#6366f1"
+          />
+        </div>
+      </>
+      )}
+      {chartData.length > 0 && (
         <div className="overflow-hidden rounded-lg border border-slate-800">
           <table className="w-full">
             <thead className="bg-slate-800/60">
@@ -560,13 +574,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                     className="cursor-pointer hover:bg-slate-800/40 transition-colors"
                   >
                     <td className="px-4 py-3">
-                      <span className={cn(
-                        'inline-flex items-center justify-center w-7 h-7 rounded-md text-sm font-bold tabular-nums',
-                        i === 0 ? 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/30' :
-                        i === 1 ? 'bg-slate-700/40 text-slate-200 ring-1 ring-inset ring-slate-600/40' :
-                        i === 2 ? 'bg-orange-700/20 text-orange-300 ring-1 ring-inset ring-orange-700/30' :
-                        'text-slate-500',
-                      )}>
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md text-sm font-bold tabular-nums text-slate-300">
                         {i + 1}
                       </span>
                     </td>
