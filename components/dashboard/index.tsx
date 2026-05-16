@@ -93,7 +93,7 @@ function HealthRing({ score, size = 52, strokeWidth = 5 }: HealthRingProps) {
   const dashLength = (Math.min(score, 100) / 100) * circumference;
 
   const color =
-    score >= 70 ? '#3d9a5f' : score >= 40 ? '#c8872e' : '#c94444';
+    score >= 70 ? '#9ec9b1' : score >= 40 ? '#d6b97a' : '#dfa6a6';
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -144,7 +144,7 @@ const COLOR_MAP: Record<KPIColor, ColorConfig> = {
   emerald: {
     bg: 'rgba(61,154,95,0.06)',
     border: 'rgba(61,154,95,0.12)',
-    text: '#3d9a5f',
+    text: '#9ec9b1',
     accent: '#4aaa73',
   },
   cyan: {
@@ -156,7 +156,7 @@ const COLOR_MAP: Record<KPIColor, ColorConfig> = {
   rose: {
     bg: 'rgba(201,68,68,0.06)',
     border: 'rgba(201,68,68,0.12)',
-    text: '#c94444',
+    text: '#dfa6a6',
     accent: '#cc5555',
   },
   violet: {
@@ -168,7 +168,7 @@ const COLOR_MAP: Record<KPIColor, ColorConfig> = {
   amber: {
     bg: 'rgba(200,135,46,0.06)',
     border: 'rgba(200,135,46,0.12)',
-    text: '#c8872e',
+    text: '#d6b97a',
     accent: '#cc9a40',
   },
 };
@@ -272,10 +272,10 @@ export function WelcomeHeader({ userName, products, predictions }: WelcomeHeader
                   style={{
                     color:
                       healthScore >= 70
-                        ? '#3d9a5f'
+                        ? '#9ec9b1'
                         : healthScore >= 40
-                        ? '#c8872e'
-                        : '#c94444',
+                        ? '#d6b97a'
+                        : '#dfa6a6',
                   }}
                 >
                   {healthLabel}
@@ -291,7 +291,7 @@ export function WelcomeHeader({ userName, products, predictions }: WelcomeHeader
               style={{
                 background: 'rgba(201,68,68,0.06)',
                 border: '1px solid rgba(201,68,68,0.12)',
-                color: '#c94444',
+                color: '#dfa6a6',
               }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
@@ -886,7 +886,7 @@ export function StatCard({ label, value, icon, color, trend, subtitle }: StatCar
           <div
             className="flex items-center gap-1 mt-2 text-xs font-semibold"
             style={{
-              color: trend.value >= 0 ? '#3d9a5f' : '#c94444',
+              color: trend.value >= 0 ? '#9ec9b1' : '#dfa6a6',
             }}
           >
             {trend.value >= 0 ? (

@@ -392,14 +392,14 @@ interface ConsumptionChartProps {
 
 // Category color mapping
 const CATEGORY_COLORS: Record<string, string> = {
-  'Estación de Servicio': '#3d9a5f',
+  'Estación de Servicio': '#9ec9b1',
   'Ferretería': '#4a7fb5',
   'Papelería': '#6b5488',
-  'Ediltor': '#c8872e',
+  'Ediltor': '#d6b97a',
   'Otros': '#986080',
 };
 
-const FALLBACK_COLORS = ['#3d9a5f', '#4a7fb5', '#6b5488', '#c8872e', '#986080', '#546280', '#3a9280'];
+const FALLBACK_COLORS = ['#9ec9b1', '#4a7fb5', '#6b5488', '#d6b97a', '#986080', '#546280', '#3a9280'];
 
 function getCatColor(categoria: string): string {
   return CATEGORY_COLORS[categoria] || FALLBACK_COLORS[Math.abs(categoria.split('').reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0)) % FALLBACK_COLORS.length];

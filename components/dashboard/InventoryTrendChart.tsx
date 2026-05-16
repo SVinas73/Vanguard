@@ -107,12 +107,12 @@ export function InventoryTrendChart({ movements, products, days = 30 }: Inventor
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="gradEntradas" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3d9a5f" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3d9a5f" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#9ec9b1" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#9ec9b1" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradSalidas" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#c94444" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#c94444" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#dfa6a6" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#dfa6a6" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(51,65,85,0.3)" />
@@ -154,14 +154,14 @@ export function InventoryTrendChart({ movements, products, days = 30 }: Inventor
               <Area
                 type="monotone"
                 dataKey="entradas"
-                stroke="#3d9a5f"
+                stroke="#9ec9b1"
                 fill="url(#gradEntradas)"
                 strokeWidth={2}
               />
               <Area
                 type="monotone"
                 dataKey="salidas"
-                stroke="#c94444"
+                stroke="#dfa6a6"
                 fill="url(#gradSalidas)"
                 strokeWidth={2}
               />

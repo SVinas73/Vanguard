@@ -157,7 +157,7 @@ interface SparkLineProps {
   width?: number;
 }
 
-function SparkLine({ data, color = '#3d9a5f', height = 32, width = 80 }: SparkLineProps) {
+function SparkLine({ data, color = '#9ec9b1', height = 32, width = 80 }: SparkLineProps) {
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
@@ -420,7 +420,7 @@ function InventoryValuePanel({ data, periodLabel = '30 días' }: InventoryValueP
             data={almacenesBarData}
             height={Math.max(160, almacenesBarData.length * 36)}
             valueFormatter={fmtMoney}
-            color="#6366f1"
+            color="#4a7fb5"
           />
         </div>
       )}
@@ -808,8 +808,8 @@ export function InventoryValueCard({ products, movements, onCategoryClick, perio
 
   const data = useMemo(() => {
     const CATEGORY_COLORS: Record<string, string> = {
-      'Estación de Servicio': '#3d9a5f', 'Ferretería': '#4a7fb5',
-      'Papelería': '#836ba0', 'Ediltor': '#c8872e',
+      'Estación de Servicio': '#9ec9b1', 'Ferretería': '#4a7fb5',
+      'Papelería': '#836ba0', 'Ediltor': '#d6b97a',
     };
 
     const totalValue = valuacion?.total ?? 0;
@@ -817,7 +817,7 @@ export function InventoryValueCard({ products, movements, onCategoryClick, perio
       nombre: c.nombre,
       valor: c.valor,
       porcentaje: totalValue > 0 ? Math.round((c.valor / totalValue) * 100) : 0,
-      color: CATEGORY_COLORS[c.nombre] ?? ['#3d9a5f','#4a7fb5','#836ba0','#c8872e','#b5547a'][i % 5],
+      color: CATEGORY_COLORS[c.nombre] ?? ['#9ec9b1','#4a7fb5','#836ba0','#d6b97a','#b5547a'][i % 5],
     }));
 
     const almacenes = valuacion?.porAlmacen ?? [];

@@ -242,7 +242,7 @@ export default function QMSDashboard() {
     return [
       { name: 'Críticas', value: conteo.critica, color: '#ef4444' },
       { name: 'Mayores', value: conteo.mayor, color: '#cc7a33' },
-      { name: 'Menores', value: conteo.menor, color: '#c8872e' },
+      { name: 'Menores', value: conteo.menor, color: '#d6b97a' },
       { name: 'Observaciones', value: conteo.observacion, color: '#64748b' },
     ];
   }, [ncrs]);
@@ -545,7 +545,7 @@ function DashboardView({
                 <XAxis dataKey="mes" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }} />
-                <Area type="monotone" dataKey="aprobadas" stackId="1" stroke="#3d9a5f" fill="#3d9a5f30" name="Aprobadas" />
+                <Area type="monotone" dataKey="aprobadas" stackId="1" stroke="#9ec9b1" fill="#9ec9b130" name="Aprobadas" />
                 <Area type="monotone" dataKey="rechazadas" stackId="1" stroke="#ef4444" fill="#ef444430" name="Rechazadas" />
               </AreaChart>
             </ResponsiveContainer>
