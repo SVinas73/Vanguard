@@ -8,279 +8,128 @@ module.exports = {
   theme: {
     extend: {
       // ============================================
-      // PROFESSIONAL / EXECUTIVE COLOR PALETTE
-      // Muted, sophisticated tones — no neon
+      // VANGUARD — Executive professional palette
+      // Single brand accent: steel blue.
+      // Status muted (pastel). No neon.
       // ============================================
       colors: {
-        // Backgrounds — warm dark grays instead of pure black
         background: {
           DEFAULT: '#111318',
           secondary: '#171a21',
           tertiary: '#1d2028',
         },
-        // Surfaces — subtle warm undertone
         surface: {
           DEFAULT: '#1d2028',
           hover: '#252830',
           active: '#2c2f38',
           border: '#323640',
         },
-        // Accent — refined steel blue (less saturated than default blue)
+        // Brand — steel blue (único acento "vivo")
         accent: {
-          50: '#f0f4f8',
+          50:  '#f0f4f8',
           100: '#d9e2ec',
           200: '#bcccdc',
           300: '#9fb3c8',
           400: '#829ab1',
           500: '#627d98',
-          600: '#486581',
-          700: '#334e68',
-          800: '#243b53',
-          900: '#1a2e44',
+          600: '#4a7fb5',
+          700: '#3b6a99',
+          800: '#2d5480',
+          900: '#243b53',
           950: '#102a43',
         },
-        // Text — neutral grays
         content: {
           DEFAULT: '#e8ecf1',
           secondary: '#8b95a5',
           tertiary: '#636d7e',
           muted: '#4a5468',
         },
-        // Status colors — muted professional versions
-        success: {
-          DEFAULT: '#3d9a5f',
-          muted: 'rgba(61, 154, 95, 0.12)',
-        },
-        warning: {
-          DEFAULT: '#c8872e',
-          muted: 'rgba(200, 135, 46, 0.12)',
-        },
-        danger: {
-          DEFAULT: '#c94444',
-          muted: 'rgba(201, 68, 68, 0.12)',
-        },
-        info: {
-          DEFAULT: '#4a7fb5',
-          muted: 'rgba(74, 127, 181, 0.12)',
-        },
+        // Muted pastel status — same intensity as badges
+        success: { DEFAULT: '#9ec9b1', muted: 'rgba(143,196,165,0.06)', ring: 'rgba(143,196,165,0.18)' },
+        warning: { DEFAULT: '#d6b97a', muted: 'rgba(212,178,112,0.06)', ring: 'rgba(212,178,112,0.18)' },
+        danger:  { DEFAULT: '#dfa6a6', muted: 'rgba(214,148,148,0.06)', ring: 'rgba(214,148,148,0.18)' },
+        info:    { DEFAULT: '#9fb3c8', muted: 'rgba(74,127,181,0.06)',  ring: 'rgba(74,127,181,0.20)' },
 
         // ============================================
-        // Override Tailwind default colors to be MORE MUTED
-        // This transforms all existing component usage automatically
+        // Tailwind defaults overridden so the existing
+        // codebase keeps working as-is (slate, blue, etc.)
         // ============================================
         slate: {
-          50: '#f5f7fa',
-          100: '#e8ecf1',
-          200: '#d1d8e2',
-          300: '#b0bac8',
-          400: '#8b95a5',
-          500: '#636d7e',
-          600: '#4a5468',
-          700: '#353d4d',
-          800: '#232833',
-          900: '#181c25',
-          950: '#111318',
+          50: '#f5f7fa', 100: '#e8ecf1', 200: '#d1d8e2', 300: '#b0bac8',
+          400: '#8b95a5', 500: '#636d7e', 600: '#4a5468', 700: '#353d4d',
+          800: '#232833', 900: '#181c25', 950: '#111318',
         },
+        // blue → steel blue (so existing bg-blue-* / text-blue-* class usage maps to brand)
         blue: {
-          50: '#f0f4f8',
-          100: '#d9e2ec',
-          200: '#bcccdc',
-          300: '#9fb3c8',
-          400: '#6b8baa',
-          500: '#4a7fb5',
-          600: '#3b6a99',
-          700: '#2d5480',
-          800: '#243b53',
-          900: '#1a2e44',
-          950: '#102a43',
+          50:  '#f0f4f8', 100: '#d9e2ec', 200: '#bcccdc', 300: '#9fb3c8',
+          400: '#829ab1', 500: '#627d98', 600: '#4a7fb5', 700: '#3b6a99',
+          800: '#2d5480', 900: '#243b53', 950: '#102a43',
         },
-        emerald: {
-          50: '#f0f9f4',
-          100: '#d1f0df',
-          200: '#a3e0bf',
-          300: '#6fcc99',
-          400: '#4aaa73',
-          500: '#3d9a5f',
-          600: '#2f7d4c',
-          700: '#26653e',
-          800: '#1e4f31',
-          900: '#173b26',
-          950: '#0d2618',
-        },
-        red: {
-          50: '#fdf5f5',
-          100: '#f8dada',
-          200: '#f0b0b0',
-          300: '#e08080',
-          400: '#cc5555',
-          500: '#c94444',
-          600: '#a83636',
-          700: '#872a2a',
-          800: '#661f1f',
-          900: '#4d1717',
-          950: '#330f0f',
-        },
-        amber: {
-          50: '#fdf8f0',
-          100: '#f8ead0',
-          200: '#f0d4a0',
-          300: '#e0b56a',
-          400: '#cc9a40',
-          500: '#c8872e',
-          600: '#a66d24',
-          700: '#84561c',
-          800: '#634015',
-          900: '#4d3110',
-          950: '#33200a',
-        },
-        cyan: {
-          50: '#f0f7fa',
-          100: '#d3e8f0',
-          200: '#a8d1e0',
-          300: '#78b5c8',
-          400: '#5099aa',
-          500: '#3d8899',
-          600: '#316e7d',
-          700: '#275762',
-          800: '#1e4149',
-          900: '#163133',
-          950: '#0e2022',
-        },
-        purple: {
-          50: '#f5f3f8',
-          100: '#e0dae8',
-          200: '#c4b5d4',
-          300: '#a38dbb',
-          400: '#836ba0',
-          500: '#6b5488',
-          600: '#564470',
-          700: '#433558',
-          800: '#312840',
-          900: '#221c2e',
-          950: '#16111f',
-        },
-        violet: {
-          50: '#f4f3f8',
-          100: '#dddae8',
-          200: '#bdb5d0',
-          300: '#9a8db5',
-          400: '#7a6b98',
-          500: '#635480',
-          600: '#504468',
-          700: '#3e3552',
-          800: '#2e283e',
-          900: '#201c2c',
-          950: '#14111d',
-        },
-        orange: {
-          50: '#fdf6f0',
-          100: '#f8e4d0',
-          200: '#f0c8a0',
-          300: '#e0a56a',
-          400: '#cc8840',
-          500: '#b87330',
-          600: '#965d26',
-          700: '#75481e',
-          800: '#573516',
-          900: '#3f2710',
-          950: '#2a190a',
-        },
-        green: {
-          50: '#f0f9f4',
-          100: '#d1f0df',
-          200: '#a3e0bf',
-          300: '#6fcc99',
-          400: '#4aaa73',
-          500: '#3d9a5f',
-          600: '#2f7d4c',
-          700: '#26653e',
-          800: '#1e4f31',
-          900: '#173b26',
-          950: '#0d2618',
-        },
+        // indigo → also steel blue, since brand is now unified
         indigo: {
-          // Stripe-style indigo — color de marca principal del rediseño.
-          // Vibrante pero no neón. Único acento "vivo" en toda la app.
-          50:  '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
+          50:  '#f0f4f8', 100: '#d9e2ec', 200: '#bcccdc', 300: '#9fb3c8',
+          400: '#829ab1', 500: '#4a7fb5', 600: '#4a7fb5', 700: '#3b6a99',
+          800: '#2d5480', 900: '#243b53', 950: '#102a43',
         },
-        pink: {
-          50: '#f8f3f5',
-          100: '#e8d8df',
-          200: '#d0b0bf',
-          300: '#b5859e',
-          400: '#986080',
-          500: '#804a68',
-          600: '#683c55',
-          700: '#503042',
-          800: '#3a2432',
-          900: '#281a24',
-          950: '#1a1018',
-        },
-        teal: {
-          50: '#f0f8f7',
-          100: '#d1ede8',
-          200: '#a3dbd0',
-          300: '#70c4b3',
-          400: '#48a896',
-          500: '#3a9280',
-          600: '#2e7668',
-          700: '#245c52',
-          800: '#1c463e',
-          900: '#14332e',
-          950: '#0d221f',
-        },
-        yellow: {
-          50: '#fdf9f0',
-          100: '#f8efd0',
-          200: '#f0dea0',
-          300: '#e0c56a',
-          400: '#ccaf40',
-          500: '#b89b30',
-          600: '#967e26',
-          700: '#75631e',
-          800: '#574a16',
-          900: '#3f3610',
-          950: '#2a240a',
-        },
+        // Status families collapsed to muted pastels
+        emerald: { 50:'#eef4ef', 100:'#dde9e0', 200:'#bcd3c3', 300:'#9ec9b1',
+                   400:'#9ec9b1', 500:'#7fb597', 600:'#5e9577', 700:'#48745d',
+                   800:'#385948', 900:'#2a4336', 950:'#1a2922' },
+        green:   { 50:'#eef4ef', 100:'#dde9e0', 200:'#bcd3c3', 300:'#9ec9b1',
+                   400:'#9ec9b1', 500:'#7fb597', 600:'#5e9577', 700:'#48745d',
+                   800:'#385948', 900:'#2a4336', 950:'#1a2922' },
+        amber:   { 50:'#f7f1e4', 100:'#efe2c8', 200:'#dfc695', 300:'#d6b97a',
+                   400:'#d6b97a', 500:'#bf9d56', 600:'#9c7e3f', 700:'#7a6230',
+                   800:'#5a4823', 900:'#3f3219', 950:'#2a2110' },
+        yellow:  { 50:'#f7f1e4', 100:'#efe2c8', 200:'#dfc695', 300:'#d6b97a',
+                   400:'#d6b97a', 500:'#bf9d56', 600:'#9c7e3f', 700:'#7a6230',
+                   800:'#5a4823', 900:'#3f3219', 950:'#2a2110' },
+        red:     { 50:'#f7eaea', 100:'#efd1d1', 200:'#e3b6b6', 300:'#dfa6a6',
+                   400:'#dfa6a6', 500:'#c98989', 600:'#a86b6b', 700:'#874f4f',
+                   800:'#653a3a', 900:'#4a2a2a', 950:'#311c1c' },
+        // Decorative tones drained — purple/violet/pink/orange/cyan/teal map to neutrals
+        purple:  { 50:'#f0f1f5', 100:'#dde0e8', 200:'#c3c7d4', 300:'#a3a8bb',
+                   400:'#838aa0', 500:'#6b7188', 600:'#565b70', 700:'#434757',
+                   800:'#31343f', 900:'#22242d', 950:'#16171e' },
+        violet:  { 50:'#f0f1f5', 100:'#dde0e8', 200:'#c3c7d4', 300:'#a3a8bb',
+                   400:'#838aa0', 500:'#6b7188', 600:'#565b70', 700:'#434757',
+                   800:'#31343f', 900:'#22242d', 950:'#16171e' },
+        pink:    { 50:'#f5eef0', 100:'#e7d6dc', 200:'#d4b3bc', 300:'#bd909c',
+                   400:'#a0727f', 500:'#825b68', 600:'#684854', 700:'#503842',
+                   800:'#3a282f', 900:'#281c20', 950:'#181114' },
+        orange:  { 50:'#f7eee4', 100:'#eed8c2', 200:'#dfb98e', 300:'#cf9b62',
+                   400:'#bb803f', 500:'#9c6a33', 600:'#7c5429', 700:'#5e3f1f',
+                   800:'#442d17', 900:'#2f1f10', 950:'#1f140b' },
+        cyan:    { 50:'#eef2f5', 100:'#d8e0e8', 200:'#b6c2cf', 300:'#92a4b5',
+                   400:'#728699', 500:'#5b6c7c', 600:'#465563', 700:'#36414b',
+                   800:'#272e36', 900:'#1a1f24', 950:'#10141a' },
+        teal:    { 50:'#edf3f1', 100:'#d4e0db', 200:'#b0c8c0', 300:'#8aada2',
+                   400:'#6a9286', 500:'#54776c', 600:'#425e54', 700:'#324840',
+                   800:'#243430', 900:'#192522', 950:'#101816' },
       },
 
-      // Shadows — subtle, no colored glows
       boxShadow: {
-        'soft': '0 1px 4px -1px rgba(0, 0, 0, 0.2)',
-        'medium': '0 3px 12px -3px rgba(0, 0, 0, 0.25)',
-        'large': '0 6px 24px -6px rgba(0, 0, 0, 0.3)',
-        'inner-soft': 'inset 0 1px 2px rgba(0, 0, 0, 0.15)',
+        'soft':        '0 1px 4px -1px rgba(0, 0, 0, 0.20)',
+        'medium':      '0 3px 12px -3px rgba(0, 0, 0, 0.25)',
+        'large':       '0 6px 24px -6px rgba(0, 0, 0, 0.30)',
+        'inner-soft':  'inset 0 1px 2px rgba(0, 0, 0, 0.15)',
       },
 
-      // Consistent border radius
       borderRadius: {
-        'sm': '6px',
+        'sm':      '6px',
         'DEFAULT': '8px',
-        'md': '10px',
-        'lg': '12px',
-        'xl': '16px',
-        '2xl': '20px',
+        'md':      '10px',
+        'lg':      '12px',
+        'xl':      '16px',
+        '2xl':     '20px',
       },
 
-      // Typography — professional system fonts
-      // Tipografía — escala subida para mejor legibilidad
-      // (text-xs y text-sm un punto más arriba que default)
       fontSize: {
-        'xs':   ['0.8125rem', { lineHeight: '1.15rem' }],   // 13px (era 12)
-        'sm':   ['0.9375rem', { lineHeight: '1.375rem' }],  // 15px (era 14)
-        'base': ['1rem',      { lineHeight: '1.5rem' }],    // 16px
-        'lg':   ['1.125rem',  { lineHeight: '1.625rem' }],  // 18px
-        'xl':   ['1.25rem',   { lineHeight: '1.75rem' }],   // 20px
+        'xs':   ['0.8125rem', { lineHeight: '1.15rem' }],
+        'sm':   ['0.9375rem', { lineHeight: '1.375rem' }],
+        'base': ['1rem',      { lineHeight: '1.5rem' }],
+        'lg':   ['1.125rem',  { lineHeight: '1.625rem' }],
+        'xl':   ['1.25rem',   { lineHeight: '1.75rem' }],
         '2xl':  ['1.5rem',    { lineHeight: '2rem' }],
         '3xl':  ['1.875rem',  { lineHeight: '2.25rem' }],
         '4xl':  ['2.25rem',   { lineHeight: '2.5rem' }],
@@ -293,25 +142,15 @@ module.exports = {
         mono: ['JetBrains Mono', 'Consolas', 'monospace'],
       },
 
-      // Smooth animations
       animation: {
-        'fade-in': 'fadeIn 0.2s ease-out',
-        'slide-up': 'slideUp 0.2s ease-out',
+        'fade-in':    'fadeIn 0.2s ease-out',
+        'slide-up':   'slideUp 0.2s ease-out',
         'slide-down': 'slideDown 0.2s ease-out',
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(8px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        slideDown: {
-          '0%': { opacity: '0', transform: 'translateY(-8px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
+        fadeIn:    { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+        slideUp:   { '0%': { opacity: '0', transform: 'translateY(8px)' },  '100%': { opacity: '1', transform: 'translateY(0)' } },
+        slideDown: { '0%': { opacity: '0', transform: 'translateY(-8px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
       },
     },
   },
