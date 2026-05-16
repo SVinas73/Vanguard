@@ -382,7 +382,7 @@ export function AIAnomaliesPanel() {
     fetchData();
   }, []);
 
-  const accentColor = '#c94444'; // rose
+  const accentColor = '#dfa6a6'; // rose
 
   return (
     <PanelShell
@@ -591,7 +591,7 @@ export function AIAssociationsPanel() {
                       className="h-full rounded-full"
                       style={{
                         width: `${confidenceWidth}%`,
-                        background: 'linear-gradient(90deg, #4a7fb5, #3d9a5f)',
+                        background: 'linear-gradient(90deg, #4a7fb5, #9ec9b1)',
                       }}
                     />
                   </div>

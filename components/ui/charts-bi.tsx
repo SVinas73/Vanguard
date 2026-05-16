@@ -16,16 +16,18 @@ import { TrendingUp, TrendingDown, type LucideIcon } from 'lucide-react';
 // Pensados para Dashboard, Reportes, Analytics.
 // =====================================================
 
-// Paleta BI — colores legibles sobre fondo oscuro y claro
+// Paleta BI alineada al Design System Vanguard.
+// Brand steel-blue + variantes drenadas (success/warning/danger pasteles
+// + neutrales para datos categóricos). Sin saturación neón.
 export const CHART_COLORS = [
-  '#6366f1', // indigo (brand)
-  '#10b981', // emerald
-  '#f59e0b', // amber
-  '#06b6d4', // cyan
-  '#ec4899', // pink
-  '#8b5cf6', // violet
-  '#84cc16', // lime
-  '#f43f5e', // rose
+  '#4a7fb5', // steel blue (brand)
+  '#9ec9b1', // success pastel
+  '#d6b97a', // warning pastel
+  '#9fb3c8', // info / steel-light
+  '#a3a8bb', // neutro violeta-grisáceo
+  '#bd909c', // pink desaturado
+  '#cf9b62', // orange desaturado
+  '#dfa6a6', // danger pastel
 ];
 
 // Tooltip de Recharts. Usamos CSS vars (--background/--content) que el
@@ -241,7 +243,7 @@ export function KpiStat({
           </span>
         </div>
         {sparkData && sparkData.length > 1 && (
-          <Sparkline data={sparkData} color={a.text.includes('emerald') ? '#10b981' : a.text.includes('red') ? '#ef4444' : '#6366f1'} width={72} height={28} />
+          <Sparkline data={sparkData} color={a.text.includes('emerald') ? '#10b981' : a.text.includes('red') ? '#ef4444' : '#4a7fb5'} width={72} height={28} />
         )}
       </div>
 
@@ -272,7 +274,7 @@ export function KpiStat({
 // SPARKLINE — mini line chart
 // =====================================================
 export function Sparkline({
-  data, color = '#6366f1', width = 80, height = 28,
+  data, color = '#4a7fb5', width = 80, height = 28,
 }: {
   data: number[];
   color?: string;

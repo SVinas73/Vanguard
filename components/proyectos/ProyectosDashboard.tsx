@@ -250,7 +250,7 @@ export function ProyectosDashboard() {
     id: p.id,
     nombre: p.nombre,
     descripcion: p.descripcion,
-    color: p.color || '#3d9a5f',
+    color: p.color || '#9ec9b1',
     estado: p.estado,
     fechaInicio: p.fecha_inicio ? new Date(p.fecha_inicio) : undefined,
     fechaFin: p.fecha_fin ? new Date(p.fecha_fin) : undefined,
@@ -815,7 +815,7 @@ export function ProyectosDashboard() {
           <div>
             <label className="block text-sm text-slate-400 mb-2">{t('proyectos.fields.color')}</label>
             <div className="flex gap-2 flex-wrap">
-              {['#3d9a5f', '#3b82f6', '#c8872e', '#ef4444', '#6b5488', '#b5547a', '#3d8f82', '#cc7a33'].map(color => (
+              {['#9ec9b1', '#3b82f6', '#d6b97a', '#ef4444', '#6b5488', '#b5547a', '#3d8f82', '#cc7a33'].map(color => (
                 <button
                   key={color}
                   type="button"
@@ -864,7 +864,7 @@ export function ProyectosDashboard() {
                 
                 const colorSeleccionado = Array.from(document.querySelectorAll('[id^="color-"]'))
                   .find(btn => (btn as HTMLElement).style.borderColor === 'white')
-                  ?.id.replace('color-', '') || '#3d9a5f';
+                  ?.id.replace('color-', '') || '#9ec9b1';
                 
                 if (!nombre?.trim()) {
                   alert(t('proyectos.errors.nameRequired'));

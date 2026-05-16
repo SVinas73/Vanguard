@@ -19,16 +19,16 @@ export function ProyectoModal({ isOpen, onClose, onSave, proyecto }: ProyectoMod
   const [formData, setFormData] = useState({
     nombre: proyecto?.nombre || '',
     descripcion: proyecto?.descripcion || '',
-    color: proyecto?.color || '#3d9a5f',
+    color: proyecto?.color || '#9ec9b1',
     estado: proyecto?.estado || 'activo' as EstadoProyecto,
     fechaInicio: proyecto?.fechaInicio ? proyecto.fechaInicio.toISOString().split('T')[0] : '',
     fechaFin: proyecto?.fechaFin ? proyecto.fechaFin.toISOString().split('T')[0] : '',
   });
 
   const coloresPreset = [
-    '#3d9a5f', // emerald
+    '#9ec9b1', // emerald
     '#3b82f6', // blue
-    '#c8872e', // amber
+    '#d6b97a', // amber
     '#ef4444', // red
     '#6b5488', // purple
     '#b5547a', // pink
