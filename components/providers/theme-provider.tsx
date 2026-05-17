@@ -1,5 +1,6 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { initErrorTracking } from '@/lib/error-tracking';
 
 type Theme = 'dark' | 'light';
 
@@ -16,6 +17,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
+    // Inicializa el error tracking global (silencioso si SENTRY_DSN no está set)
+    initErrorTracking();
     const saved = localStorage.getItem('vanguard-theme') as Theme;
     if (saved) setTheme(saved);
   }, []);
