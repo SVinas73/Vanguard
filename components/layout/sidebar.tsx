@@ -44,6 +44,7 @@ import { LanguageSelector } from '@/components/ui/language-selector';
 import { Logo } from '@/components/ui/Logo';
 import { NotificacionesBell } from '@/components/proyectos/NotificacionesBell';
 import { ChatBadge } from '@/components/chat';
+import { ApprovalsBadge } from '@/components/approvals/ApprovalsBadge';
 
 // ============================================
 // TIPOS
@@ -322,6 +323,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                           </span>
 
                           {item.id === 'chat' && <ChatBadge />}
+                          {item.id === 'aprobaciones' && <ApprovalsBadge />}
 
                           {item.badge && (
                             <span className="px-1.5 py-0.5 text-[9px] font-semibold bg-indigo-500/10 text-indigo-300 rounded ring-1 ring-inset ring-indigo-500/20">
