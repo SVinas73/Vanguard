@@ -154,6 +154,9 @@ export function InventoryTrendChart({
                   minTickGap={40}
                 />
                 <YAxis
+                  // Forzamos dominio desde 0 para que las áreas nunca crucen el eje.
+                  domain={[0, 'auto']}
+                  allowDataOverflow={false}
                   tick={{ fill: 'currentColor', fontSize: 11, opacity: 0.5 }}
                   axisLine={false}
                   tickLine={false}
@@ -176,20 +179,23 @@ export function InventoryTrendChart({
                   cursor={{ stroke: 'currentColor', strokeOpacity: 0.15, strokeWidth: 1 }}
                 />
                 <Area
-                  type="natural"
+                  type="monotone"
                   dataKey="entradas"
                   stroke="#9ec9b1"
                   fill="url(#gradEntradas)"
                   strokeWidth={2.5}
+                  // baseValue=0 fuerza el área a comenzar desde el eje X (sin overshoots).
+                  baseValue={0}
                   dot={false}
                   activeDot={{ r: 4, strokeWidth: 0 }}
                 />
                 <Area
-                  type="natural"
+                  type="monotone"
                   dataKey="salidas"
                   stroke="#dfa6a6"
                   fill="url(#gradSalidas)"
                   strokeWidth={2.5}
+                  baseValue={0}
                   dot={false}
                   activeDot={{ r: 4, strokeWidth: 0 }}
                 />
