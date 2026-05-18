@@ -8,7 +8,7 @@ import { docs, buscarDocs, type DocSection } from '@/lib/help/docs-content';
 
 const CATEGORIA_LABEL: Record<DocSection['categoria'], string> = {
   inicio: 'Empezar',
-  core: 'Núcleo',
+  nucleo: 'Núcleo del negocio',
   operaciones: 'Operaciones',
   analisis: 'Análisis e IA',
   postventa: 'Post-venta',
@@ -16,7 +16,7 @@ const CATEGORIA_LABEL: Record<DocSection['categoria'], string> = {
 };
 
 const CATEGORIA_ORDER: DocSection['categoria'][] = [
-  'inicio', 'core', 'operaciones', 'analisis', 'postventa', 'sistema',
+  'inicio', 'nucleo', 'operaciones', 'analisis', 'postventa', 'sistema',
 ];
 
 interface AyudaModuleProps {
