@@ -336,21 +336,36 @@ Manejá el ciclo de compras: del pedido al proveedor a la recepción en bodega.
 
 1. **Reabastecimiento IA** te sugiere qué comprar (opcional)
 2. Generás **orden de compra** al proveedor
-3. Si supera monto X → pasa por **Aprobaciones**
-4. El proveedor confirma + envía mercadería
-5. **Recepción** en bodega genera movimiento de entrada
-6. **QMS** valida calidad si está configurado
-7. **Finanzas** crea cuenta por pagar
+3. El sistema automáticamente:
+   - Registra fecha/hora/usuario en **Auditoría** (con hash chain)
+   - Crea notificación in-app para los destinatarios configurados
+   - Envía email a esos destinatarios (si Resend está configurado)
+4. Si supera monto X → pasa por **Aprobaciones**
+5. (Opcional) Botón "Enviar al proveedor": dispara mail con la OC al email del proveedor
+6. El proveedor confirma + envía mercadería
+7. **Recepción** en bodega genera movimiento de entrada
+8. **QMS** valida calidad si está configurado
+9. **Finanzas** crea cuenta por pagar
+
+## Configurar quién recibe notificaciones
+
+En *Configuración → Integraciones → pestaña Notificaciones* podés definir, para cada evento (ej: "Orden de compra creada"), qué emails reciben notificación in-app + email externo. Es por organización (multi-tenant).
 
 ## Conexiones
 
-- **Proveedores**: catálogo + datos fiscales
+- **Proveedores**: catálogo + datos fiscales + email para envío
 - **Stock**: recepción suma inventario
 - **WMS**: ubicación física al recibir
 - **QMS**: control de calidad en recepción
 - **RMA**: si hay defectos, se devuelve al proveedor
 - **Finanzas**: cuenta por pagar + asiento contable
 - **Aprobaciones**: según monto y tipo
+- **Auditoría**: cada OC creada/enviada queda con hash chain
+- **Notificaciones**: in-app + email a destinatarios configurables
+
+## Outbox de emails
+
+Si el provider de email (Resend) no está configurado, los mensajes quedan en la tabla \`email_outbox\` como **pendientes**. No se pierden y podés mandarlos manualmente después.
 
 ## Tip
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
+import { useOrganizacion } from '@/hooks/useOrganizacion';
 import { Proveedor, OrdenCompra, OrdenCompraItem, Product, OrdenCompraEstado } from '@/types';
 import { Button, Input, Select, Modal, Card } from '@/components/ui';
 import { 
@@ -315,6 +316,7 @@ interface OrdenesCompraPanelProps {
 
 export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelProps) {
   const { t } = useTranslation();
+  const { orgActivaId } = useOrganizacion();
   const [ordenes, setOrdenes] = useState<OrdenCompra[]>([]);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -418,41 +420,35 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
       return;
     }
 
-    const numero = await generarNumeroOrden();
-    const subtotal = ordenItems.reduce((sum, item) => sum + (item.cantidad * item.costoUnitario), 0);
-    const total = subtotal;
-
-    // Crear orden
-    const { data: ordenData, error: ordenError } = await supabase
-      .from('ordenes_compra')
-      .insert({
-        numero,
+    // POST al endpoint server-side. Hace audit + notificación + email
+    // a destinatarios configurados de la organización automáticamente.
+    const resp = await fetch('/api/compras', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         proveedor_id: selectedProveedor,
-        estado: 'borrador',
+        productos: ordenItems.map(it => ({
+          codigo: it.productoCodigo,
+          cantidad: it.cantidad,
+          precio: it.costoUnitario,
+        })),
         fecha_esperada: fechaEsperada || null,
-        subtotal,
-        total,
         notas: notas || null,
-        creado_por: userEmail,
-      })
-      .select()
-      .single();
+        organizacion_id: orgActivaId || null,
+      }),
+    });
 
-    if (ordenError || !ordenData) {
-      alert('Error al crear la orden');
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      alert(body?.error || 'Error al crear la orden');
       return;
     }
 
-    // Crear items
-    const itemsToInsert = ordenItems.map(item => ({
-      orden_id: ordenData.id,
-      producto_codigo: item.productoCodigo,
-      cantidad_ordenada: item.cantidad,
-      costo_unitario: item.costoUnitario,
-      subtotal: item.cantidad * item.costoUnitario,
-    }));
-
-    await supabase.from('ordenes_compra_items').insert(itemsToInsert);
+    const result = await resp.json();
+    if (result.destinatarios_notificados > 0) {
+      // Aviso suave (no bloquea con alert si fue 0)
+      console.info(`OC creada. Notificados: ${result.destinatarios_notificados} destinatarios.`);
+    }
 
     // Reset form
     setShowNewOrden(false);
