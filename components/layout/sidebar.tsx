@@ -40,7 +40,8 @@ import {
   Moon,
   Briefcase,
   Sparkles,
-  Truck
+  Truck,
+  ShieldAlert
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -160,6 +161,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'taller', label: t('modules.workshop'), icon: Wrench, permission: 'canViewTaller' },
         { id: 'garantias', label: t('modules.warranties') || 'Garantías', icon: Shield },
         { id: 'tickets', label: t('modules.tickets') || 'Tickets soporte', icon: MessageCircle },
+        { id: 'customer_risk', label: t('nav.customerRisk') || 'Clientes en riesgo', icon: ShieldAlert, badge: 'AI' },
         { id: 'rma', label: t('modules.returns'), icon: RotateCcw, permission: 'canViewRMA' },
       ]
     },

@@ -20,7 +20,11 @@ const resources = {
         createError: 'No se pudo crear la organización. Revisá que la migration 016 esté aplicada en Supabase.',
       },
       roles: { admin: 'Admin', seller: 'Vendedor', warehouse: 'Bodeguero', operator: 'Operador' },
-      nav: { main: 'Principal', dashboard: 'Dashboard', executive: 'Vista Ejecutiva', pricing: 'Precios IA', replenishment: 'Reabastecimiento IA', stock: 'Stock', movements: 'Transacciones de Movimientos', operations: 'Operaciones', purchases: 'Compras', sales: 'Ventas', warehouses: 'Almacenes', analysis: 'Análisis', analytics: 'Analytics IA', reports: 'Reportes', costs: 'Costos', config: 'Configuración', integrations: 'Integraciones', audit: 'Auditoría', controlTracking: 'Control & Seguimiento', postSales: 'Post-venta', people: 'Personal', approvals: 'Aprobaciones', invoicing: 'Facturación electrónica' },
+      nav: { main: 'Principal', dashboard: 'Dashboard', executive: 'Vista Ejecutiva', pricing: 'Precios IA', replenishment: 'Reabastecimiento IA', customerRisk: 'Clientes en riesgo', stock: 'Stock', movements: 'Transacciones de Movimientos', operations: 'Operaciones', purchases: 'Compras', sales: 'Ventas', warehouses: 'Almacenes', analysis: 'Análisis', analytics: 'Analytics IA', reports: 'Reportes', costs: 'Costos', config: 'Configuración', integrations: 'Integraciones', audit: 'Auditoría', controlTracking: 'Control & Seguimiento', postSales: 'Post-venta', people: 'Personal', approvals: 'Aprobaciones', invoicing: 'Facturación electrónica' },
+      customerRisk: {
+        title: 'Clientes en Riesgo',
+        subtitle: 'Score ML (XGBoost) + análisis cualitativo (LLM) de cada cliente',
+      },
       replenishment: {
         title: 'Reabastecimiento IA',
         subtitle: 'EOQ + punto de reorden conservador · optimiza capital, evita sobre-stock',
@@ -525,7 +529,11 @@ const resources = {
         createError: 'Could not create the organization. Check that migration 016 has been applied in Supabase.',
       },
       roles: { admin: 'Admin', seller: 'Seller', warehouse: 'Warehouse', operator: 'Operator' },
-      nav: { main: 'Main', dashboard: 'Dashboard', executive: 'Executive View', pricing: 'AI Pricing', replenishment: 'AI Replenishment', stock: 'Stock', movements: 'Movement Transactions', operations: 'Operations', purchases: 'Purchases', sales: 'Sales', warehouses: 'Warehouses', analysis: 'Analysis', analytics: 'AI Analytics', reports: 'Reports', costs: 'Costs', config: 'Configuration', integrations: 'Integrations', audit: 'Audit', controlTracking: 'Control & Tracking', postSales: 'After-sales', people: 'People', approvals: 'Approvals', invoicing: 'E-Invoicing' },
+      nav: { main: 'Main', dashboard: 'Dashboard', executive: 'Executive View', pricing: 'AI Pricing', replenishment: 'AI Replenishment', customerRisk: 'At-risk customers', stock: 'Stock', movements: 'Movement Transactions', operations: 'Operations', purchases: 'Purchases', sales: 'Sales', warehouses: 'Warehouses', analysis: 'Analysis', analytics: 'AI Analytics', reports: 'Reports', costs: 'Costs', config: 'Configuration', integrations: 'Integrations', audit: 'Audit', controlTracking: 'Control & Tracking', postSales: 'After-sales', people: 'People', approvals: 'Approvals', invoicing: 'E-Invoicing' },
+      customerRisk: {
+        title: 'At-risk Customers',
+        subtitle: 'ML score (XGBoost) + qualitative analysis (LLM) per customer',
+      },
       replenishment: {
         title: 'AI Replenishment',
         subtitle: 'EOQ + conservative reorder point · optimize capital, avoid overstock',
@@ -978,7 +986,11 @@ const resources = {
         createError: 'Não foi possível criar a organização. Verifique se a migration 016 foi aplicada no Supabase.',
       },
       roles: { admin: 'Admin', seller: 'Vendedor', warehouse: 'Armazém', operator: 'Operador' },
-      nav: { main: 'Principal', dashboard: 'Painel', executive: 'Visão Executiva', pricing: 'Preços IA', replenishment: 'Reabastecimento IA', stock: 'Estoque', movements: 'Movimentos', operations: 'Operações', purchases: 'Compras', sales: 'Vendas', warehouses: 'Armazéns', analysis: 'Análise', analytics: 'Analytics IA', reports: 'Relatórios', costs: 'Custos', config: 'Config', integrations: 'Integrações', audit: 'Auditoria', controlTracking: 'Controle & Rastreamento', postSales: 'Pós-venda', people: 'Pessoal', approvals: 'Aprovações', invoicing: 'Faturação eletrônica' },
+      nav: { main: 'Principal', dashboard: 'Painel', executive: 'Visão Executiva', pricing: 'Preços IA', replenishment: 'Reabastecimento IA', customerRisk: 'Clientes em risco', stock: 'Estoque', movements: 'Movimentos', operations: 'Operações', purchases: 'Compras', sales: 'Vendas', warehouses: 'Armazéns', analysis: 'Análise', analytics: 'Analytics IA', reports: 'Relatórios', costs: 'Custos', config: 'Config', integrations: 'Integrações', audit: 'Auditoria', controlTracking: 'Controle & Rastreamento', postSales: 'Pós-venda', people: 'Pessoal', approvals: 'Aprovações', invoicing: 'Faturação eletrônica' },
+      customerRisk: {
+        title: 'Clientes em Risco',
+        subtitle: 'Score ML (XGBoost) + análise qualitativa (LLM) por cliente',
+      },
       replenishment: {
         title: 'Reabastecimento IA',
         subtitle: 'EOQ + ponto de reorder conservador · otimiza capital, evita superestoque',
