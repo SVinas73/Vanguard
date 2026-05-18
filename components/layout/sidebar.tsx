@@ -39,7 +39,8 @@ import {
   Sun,
   Moon,
   Briefcase,
-  Sparkles
+  Sparkles,
+  Truck
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -142,6 +143,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       defaultOpen: true,
       items: [
         { id: 'comercial', label: t('modules.comercial'), icon: DollarSign, permission: 'canViewComercial' },
+        { id: 'replenishment', label: t('nav.replenishment') || 'Reabastecimiento IA', icon: Truck, badge: 'AI' },
         { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
         { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
         { id: 'facturacion', label: t('nav.invoicing') || 'Facturación electrónica', icon: FileText },
