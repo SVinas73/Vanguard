@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import {
   Bell, AlertTriangle, X, Check, CheckCheck, Package,
   FileText, FileWarning, CreditCard, Truck, Info, RefreshCw,
-  Archive, Target
+  Archive, Target, ShoppingCart
 } from 'lucide-react';
 import { useInventoryStore } from '@/store';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,6 +29,7 @@ const TIPO_ICON: Record<TipoNotificacion, React.ElementType> = {
   cxc_vencida: CreditCard,
   cxp_vencida: CreditCard,
   orden_sin_entregar: Truck,
+  orden_compra_creada: ShoppingCart,
   putaway_pendiente: Archive,
   picking_sin_asignar: Target,
   ticket_sla_breached: AlertTriangle,

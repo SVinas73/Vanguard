@@ -89,7 +89,9 @@ export const crearOrdenCompraSchema = z.object({
     cantidad: z.number().positive(),
     precio: z.number().nonnegative(),
   })).min(1, 'Al menos un producto'),
-  notas: z.string().max(1000).optional(),
+  fecha_esperada: z.string().optional().nullable(),
+  notas: z.string().max(1000).optional().nullable(),
+  organizacion_id: z.string().uuid().optional().nullable(),
 });
 
 // =====================================================
