@@ -105,7 +105,8 @@ function FormattedMessage({ content }: { content: string }) {
   return (
     <>
       {lines.map((line, i) => {
-        let processed = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+        const escape = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+        let processed = escape(line).replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
         
         if (line.startsWith('• ') || line.startsWith('- ') || line.startsWith('* ')) {
           return (

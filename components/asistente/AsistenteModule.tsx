@@ -444,8 +444,11 @@ function FormattedMessage({ content }: { content: string }) {
       return <h4 key={index} className="font-medium mt-2 mb-1 text-white">{line.slice(4)}</h4>;
     }
 
-    // Bold **text**
-    let processed = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+    // Escape HTML entities before any rendering to prevent XSS from AI-generated content
+    const escape = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+
+    // Bold **text** — applied AFTER escaping so user content can't inject tags
+    let processed = escape(line).replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
     
     // Lists
     if (line.startsWith('• ') || line.startsWith('- ') || line.startsWith('* ')) {

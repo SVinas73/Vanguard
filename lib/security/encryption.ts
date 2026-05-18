@@ -17,7 +17,13 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const PII_KEY = process.env.PII_ENCRYPTION_KEY || '';
+const PII_KEY = (() => {
+  const key = process.env.PII_ENCRYPTION_KEY;
+  if (!key && process.env.NODE_ENV === 'production') {
+    throw new Error('PII_ENCRYPTION_KEY no configurado. Generá uno con: openssl rand -hex 32');
+  }
+  return key || '';
+})();
 
 function getClient(): any {
   return createClient(supabaseUrl, supabaseKey);

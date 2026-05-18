@@ -12,37 +12,19 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        console.log('🔐 Login attempt:', credentials?.email);
-        
-        if (!credentials?.email || !credentials?.password) {
-          console.log('❌ Missing credentials');
-          return null;
-        }
+        if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          console.log('🔍 Searching user in Supabase...');
           const { data: user, error } = await supabase
             .from('users')
             .select('*')
             .eq('email', credentials.email)
             .single();
 
-          console.log('📊 Result:', { found: !!user, error: error?.message });
+          if (error || !user || !user.password) return null;
 
-          if (error || !user || !user.password) {
-            console.log('❌ User not found');
-            return null;
-          }
-
-          console.log('🔑 Verifying password...');
           const isValid = await bcrypt.compare(credentials.password, user.password);
-          console.log('✅ Password valid:', isValid);
-
-          if (!isValid) {
-            return null;
-          }
-
-          console.log('👤 User role:', user.role); // Log adicional para ver el rol
+          if (!isValid) return null;
 
           return {
             id: user.id,
@@ -50,8 +32,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name,
             role: user.role,
           };
-        } catch (error) {
-          console.error('💥 Auth error:', error);
+        } catch {
           return null;
         }
       }
@@ -59,18 +40,16 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: 8 * 60 * 60, // 8 horas — ERP con datos financieros sensibles
   },
   pages: {
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user, trigger }) {
-      // En el primer login, guardar el rol del usuario
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
-        console.log('💾 JWT created with role:', token.role); // Log del rol en JWT
       }
       
       // Opcional: Revalidar rol en cada request (descomentar si querés actualizaciones automáticas)
@@ -96,7 +75,6 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
-        console.log('📋 Session created with role:', token.role); // Log del rol en sesión
       }
       return session;
     },
@@ -110,5 +88,5 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: true,
+  debug: process.env.NODE_ENV === 'development',
 };
