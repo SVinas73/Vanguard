@@ -2,11 +2,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Building2, ChevronDown, Check, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useOrganizacion } from '@/hooks/useOrganizacion';
 import { cn } from '@/lib/utils';
 import { CrearOrgModal } from './CrearOrgModal';
 
 export function OrgSwitcher() {
+  const { t } = useTranslation();
   const { orgs, orgActiva, orgActivaId, cambiarOrg, recargar, loading } = useOrganizacion();
   const [open, setOpen] = useState(false);
   const [showCrear, setShowCrear] = useState(false);
@@ -27,10 +29,10 @@ export function OrgSwitcher() {
         <button
           onClick={() => setShowCrear(true)}
           className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] text-slate-400 hover:text-slate-200 border border-slate-800 rounded-md hover:bg-slate-900 transition-colors"
-          title="Crear organización"
+          title={t('org.createOrganization')}
         >
           <Building2 size={13} />
-          <span>Crear organización</span>
+          <span>{t('org.createOrganization')}</span>
         </button>
         {showCrear && (
           <CrearOrgModal
@@ -62,7 +64,7 @@ export function OrgSwitcher() {
         {open && (
           <div className="absolute right-0 top-full mt-1.5 w-64 bg-slate-950 border border-slate-800 rounded-md shadow-xl z-50">
             <div className="px-3 py-2 border-b border-slate-800">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">Organizaciones</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-500">{t('org.organizations')}</p>
             </div>
             <div className="max-h-64 overflow-y-auto py-1">
               {orgs.map(o => (
@@ -94,7 +96,7 @@ export function OrgSwitcher() {
                 className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[12px] text-slate-300 hover:text-slate-100 hover:bg-slate-900 rounded-md transition-colors"
               >
                 <Plus size={12} />
-                <span>Nueva organización</span>
+                <span>{t('org.newOrganization')}</span>
               </button>
             </div>
           </div>

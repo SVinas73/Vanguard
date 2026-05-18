@@ -54,6 +54,7 @@ const TicketsModule         = dynamic(() => import('@/components/tickets/Tickets
 const GarantiasModule       = dynamic(() => import('@/components/garantias/GarantiasModule'),                                    { loading: ModuleLoader });
 const RRHHModule            = dynamic(() => import('@/components/rrhh/RRHHModule'),                                                { loading: ModuleLoader });
 const HistorialCliente      = dynamic(() => import('@/components/clientes/HistorialCliente'),                                    { loading: ModuleLoader });
+const ExecutiveDashboard    = dynamic(() => import('@/components/executive/ExecutiveDashboard'),                                  { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -795,9 +796,14 @@ export default function HomePage() {
 
         
 
+        {/* ==================== VISTA EJECUTIVA ==================== */}
+        {activeTab === 'executive' && (
+          <ExecutiveDashboard />
+        )}
+
         {/* ==================== ANALYTICS ==================== */}
         {activeTab === 'analytics' && (
-          <AnalyticsDashboard 
+          <AnalyticsDashboard
             products={products}
             movements={movements}
             predictions={predictions}
