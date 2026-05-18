@@ -41,7 +41,8 @@ import {
   Briefcase,
   Sparkles,
   Truck,
-  ShieldAlert
+  ShieldAlert,
+  HelpCircle
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -202,6 +203,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       defaultOpen: false,
       items: [
         { id: 'integraciones', label: t('nav.integrations'), icon: Plug },
+        { id: 'ayuda', label: t('nav.help') || 'Centro de Ayuda', icon: HelpCircle },
       ]
     },
   ];
@@ -235,6 +237,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       )}
 
     <aside
+      data-tour="sidebar"
       className={cn(
         'fixed left-0 top-0 h-screen flex flex-col transition-transform duration-300 lg:transition-all lg:duration-200 z-[60]',
         'bg-slate-950 border-r border-slate-800',
@@ -300,6 +303,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                   return (
                     <button
                       key={item.id}
+                      data-tour={item.id}
                       onClick={() => { if (hasPermission) { onTabChange(item.id); setMobileOpen(false); } }}
                       disabled={!hasPermission}
                       title={collapsed ? item.label : undefined}
