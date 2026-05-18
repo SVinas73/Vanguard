@@ -37,7 +37,8 @@ import {
   Menu,
   X,
   Sun,
-  Moon
+  Moon,
+  Briefcase
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -128,6 +129,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       defaultOpen: true,
       items: [
         { id: 'dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
+        { id: 'executive', label: t('nav.executive') || 'Vista Ejecutiva', icon: Briefcase, badge: 'C' },
         { id: 'stock', label: t('nav.stock'), icon: Package },
         { id: 'movimientos', label: t('nav.movements'), icon: ArrowLeftRight },
         { id: 'chat', label: t('modules.messages'), icon: MessageCircle },
