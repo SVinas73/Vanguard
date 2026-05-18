@@ -55,6 +55,8 @@ const GarantiasModule       = dynamic(() => import('@/components/garantias/Garan
 const RRHHModule            = dynamic(() => import('@/components/rrhh/RRHHModule'),                                                { loading: ModuleLoader });
 const HistorialCliente      = dynamic(() => import('@/components/clientes/HistorialCliente'),                                    { loading: ModuleLoader });
 const ExecutiveDashboard    = dynamic(() => import('@/components/executive/ExecutiveDashboard'),                                  { loading: ModuleLoader });
+const PricingRecommender    = dynamic(() => import('@/components/pricing/PricingRecommender'),                                    { loading: ModuleLoader });
+const ReplenishmentDashboard = dynamic(() => import('@/components/replenishment/ReplenishmentDashboard'),                          { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -799,6 +801,16 @@ export default function HomePage() {
         {/* ==================== VISTA EJECUTIVA ==================== */}
         {activeTab === 'executive' && (
           <ExecutiveDashboard />
+        )}
+
+        {/* ==================== RECOMENDADOR DE PRECIOS ==================== */}
+        {activeTab === 'pricing' && (
+          <PricingRecommender />
+        )}
+
+        {/* ==================== REABASTECIMIENTO IA ==================== */}
+        {activeTab === 'replenishment' && (
+          <ReplenishmentDashboard />
         )}
 
         {/* ==================== ANALYTICS ==================== */}

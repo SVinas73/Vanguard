@@ -38,7 +38,9 @@ import {
   X,
   Sun,
   Moon,
-  Briefcase
+  Briefcase,
+  Sparkles,
+  Truck
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -141,6 +143,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       defaultOpen: true,
       items: [
         { id: 'comercial', label: t('modules.comercial'), icon: DollarSign, permission: 'canViewComercial' },
+        { id: 'replenishment', label: t('nav.replenishment') || 'Reabastecimiento IA', icon: Truck, badge: 'AI' },
         { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
         { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
         { id: 'facturacion', label: t('nav.invoicing') || 'Facturación electrónica', icon: FileText },
@@ -175,6 +178,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       items: [
         { id: 'analytics', label: t('nav.analytics'), icon: Brain, badge: 'AI' },
         { id: 'demand', label: t('modules.demandPlanning'), icon: Zap, badge: 'AI', permission: 'canViewDemand' },
+        { id: 'pricing', label: t('nav.pricing') || 'Precios IA', icon: Sparkles, badge: 'AI' },
         { id: 'reportes', label: t('nav.reports'), icon: FileText, permission: 'canViewReports' },
       ]
     },
