@@ -38,7 +38,8 @@ import {
   X,
   Sun,
   Moon,
-  Briefcase
+  Briefcase,
+  Sparkles
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -175,6 +176,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       items: [
         { id: 'analytics', label: t('nav.analytics'), icon: Brain, badge: 'AI' },
         { id: 'demand', label: t('modules.demandPlanning'), icon: Zap, badge: 'AI', permission: 'canViewDemand' },
+        { id: 'pricing', label: t('nav.pricing') || 'Precios IA', icon: Sparkles, badge: 'AI' },
         { id: 'reportes', label: t('nav.reports'), icon: FileText, permission: 'canViewReports' },
       ]
     },
