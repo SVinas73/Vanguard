@@ -5,6 +5,7 @@ import { useSession, signOut as nextAuthSignOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { UserRole, ROLE_PERMISSIONS } from '@/types';
+import { setUsuario as setSentryUsuario } from '@/lib/security/error-reporting';
 
 interface AuthUser {
   id: string;
@@ -50,6 +51,7 @@ export function useAuth(redirectIfNotAuth: boolean = true) {
 
       if (status === 'unauthenticated') {
         setUser(null);
+        setSentryUsuario(null);
         if (redirectIfNotAuth) {
           router.push('/login');
         }
@@ -75,6 +77,7 @@ export function useAuth(redirectIfNotAuth: boolean = true) {
           };
 
           setUser(authUser);
+          setSentryUsuario({ email: authUser.email, rol: authUser.rol });
         } catch (error) {
           console.error('Error fetching user profile:', error);
           // Si falla, usar datos de la sesión
