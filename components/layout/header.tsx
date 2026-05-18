@@ -8,6 +8,7 @@ import { AIStatusIndicator } from '@/components/analytics';
 import { LanguageSelector } from '@/components/ui/language-selector';
 import { Logo } from '@/components/ui/Logo';
 import { NotificacionesBell } from '@/components/proyectos/NotificacionesBell';
+import { OrgSwitcher } from '@/components/organization';
 
 import { cn } from '@/lib/utils';
 
@@ -42,6 +43,7 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-3">
+            {user && <OrgSwitcher />}
             <AIStatusIndicator />
             <NotificacionesBell />
             <LanguageSelector />
