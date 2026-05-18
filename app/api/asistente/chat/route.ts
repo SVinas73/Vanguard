@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ejecutarHerramienta } from '@/components/asistente/tools';
+import { ejecutarHerramienta } from '@/lib/asistente/tools';
 import { createClient } from '@supabase/supabase-js';
 import { parseSafe, chatRequestSchema } from '@/lib/security/zod-schemas';
 import { chequearRateLimit, extraerIP } from '@/lib/security/rate-limit';
