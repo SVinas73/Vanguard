@@ -5,6 +5,20 @@ const resources = {
   es: {
     translation: {
       header: { subtitle: 'Sistema de Gestión de Inventarios', logout: 'Cerrar sesión' },
+      org: {
+        organizations: 'Organizaciones',
+        newOrganization: 'Nueva organización',
+        createOrganization: 'Crear organización',
+        name: 'Nombre',
+        taxId: 'RUT / ID Fiscal',
+        optional: 'Opcional',
+        country: 'País',
+        currency: 'Moneda',
+        creating: 'Creando…',
+        createButton: 'Crear organización',
+        cancel: 'Cancelar',
+        createError: 'No se pudo crear la organización. Revisá que la migration 016 esté aplicada en Supabase.',
+      },
       roles: { admin: 'Admin', seller: 'Vendedor', warehouse: 'Bodeguero', operator: 'Operador' },
       nav: { main: 'Principal', dashboard: 'Dashboard', stock: 'Stock', movements: 'Transacciones de Movimientos', operations: 'Operaciones', purchases: 'Compras', sales: 'Ventas', warehouses: 'Almacenes', analysis: 'Análisis', analytics: 'Analytics IA', reports: 'Reportes', costs: 'Costos', config: 'Configuración', integrations: 'Integraciones', audit: 'Auditoría', controlTracking: 'Control & Seguimiento', postSales: 'Post-venta', people: 'Personal', approvals: 'Aprobaciones', invoicing: 'Facturación electrónica' },
       greetings: {
@@ -439,6 +453,20 @@ const resources = {
   en: {
     translation: {
       header: { subtitle: 'Inventory Management System', logout: 'Log out' },
+      org: {
+        organizations: 'Organizations',
+        newOrganization: 'New organization',
+        createOrganization: 'Create organization',
+        name: 'Name',
+        taxId: 'Tax ID',
+        optional: 'Optional',
+        country: 'Country',
+        currency: 'Currency',
+        creating: 'Creating…',
+        createButton: 'Create organization',
+        cancel: 'Cancel',
+        createError: 'Could not create the organization. Check that migration 016 has been applied in Supabase.',
+      },
       roles: { admin: 'Admin', seller: 'Seller', warehouse: 'Warehouse', operator: 'Operator' },
       nav: { main: 'Main', dashboard: 'Dashboard', stock: 'Stock', movements: 'Movement Transactions', operations: 'Operations', purchases: 'Purchases', sales: 'Sales', warehouses: 'Warehouses', analysis: 'Analysis', analytics: 'AI Analytics', reports: 'Reports', costs: 'Costs', config: 'Configuration', integrations: 'Integrations', audit: 'Audit', controlTracking: 'Control & Tracking', postSales: 'After-sales', people: 'People', approvals: 'Approvals', invoicing: 'E-Invoicing' },
       greetings: {
@@ -821,6 +849,20 @@ const resources = {
   pt: {
     translation: {
       header: { subtitle: 'Sistema de Gestão de Inventário', logout: 'Sair' },
+      org: {
+        organizations: 'Organizações',
+        newOrganization: 'Nova organização',
+        createOrganization: 'Criar organização',
+        name: 'Nome',
+        taxId: 'CNPJ / ID Fiscal',
+        optional: 'Opcional',
+        country: 'País',
+        currency: 'Moeda',
+        creating: 'Criando…',
+        createButton: 'Criar organização',
+        cancel: 'Cancelar',
+        createError: 'Não foi possível criar a organização. Verifique se a migration 016 foi aplicada no Supabase.',
+      },
       roles: { admin: 'Admin', seller: 'Vendedor', warehouse: 'Armazém', operator: 'Operador' },
       nav: { main: 'Principal', dashboard: 'Painel', stock: 'Estoque', movements: 'Movimentos', operations: 'Operações', purchases: 'Compras', sales: 'Vendas', warehouses: 'Armazéns', analysis: 'Análise', analytics: 'Analytics IA', reports: 'Relatórios', costs: 'Custos', config: 'Config', integrations: 'Integrações', audit: 'Auditoria', controlTracking: 'Controle & Rastreamento', postSales: 'Pós-venda', people: 'Pessoal', approvals: 'Aprovações', invoicing: 'Faturação eletrônica' },
       greetings: {

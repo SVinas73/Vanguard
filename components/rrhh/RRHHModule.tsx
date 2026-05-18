@@ -61,7 +61,6 @@ export default function RRHHModule() {
   const [showFormEmpleado, setShowFormEmpleado] = useState(false);
   /** Si tiene valor, el modal está en modo edición. Si es null, en modo crear. */
   const [editandoEmpleado, setEditandoEmpleado] = useState<Empleado | null>(null);
-  const [editingEmpleado, setEditingEmpleado] = useState<Empleado | null>(null);
   const [showFormSolicitud, setShowFormSolicitud] = useState(false);
   const [search, setSearch] = useState('');
   const [filtroArea, setFiltroArea] = useState<string>('todas');
