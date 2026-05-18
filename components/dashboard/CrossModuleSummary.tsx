@@ -98,14 +98,14 @@ export function CrossModuleSummary({ onNavigate }: { onNavigate?: (tab: string) 
       count: data.ventasAbiertas,
       sub: data.ventasTotal > 0 ? `$${data.ventasTotal.toLocaleString('es-UY', { maximumFractionDigits: 0 })}` : undefined,
       icon: <ShoppingBag size={16} />,
-      color: '#3d9a5f',
+      color: '#9ec9b1',
       tab: 'ventas',
     },
     {
       label: 'RMAs Activos',
       count: data.rmasActivos,
       icon: <RotateCcw size={16} />,
-      color: '#c8872e',
+      color: '#d6b97a',
       tab: 'rma',
     },
     {
@@ -127,7 +127,7 @@ export function CrossModuleSummary({ onNavigate }: { onNavigate?: (tab: string) 
       count: undefined,
       sub: `$${data.porCobrar.toLocaleString('es-UY', { maximumFractionDigits: 0 })}`,
       icon: <ArrowDownLeft size={16} />,
-      color: '#3d9a5f',
+      color: '#9ec9b1',
       tab: 'finanzas',
     },
     {
@@ -135,7 +135,7 @@ export function CrossModuleSummary({ onNavigate }: { onNavigate?: (tab: string) 
       count: undefined,
       sub: `$${data.porPagar.toLocaleString('es-UY', { maximumFractionDigits: 0 })}`,
       icon: <ArrowUpRight size={16} />,
-      color: '#c94444',
+      color: '#dfa6a6',
       tab: 'finanzas',
     },
   ];

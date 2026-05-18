@@ -162,7 +162,7 @@ const ALERTA_MARGEN = {
   bajo: { label: 'Margen Bajo', color: 'text-amber-400', bg: 'bg-amber-500/10', umbral: 15 },
 };
 
-const COLORES_GRAFICO = ['#3d9a5f', '#c8872e', '#64748b', '#4a7fb5', '#6b5488', '#b5547a', '#cc7a33'];
+const COLORES_GRAFICO = ['#9ec9b1', '#d6b97a', '#64748b', '#4a7fb5', '#6b5488', '#b5547a', '#cc7a33'];
 
 // ============================================
 // HELPERS
@@ -677,8 +677,8 @@ export default function CostosEnterprise() {
 
   // Datos para gráficos
   const datosABC = useMemo(() => [
-    { name: 'Clase A', value: metricas.valorA, cantidad: metricas.productosA, color: '#3d9a5f' },
-    { name: 'Clase B', value: metricas.valorB, cantidad: metricas.productosB, color: '#c8872e' },
+    { name: 'Clase A', value: metricas.valorA, cantidad: metricas.productosA, color: '#9ec9b1' },
+    { name: 'Clase B', value: metricas.valorB, cantidad: metricas.productosB, color: '#d6b97a' },
     { name: 'Clase C', value: metricas.valorC, cantidad: metricas.productosC, color: '#64748b' },
   ], [metricas]);
 
@@ -1584,7 +1584,7 @@ export default function CostosEnterprise() {
                     formatter={(value: number) => formatCurrency(value)}
                     contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
                   />
-                  <Area type="monotone" dataKey="costoPromedio" stroke="#3d9a5f" fill="#3d9a5f30" strokeWidth={2} />
+                  <Area type="monotone" dataKey="costoPromedio" stroke="#9ec9b1" fill="#9ec9b130" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

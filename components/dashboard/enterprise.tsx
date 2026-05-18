@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valuation';
+import { Donut, HorizontalBars, CHART_COLORS } from '@/components/ui/charts-bi';
 
 // ============================================
 // TYPES
@@ -156,7 +157,7 @@ interface SparkLineProps {
   width?: number;
 }
 
-function SparkLine({ data, color = '#3d9a5f', height = 32, width = 80 }: SparkLineProps) {
+function SparkLine({ data, color = '#9ec9b1', height = 32, width = 80 }: SparkLineProps) {
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
@@ -255,7 +256,7 @@ function KPICard({ label, value, prevValue, suffix, icon, sparkData, description
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-slate-500">{icon}</span>
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
+          <span className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
         </div>
         {sparkData && <SparkLine data={sparkData} color="#a1a1aa" width={56} height={20} />}
       </div>
@@ -268,7 +269,7 @@ function KPICard({ label, value, prevValue, suffix, icon, sparkData, description
             </span>
             {suffix && <span className="text-sm font-medium text-slate-400">{suffix}</span>}
           </div>
-          {description && <p className="text-[11px] mt-1.5 text-slate-500">{description}</p>}
+          {description && <p className="text-xs mt-1.5 text-slate-500">{description}</p>}
         </div>
 
         {delta !== null && Number.isFinite(delta) && (
@@ -290,162 +291,148 @@ function KPICard({ label, value, prevValue, suffix, icon, sparkData, description
 // ============================================
 
 interface InventoryValuePanelProps {
+  periodLabel?: string;
   data: ValorInventarioData;
 }
 
-function InventoryValuePanel({ data }: InventoryValuePanelProps) {
+function InventoryValuePanel({ data, periodLabel = '30 días' }: InventoryValuePanelProps) {
   const trend = data.prev30d > 0
     ? ((data.total - data.prev30d) / data.prev30d * 100)
     : 0;
   const isUp = trend >= 0;
   const hayProblemasDatos = data.sinCosto > 0 || data.sinAlmacen > 0;
 
+  // Datos para donut chart (categorías)
+  const donutData = data.categorias.slice(0, 6).map((cat, i) => ({
+    name: cat.nombre,
+    value: cat.valor,
+    color: CHART_COLORS[i % CHART_COLORS.length],
+  }));
+
+  // Top almacenes en barras horizontales
+  const almacenesBarData = data.almacenes.slice(0, 6).map(a => ({
+    name: a.id === '__sin_almacen__' ? 'Sin asignar' : a.nombre,
+    value: a.valor,
+  }));
+
+  const fmtMoney = (v: number) => `$${(v / 1000).toFixed(1)}k`;
+  const fmtMoneyFull = (v: number) => `$${v.toLocaleString('es-UY', { minimumFractionDigits: 0 })}`;
+
   return (
     <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      {/* Header — título más grande y profesional */}
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-slate-100 tracking-tight">Valor del Inventario</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Capital total en stock</p>
+          <h3 className="text-xl font-bold text-slate-100 tracking-tight">Valor del Inventario</h3>
+          <p className="text-sm text-slate-400 mt-0.5">Capital total en stock · Valuación FIFO</p>
         </div>
         {Number.isFinite(trend) && trend !== 0 && (
           <span className={cn(
-            'inline-flex items-center gap-0.5 text-xs font-medium tabular-nums',
-            isUp ? 'text-green-400' : 'text-red-400',
+            'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-semibold tabular-nums ring-1 ring-inset',
+            isUp ? 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/20' : 'bg-red-500/10 text-red-300 ring-red-500/20',
           )}>
-            {isUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+            {isUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
             {Math.abs(trend).toFixed(1)}%
           </span>
         )}
       </div>
 
-      {/* Big number */}
-      <div className="mb-6">
-        <div className="flex items-baseline gap-4">
-          <span className="text-4xl font-semibold text-slate-50 tabular-nums tracking-tight">
-            ${data.total.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
-          </span>
-          <div className="text-xs text-slate-500">
-            vs 30 días: <span className="tabular-nums">${data.prev30d.toLocaleString('es-UY', { minimumFractionDigits: 0 })}</span>
+      {/* Hero: valor BIG + donut grande */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-6 items-center mb-6">
+        <div>
+          <div className="text-sm uppercase tracking-[0.08em] text-slate-400 mb-2 font-bold">Total en stock</div>
+          {/* Valor 6xl — el protagonista del card */}
+          <div className="text-6xl font-bold text-slate-50 tabular-nums tracking-tight leading-none">
+            {fmtMoneyFull(data.total)}
           </div>
-        </div>
-      </div>
+          <div className="text-base text-slate-400 mt-3 tabular-nums">
+            vs {periodLabel}: <span className="text-slate-200 font-semibold">{fmtMoneyFull(data.prev30d)}</span>
+          </div>
 
-      {/* Category breakdown */}
-      {data.categorias.length > 0 && (
-        <div className="mb-6">
-          <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500 mb-3">
-            Por categoría
-          </div>
-          <div className="space-y-3">
-            {data.categorias.map((cat: Categoria) => (
-              <div key={cat.nombre} className="group">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-slate-300">{cat.nombre}</span>
-                  <div className="flex items-center gap-3 tabular-nums">
-                    <span className="text-xs font-medium text-slate-200">
-                      ${cat.valor.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
-                    </span>
-                    <span className="text-[11px] text-slate-500 w-9 text-right">{cat.porcentaje}%</span>
-                  </div>
-                </div>
-                <div className="h-1 rounded-full overflow-hidden bg-slate-800">
-                  <div
-                    className="h-full bg-slate-400 rounded-full transition-all duration-500"
-                    style={{ width: `${cat.porcentaje}%` }}
-                  />
-                </div>
+          {/* 3 mini KPIs — bigger */}
+          <div className="mt-5 grid grid-cols-3 gap-3">
+            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-4">
+              <div className="text-xs uppercase tracking-[0.08em] text-slate-400 font-bold">Inmovilizado</div>
+              <div className="text-2xl font-bold text-amber-300 tabular-nums mt-1.5">
+                {fmtMoney(data.capitalInmovilizado)}
               </div>
-            ))}
+              <div className="text-xs text-slate-500 tabular-nums mt-1">
+                {data.productosInmovilizados} prod · 60d
+              </div>
+            </div>
+            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-4">
+              <div className="text-xs uppercase tracking-[0.08em] text-slate-400 font-bold">Categorías</div>
+              <div className="text-2xl font-bold text-slate-100 tabular-nums mt-1.5">
+                {data.categorias.length}
+              </div>
+              <div className="text-xs text-slate-500 truncate mt-1">
+                {data.categorias[0]?.nombre ?? '—'}
+              </div>
+            </div>
+            <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-4">
+              <div className="text-xs uppercase tracking-[0.08em] text-slate-400 font-bold">Almacenes</div>
+              <div className="text-2xl font-bold text-slate-100 tabular-nums mt-1.5">
+                {data.almacenes.length}
+              </div>
+              <div className="text-xs text-slate-500 truncate mt-1">
+                {data.almacenes[0]?.nombre ?? '—'}
+              </div>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Desglose por almacén */}
-      {data.almacenes.length > 0 && (
-        <div className="mb-6 pt-6 border-t border-slate-800/60">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500">
-              Por almacén
-            </div>
-            <span className="text-[10px] text-slate-600 tabular-nums">
-              {data.almacenes.length} {data.almacenes.length === 1 ? 'almacén' : 'almacenes'}
-            </span>
-          </div>
-          <div className="space-y-2.5">
-            {data.almacenes.map((a) => {
-              const pct = data.total > 0 ? Math.round((a.valor / data.total) * 100) : 0;
-              const esSinAlmacen = a.id === '__sin_almacen__';
-              return (
-                <div key={a.id}>
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className={cn('text-xs font-medium', esSinAlmacen ? 'text-amber-300' : 'text-slate-200')}>
-                      {a.codigo !== '—' && a.codigo !== '' && (
-                        <span className="text-slate-600 mr-1.5 font-mono">{a.codigo}</span>
-                      )}
-                      {a.nombre}
-                    </span>
-                    <span className="text-xs text-slate-300 tabular-nums">
-                      ${a.valor.toLocaleString('es-UY', { minimumFractionDigits: 0 })}
-                      <span className="text-slate-600 ml-2">· {pct}%</span>
-                    </span>
+        {/* Donut grande con leyenda */}
+        {donutData.length > 0 && (
+          <div className="flex items-center justify-center">
+            <div className="flex flex-col items-center">
+              <Donut
+                data={donutData}
+                size={220}
+                centerLabel="Categorías"
+                centerValue={String(data.categorias.length)}
+                valueFormatter={fmtMoneyFull}
+              />
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 text-sm">
+                {donutData.slice(0, 6).map(d => (
+                  <div key={d.name} className="flex items-center gap-2 min-w-0">
+                    <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: d.color }} />
+                    <span className="text-slate-300 truncate font-medium">{d.name}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500 tabular-nums">
-                    <span>{a.productos} productos</span>
-                    <span className="text-slate-700">·</span>
-                    <span>{a.unidades.toLocaleString('es-UY')} unidades</span>
-                    {a.criticos > 0 && (
-                      <>
-                        <span className="text-slate-700">·</span>
-                        <span className="text-amber-400">{a.criticos} críticos</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Inmovilizado */}
-      <div className="pt-6 border-t border-slate-800/60">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Hourglass size={14} className="text-slate-500" strokeWidth={1.75} />
-            <div>
-              <div className="text-xs font-medium text-slate-200">Capital inmovilizado</div>
-              <div className="text-[11px] text-slate-500">{data.productosInmovilizados} productos sin movimiento (60d)</div>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-sm font-semibold text-slate-100 tabular-nums">
-              ${data.capitalInmovilizado.toLocaleString('es-UY')}
-            </div>
-            <div className="text-[11px] text-slate-500 tabular-nums">
-              {data.total > 0 ? ((data.capitalInmovilizado / data.total) * 100).toFixed(0) : 0}% del total
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Calidad de datos — solo si hay problemas */}
-      {hayProblemasDatos && (
-        <div className="mt-4 p-3 rounded-lg bg-red-500/5 border border-red-500/20">
-          <div className="flex items-center gap-2 mb-1.5">
-            <AlertTriangle size={11} className="text-red-400" strokeWidth={2} />
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-red-300">
-              Calidad de datos
+      {/* Almacenes como barras horizontales */}
+      {data.almacenes.length > 1 && (
+        <div className="pt-5 border-t border-slate-800/60">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-base font-bold text-slate-200 tracking-tight">
+              Top almacenes por valor
+            </span>
+            <span className="text-sm text-slate-400 tabular-nums">
+              {data.almacenes.length} en total
             </span>
           </div>
-          <ul className="space-y-0.5 text-[11px] text-slate-400">
-            {data.sinCosto > 0 && (
-              <li>{data.sinCosto} producto(s) con stock pero sin costo promedio — no valúan</li>
-            )}
-            {data.sinAlmacen > 0 && (
-              <li>{data.sinAlmacen} producto(s) sin almacén asignado</li>
-            )}
-          </ul>
+          <HorizontalBars
+            data={almacenesBarData}
+            height={Math.max(160, almacenesBarData.length * 36)}
+            valueFormatter={fmtMoney}
+            color="#4a7fb5"
+          />
+        </div>
+      )}
+
+      {/* Calidad de datos compacta */}
+      {hayProblemasDatos && (
+        <div className="mt-4 pt-4 border-t border-slate-800/60 flex items-start gap-2 text-sm text-slate-400">
+          <AlertTriangle size={14} className="text-red-400 mt-0.5 flex-shrink-0" strokeWidth={2} />
+          <span>
+            {data.sinCosto > 0 && <span>{data.sinCosto} sin costo · </span>}
+            {data.sinAlmacen > 0 && <span>{data.sinAlmacen} sin almacén</span>}
+          </span>
         </div>
       )}
     </div>
@@ -535,7 +522,7 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
                   <IconComp size={14} className={cn('flex-shrink-0', cfg.text)} strokeWidth={2} />
                   <div className="min-w-0">
                     <div className="font-medium text-[13px] text-slate-100 truncate">{item.descripcion}</div>
-                    <div className="text-[11px] text-slate-500 tabular-nums">
+                    <div className="text-xs text-slate-500 tabular-nums">
                       <span className="font-mono text-slate-600">{item.codigo}</span>
                       <span className="mx-1.5 text-slate-700">·</span>
                       <span className={cfg.text}>
@@ -545,7 +532,7 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
                   </div>
                 </div>
                 {item.dias !== null && (
-                  <span className={cn('text-[11px] font-mono font-medium tabular-nums flex-shrink-0', cfg.text)}>
+                  <span className={cn('text-xs font-mono font-medium tabular-nums flex-shrink-0', cfg.text)}>
                     {item.dias === 0 ? 'HOY' : `${item.dias}d`}
                   </span>
                 )}
@@ -598,7 +585,7 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
               key={p.key}
               onClick={() => setPeriod(p.key)}
               className={cn(
-                'px-2.5 py-1 rounded text-[11px] font-medium transition-colors',
+                'px-2.5 py-1 rounded text-xs font-medium transition-colors',
                 period === p.key
                   ? 'bg-slate-800 text-slate-100'
                   : 'text-slate-500 hover:text-slate-300',
@@ -623,7 +610,7 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
               <div className="flex items-center gap-3">
                 <div className="w-5 text-center">
                   <span className={cn(
-                    'text-[11px] font-medium tabular-nums',
+                    'text-xs font-medium tabular-nums',
                     i < 3 ? 'text-slate-300' : 'text-slate-600',
                   )}>
                     {i + 1}
@@ -637,7 +624,7 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
                       <span className="text-sm font-semibold text-slate-100 font-mono">{item.cantidad}</span>
                       {Number.isFinite(delta) && delta !== 0 && (
                         <span className={cn(
-                          'text-[11px] font-medium',
+                          'text-xs font-medium',
                           isUp ? 'text-green-400' : 'text-red-400',
                         )}>
                           {isUp ? '+' : ''}{delta.toFixed(0)}%
@@ -752,7 +739,7 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
         {groupedByTime.map(([time, items]: [string, ActividadItem[]]) => (
           <div key={time}>
             <div className="flex items-center gap-2 mb-2 px-2">
-              <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500">
+              <span className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">
                 hace {time}
               </span>
               <div className="h-px flex-1 bg-slate-800/60" />
@@ -765,7 +752,7 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
                   className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-800/40 transition-colors"
                 >
                   <span className={cn(
-                    'inline-flex items-center justify-center w-7 h-7 rounded-md text-[11px] font-mono font-semibold tabular-nums flex-shrink-0',
+                    'inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-mono font-semibold tabular-nums flex-shrink-0',
                     item.tipo === 'entrada'
                       ? 'bg-green-500/10 text-green-300 ring-1 ring-inset ring-green-500/20'
                       : 'bg-slate-800 text-slate-300 ring-1 ring-inset ring-slate-700',
@@ -774,7 +761,7 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[13px] text-slate-100 truncate">{item.descripcion}</div>
-                    <div className="text-[11px] text-slate-500">{item.usuario}</div>
+                    <div className="text-xs text-slate-500">{item.usuario}</div>
                   </div>
                 </div>
               ))}
@@ -791,10 +778,13 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
 // PUBLIC EXPORTS para page.tsx
 // ============================================
 
-export function InventoryValueCard({ products, movements, onCategoryClick }: {
+export function InventoryValueCard({ products, movements, onCategoryClick, periodDays = 30, periodLabel = '30 días' }: {
   products: any[];
   movements: any[];
   onCategoryClick: (category: string) => void;
+  /** Cuántos días atrás comparar (viene del PeriodSelector del dashboard) */
+  periodDays?: number;
+  periodLabel?: string;
 }) {
   // Valuación unificada: FIFO sobre lotes (fuente de verdad) + fallback
   // a costo promedio. Misma lógica que el Centro de Costos.
@@ -818,8 +808,8 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
 
   const data = useMemo(() => {
     const CATEGORY_COLORS: Record<string, string> = {
-      'Estación de Servicio': '#3d9a5f', 'Ferretería': '#4a7fb5',
-      'Papelería': '#836ba0', 'Ediltor': '#c8872e',
+      'Estación de Servicio': '#9ec9b1', 'Ferretería': '#4a7fb5',
+      'Papelería': '#836ba0', 'Ediltor': '#d6b97a',
     };
 
     const totalValue = valuacion?.total ?? 0;
@@ -827,7 +817,7 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
       nombre: c.nombre,
       valor: c.valor,
       porcentaje: totalValue > 0 ? Math.round((c.valor / totalValue) * 100) : 0,
-      color: CATEGORY_COLORS[c.nombre] ?? ['#3d9a5f','#4a7fb5','#836ba0','#c8872e','#b5547a'][i % 5],
+      color: CATEGORY_COLORS[c.nombre] ?? ['#9ec9b1','#4a7fb5','#836ba0','#d6b97a','#b5547a'][i % 5],
     }));
 
     const almacenes = valuacion?.porAlmacen ?? [];
@@ -843,9 +833,9 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
     const inmovilizados = products.filter((p) => !activeCodes.has(p.codigo) && p.stock > 0);
     const capitalInmovilizado = inmovilizados.reduce((sum, p) => sum + valorProducto(p), 0);
 
-    // VALOR 30 DÍAS ATRÁS — tendencia. Usamos valor unitario implícito por producto
-    // (valor / stock) para aproximar. Si stock=0, no contribuye.
-    const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // VALOR EN EL PERÍODO ANTERIOR — tendencia. Usamos valor unitario implícito
+    // por producto (valor / stock). Ventana = periodDays (controlado por el selector).
+    const periodStart = new Date(Date.now() - periodDays * 86400000);
     const costoUnitMap = new Map<string, number>();
     (valuacion?.porProducto ?? []).forEach(vp => {
       const unit = vp.unidades > 0 ? vp.valor / vp.unidades : 0;
@@ -853,7 +843,7 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
     });
     let netValueChange = 0;
     movements.forEach((m) => {
-      if (new Date(m.timestamp) >= thirtyDaysAgo) {
+      if (new Date(m.timestamp) >= periodStart) {
         const cost = costoUnitMap.get(m.codigo) ?? 0;
         if (m.tipo === 'entrada') netValueChange += m.cantidad * cost;
         else                       netValueChange -= m.cantidad * cost;
@@ -874,8 +864,8 @@ export function InventoryValueCard({ products, movements, onCategoryClick }: {
       sinCosto,
       sinAlmacen,
     };
-  }, [valuacion, products, movements]);
-  return <InventoryValuePanel data={data} />;
+  }, [valuacion, products, movements, periodDays]);
+  return <InventoryValuePanel data={data} periodLabel={periodLabel} />;
 }
 
 export function StockAlertsPanel({ products, predictions, onProductClick, onCreatePurchaseOrder }: {

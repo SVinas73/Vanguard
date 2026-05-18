@@ -4,6 +4,7 @@ import React, { useMemo, useState, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Product, Movement, StockPrediction } from '@/types';
+import { KpiStat, type KpiAccent } from '@/components/ui/charts-bi';
 import {
   Package,
   RefreshCw,
@@ -92,7 +93,7 @@ function HealthRing({ score, size = 52, strokeWidth = 5 }: HealthRingProps) {
   const dashLength = (Math.min(score, 100) / 100) * circumference;
 
   const color =
-    score >= 70 ? '#3d9a5f' : score >= 40 ? '#c8872e' : '#c94444';
+    score >= 70 ? '#9ec9b1' : score >= 40 ? '#d6b97a' : '#dfa6a6';
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -143,7 +144,7 @@ const COLOR_MAP: Record<KPIColor, ColorConfig> = {
   emerald: {
     bg: 'rgba(61,154,95,0.06)',
     border: 'rgba(61,154,95,0.12)',
-    text: '#3d9a5f',
+    text: '#9ec9b1',
     accent: '#4aaa73',
   },
   cyan: {
@@ -155,7 +156,7 @@ const COLOR_MAP: Record<KPIColor, ColorConfig> = {
   rose: {
     bg: 'rgba(201,68,68,0.06)',
     border: 'rgba(201,68,68,0.12)',
-    text: '#c94444',
+    text: '#dfa6a6',
     accent: '#cc5555',
   },
   violet: {
@@ -167,7 +168,7 @@ const COLOR_MAP: Record<KPIColor, ColorConfig> = {
   amber: {
     bg: 'rgba(200,135,46,0.06)',
     border: 'rgba(200,135,46,0.12)',
-    text: '#c8872e',
+    text: '#d6b97a',
     accent: '#cc9a40',
   },
 };
@@ -271,10 +272,10 @@ export function WelcomeHeader({ userName, products, predictions }: WelcomeHeader
                   style={{
                     color:
                       healthScore >= 70
-                        ? '#3d9a5f'
+                        ? '#9ec9b1'
                         : healthScore >= 40
-                        ? '#c8872e'
-                        : '#c94444',
+                        ? '#d6b97a'
+                        : '#dfa6a6',
                   }}
                 >
                   {healthLabel}
@@ -290,7 +291,7 @@ export function WelcomeHeader({ userName, products, predictions }: WelcomeHeader
               style={{
                 background: 'rgba(201,68,68,0.06)',
                 border: '1px solid rgba(201,68,68,0.12)',
-                color: '#c94444',
+                color: '#dfa6a6',
               }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
@@ -367,16 +368,16 @@ export function StatsGrid({ stats, products, movements }: StatsGridProps) {
     return result;
   }, [movements]);
 
-  // Map stat colors to KPI colors
-  const colorMapping: Record<string, KPIColor> = {
+  // Map stat colors to KPI accents
+  const accentMap: Record<string, KpiAccent> = {
     emerald: 'emerald',
     cyan: 'cyan',
-    amber: 'rose',
+    amber: 'amber',
     purple: 'violet',
-    red: 'rose',
-    slate: 'cyan',
-    blue: 'cyan',
-    pink: 'rose',
+    red: 'red',
+    slate: 'slate',
+    blue: 'indigo',
+    pink: 'red',
   };
 
   return (
@@ -387,74 +388,23 @@ export function StatsGrid({ stats, products, movements }: StatsGridProps) {
       )}
     >
       {stats.map((stat, i: number) => {
-        const kpiColor = colorMapping[stat.color] || 'emerald';
-        const c = COLOR_MAP[kpiColor];
+        const accent: KpiAccent = accentMap[stat.color] || 'indigo';
         const spark = sparklines[i];
+        // Extract icon as LucideIcon (the stats array passes <Icon size=.. />)
+        const iconElement = stat.icon as any;
+        const IconComponent = iconElement?.type;
 
         return (
-          <div
+          <KpiStat
             key={i}
-            className="relative group rounded-xl overflow-hidden transition-all duration-200 bg-slate-900 border border-slate-800 hover:border-slate-700"
-          >
-
-            <div className="relative p-5">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg" style={{ background: c.bg }}>
-                    <span style={{ color: c.text }}>{stat.icon}</span>
-                  </div>
-                  <span
-                    className="text-xs font-medium uppercase tracking-wider"
-                    style={{ color: 'rgba(148,163,184,0.8)' }}
-                  >
-                    {stat.label}
-                  </span>
-                </div>
-                {spark && spark.length >= 2 && (
-                  <SparkLine data={spark} color={c.text} width={56} height={22} />
-                )}
-              </div>
-
-              <div className="flex items-end justify-between">
-                <div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-3xl font-bold tracking-tight text-white">
-                      {stat.value}
-                    </span>
-                  </div>
-                  {stat.subtitle && (
-                    <p
-                      className="text-[11px] mt-1"
-                      style={{ color: 'rgba(148,163,184,0.6)' }}
-                    >
-                      {stat.subtitle}
-                    </p>
-                  )}
-                </div>
-
-                {stat.trend && (
-                  <div
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold"
-                    style={{
-                      background:
-                        stat.trend.value >= 0
-                          ? 'rgba(61,154,95,0.08)'
-                          : 'rgba(201,68,68,0.08)',
-                      color:
-                        stat.trend.value >= 0 ? '#3d9a5f' : '#c94444',
-                    }}
-                  >
-                    {stat.trend.value >= 0 ? (
-                      <ArrowUpRight size={12} />
-                    ) : (
-                      <ArrowDownRight size={12} />
-                    )}
-                    <span>{Math.abs(stat.trend.value)}%</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+            label={stat.label}
+            value={stat.value}
+            sublabel={stat.subtitle}
+            icon={IconComponent}
+            accent={accent}
+            delta={stat.trend ? { value: stat.trend.value, label: stat.trend.label } : undefined}
+            sparkData={spark}
+          />
         );
       })}
     </div>
@@ -592,8 +542,9 @@ export function InsightsPanel({
     const slowMovers = products.filter(
       (p: Product) => p.stock > 0 && !recentCodes.has(p.codigo)
     );
+    // Valuación al COSTO (no precio de venta). Si no hay costo, no valúa.
     const slowValue = slowMovers.reduce(
-      (sum: number, p: Product) => sum + p.stock * (p.costoPromedio || p.precio),
+      (sum: number, p: Product) => sum + p.stock * (p.costoPromedio || 0),
       0
     );
 
@@ -637,122 +588,89 @@ export function InsightsPanel({
       }
     }
 
-    return result.slice(0, 4);
+    return result.slice(0, 6);
   }, [products, movements, predictions, t]);
 
-  const typeConfig: Record<InsightType, InsightConfig> = {
-    urgente: {
-      color: '#c94444',
-      bg: 'rgba(201,68,68,0.04)',
-      border: 'rgba(201,68,68,0.10)',
-      Icon: Flame,
-    },
-    tendencia: {
-      color: '#3d9a5f',
-      bg: 'rgba(61,154,95,0.04)',
-      border: 'rgba(61,154,95,0.10)',
-      Icon: TrendingUp,
-    },
-    alerta: {
-      color: '#c8872e',
-      bg: 'rgba(200,135,46,0.04)',
-      border: 'rgba(200,135,46,0.10)',
-      Icon: AlertCircle,
-    },
-    oportunidad: {
-      color: '#4a7fb5',
-      bg: 'rgba(74,127,181,0.04)',
-      border: 'rgba(74,127,181,0.10)',
-      Icon: Zap,
-    },
+  // Solo color en el ícono — fila compacta, sin cards con fondo
+  const typeTone: Record<InsightType, { text: string; Icon: typeof Flame }> = {
+    urgente:     { text: 'text-red-400',   Icon: Flame },
+    tendencia:   { text: 'text-green-400', Icon: TrendingUp },
+    alerta:      { text: 'text-amber-400', Icon: AlertCircle },
+    oportunidad: { text: 'text-indigo-400', Icon: Zap },
   };
 
   if (insights.length === 0) return null;
 
   return (
-    <div
-      className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-800"
-    >
-      <div className="p-6">
-        <div className="flex items-center gap-3 mb-5">
-          <div
-            className="p-2.5 rounded-lg bg-slate-800"
-          >
-            <Brain size={18} className="text-slate-400" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-200 text-sm flex items-center gap-2">
-              {t('dashboard.insights', 'Insights')}
-              <span
-                className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-800 text-slate-400"
-              >
-                AI
-              </span>
-            </h3>
-            <p
-              className="text-[11px]"
-              style={{ color: 'rgba(148,163,184,0.5)' }}
-            >
-              {t('dashboard.insightsSubtitle', 'Lo que necesitás saber ahora')}
-            </p>
-          </div>
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
+            {t('dashboard.insights', 'Insights')}
+            <span className="px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-indigo-500/10 text-indigo-300 ring-1 ring-inset ring-indigo-500/20">
+              AI
+            </span>
+          </h3>
+          <p className="text-sm text-slate-400 mt-0.5">
+            {t('dashboard.insightsSubtitle', 'Lo que necesitás saber ahora')}
+          </p>
         </div>
-
-        <div className="space-y-3">
-          {insights.map((insight: Insight, i: number) => {
-            const cfg = typeConfig[insight.tipo];
-            const IconComp = cfg.Icon;
-            return (
-              <div
-                key={i}
-                className="p-4 rounded-lg cursor-pointer transition-all hover:brightness-110"
-                style={{
-                  background: cfg.bg,
-                  border: `1px solid ${cfg.border}`,
-                }}
-              >
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 mt-0.5">
-                    <IconComp size={18} style={{ color: cfg.color }} />
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-semibold text-sm text-slate-200 mb-1">
-                        {insight.titulo}
-                      </div>
-                      {insight.metric && (
-                        <span
-                          className="text-xs font-bold font-mono px-1.5 py-0.5 rounded flex-shrink-0"
-                          style={{ background: cfg.bg, color: cfg.color }}
-                        >
-                          {insight.metric}
-                        </span>
-                      )}
-                    </div>
-                    <p
-                      className="text-xs leading-relaxed"
-                      style={{ color: 'rgba(148,163,184,0.7)' }}
-                    >
-                      {insight.descripcion}
-                    </p>
-                    <button
-                      className="mt-2.5 text-xs font-semibold flex items-center gap-1 transition-colors hover:opacity-80"
-                      style={{ color: cfg.color }}
-                      onClick={() => {
-                        if (insight.tipo === 'urgente') onNavigate?.('compras');
-                        else if (insight.tipo === 'alerta') onNavigate?.('stock');
-                        else onNavigate?.('analytics');
-                      }}
-                    >
-                      {insight.accion} <ArrowRight size={12} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <Brain size={18} className="text-slate-500" strokeWidth={1.75} />
       </div>
+
+      <div className="-mx-2">
+        {insights.map((insight: Insight, i: number) => {
+          const tone = typeTone[insight.tipo];
+          const IconComp = tone.Icon;
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                if (insight.tipo === 'urgente') onNavigate?.('compras');
+                else if (insight.tipo === 'alerta') onNavigate?.('stock');
+                else onNavigate?.('analytics');
+              }}
+              className="w-full text-left flex items-start gap-3 px-3 py-3.5 rounded-md hover:bg-slate-800/40 transition-colors group"
+            >
+              <IconComp size={18} className={cn('flex-shrink-0 mt-0.5', tone.text)} strokeWidth={2} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-base font-semibold text-slate-100">
+                    {insight.titulo}
+                  </span>
+                  <ArrowRight size={14} className="text-slate-500 group-hover:text-slate-300 transition-colors flex-shrink-0" />
+                </div>
+                <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+                  {insight.descripcion}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Mini stats footer — llena el espacio si hay pocos insights */}
+      {insights.length <= 3 && (
+        <div className="mt-4 pt-4 border-t border-slate-800/60 grid grid-cols-3 gap-3">
+          <div className="text-center">
+            <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Productos</div>
+            <div className="text-2xl font-bold text-slate-100 tabular-nums mt-1">{products.length}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Sin Stock</div>
+            <div className="text-2xl font-bold text-red-300 tabular-nums mt-1">
+              {products.filter((p: Product) => p.stock === 0).length}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Críticos</div>
+            <div className="text-2xl font-bold text-amber-300 tabular-nums mt-1">
+              {products.filter((p: Product) => p.stock > 0 && p.stock <= p.stockMinimo).length}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -968,7 +886,7 @@ export function StatCard({ label, value, icon, color, trend, subtitle }: StatCar
           <div
             className="flex items-center gap-1 mt-2 text-xs font-semibold"
             style={{
-              color: trend.value >= 0 ? '#3d9a5f' : '#c94444',
+              color: trend.value >= 0 ? '#9ec9b1' : '#dfa6a6',
             }}
           >
             {trend.value >= 0 ? (

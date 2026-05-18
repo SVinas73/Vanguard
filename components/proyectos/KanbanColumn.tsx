@@ -89,9 +89,9 @@ export function KanbanColumn({
   }, []);
 
   const colores = [
-    '#3d9a5f', '#3b82f6', '#c8872e', '#ef4444',
+    '#9ec9b1', '#3b82f6', '#d6b97a', '#ef4444',
     '#6b5488', '#b5547a', '#3d8f82', '#cc7a33',
-    '#6366f1', '#84cc16', '#4a7fb5', '#836ba0'
+    '#4a7fb5', '#84cc16', '#4a7fb5', '#836ba0'
   ];
 
   const handleRename = () => {

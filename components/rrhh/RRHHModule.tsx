@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users, Plus, Search, X, Clock, Calendar, CheckCircle2,
   Cake, UserCheck, UserX, Coffee, AlertCircle, MapPin,
-  Briefcase, Mail, Phone, RefreshCw, Filter,
+  Briefcase, Mail, Phone, RefreshCw, Filter, Edit,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -59,6 +59,8 @@ export default function RRHHModule() {
 
   // Modales / formularios
   const [showFormEmpleado, setShowFormEmpleado] = useState(false);
+  /** Si tiene valor, el modal está en modo edición. Si es null, en modo crear. */
+  const [editandoEmpleado, setEditandoEmpleado] = useState<Empleado | null>(null);
   const [editingEmpleado, setEditingEmpleado] = useState<Empleado | null>(null);
   const [showFormSolicitud, setShowFormSolicitud] = useState(false);
   const [search, setSearch] = useState('');
@@ -137,6 +139,69 @@ export default function RRHHModule() {
     } else {
       toast.error(t('rrhh.cantCreate'));
     }
+  };
+
+  /** Abre el modal en modo edición precargado con datos del empleado. */
+  const onEditar = (e: Empleado) => {
+    setEditandoEmpleado(e);
+    setFormEmp({
+      nombre: e.nombre,
+      apellido: e.apellido,
+      cargo: e.cargo,
+      area: e.area,
+      fecha_ingreso: e.fecha_ingreso,
+      user_email: e.user_email ?? '',
+      dni: e.dni ?? '',
+      telefono: e.telefono ?? '',
+      email_personal: e.email_personal ?? '',
+      fecha_nacimiento: e.fecha_nacimiento ?? '',
+      sueldo_base: e.sueldo_base != null ? String(e.sueldo_base) : '',
+      tipo_contrato: (e.tipo_contrato ?? 'efectivo') as any,
+      jornada: (e.jornada ?? 'full') as any,
+    });
+    setShowFormEmpleado(true);
+  };
+
+  /** Guarda cambios (modo edición). */
+  const onGuardarEdicion = async () => {
+    if (!editandoEmpleado) return;
+    if (!formEmp.nombre || !formEmp.apellido || !formEmp.cargo || !formEmp.area) {
+      toast.warning(t('rrhh.completeFields'));
+      return;
+    }
+    const ok = await actualizarEmpleado(editandoEmpleado.id, {
+      nombre: formEmp.nombre,
+      apellido: formEmp.apellido,
+      cargo: formEmp.cargo,
+      area: formEmp.area,
+      fecha_ingreso: formEmp.fecha_ingreso,
+      user_email: formEmp.user_email || undefined,
+      dni: formEmp.dni || undefined,
+      telefono: formEmp.telefono || undefined,
+      email_personal: formEmp.email_personal || undefined,
+      fecha_nacimiento: formEmp.fecha_nacimiento || undefined,
+      sueldo_base: formEmp.sueldo_base ? parseFloat(formEmp.sueldo_base) : undefined,
+      tipo_contrato: formEmp.tipo_contrato,
+      jornada: formEmp.jornada,
+    }, user?.email || 'sistema');
+    if (ok) {
+      toast.success(`${formEmp.nombre} ${formEmp.apellido} actualizado`);
+      setShowFormEmpleado(false);
+      setEditandoEmpleado(null);
+      loadAll();
+    } else {
+      toast.error('No se pudo actualizar el empleado');
+    }
+  };
+
+  const cerrarFormEmpleado = () => {
+    setShowFormEmpleado(false);
+    setEditandoEmpleado(null);
+    setFormEmp({
+      ...formEmp,
+      nombre: '', apellido: '', cargo: '', dni: '', user_email: '',
+      telefono: '', email_personal: '', sueldo_base: '', fecha_nacimiento: '',
+    });
   };
 
   const onDarBaja = async (e: Empleado) => {
@@ -363,6 +428,9 @@ export default function RRHHModule() {
                     <div className="mt-2 flex gap-2">
                       <button onClick={() => onFichar(e.id, 'entrada')} className="flex-1 px-2 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 rounded text-xs font-medium">{t('rrhh.clockIn')}</button>
                       <button onClick={() => onFichar(e.id, 'salida')}  className="flex-1 px-2 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 rounded text-xs font-medium">{t('rrhh.clockOut')}</button>
+                      <button onClick={() => onEditar(e)} className="px-2 py-1.5 bg-slate-800 hover:bg-indigo-600/20 text-slate-400 hover:text-indigo-300 rounded text-xs" title="Editar empleado">
+                        <Edit className="h-3 w-3" />
+                      </button>
                       {e.estado !== 'baja' && (
                         <button onClick={() => onDarBaja(e)} className="px-2 py-1.5 bg-slate-800 hover:bg-red-600/20 text-slate-400 hover:text-red-300 rounded text-xs">{t('rrhh.terminate')}</button>
                       )}
@@ -478,9 +546,12 @@ export default function RRHHModule() {
         )}
       </div>
 
-      {/* ===== MODAL NUEVO EMPLEADO ===== */}
+      {/* ===== MODAL EMPLEADO (crear / editar) ===== */}
       {showFormEmpleado && (
-        <Modal onClose={() => setShowFormEmpleado(false)} title={t('rrhh.newEmployee')}>
+        <Modal
+          onClose={cerrarFormEmpleado}
+          title={editandoEmpleado ? `Editar ${editandoEmpleado.nombre} ${editandoEmpleado.apellido}` : t('rrhh.newEmployee')}
+        >
           <div className="grid grid-cols-2 gap-3">
             <Field label={`${t('rrhh.name')} *`}     value={formEmp.nombre}    onChange={v => setFormEmp({ ...formEmp, nombre: v })} />
             <Field label={`${t('rrhh.surname')} *`}  value={formEmp.apellido}  onChange={v => setFormEmp({ ...formEmp, apellido: v })} />
@@ -494,8 +565,13 @@ export default function RRHHModule() {
             <Field label={t('rrhh.dateOfBirth')}     type="date" value={formEmp.fecha_nacimiento} onChange={v => setFormEmp({ ...formEmp, fecha_nacimiento: v })} />
             <Field label={t('rrhh.baseSalary')}      type="number" value={formEmp.sueldo_base} onChange={v => setFormEmp({ ...formEmp, sueldo_base: v })} />
             <div className="col-span-2 flex gap-3 mt-2">
-              <button onClick={onCrearEmpleado} className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium">{t('rrhh.createEmployee')}</button>
-              <button onClick={() => setShowFormEmpleado(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">{t('wmsModule.cancel')}</button>
+              <button
+                onClick={editandoEmpleado ? onGuardarEdicion : onCrearEmpleado}
+                className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium"
+              >
+                {editandoEmpleado ? 'Guardar cambios' : t('rrhh.createEmployee')}
+              </button>
+              <button onClick={cerrarFormEmpleado} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">{t('wmsModule.cancel')}</button>
             </div>
           </div>
         </Modal>

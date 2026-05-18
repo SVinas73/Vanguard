@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Product, Movement, StockPrediction } from '@/types';
 import { CategoryBadge } from '@/components/productos';
+import { Donut, CHART_COLORS } from '@/components/ui/charts-bi';
 import { 
   CheckCircle, 
   AlertTriangle, 
@@ -338,7 +339,7 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
                     <div className="font-medium text-sm">{product.descripcion}</div>
                     <div className="text-xs text-slate-500 flex items-center gap-2">
                       {product.codigo}
-                      <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', config.bg, config.color)}>
+                      <span className={cn('px-1.5 py-0.5 rounded text-xs font-medium', config.bg, config.color)}>
                         {config.label}
                       </span>
                     </div>
@@ -385,26 +386,37 @@ interface ProductDetail {
 interface ConsumptionChartProps {
   movements: Movement[];
   products: Product[];
+  /** Si se provee, se usa este período en vez del state interno. Acepta 7d/30d/90d/1a. */
+  fixedPeriod?: '7d' | '30d' | '90d' | '1a';
 }
 
 // Category color mapping
 const CATEGORY_COLORS: Record<string, string> = {
-  'Estación de Servicio': '#3d9a5f',
+  'Estación de Servicio': '#9ec9b1',
   'Ferretería': '#4a7fb5',
   'Papelería': '#6b5488',
-  'Ediltor': '#c8872e',
+  'Ediltor': '#d6b97a',
   'Otros': '#986080',
 };
 
-const FALLBACK_COLORS = ['#3d9a5f', '#4a7fb5', '#6b5488', '#c8872e', '#986080', '#546280', '#3a9280'];
+const FALLBACK_COLORS = ['#9ec9b1', '#4a7fb5', '#6b5488', '#d6b97a', '#986080', '#546280', '#3a9280'];
 
 function getCatColor(categoria: string): string {
   return CATEGORY_COLORS[categoria] || FALLBACK_COLORS[Math.abs(categoria.split('').reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0)) % FALLBACK_COLORS.length];
 }
 
-export function ConsumptionChart({ movements, products }: ConsumptionChartProps) {
+export function ConsumptionChart({ movements, products, fixedPeriod }: ConsumptionChartProps) {
   const { t } = useTranslation();
-  const [period, setPeriod] = useState<PeriodFilter>('mes');
+  // Si recibe fixedPeriod del dashboard, lo usa; sino mantiene state interno.
+  const externalPeriod: PeriodFilter | null =
+    fixedPeriod === '7d' ? 'semana'
+    : fixedPeriod === '90d' ? 'semestre'   // 90d ≈ semestre en nuestro mapping
+    : fixedPeriod === '1a' ? 'año'
+    : fixedPeriod === '30d' ? 'mes'
+    : null;
+  const [internalPeriod, setInternalPeriod] = useState<PeriodFilter>('mes');
+  const period: PeriodFilter = externalPeriod ?? internalPeriod;
+  const setPeriod = setInternalPeriod;
   const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null);
 
   const periodConfig: Record<PeriodFilter, { label: string; fullLabel: string; days: number }> = {
@@ -446,7 +458,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
 
     const sorted = Object.entries(currentMap)
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 10);
+      .slice(0, 5);
 
     const data = sorted.map(([codigo, cantidad]) => {
       const product = products.find((p: Product) => p.codigo === codigo);
@@ -500,122 +512,126 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {/* Header — más grande, ejecutivo */}
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl" style={{ background: 'rgba(6,182,212,0.12)' }}>
-            <BarChart3 size={18} className="text-cyan-400" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-200 text-sm">
-              {t('analytics.topConsumed', 'Productos Más Consumidos')}
-            </h3>
-            <p className="text-[11px] text-slate-500">
-              {t('analytics.rankByUnitsOut', 'Ranking por unidades salidas')} · {periodConfig[period].fullLabel}
-            </p>
-          </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-100 tracking-tight">
+            {t('analytics.topConsumed', 'Productos más consumidos')}
+          </h3>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Ranking por unidades salidas · {periodConfig[period].fullLabel}
+          </p>
         </div>
 
-        {/* Period selector */}
-        <div className="flex gap-0.5 p-0.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        {/* Period selector — solo si NO viene controlado desde afuera */}
+        {!externalPeriod && (
+        <div className="flex gap-0.5 p-0.5 rounded-md bg-slate-900 border border-slate-800">
           {(Object.keys(periodConfig) as PeriodFilter[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
-              style={{
-                background: period === p ? 'rgba(6,182,212,0.15)' : 'transparent',
-                color: period === p ? '#6b8baa' : 'rgba(148,163,184,0.5)',
-              }}
+              className={cn(
+                'px-2.5 py-1 rounded text-xs font-medium transition-colors',
+                period === p
+                  ? 'bg-slate-800 text-slate-100'
+                  : 'text-slate-500 hover:text-slate-300',
+              )}
             >
               {periodConfig[p].label}
             </button>
           ))}
         </div>
+        )}
       </div>
 
-      {/* Chart */}
+      {/* Visual: donut chart con leyenda + tabla detallada */}
       {chartData.length === 0 ? (
-        <div className="py-12 text-center rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(51,65,85,0.2)' }}>
-          <Package size={32} className="mx-auto mb-2 text-slate-600" />
-          <p className="text-sm text-slate-500">{t('analytics.noConsumptionData', 'Sin datos de consumo en este período')}</p>
+        <div className="py-10 text-center text-sm text-slate-500">
+          {t('analytics.noConsumptionData', 'Sin datos de consumo en este período')}
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {chartData.map((item, i: number) => {
-            const pct = (item.cantidad / maxValue) * 100;
-            const delta = item.prevCantidad > 0
-              ? ((item.cantidad - item.prevCantidad) / item.prevCantidad * 100).toFixed(0)
-              : null;
-            const isUp = delta !== null && parseFloat(delta) >= 0;
-            const barColor = getCatColor(item.categoria);
-
-            return (
-              <div
-                key={item.codigo}
-                className="group cursor-pointer"
-                onClick={() => handleBarClick(item.codigo)}
-              >
-                <div className="flex items-center gap-3">
-                  {/* Rank number */}
-                  <div className="w-5 text-center flex-shrink-0">
-                    <span
-                      className="text-[11px] font-bold"
-                      style={{ color: i < 3 ? '#6b8baa' : 'rgba(148,163,184,0.3)' }}
-                    >
-                      {i + 1}
-                    </span>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <Donut
+              data={chartData.map((d, i) => ({
+                name: d.descripcion,
+                value: d.cantidad,
+                color: CHART_COLORS[i % CHART_COLORS.length],
+              }))}
+              size={200}
+              centerLabel="Total"
+              centerValue={chartData.reduce((s, d) => s + d.cantidad, 0).toLocaleString('es-UY')}
+              valueFormatter={(v) => `${v.toLocaleString('es-UY')} uds`}
+            />
+            <div className="flex-1 w-full space-y-2.5">
+              {chartData.map((d, i) => {
+                const total = chartData.reduce((s, x) => s + x.cantidad, 0);
+                const pct = total > 0 ? (d.cantidad / total * 100) : 0;
+                return (
+                  <div key={d.codigo} className="flex items-center gap-3">
+                    <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                    <span className="flex-1 text-sm text-slate-200 font-medium truncate">{d.descripcion}</span>
+                    <span className="text-sm font-semibold text-slate-100 tabular-nums">{d.cantidad.toLocaleString('es-UY')}</span>
+                    <span className="text-xs text-slate-500 tabular-nums w-12 text-right">{pct.toFixed(1)}%</span>
                   </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm text-slate-200 font-medium truncate group-hover:text-white transition-colors">
-                          {item.descripcion}
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+      {chartData.length > 0 && (
+        <div className="overflow-hidden rounded-lg border border-slate-800">
+          <table className="w-full">
+            <thead className="bg-slate-800/60">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.08em] text-slate-400 w-10">#</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.08em] text-slate-400">Producto</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.08em] text-slate-400">Categoría</th>
+                <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-[0.08em] text-slate-400">Unidades</th>
+                <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-[0.08em] text-slate-400">vs ant.</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {chartData.map((item, i: number) => {
+                const delta = item.prevCantidad > 0
+                  ? ((item.cantidad - item.prevCantidad) / item.prevCantidad * 100)
+                  : null;
+                const isUp = delta !== null && delta >= 0;
+                return (
+                  <tr
+                    key={item.codigo}
+                    onClick={() => handleBarClick(item.codigo)}
+                    className="cursor-pointer hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md text-sm font-bold tabular-nums text-slate-300">
+                        {i + 1}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-slate-100 max-w-[320px] truncate">{item.descripcion}</td>
+                    <td className="px-4 py-3 text-xs text-slate-500 truncate">{item.categoria}</td>
+                    <td className="px-4 py-3 text-right text-base font-bold text-slate-100 tabular-nums">
+                      {item.cantidad.toLocaleString('es-UY')}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {delta !== null && Number.isFinite(delta) ? (
+                        <span className={cn(
+                          'inline-flex items-center gap-1 text-sm font-semibold',
+                          isUp ? 'text-emerald-400' : 'text-red-400',
+                        )}>
+                          {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                          {Math.abs(delta).toFixed(0)}%
                         </span>
-                        <span
-                          className="text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0"
-                          style={{
-                            background: `${barColor}15`,
-                            color: `${barColor}cc`,
-                          }}
-                        >
-                          {item.categoria}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2.5 flex-shrink-0 ml-3">
-                        <span className="text-sm font-bold text-white font-mono">{item.cantidad}</span>
-                        {delta !== null && (
-                          <span
-                            className="text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5"
-                            style={{
-                              background: isUp ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
-                              color: isUp ? '#4aaa73' : '#cc5555',
-                            }}
-                          >
-                            {isUp ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-                            {isUp ? '+' : ''}{delta}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Bar */}
-                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                      <div
-                        className="h-full rounded-full transition-all duration-700 group-hover:opacity-90"
-                        style={{
-                          width: `${Math.max(pct, 3)}%`,
-                          background: `linear-gradient(90deg, ${barColor}cc, ${barColor}44)`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                      ) : (
+                        <span className="text-xs text-slate-600">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -658,7 +674,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
               <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <Package size={12} className="text-slate-500" />
-                  <span className="text-[11px] text-slate-500">{t('analytics.currentStock', 'Stock actual')}</span>
+                  <span className="text-xs text-slate-500">{t('analytics.currentStock', 'Stock actual')}</span>
                 </div>
                 <div
                   className="text-xl font-bold font-mono"
@@ -666,24 +682,24 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                 >
                   {selectedProduct.stock}
                 </div>
-                <div className="text-[10px] text-slate-600">{t('stock.minStock', 'Mín')}: {selectedProduct.stockMinimo}</div>
+                <div className="text-xs text-slate-600">{t('stock.minStock', 'Mín')}: {selectedProduct.stockMinimo}</div>
               </div>
 
               <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <BarChart3 size={12} className="text-slate-500" />
-                  <span className="text-[11px] text-slate-500">{t('analytics.consumption', 'Consumo')}</span>
+                  <span className="text-xs text-slate-500">{t('analytics.consumption', 'Consumo')}</span>
                 </div>
                 <div className="text-xl font-bold font-mono text-cyan-400">
                   {selectedProduct.consumoTotal}
                 </div>
-                <div className="text-[10px] text-slate-600">{selectedProduct.consumoDiario}/{t('analytics.dayAvg', 'día prom.')}</div>
+                <div className="text-xs text-slate-600">{selectedProduct.consumoDiario}/{t('analytics.dayAvg', 'día prom.')}</div>
               </div>
 
               <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <Clock size={12} className="text-slate-500" />
-                  <span className="text-[11px] text-slate-500">{t('analytics.daysLeft', 'Días restantes')}</span>
+                  <span className="text-xs text-slate-500">{t('analytics.daysLeft', 'Días restantes')}</span>
                 </div>
                 <div
                   className="text-xl font-bold font-mono"
@@ -696,18 +712,18 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                 >
                   {selectedProduct.diasRestantes ?? '∞'}
                 </div>
-                <div className="text-[10px] text-slate-600">{t('analytics.estimatedCurrentRate', 'al ritmo actual')}</div>
+                <div className="text-xs text-slate-600">{t('analytics.estimatedCurrentRate', 'al ritmo actual')}</div>
               </div>
 
               <div className="p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(51,65,85,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <DollarSign size={12} className="text-slate-500" />
-                  <span className="text-[11px] text-slate-500">{t('stock.salePrice', 'Precio')}</span>
+                  <span className="text-xs text-slate-500">{t('stock.salePrice', 'Precio')}</span>
                 </div>
                 <div className="text-xl font-bold font-mono text-violet-400">
                   ${selectedProduct.precio.toLocaleString('es-UY')}
                 </div>
-                <div className="text-[10px] text-slate-600">{t('common.perUnit', 'por unidad')}</div>
+                <div className="text-xs text-slate-600">{t('common.perUnit', 'por unidad')}</div>
               </div>
             </div>
 
@@ -731,7 +747,7 @@ export function ConsumptionChart({ movements, products }: ConsumptionChartProps)
                     >
                       <div className="flex items-center gap-2">
                         <span
-                          className="text-[10px] px-2 py-0.5 rounded font-medium"
+                          className="text-xs px-2 py-0.5 rounded font-medium"
                           style={{
                             background: mov.tipo === 'entrada' ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
                             color: mov.tipo === 'entrada' ? '#4aaa73' : '#cc5555',

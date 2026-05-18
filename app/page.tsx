@@ -114,6 +114,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [dashboardPeriod, setDashboardPeriod] = useState('30d');
+  const [dashboardAlmacenId, setDashboardAlmacenId] = useState<string>('todos');
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [comercialSubTab, setComercialSubTab] = useState<ComercialSubTab>('dashboard');
 
@@ -284,8 +285,15 @@ export default function HomePage() {
     setLastRefresh(new Date());
   }, [fetchProducts, fetchMovements, refreshPredictions]);
 
-  // Period days mapping
-  const periodDays = dashboardPeriod === '7d' ? 7 : dashboardPeriod === '90d' ? 90 : 30;
+  // Period days mapping — fuente única de período para todo el dashboard
+  const periodDays = dashboardPeriod === '7d' ? 7
+    : dashboardPeriod === '90d' ? 90
+    : dashboardPeriod === '1a' ? 365
+    : 30;
+  const periodLabel = dashboardPeriod === '7d' ? '7 días'
+    : dashboardPeriod === '90d' ? '90 días'
+    : dashboardPeriod === '1a' ? '1 año'
+    : '30 días';
 
   // Filtered products with semantic search
   const filteredProducts = useMemo(() => {
@@ -304,50 +312,61 @@ export default function HomePage() {
     return getStockAlerts(products, predictions);
   }, [products, predictions]);
 
-  // Dashboard stats
+  // Dashboard stats — filtered by warehouse if selected
   const stats = useMemo(() => {
-    const activeProducts = products.length;
-    const lowStockCount = products.filter((p) => p.stock <= p.stockMinimo).length;
-    const today = new Date();
-    const todayMovements = movements.filter(
-      (m) => new Date(m.timestamp).toDateString() === today.toDateString()
-    ).length;
+    const filteredProducts = dashboardAlmacenId === 'todos'
+      ? products
+      : products.filter(p => p.almacenId === dashboardAlmacenId);
 
-    // Calcular rotación promedio (días de inventario)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // Movement filter: si hay almacén seleccionado, solo movs cuyo producto pertenece
+    const productCodesInAlmacen = new Set(filteredProducts.map(p => p.codigo));
+    const filteredMovements = dashboardAlmacenId === 'todos'
+      ? movements
+      : movements.filter(m => productCodesInAlmacen.has(m.codigo));
 
-    const salesLast30Days = movements
-      .filter(m => m.tipo === 'salida' && new Date(m.timestamp) >= thirtyDaysAgo)
-      .reduce((sum, m) => sum + m.cantidad, 0);
+    const activeProducts = filteredProducts.length;
 
-    const dailyAvgSales = salesLast30Days / 30;
-    const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
-    const avgRotation = dailyAvgSales > 0 ? Math.round(totalStock / dailyAvgSales) : 0;
+    // Stock bajo = stock > 0 AND ≤ minimo (separar de agotados)
+    const stockBajoSinAgotados = filteredProducts.filter(p => p.stock > 0 && p.stockMinimo > 0 && p.stock <= p.stockMinimo).length;
+    const agotados = filteredProducts.filter(p => p.stock === 0).length;
 
-    // Trend: movements today vs yesterday
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayMovements = movements.filter(
-      (m) => new Date(m.timestamp).toDateString() === yesterday.toDateString()
-    ).length;
+    // Ventanas según el período del dashboard
+    const now = Date.now();
+    const periodStart = new Date(now - periodDays * 86400000);
+    const prevPeriodStart = new Date(now - periodDays * 2 * 86400000);
 
-    const movementTrend = yesterdayMovements > 0
-      ? { value: Math.round(((todayMovements - yesterdayMovements) / yesterdayMovements) * 100), label: 'vs ayer' }
-      : undefined;
+    const movementsInPeriod = filteredMovements.filter(
+      (m) => new Date(m.timestamp) >= periodStart
+    );
+    const movementsInPrevPeriod = filteredMovements.filter(
+      (m) => {
+        const t = new Date(m.timestamp);
+        return t >= prevPeriodStart && t < periodStart;
+      }
+    );
 
-    // Trend: rotation current 30d vs previous 30d (lower = better for rotation days)
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-    const salesPrev30Days = movements
-      .filter(m => m.tipo === 'salida' && new Date(m.timestamp) >= sixtyDaysAgo && new Date(m.timestamp) < thirtyDaysAgo)
-      .reduce((sum, m) => sum + m.cantidad, 0);
-    const prevDailyAvg = salesPrev30Days / 30;
-    const prevRotation = prevDailyAvg > 0 ? Math.round(totalStock / prevDailyAvg) : 0;
+    // ROTACIÓN — días de inventario reales en la ventana seleccionada.
+    const salesInPeriod = movementsInPeriod.filter(m => m.tipo === 'salida');
 
-    // For rotation, lower days = faster turnover = good, so we invert the sign
-    const rotationTrend = (avgRotation > 0 && prevRotation > 0)
-      ? { value: Math.round(((prevRotation - avgRotation) / prevRotation) * 100), label: 'vs mes ant.' }
+    let avgRotation = 0;
+    let dailyAvgSales = 0;
+    if (salesInPeriod.length > 0) {
+      const oldest = salesInPeriod.reduce((min, m) => {
+        const t = new Date(m.timestamp).getTime();
+        return t < min ? t : min;
+      }, now);
+      const daysSpan = Math.max(1, Math.min(periodDays, Math.ceil((now - oldest) / 86400000)));
+      const totalSales = salesInPeriod.reduce((sum, m) => sum + m.cantidad, 0);
+      dailyAvgSales = totalSales / daysSpan;
+      const totalStock = filteredProducts.reduce((sum, p) => sum + p.stock, 0);
+      avgRotation = dailyAvgSales > 0 ? Math.round(totalStock / dailyAvgSales) : 0;
+    }
+
+    // Trend: movimientos en período vs período anterior
+    const movsCount = movementsInPeriod.length;
+    const prevMovsCount = movementsInPrevPeriod.length;
+    const movementTrend = prevMovsCount > 0
+      ? { value: Math.round(((movsCount - prevMovsCount) / prevMovsCount) * 100), label: `vs ${periodLabel} ant.` }
       : undefined;
 
     return [
@@ -356,31 +375,43 @@ export default function HomePage() {
         value: formatNumber(activeProducts),
         icon: <Package size={24} />,
         color: 'emerald',
-        subtitle: 'SKUs en catálogo'
+        subtitle: dashboardAlmacenId === 'todos' ? 'SKUs en catálogo' : 'SKUs en este almacén',
       },
       {
         label: t('dashboard.avgRotation', 'Rotación Promedio'),
         value: avgRotation > 0 ? `${avgRotation}d` : '—',
         icon: <TrendingUp size={24} />,
         color: 'cyan',
-        subtitle: t('dashboard.daysOfInventory', 'días de inventario'),
-        trend: rotationTrend,
+        subtitle: dailyAvgSales > 0 ? `${dailyAvgSales.toFixed(1)} unid/día (${periodLabel})` : `Sin ventas en ${periodLabel}`,
       },
       {
         label: t('dashboard.lowStock', 'Stock Bajo'),
-        value: lowStockCount.toString(),
+        value: stockBajoSinAgotados.toString(),
         icon: <AlertTriangle size={24} />,
-        color: lowStockCount > 0 ? 'amber' : 'slate'
+        color: stockBajoSinAgotados > 0 ? 'amber' : 'slate',
+        subtitle: agotados > 0 ? `+ ${agotados} agotados` : 'Sin agotados',
       },
       {
-        label: t('dashboard.movementsToday', 'Movimientos Hoy'),
-        value: todayMovements.toString(),
+        label: `Movimientos · ${periodLabel}`,
+        value: movsCount.toString(),
         icon: <ArrowLeftRight size={24} />,
         color: 'purple',
         trend: movementTrend,
       },
     ];
-  }, [products, movements, t]);
+  }, [products, movements, t, dashboardAlmacenId, periodDays, periodLabel]);
+
+  // Productos / movimientos filtrados por almacén — usados en cards del dashboard
+  const dashboardProducts = useMemo(() => {
+    if (dashboardAlmacenId === 'todos') return products;
+    return products.filter(p => p.almacenId === dashboardAlmacenId);
+  }, [products, dashboardAlmacenId]);
+
+  const dashboardMovements = useMemo(() => {
+    if (dashboardAlmacenId === 'todos') return movements;
+    const codes = new Set(dashboardProducts.map(p => p.codigo));
+    return movements.filter(m => codes.has(m.codigo));
+  }, [movements, dashboardProducts, dashboardAlmacenId]);
 
   // Products with predictions for analytics
   const productsWithPredictions = useMemo(() => {
@@ -623,123 +654,82 @@ export default function HomePage() {
 
         {/* ==================== DASHBOARD ==================== */}
         {activeTab === 'dashboard' && (
-          <div className="space-y-6">
-            {/* "Mi Día" — vista personal anti-estrés */}
-            <MiDia onNavigate={handleTabChange} onAskAI={askAI} />
-
-            {/* Welcome Header + Period Selector + Refresh */}
+          <div className="space-y-5">
+            {/* Header: saludo + selector almacén + período + refresh */}
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="flex-1 min-w-0">
                 <WelcomeHeader
                   userName={user?.nombre || user?.email?.split('@')[0]}
-                  products={products}
+                  products={dashboardProducts}
                   predictions={predictions}
                 />
               </div>
-              <div className="flex items-center gap-3 flex-shrink-0 pt-1">
+              <div className="flex items-center gap-2 flex-shrink-0 pt-1">
+                {/* Selector de almacén — el dashboard se filtra entero */}
+                <select
+                  value={dashboardAlmacenId}
+                  onChange={(e) => setDashboardAlmacenId(e.target.value)}
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-sm text-slate-200 transition-colors focus:outline-none focus:border-indigo-500"
+                  title="Filtrar dashboard por almacén"
+                >
+                  <option value="todos">Todos los almacenes</option>
+                  {almacenes.map(a => (
+                    <option key={a.id} value={a.id}>{a.nombre}</option>
+                  ))}
+                </select>
                 <PeriodSelector value={dashboardPeriod} onChange={setDashboardPeriod} />
                 <button
                   onClick={handleManualRefresh}
-                  className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 transition-all group"
+                  className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-colors"
                   title={`Última actualización: ${lastRefresh.toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' })}`}
                 >
-                  <RefreshCw size={14} className="text-slate-400 group-hover:text-slate-200 transition-colors" />
+                  <RefreshCw size={14} className="text-slate-400 hover:text-slate-200 transition-colors" />
                 </button>
               </div>
             </div>
 
-            {/* Stats */}
-            <StatsGrid stats={stats} products={products} movements={movements} />
+            {/* KPIs principales */}
+            <StatsGrid stats={stats} products={dashboardProducts} movements={dashboardMovements} />
 
-            {/* Cross-Module Summary */}
-            <CrossModuleSummary onNavigate={(tab) => handleTabChange(tab as TabType)} />
+            {/* Valor del Inventario (con desglose por almacén) */}
+            <InventoryValueCard
+              products={dashboardProducts}
+              movements={dashboardMovements}
+              periodDays={periodDays}
+              periodLabel={periodLabel}
+              onCategoryClick={(category: string) => {
+                setSelectedCategory(category);
+                handleTabChange('stock');
+              }}
+            />
 
-            {/* Enterprise Panels Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <InventoryValueCard
-                products={products}
-                movements={movements}
-                onCategoryClick={(category: string) => {
-                  setSelectedCategory(category);
-                  handleTabChange('stock');
-                }}
-              />
-              <StockAlertsPanel
-                products={products}
-                predictions={predictions}
-                onProductClick={(product: Product) => handleOpenEdit(product)}
-                onCreatePurchaseOrder={(productsAtRisk: Product[]) => {
-                  handleTabChange('compras');
-                }}
-              />
-            </div>
-
-            {/* Inventory Trend Chart */}
+            {/* Flujo de inventario */}
             <InventoryTrendChart
-              movements={movements}
-              products={products}
+              movements={dashboardMovements}
+              products={dashboardProducts}
               days={periodDays}
             />
 
-            {/* Activity + Consumption Chart Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2">
-                <div className="rounded-xl p-5 bg-slate-900 border border-slate-800">
-                  <ConsumptionChart movements={movements} products={products} />
-                </div>
+            {/* Top consumidos + Insights — lado a lado (60/40) */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              <div className="lg:col-span-3 rounded-xl p-6 bg-slate-900/40 border border-slate-800">
+                <ConsumptionChart
+                  movements={dashboardMovements}
+                  products={dashboardProducts}
+                  fixedPeriod={dashboardPeriod as '7d' | '30d' | '90d' | '1a'}
+                />
               </div>
-              <RecentActivityPanel
-                movements={movements}
-                products={products}
-                maxItems={8}
-              />
+              <div className="lg:col-span-2">
+                <InsightsPanel
+                  products={dashboardProducts}
+                  movements={dashboardMovements}
+                  predictions={predictions}
+                  onNavigate={(tab) => handleTabChange(tab as TabType)}
+                />
+              </div>
             </div>
 
-            {/* AI Insights */}
-            <InsightsPanel
-              products={products}
-              movements={movements}
-              predictions={predictions}
-              onNavigate={(tab) => handleTabChange(tab as TabType)}
-            />
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <button
-                onClick={() => setShowNewProduct(true)}
-                className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left group"
-              >
-                <Plus size={20} className="text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
-                <div className="text-sm font-semibold text-slate-200">Nuevo Producto</div>
-                <div className="text-xs text-slate-500">Agregar al catálogo</div>
-              </button>
-              <button
-                onClick={() => setShowNewMovement(true)}
-                className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left group"
-              >
-                <ArrowLeftRight size={20} className="text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
-                <div className="text-sm font-semibold text-slate-200">Registrar Movimiento</div>
-                <div className="text-xs text-slate-500">Entrada o salida</div>
-              </button>
-              <button
-                onClick={() => handleTabChange('compras')}
-                className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left group"
-              >
-                <ShoppingCart size={20} className="text-amber-400 mb-2 group-hover:scale-110 transition-transform" />
-                <div className="text-sm font-semibold text-slate-200">Orden de Compra</div>
-                <div className="text-xs text-slate-500">Crear nueva orden</div>
-              </button>
-              <button
-                onClick={() => handleTabChange('reportes')}
-                className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all text-left group"
-              >
-                <FileText size={20} className="text-violet-400 mb-2 group-hover:scale-110 transition-transform" />
-                <div className="text-sm font-semibold text-slate-200">Reportes</div>
-                <div className="text-xs text-slate-500">Generar informes</div>
-              </button>
-            </div>
-
-            {/* AI Panels */}
+            {/* Paneles de IA — predicciones, anomalías, asociaciones */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <AIPredictionsPanel />
               <AIAnomaliesPanel />
