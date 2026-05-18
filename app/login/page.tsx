@@ -3,8 +3,11 @@
 import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
+
+const IntroAnimation = dynamic(() => import('@/components/intro/IntroAnimation'), { ssr: false });
 
 export default function LoginPage() {
   const router = useRouter();
@@ -82,7 +85,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+    <>
+      <IntroAnimation />
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
@@ -202,5 +207,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
