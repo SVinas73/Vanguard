@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
+import { Logo } from '@/components/ui/Logo';
 
 const SESSION_KEY = 'vg:intro:shown';
 
@@ -98,16 +98,9 @@ export default function IntroAnimation({ force = false, onComplete }: IntroAnima
                 ],
               }}
               transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-              className="relative"
+              className="relative flex justify-center"
             >
-              <Image
-                src="/vang.png"
-                alt="Vanguard"
-                width={180}
-                height={180}
-                priority
-                className="select-none"
-              />
+              <Logo size={180} gradientId="intro-animation" />
             </motion.div>
 
             {/* Nombre del producto */}
