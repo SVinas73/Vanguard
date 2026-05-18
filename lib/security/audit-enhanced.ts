@@ -23,13 +23,16 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const HMAC_KEY = (() => {
+function getHmacKey(): string {
   const key = process.env.AUDIT_HMAC_KEY;
-  if (!key && process.env.NODE_ENV === 'production') {
-    throw new Error('AUDIT_HMAC_KEY no configurado. Generá uno con: openssl rand -hex 32');
+  if (!key) {
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
+      throw new Error('AUDIT_HMAC_KEY no configurado. Generá uno con: openssl rand -hex 32');
+    }
+    return 'dev-only-insecure-key-never-use-in-prod';
   }
-  return key || 'dev-only-insecure-key-never-use-in-prod';
-})();
+  return key;
+}
 
 export interface AuditContext {
   ip?: string;
@@ -63,7 +66,7 @@ function calcularHashChain(entry: AuditEntry, hashPrevio: string, createdAt: str
     JSON.stringify(entry.datosNuevos || null),
   ].join('|');
 
-  return crypto.createHmac('sha256', HMAC_KEY).update(payload).digest('hex');
+  return crypto.createHmac('sha256', getHmacKey()).update(payload).digest('hex');
 }
 
 /**

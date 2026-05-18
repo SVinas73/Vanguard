@@ -17,24 +17,24 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const PII_KEY = (() => {
+function getPiiKey(): string {
   const key = process.env.PII_ENCRYPTION_KEY;
-  if (!key && process.env.NODE_ENV === 'production') {
+  if (!key && process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
     throw new Error('PII_ENCRYPTION_KEY no configurado. Generá uno con: openssl rand -hex 32');
   }
   return key || '';
-})();
-
+}
 function getClient(): any {
   return createClient(supabaseUrl, supabaseKey);
 }
 
 async function setKey(client: any) {
-  if (!PII_KEY) return;
+  const piiKey = getPiiKey();
+  if (!piiKey) return;
   try {
     await client.rpc('set_config', {
       setting_name: 'app.pii_key',
-      new_value: PII_KEY,
+      new_value: piiKey,
       is_local: false,
     });
   } catch { /* set_config puede no estar habilitado en este server */ }
@@ -46,7 +46,7 @@ async function setKey(client: any) {
  */
 export async function cifrarPII(plaintext: string | null | undefined): Promise<string | null> {
   if (!plaintext) return null;
-  if (!PII_KEY) return plaintext;
+  if (!getPiiKey()) return plaintext;
 
   const client = getClient();
   await setKey(client);
@@ -64,7 +64,7 @@ export async function cifrarPII(plaintext: string | null | undefined): Promise<s
  */
 export async function descifrarPII(ciphertext: string | null | undefined): Promise<string | null> {
   if (!ciphertext) return null;
-  if (!PII_KEY) return ciphertext;
+  if (!getPiiKey()) return ciphertext;
 
   const client = getClient();
   await setKey(client);
