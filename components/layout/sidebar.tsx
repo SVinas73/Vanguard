@@ -237,7 +237,6 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       )}
 
     <aside
-      data-tour="sidebar"
       className={cn(
         'fixed left-0 top-0 h-screen flex flex-col transition-transform duration-300 lg:transition-all lg:duration-200 z-[60]',
         'bg-slate-950 border-r border-slate-800',
@@ -303,7 +302,6 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                   return (
                     <button
                       key={item.id}
-                      data-tour={item.id}
                       onClick={() => { if (hasPermission) { onTabChange(item.id); setMobileOpen(false); } }}
                       disabled={!hasPermission}
                       title={collapsed ? item.label : undefined}

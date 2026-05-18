@@ -59,8 +59,6 @@ const PricingRecommender    = dynamic(() => import('@/components/pricing/Pricing
 const ReplenishmentDashboard = dynamic(() => import('@/components/replenishment/ReplenishmentDashboard'),                          { loading: ModuleLoader });
 const CustomerRiskModule    = dynamic(() => import('@/components/customer-risk/CustomerRiskModule'),                              { loading: ModuleLoader });
 const AyudaModule           = dynamic(() => import('@/components/ayuda/AyudaModule'),                                              { loading: ModuleLoader });
-const WelcomeTour           = dynamic(() => import('@/components/tour/WelcomeTour'),                                               { ssr: false });
-import { useFirstTimeUser } from '@/hooks/useFirstTimeUser';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -118,7 +116,6 @@ export default function HomePage() {
 
   // UI State
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-  const { mostrarTour, marcarCompletado: marcarTourCompletado, resetear: resetearTour } = useFirstTimeUser();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [dashboardPeriod, setDashboardPeriod] = useState('30d');
@@ -825,7 +822,7 @@ export default function HomePage() {
 
         {/* ==================== AYUDA ==================== */}
         {activeTab === 'ayuda' && (
-          <AyudaModule onStartTour={() => { resetearTour(); }} />
+          <AyudaModule />
         )}
 
         {/* ==================== ANALYTICS ==================== */}
@@ -1240,9 +1237,6 @@ export default function HomePage() {
 
       {/* Chatbot IA */}
       <ChatbotWidget />
-
-      {/* Tour de bienvenida (primera visita) */}
-      <WelcomeTour run={mostrarTour} onFinish={marcarTourCompletado} />
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}

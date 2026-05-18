@@ -51,7 +51,7 @@ export function OrgSwitcher() {
 
   return (
     <>
-      <div ref={ref} className="relative" data-tour="org-switcher">
+      <div ref={ref} className="relative">
         <button
           onClick={() => setOpen(v => !v)}
           className="flex items-center gap-2 px-2.5 py-1.5 text-[12px] text-slate-300 hover:text-slate-100 border border-slate-800 rounded-md hover:bg-slate-900 transition-colors"

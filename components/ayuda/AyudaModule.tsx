@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Search, BookOpen, PlayCircle, Rocket, Box, Boxes, Brain, ShieldQuestion, Settings } from 'lucide-react';
+import { Search, BookOpen, Rocket, Box, Boxes, Brain, ShieldQuestion, Settings } from 'lucide-react';
 import { docs, buscarDocs, type DocSection } from '@/lib/help/docs-content';
 import { resolveIcon } from './icon-registry';
 
@@ -29,11 +29,7 @@ const CATEGORIA_ORDER: DocSection['categoria'][] = [
   'inicio', 'nucleo', 'operaciones', 'analisis', 'postventa', 'sistema',
 ];
 
-interface AyudaModuleProps {
-  onStartTour?: () => void;
-}
-
-export default function AyudaModule({ onStartTour }: AyudaModuleProps) {
+export default function AyudaModule() {
   const [query, setQuery] = useState('');
   const [slugActivo, setSlugActivo] = useState<string>('getting-started');
 
@@ -67,15 +63,6 @@ export default function AyudaModule({ onStartTour }: AyudaModuleProps) {
               className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500"
             />
           </div>
-          {onStartTour && (
-            <button
-              onClick={onStartTour}
-              className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm transition"
-            >
-              <PlayCircle className="w-4 h-4" />
-              Hacer el tour guiado
-            </button>
-          )}
         </div>
 
         <nav className="flex-1 overflow-y-auto p-2">
