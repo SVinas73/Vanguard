@@ -283,6 +283,7 @@ export function ChatbotWidget() {
     <>
       {/* Chat button */}
       <button
+        data-tour="asistente"
         onClick={() => setIsOpen(true)}
         className={cn(
           'fixed bottom-24 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all z-[70]',
