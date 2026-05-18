@@ -23,7 +23,13 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const HMAC_KEY = process.env.AUDIT_HMAC_KEY || 'vanguard-audit-default-key-change-me';
+const HMAC_KEY = (() => {
+  const key = process.env.AUDIT_HMAC_KEY;
+  if (!key && process.env.NODE_ENV === 'production') {
+    throw new Error('AUDIT_HMAC_KEY no configurado. Generá uno con: openssl rand -hex 32');
+  }
+  return key || 'dev-only-insecure-key-never-use-in-prod';
+})();
 
 export interface AuditContext {
   ip?: string;
