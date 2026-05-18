@@ -13,6 +13,7 @@ import { requireAuth } from '@/lib/security/permissions';
 import { parseSafe, gdprSchema } from '@/lib/security/zod-schemas';
 import { chequearRateLimit, extraerIP } from '@/lib/security/rate-limit';
 import { registrarAuditoriaSegura, extraerContextoAudit } from '@/lib/security/audit-enhanced';
+import { requireTotpCode } from '@/lib/security/require-totp';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -27,10 +28,20 @@ export async function POST(request: NextRequest) {
   if (!parsed.ok) return NextResponse.json(parsed, { status: 400 });
 
   const target = parsed.data.usuario_email;
+  const esBorradoPropio = auth.user.email === target;
+  const esAdmin = auth.user.rol === 'admin';
 
   // El propio usuario o un admin
-  if (auth.user.email !== target && auth.user.rol !== 'admin') {
+  if (!esBorradoPropio && !esAdmin) {
     return NextResponse.json({ error: 'Solo podés solicitar borrado de tu propio usuario' }, { status: 403 });
+  }
+
+  // Si admin solicita borrado sobre OTRO usuario, exigir 2FA
+  if (!esBorradoPropio && esAdmin) {
+    const totp = await requireTotpCode(request, auth.user.email);
+    if (!totp.ok) {
+      return NextResponse.json({ error: totp.error, code: totp.code }, { status: totp.status });
+    }
   }
 
   // Rate limit estricto: max 1 solicitud por día

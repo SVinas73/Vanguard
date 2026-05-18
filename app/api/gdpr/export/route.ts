@@ -13,6 +13,7 @@ import { requireAuth } from '@/lib/security/permissions';
 import { parseSafe, gdprSchema } from '@/lib/security/zod-schemas';
 import { chequearRateLimit, extraerIP } from '@/lib/security/rate-limit';
 import { registrarAuditoriaSegura, extraerContextoAudit } from '@/lib/security/audit-enhanced';
+import { requireTotpCode } from '@/lib/security/require-totp';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -29,8 +30,18 @@ export async function POST(request: NextRequest) {
   if (!parsed.ok) return NextResponse.json(parsed, { status: 400 });
 
   // 3. Solo el propio usuario o un admin pueden exportar
-  if (auth.user.email !== parsed.data.usuario_email && auth.user.rol !== 'admin') {
+  const esExportPropio = auth.user.email === parsed.data.usuario_email;
+  const esAdmin = auth.user.rol === 'admin';
+  if (!esExportPropio && !esAdmin) {
     return NextResponse.json({ error: 'Solo podés exportar tus propios datos' }, { status: 403 });
+  }
+
+  // 3.5. Si admin exporta data de OTRO usuario, exigir 2FA
+  if (!esExportPropio && esAdmin) {
+    const totp = await requireTotpCode(request, auth.user.email);
+    if (!totp.ok) {
+      return NextResponse.json({ error: totp.error, code: totp.code }, { status: totp.status });
+    }
   }
 
   // 4. Rate limit (max 3 exports por hora por usuario)

@@ -1,15 +1,18 @@
 // =====================================================
-// HERRAMIENTAS DEL ASISTENTE OMNISCIENTE
+// HERRAMIENTAS DEL ASISTENTE OMNISCIENTE — SERVER ONLY
 // =====================================================
 // Cobertura completa: stock, compras, ventas, finanzas,
 // WMS, taller, proyectos, QMS, RMA, trazabilidad, BOM,
 // aprobaciones, facturación electrónica, notificaciones,
 // auditoría + guía de navegación de la app.
 //
-// Cada tool devuelve { ...data } o { error: string }.
-// Las que escriben respetan permisos (rol del usuario).
+// IMPORTANTE: este archivo usa SUPABASE_SERVICE_ROLE_KEY
+// y nunca debe ejecutarse en el cliente. El import de
+// 'server-only' tira error de build si Next.js intenta
+// empaquetarlo con código de cliente.
 // =====================================================
 
+import 'server-only';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
