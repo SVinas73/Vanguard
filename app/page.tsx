@@ -57,6 +57,7 @@ const HistorialCliente      = dynamic(() => import('@/components/clientes/Histor
 const ExecutiveDashboard    = dynamic(() => import('@/components/executive/ExecutiveDashboard'),                                  { loading: ModuleLoader });
 const PricingRecommender    = dynamic(() => import('@/components/pricing/PricingRecommender'),                                    { loading: ModuleLoader });
 const ReplenishmentDashboard = dynamic(() => import('@/components/replenishment/ReplenishmentDashboard'),                          { loading: ModuleLoader });
+const CustomerRiskModule    = dynamic(() => import('@/components/customer-risk/CustomerRiskModule'),                              { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -811,6 +812,11 @@ export default function HomePage() {
         {/* ==================== REABASTECIMIENTO IA ==================== */}
         {activeTab === 'replenishment' && (
           <ReplenishmentDashboard />
+        )}
+
+        {/* ==================== CLIENTES EN RIESGO ==================== */}
+        {activeTab === 'customer_risk' && (
+          <CustomerRiskModule />
         )}
 
         {/* ==================== ANALYTICS ==================== */}
