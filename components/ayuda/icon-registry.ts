@@ -46,6 +46,7 @@ import {
   Plug,
   Users,
   Lock,
+  AlertTriangle,
   HelpCircle,
   type LucideIcon,
 } from 'lucide-react';
@@ -57,6 +58,7 @@ export const ICONS: Record<string, LucideIcon> = {
   TrendingUp, Sparkles, RefreshCw, Activity, Bot, MessageCircle,
   MessageSquare, ShieldCheck, ShieldAlert, RotateCcw, CheckCircle2,
   QrCode, GitBranch, BadgeCheck, FileSearch, Plug, Users, Lock,
+  AlertTriangle,
 };
 
 export function resolveIcon(name: string): LucideIcon {

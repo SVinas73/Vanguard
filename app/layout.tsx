@@ -3,6 +3,7 @@ import { JetBrains_Mono } from 'next/font/google';
 import { I18nProvider } from '@/components/providers/i18n-provider';
 import { SessionProvider } from '@/components/providers/session-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import './globals.css';
 
 const jetbrainsMono = JetBrains_Mono({
@@ -31,7 +32,9 @@ export default function RootLayout({
         <ThemeProvider>
           <SessionProvider>
             <I18nProvider>
-              {children}
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
             </I18nProvider>
           </SessionProvider>
         </ThemeProvider>

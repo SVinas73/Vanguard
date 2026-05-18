@@ -1350,6 +1350,74 @@ Antes de invitar usuarios en producción, **verificá las RLS policies en Supaba
 `,
   },
   {
+    slug: 'monitoreo-errores',
+    icon: 'AlertTriangle',
+    titulo: 'Monitoreo de Errores (Sentry)',
+    categoria: 'sistema',
+    resumen: 'Captura automática y alertas de errores en producción',
+    contenido: `# Monitoreo de Errores
+
+Vanguard tiene integrado **Sentry** para capturar automáticamente cualquier error que ocurra en producción — sin que vos te enteres por un cliente quejándose.
+
+## ¿Qué captura?
+
+- **Errores no manejados** en cualquier API route
+- **Errores de React** (componentes que crashean)
+- **Promesas rechazadas** sin catch
+- **Crashes del layout** (errores en providers raíz)
+
+## ¿Qué incluye cada reporte?
+
+- Stack trace completo
+- URL donde ocurrió
+- Usuario afectado (anonimizado: \`j***@empresa.com\`)
+- Rol y organización (como tags)
+- Módulo y acción en curso
+- Browser/OS del cliente
+- Estado de la sesión
+
+## ¿Qué NO se envía?
+
+Sentry se configuró con **scrubbing agresivo**:
+- Headers \`Authorization\`, \`Cookie\`, \`x-totp-code\`, \`x-api-key\` se eliminan
+- Query strings con \`token=\` o \`key=\` se redactan
+- Email del usuario se anonimiza
+- \`sendDefaultPii: false\` para que Sentry no infiera más datos
+
+## Cómo activarlo
+
+1. Crear proyecto en [sentry.io](https://sentry.io) (gratis hasta 5K eventos/mes)
+2. Copiar el DSN
+3. Setear en las variables de entorno:
+   - \`NEXT_PUBLIC_SENTRY_DSN\` (para errores client-side)
+   - \`SENTRY_DSN\` (mismo valor, para server-side)
+4. (Opcional) Para source maps legibles:
+   - \`SENTRY_ORG\`, \`SENTRY_PROJECT\`, \`SENTRY_AUTH_TOKEN\`
+5. Deploy
+
+## Cómo testearlo
+
+Endpoint de prueba (solo admin):
+\`\`\`
+GET /api/_sentry-test
+\`\`\`
+Dispara un error de prueba que debería aparecer en el dashboard de Sentry.
+
+## Conexiones
+
+- **Auditoría**: complementa al log de auditoría (auditoría = qué hizo el usuario, Sentry = qué falló)
+- **Notificaciones**: configurable para que Sentry mande a Slack/email
+- **TODO el sistema**: cualquier error en cualquier módulo se captura
+
+## Tip
+
+Configurá **alertas en Sentry** para que te avisen por Slack/email cuando:
+- Un nuevo tipo de error aparece (primera vez)
+- Un error supera N ocurrencias por hora
+- Un error afecta a más de N usuarios únicos
+`,
+  },
+  {
     slug: 'seguridad',
     icon: 'Lock',
     titulo: 'Seguridad',
