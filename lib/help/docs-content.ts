@@ -15,6 +15,8 @@ export interface DocSection {
   titulo: string;
   categoria: 'inicio' | 'nucleo' | 'operaciones' | 'analisis' | 'postventa' | 'sistema';
   resumen: string;
+  /** Nombre del icono Lucide (lucide-react). Ver components/ayuda/icon-registry.ts */
+  icon: string;
   contenido: string;
 }
 
@@ -24,6 +26,7 @@ export const docs: DocSection[] = [
   // ===================================================
   {
     slug: 'getting-started',
+    icon: 'Rocket',
     titulo: 'Primeros pasos',
     categoria: 'inicio',
     resumen: 'Bienvenida y orientación inicial del sistema',
@@ -61,6 +64,7 @@ Mirá el **Mapa de Módulos** para entender cómo se conectan todas las piezas d
   },
   {
     slug: 'mapa-modulos',
+    icon: 'Network',
     titulo: 'Mapa de Módulos — Cómo se conectan',
     categoria: 'inicio',
     resumen: 'Vista global de los flujos del sistema y cómo encaja cada módulo',
@@ -68,7 +72,7 @@ Mirá el **Mapa de Módulos** para entender cómo se conectan todas las piezas d
 
 Vanguard no son módulos sueltos: todo está conectado. Cuando creás una venta, **automáticamente** se reserva stock, se asigna picking, se genera factura, se crea cuenta por cobrar y se contabiliza. Acá te muestro los **5 flujos principales** y qué módulos intervienen.
 
-## 🛒 Flujo 1: Venta (de la cotización al cobro)
+## Flujo 1: Venta (de la cotización al cobro)
 
 \`\`\`
 Comercial → Stock/WMS → Facturación → Finanzas → Auditoría
@@ -82,7 +86,7 @@ Comercial → Stock/WMS → Facturación → Finanzas → Auditoría
 6. **Stock**: al despachar, se descuenta el stock realmente
 7. **Auditoría**: cada paso queda registrado con hash chain inmutable
 
-## 📦 Flujo 2: Compra (del pedido a la recepción)
+## Flujo 2: Compra (del pedido a la recepción)
 
 \`\`\`
 Reabastecimiento IA → Compras → Aprobaciones → Stock/WMS → QMS → Finanzas
@@ -96,7 +100,7 @@ Reabastecimiento IA → Compras → Aprobaciones → Stock/WMS → QMS → Finan
 6. **Stock**: se generan movimientos de entrada
 7. **Finanzas**: cuenta por pagar al proveedor
 
-## 🔧 Flujo 3: Post-venta (cliente reporta problema)
+## Flujo 3: Post-venta (cliente reporta problema)
 
 \`\`\`
 Tickets → Garantías/Taller → Stock → RMA → Comercial
@@ -109,7 +113,7 @@ Tickets → Garantías/Taller → Stock → RMA → Comercial
 5. **RMA**: si hay que devolver al proveedor por defecto de fábrica
 6. **Comercial**: queda registrado en el historial del cliente
 
-## 🏭 Flujo 4: Producción (BOM + Ensamblaje)
+## Flujo 4: Producción (BOM + Ensamblaje)
 
 \`\`\`
 BOM → Ensamblajes → Stock → Trazabilidad
@@ -120,7 +124,7 @@ BOM → Ensamblajes → Stock → Trazabilidad
 3. **Stock**: bajan las materias primas, sube el producto terminado
 4. **Trazabilidad**: si usás seriales/lotes, queda registrado qué lote de cada materia prima generó qué lote de producto
 
-## 📊 Flujo 5: Análisis (IA toma decisiones)
+## Flujo 5: Análisis (IA toma decisiones)
 
 \`\`\`
 Stock + Comercial + Tickets → Customer Risk / Pricing AI / Reabastecimiento → Acciones
@@ -152,6 +156,7 @@ Antes de configurar reglas complejas, hacé el flujo más simple end-to-end (una
   // ===================================================
   {
     slug: 'dashboard',
+    icon: 'LayoutDashboard',
     titulo: 'Dashboard',
     categoria: 'nucleo',
     resumen: 'Vista general del estado del negocio',
@@ -181,6 +186,7 @@ Si querés métricas más financieras (margen, DSO, EBITDA), andá a **Vista Eje
   },
   {
     slug: 'executive',
+    icon: 'Briefcase',
     titulo: 'Vista Ejecutiva (C-Level)',
     categoria: 'nucleo',
     resumen: 'KPIs financieros para gerencia y dueños',
@@ -212,6 +218,7 @@ Mirá la tendencia del **margen %**. Si baja consistentemente, algo está pasand
   },
   {
     slug: 'stock',
+    icon: 'Package',
     titulo: 'Stock e Inventario',
     categoria: 'nucleo',
     resumen: 'Productos, niveles, alertas',
@@ -245,6 +252,7 @@ Cargá **stock mínimo y máximo** desde el principio. Es la base para que el si
   },
   {
     slug: 'movimientos',
+    icon: 'ArrowLeftRight',
     titulo: 'Movimientos',
     categoria: 'nucleo',
     resumen: 'Historial inmutable de cambios de inventario',
@@ -277,6 +285,7 @@ Si tu stock está "raro" (no coincide con lo físico), filtrá movimientos del �
   },
   {
     slug: 'comercial',
+    icon: 'ShoppingCart',
     titulo: 'Comercial / Ventas',
     categoria: 'nucleo',
     resumen: 'Cotizaciones, órdenes de venta, clientes',
@@ -315,6 +324,7 @@ Si un cliente aparece en **Clientes en Riesgo**, tomá acción antes de mandar u
   },
   {
     slug: 'compras',
+    icon: 'Truck',
     titulo: 'Compras',
     categoria: 'nucleo',
     resumen: 'Órdenes de compra, recepción, proveedores',
@@ -349,6 +359,7 @@ Cargá los **lead times** de cada proveedor. Reabastecimiento IA los usa para ca
   },
   {
     slug: 'finanzas',
+    icon: 'Wallet',
     titulo: 'Finanzas',
     categoria: 'nucleo',
     resumen: 'Cuentas por cobrar, por pagar, conciliación',
@@ -379,6 +390,7 @@ Revisá el **aging report** semanalmente. Las facturas que pasan 60 días sin co
   },
   {
     slug: 'reportes',
+    icon: 'FileBarChart',
     titulo: 'Reportes',
     categoria: 'nucleo',
     resumen: 'Exportación de datos a Excel y PDF',
@@ -408,6 +420,7 @@ Si necesitás un reporte que no existe, usá el **Asistente IA**: "Mostrame las 
   },
   {
     slug: 'costos',
+    icon: 'Calculator',
     titulo: 'Costos',
     categoria: 'nucleo',
     resumen: 'Costeo de productos y análisis de rentabilidad',
@@ -440,6 +453,7 @@ Si usás materias importadas con tipo de cambio volátil, considerá actualizar 
   // ===================================================
   {
     slug: 'wms',
+    icon: 'Warehouse',
     titulo: 'WMS — Warehouse Management',
     categoria: 'operaciones',
     resumen: 'Picking, packing, ubicaciones, despacho',
@@ -477,6 +491,7 @@ Activá **ubicaciones físicas** desde el principio. Cuando el depósito crece, 
   },
   {
     slug: 'almacenes',
+    icon: 'Building2',
     titulo: 'Almacenes',
     categoria: 'operaciones',
     resumen: 'Múltiples depósitos físicos',
@@ -505,6 +520,7 @@ Si tenés vehículos de reparto, manejalos como almacenes móviles. Carga lo que
   },
   {
     slug: 'facturacion',
+    icon: 'Receipt',
     titulo: 'Facturación Electrónica',
     categoria: 'operaciones',
     resumen: 'CFE para DGI Uruguay',
@@ -543,6 +559,7 @@ Configurá los **certificados digitales** y datos del emisor antes de empezar. S
   },
   {
     slug: 'clientes-360',
+    icon: 'UserCircle2',
     titulo: 'Cliente 360°',
     categoria: 'operaciones',
     resumen: 'Vista completa de cada cliente',
@@ -572,6 +589,7 @@ Antes de cualquier reunión comercial importante, abrí el Cliente 360°. Ver el
   },
   {
     slug: 'taller',
+    icon: 'Wrench',
     titulo: 'Taller',
     categoria: 'operaciones',
     resumen: 'Órdenes de trabajo, técnicos, reparaciones',
@@ -611,6 +629,7 @@ Trackeá el **tiempo real de cada OT** vs el estimado. Si los técnicos siempre 
   },
   {
     slug: 'proyectos',
+    icon: 'Kanban',
     titulo: 'Proyectos',
     categoria: 'operaciones',
     resumen: 'Trabajos con múltiples etapas (kanban)',
@@ -640,6 +659,7 @@ Para proyectos largos (>30 días) facturá por hitos, no al final. Mejora tu cas
   },
   {
     slug: 'bom',
+    icon: 'Boxes',
     titulo: 'BOM (Lista de Materiales)',
     categoria: 'operaciones',
     resumen: 'Fórmulas de productos terminados',
@@ -673,6 +693,7 @@ Cargá la **merma esperada**. Si vas a usar 4.2 patas para hacer 1 silla en prom
   },
   {
     slug: 'ensamblajes',
+    icon: 'Cog',
     titulo: 'Ensamblajes',
     categoria: 'operaciones',
     resumen: 'Órdenes de producción',
@@ -707,6 +728,7 @@ Para productos con pocos componentes (<5) es viable. Para productos con BOM de 1
   // ===================================================
   {
     slug: 'analytics',
+    icon: 'TrendingUp',
     titulo: 'Analytics',
     categoria: 'analisis',
     resumen: 'Análisis avanzado, predicciones, anomalías',
@@ -734,6 +756,7 @@ Si Analytics te dice que un producto está vendiendo X veces más que su promedi
   },
   {
     slug: 'pricing-ai',
+    icon: 'Sparkles',
     titulo: 'Pricing IA',
     categoria: 'analisis',
     resumen: 'Recomendaciones de precios por elasticidad',
@@ -757,9 +780,9 @@ Usa **regresión log-log** para estimar elasticidad-precio y recomendar precios 
 
 ## Cuándo confiar
 
-- ✅ ≥8 transacciones y ≥2 niveles de precio
-- ⚠️ Poca historia → fallback margen 40%
-- ❌ Elasticidad |e|>10 → no se sugiere
+- - OK: ≥8 transacciones y ≥2 niveles de precio
+- Atención: Poca historia → fallback margen 40%
+- - Excluido: Elasticidad |e|>10 → no se sugiere
 
 ## Conexiones
 
@@ -774,6 +797,7 @@ No cambies precios todos los meses. Trimestral. Y monitoreá impacto vs predicci
   },
   {
     slug: 'replenishment',
+    icon: 'RefreshCw',
     titulo: 'Reabastecimiento IA',
     categoria: 'analisis',
     resumen: 'Qué comprar y cuánto — optimiza capital',
@@ -789,9 +813,9 @@ Te dice **qué comprar, cuánto y cuándo** para no tener stockouts pero tampoco
 
 ## Estados
 
-- 🟢 **Mantener**: stock OK
-- 🟡 **Comprar**: cerca del ROP → pedir EOQ
-- 🔴 **Reducir**: cobertura > 90 días → liquidar
+- �**Mantener**: stock OK
+- �**Comprar**: cerca del ROP → pedir EOQ
+- �**Reducir**: cobertura > 90 días → liquidar
 
 ## Urgencia
 
@@ -811,6 +835,7 @@ Calibrado para **optimizar capital** — prefiere quedarse corto. Si tu negocio 
   },
   {
     slug: 'demand-planning',
+    icon: 'Activity',
     titulo: 'Demand Planning',
     categoria: 'analisis',
     resumen: 'Proyección de demanda futura',
@@ -845,6 +870,7 @@ Compará forecast vs real cada mes. Si el forecast siempre se equivoca para arri
   },
   {
     slug: 'asistente-ia',
+    icon: 'Bot',
     titulo: 'Asistente IA Omnisciente',
     categoria: 'analisis',
     resumen: 'Chat con IA que entiende tu negocio',
@@ -879,6 +905,7 @@ Si pedís un cálculo importante, podés volver a verlo en el **historial de ses
   // ===================================================
   {
     slug: 'tickets',
+    icon: 'MessageCircle',
     titulo: 'Tickets de Soporte',
     categoria: 'postventa',
     resumen: 'Reclamos y consultas de clientes',
@@ -910,6 +937,7 @@ Definí **SLA realistas**. Si tu equipo no puede responder en 2h, no lo prometas
   },
   {
     slug: 'garantias',
+    icon: 'ShieldCheck',
     titulo: 'Garantías',
     categoria: 'postventa',
     resumen: 'Cobertura de productos vendidos',
@@ -940,6 +968,7 @@ Para productos costosos, ofrecé **extensión de garantía paga**. Es margen cas
   },
   {
     slug: 'rma',
+    icon: 'RotateCcw',
     titulo: 'RMA — Devoluciones',
     categoria: 'postventa',
     resumen: 'Devoluciones a proveedor o de cliente',
@@ -976,6 +1005,7 @@ Si el mismo producto tiene muchos RMAs, hay problema de calidad sistémico. Revi
   },
   {
     slug: 'customer-risk',
+    icon: 'ShieldAlert',
     titulo: 'Clientes en Riesgo (Churn IA)',
     categoria: 'postventa',
     resumen: 'Detección temprana de clientes que están por irse',
@@ -1007,10 +1037,10 @@ Si tenés postsale-mvp conectado, lee emails y extrae:
 
 ## Niveles
 
-- 🔴 **Crítico ≥75%**: acción urgente
-- 🟠 **Alto ≥50%**: call de retención
-- 🟡 **Medio ≥25%**: monitorear
-- 🟢 **Bajo <25%**
+- �**Crítico ≥75%**: acción urgente
+- �**Alto ≥50%**: call de retención
+- �**Medio ≥25%**: monitorear
+- �**Bajo <25%**
 
 ## Conexiones
 
@@ -1029,6 +1059,7 @@ Cuando alguien entra en crítico, **no mandes descuento**. Llamá primero. Mucha
   // ===================================================
   {
     slug: 'aprobaciones',
+    icon: 'CheckCircle2',
     titulo: 'Aprobaciones',
     categoria: 'sistema',
     resumen: 'Workflow de autorizaciones',
@@ -1067,6 +1098,7 @@ Si todo requiere aprobación, los gerentes son cuello de botella. Si nada, perd�
   },
   {
     slug: 'seriales',
+    icon: 'QrCode',
     titulo: 'Seriales',
     categoria: 'sistema',
     resumen: 'Tracking por número de serie único',
@@ -1096,6 +1128,7 @@ Si vendés equipos costosos, **siempre por serial**. Te permite hacer recall si 
   },
   {
     slug: 'trazabilidad',
+    icon: 'GitBranch',
     titulo: 'Trazabilidad (Lotes)',
     categoria: 'sistema',
     resumen: 'Tracking por lote o batch',
@@ -1125,6 +1158,7 @@ Es **obligatorio por regulación** en alimentos/farma. Si vas a exportar, es cr�
   },
   {
     slug: 'qms',
+    icon: 'BadgeCheck',
     titulo: 'QMS — Calidad',
     categoria: 'sistema',
     resumen: 'Control de calidad, no conformidades, auditorías',
@@ -1163,6 +1197,7 @@ Si exportás a UE o EE.UU., empezá QMS **desde el día 1**. Los compradores ins
   },
   {
     slug: 'auditoria',
+    icon: 'FileSearch',
     titulo: 'Auditoría',
     categoria: 'sistema',
     resumen: 'Log inmutable con hash chain',
@@ -1193,6 +1228,7 @@ Si te audita la AFIP/DGI o un cliente institucional, **acá está toda la eviden
   },
   {
     slug: 'integraciones',
+    icon: 'Plug',
     titulo: 'Integraciones',
     categoria: 'sistema',
     resumen: 'API keys, webhooks, conectores externos',
@@ -1220,6 +1256,7 @@ Para API keys: rotalas cada 6 meses. Para webhooks: configurá retries (3 intent
   },
   {
     slug: 'chat',
+    icon: 'MessageSquare',
     titulo: 'Chat / Notificaciones',
     categoria: 'sistema',
     resumen: 'Mensajería interna y avisos del sistema',
@@ -1248,6 +1285,7 @@ Configurá las **preferencias de notificaciones** para no recibir spam. Sino la 
   },
   {
     slug: 'rrhh',
+    icon: 'Users',
     titulo: 'RRHH',
     categoria: 'sistema',
     resumen: 'Empleados, ausencias, evaluaciones',
@@ -1277,6 +1315,7 @@ Trackeá **fechas de vencimiento de certificaciones** (técnicos, choferes). El 
   },
   {
     slug: 'multi-tenant',
+    icon: 'Building',
     titulo: 'Multi-empresa (Multi-tenant)',
     categoria: 'sistema',
     resumen: 'Varias empresas desde una instancia',
@@ -1312,6 +1351,7 @@ Antes de invitar usuarios en producción, **verificá las RLS policies en Supaba
   },
   {
     slug: 'seguridad',
+    icon: 'Lock',
     titulo: 'Seguridad',
     categoria: 'sistema',
     resumen: 'Audit log, 2FA, GDPR, encriptación',
