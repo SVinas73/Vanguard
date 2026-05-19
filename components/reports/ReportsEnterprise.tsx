@@ -13,7 +13,10 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { valuarInventarioSync } from '@/lib/inventory-valuation';
-import { exportarReporteExcel, exportarReportePDF } from '@/lib/export-reportes';
+import { exportarReporteExcel, exportarReportePDF, setMonedaExport } from '@/lib/export-reportes';
+import { formatMoney, MONEDAS_DISPONIBLES } from '@/lib/currency';
+import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
+import type { Moneda } from '@/types';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart as RechartsPie, Pie, Cell,
@@ -401,9 +404,16 @@ const COLORS_CHART = ['#9ec9b1', '#4a7fb5', '#6b5488', '#d6b97a', '#dfa6a6', '#b
 // HELPERS
 // ============================================
 
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(value);
-};
+// Moneda objetivo dinámica para los reportes. La setea el componente
+// según `org.config.display_currency` (default UYU para que los datos
+// en pesos no se muestren como dólares).
+// Es una variable de módulo porque formatCurrency se usa en muchísimos
+// call-sites dentro y fuera del render; centralizar el cambio acá evita
+// tener que hacer prop drilling por todo el archivo.
+let MONEDA_REPORTE: Moneda = 'UYU';
+export function setMonedaReporte(m: Moneda) { MONEDA_REPORTE = m; }
+
+const formatCurrency = (value: number): string => formatMoney(value, MONEDA_REPORTE);
 
 const formatNumber = (value: number): string => {
   return new Intl.NumberFormat('es-UY').format(value);
@@ -481,6 +491,23 @@ function useToast() {
 export default function ReportsEnterprise() {
   const { user } = useAuth();
   const toast = useToast();
+  const { config: orgConfig, setDisplayCurrency } = useModulosHabilitados();
+
+  // Moneda objetivo de los reportes. Por defecto la de la organización.
+  // Se puede cambiar desde el toggle del header sin tocar el resto de la app.
+  const [monedaReporte, setMonedaReporteState] = useState<Moneda>(
+    (orgConfig.display_currency as Moneda) ?? 'UYU'
+  );
+
+  useEffect(() => {
+    setMonedaReporteState((orgConfig.display_currency as Moneda) ?? 'UYU');
+  }, [orgConfig.display_currency]);
+
+  // Sincronizar la variable de módulo con el estado.
+  useEffect(() => {
+    setMonedaReporte(monedaReporte);
+    setMonedaExport(monedaReporte);
+  }, [monedaReporte]);
 
   // Estado principal
   const [loading, setLoading] = useState(false);
@@ -2268,6 +2295,29 @@ export default function ReportsEnterprise() {
             Centro de Reportes
           </h2>
           <p className="text-slate-400 text-sm mt-1">Genera reportes detallados de todo el sistema</p>
+          <div className="mt-3 flex items-center gap-2 text-xs">
+            <span className="text-slate-500">Mostrar valores en:</span>
+            {MONEDAS_DISPONIBLES.map(m => (
+              <button
+                key={m}
+                onClick={() => {
+                  setMonedaReporteState(m);
+                  setDisplayCurrency(m); // persiste en la org
+                }}
+                className={
+                  'px-2 py-1 rounded-md font-medium transition-colors ' +
+                  (monedaReporte === m
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700')
+                }
+              >
+                {m}
+              </button>
+            ))}
+            <span className="ml-2 text-slate-600">
+              · Los productos guardan su moneda original; se convierte con tipos de cambio cargados.
+            </span>
+          </div>
         </div>
         {datosReporte && (
           <div className="flex gap-2">

@@ -11,6 +11,7 @@ import {
   DollarSign, Package, AlertCircle, ArrowLeftRight,
 } from 'lucide-react';
 import { ProductThumbnail } from './product-image';
+import { formatMoney } from '@/lib/currency';
 
 // ============================================
 // CATEGORY BADGE
@@ -238,11 +239,17 @@ export function ProductTable({
     onEdit?.(product);
   };
 
-  // Summary stats
+  // Summary stats — agrupado por moneda para evitar sumar peras con manzanas.
+  // (La conversión a una sola moneda se hace en Reportes, donde sí hay tasas.)
   const summary = useMemo(() => {
-    const totalValue = products.reduce((s, p) => s + p.stock * (p.costoPromedio || p.precio), 0);
+    const porMoneda = new Map<string, number>();
+    for (const p of products) {
+      const m = p.moneda ?? 'UYU';
+      const v = p.stock * (p.costoPromedio || p.precio);
+      porMoneda.set(m, (porMoneda.get(m) ?? 0) + v);
+    }
     const critical = products.filter(p => p.stock <= p.stockMinimo).length;
-    return { count: products.length, value: totalValue, critical };
+    return { count: products.length, porMoneda, critical };
   }, [products]);
 
   const thClass = 'px-3 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider cursor-pointer select-none group';
@@ -256,9 +263,15 @@ export function ProductTable({
             <Package size={13} />
             <strong className="text-white">{summary.count}</strong> productos
           </span>
-          <span className="flex items-center gap-1.5 text-slate-400">
+          <span className="flex items-center gap-1.5 text-slate-400 flex-wrap">
             <DollarSign size={13} />
-            Valor: <strong className="text-white">${summary.value.toLocaleString('es-UY', { maximumFractionDigits: 0 })}</strong>
+            Valor:
+            {Array.from(summary.porMoneda.entries()).map(([moneda, valor]) => (
+              <strong key={moneda} className="text-white">
+                {formatMoney(valor, moneda as 'UYU' | 'USD' | 'EUR' | 'BRL' | 'ARS')}
+              </strong>
+            ))}
+            {summary.porMoneda.size === 0 && <strong className="text-white">—</strong>}
           </span>
           {summary.critical > 0 && (
             <span className="flex items-center gap-1.5 text-red-400">
@@ -392,7 +405,9 @@ export function ProductTable({
                       </td>
                     )}
                     <td className="px-3 py-2.5 text-right">
-                      <span className="font-mono text-sm text-slate-300">${product.precio.toFixed(2)}</span>
+                      <span className="font-mono text-sm text-slate-300">
+                        {formatMoney(product.precio, product.moneda ?? 'UYU', { minimumFractionDigits: 2 })}
+                      </span>
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex justify-center">
@@ -481,7 +496,7 @@ export function ProductCard({ product, prediction, onClick }: ProductCardProps) 
       <h3 className="font-medium text-sm mb-3 line-clamp-2">{product.descripcion}</h3>
       
       <div className="flex items-center justify-between">
-        <span className="font-mono text-emerald-400">${product.precio.toFixed(2)}</span>
+        <span className="font-mono text-emerald-400">{formatMoney(product.precio, product.moneda ?? 'UYU', { minimumFractionDigits: 2 })}</span>
         <StockIndicator
           stock={product.stock}
           stockMinimo={product.stockMinimo}

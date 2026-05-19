@@ -104,6 +104,7 @@ model Producto {
   codigo         String   @unique
   descripcion    String
   precio         Decimal  @db.Decimal(10, 2)
+  moneda         String   @default("UYU")
   categoria      String
   stock          Int      @default(0)
   stockMinimo    Int      @default(5) @map("stock_minimo")
