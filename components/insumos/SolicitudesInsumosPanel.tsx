@@ -6,6 +6,7 @@ import { useOrganizacion } from '@/hooks/useOrganizacion';
 import { useAuth } from '@/hooks/useAuth';
 import CrearSolicitudInsumoModal from './CrearSolicitudInsumoModal';
 import DetalleSolicitudInsumoModal from './DetalleSolicitudInsumoModal';
+import { CrearOrgModal } from '@/components/organization/CrearOrgModal';
 
 interface ItemSolicitud {
   id: number;
@@ -153,16 +154,7 @@ export default function SolicitudesInsumosPanel() {
       )}
 
       {!orgActivaId && (
-        <div className="text-center py-12 px-6 bg-slate-900/50 border border-amber-500/30 rounded-lg">
-          <Building2 className="w-12 h-12 mx-auto text-amber-400 mb-3" />
-          <h4 className="text-slate-100 font-medium mb-1">Falta seleccionar una empresa</h4>
-          <p className="text-sm text-slate-400 mb-4 max-w-md mx-auto">
-            Las solicitudes de insumos se asocian a una organización. Mirá <strong>arriba a la derecha del header</strong> y vas a ver un botón <strong>"Elegir empresa"</strong> o <strong>"Crear empresa"</strong> (color ámbar).
-          </p>
-          <p className="text-xs text-slate-500">
-            Si no aparece el botón, es porque tu usuario no tiene asignada ninguna organización todavía. Pedile a un admin que te invite.
-          </p>
-        </div>
+        <SeleccionarEmpresaCard />
       )}
 
       {loading && orgActivaId && (
@@ -252,5 +244,73 @@ export default function SolicitudesInsumosPanel() {
         />
       )}
     </div>
+  );
+}
+
+// =====================================================
+// Empty-state card cuando no hay empresa activa
+// =====================================================
+function SeleccionarEmpresaCard() {
+  const { orgs, cambiarOrg, recargar, loading } = useOrganizacion();
+  const [showCrear, setShowCrear] = useState(false);
+
+  return (
+    <>
+      <div className="text-center py-12 px-6 bg-slate-900/50 border border-amber-500/30 rounded-lg">
+        <Building2 className="w-12 h-12 mx-auto text-amber-400 mb-3" />
+        <h4 className="text-slate-100 font-medium mb-4">Selecciona una empresa</h4>
+
+        {loading && (
+          <p className="text-sm text-slate-500">Cargando empresas...</p>
+        )}
+
+        {!loading && orgs.length > 0 && (
+          <div className="max-w-sm mx-auto space-y-2">
+            {orgs.map(o => (
+              <button
+                key={o.organizacion_id}
+                onClick={() => cambiarOrg(o.organizacion_id)}
+                className="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-md text-left transition"
+              >
+                <Building2 className="w-4 h-4 text-blue-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-slate-100 truncate">{o.organizacion.nombre}</div>
+                  <div className="text-xs text-slate-500 capitalize">{o.rol}</div>
+                </div>
+              </button>
+            ))}
+            <button
+              onClick={() => setShowCrear(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm transition mt-3"
+            >
+              <Plus className="w-4 h-4" />
+              Crear otra empresa
+            </button>
+          </div>
+        )}
+
+        {!loading && orgs.length === 0 && (
+          <div className="max-w-sm mx-auto">
+            <p className="text-sm text-slate-400 mb-4">
+              Todavía no tenés ninguna empresa creada.
+            </p>
+            <button
+              onClick={() => setShowCrear(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-medium transition"
+            >
+              <Plus className="w-4 h-4" />
+              Crear mi primera empresa
+            </button>
+          </div>
+        )}
+      </div>
+
+      {showCrear && (
+        <CrearOrgModal
+          onClose={() => setShowCrear(false)}
+          onCreado={() => { setShowCrear(false); recargar(); }}
+        />
+      )}
+    </>
   );
 }

@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Plus, Trash2, Save, Loader2, AlertCircle, Check, Pencil, Tag } from 'lucide-react';
+import { Plus, Trash2, Save, Loader2, AlertCircle, Check, Pencil, Tag, Building2 } from 'lucide-react';
 import { useOrganizacion } from '@/hooks/useOrganizacion';
+import { CrearOrgModal } from '@/components/organization/CrearOrgModal';
 
 interface Routing {
   id?: number;
@@ -49,16 +50,7 @@ export default function RoutingInsumos() {
   }, [orgActivaId]);
 
   if (!orgActivaId) {
-    return (
-      <div className="text-center py-12 px-6 bg-slate-900/50 border border-amber-500/30 rounded-lg">
-        <Tag className="w-12 h-12 mx-auto text-amber-400 mb-3" />
-        <h4 className="text-slate-100 font-medium mb-1">Falta seleccionar una empresa</h4>
-        <p className="text-sm text-slate-400 max-w-md mx-auto">
-          Para configurar destinatarios necesitás tener una empresa activa.
-          Mirá <strong>arriba a la derecha del header</strong> el botón <strong>"Elegir empresa"</strong> o <strong>"Crear empresa"</strong> (color ámbar).
-        </p>
-      </div>
-    );
+    return <SeleccionarEmpresaCardRouting />;
   }
 
   return (
@@ -354,5 +346,69 @@ function EditarRoutingModal({
         </div>
       </div>
     </div>
+  );
+}
+
+// =====================================================
+// Empty-state card cuando no hay empresa activa
+// =====================================================
+function SeleccionarEmpresaCardRouting() {
+  const { orgs, cambiarOrg, recargar, loading } = useOrganizacion();
+  const [showCrear, setShowCrear] = useState(false);
+
+  return (
+    <>
+      <div className="text-center py-12 px-6 bg-slate-900/50 border border-amber-500/30 rounded-lg">
+        <Building2 className="w-12 h-12 mx-auto text-amber-400 mb-3" />
+        <h4 className="text-slate-100 font-medium mb-4">Selecciona una empresa</h4>
+
+        {loading && <p className="text-sm text-slate-500">Cargando empresas...</p>}
+
+        {!loading && orgs.length > 0 && (
+          <div className="max-w-sm mx-auto space-y-2">
+            {orgs.map(o => (
+              <button
+                key={o.organizacion_id}
+                onClick={() => cambiarOrg(o.organizacion_id)}
+                className="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-md text-left transition"
+              >
+                <Building2 className="w-4 h-4 text-blue-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-slate-100 truncate">{o.organizacion.nombre}</div>
+                  <div className="text-xs text-slate-500 capitalize">{o.rol}</div>
+                </div>
+              </button>
+            ))}
+            <button
+              onClick={() => setShowCrear(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm transition mt-3"
+            >
+              <Plus className="w-4 h-4" />
+              Crear otra empresa
+            </button>
+          </div>
+        )}
+
+        {!loading && orgs.length === 0 && (
+          <div className="max-w-sm mx-auto">
+            <p className="text-sm text-slate-400 mb-4">Todavía no tenés ninguna empresa creada.</p>
+            <button
+              onClick={() => setShowCrear(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-medium transition"
+            >
+              <Plus className="w-4 h-4" />
+              Crear mi primera empresa
+            </button>
+          </div>
+        )}
+      </div>
+
+      {showCrear && (
+        <CrearOrgModal
+          onClose={() => setShowCrear(false)}
+          onCreado={() => { setShowCrear(false); recargar(); }}
+        />
+      )}
+    </>
   );
 }
