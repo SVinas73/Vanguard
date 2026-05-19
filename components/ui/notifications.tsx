@@ -30,6 +30,8 @@ const TIPO_ICON: Record<TipoNotificacion, React.ElementType> = {
   cxp_vencida: CreditCard,
   orden_sin_entregar: Truck,
   orden_compra_creada: ShoppingCart,
+  solicitud_insumo_creada: ShoppingCart,
+  solicitud_insumo_estado: ShoppingCart,
   putaway_pendiente: Archive,
   picking_sin_asignar: Target,
   ticket_sla_breached: AlertTriangle,

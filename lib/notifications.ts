@@ -13,6 +13,8 @@ export type TipoNotificacion =
   | 'cxp_vencida'
   | 'orden_sin_entregar'
   | 'orden_compra_creada'
+  | 'solicitud_insumo_creada'
+  | 'solicitud_insumo_estado'
   | 'putaway_pendiente'
   | 'picking_sin_asignar'
   | 'ticket_sla_breached'

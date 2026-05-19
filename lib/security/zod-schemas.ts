@@ -95,6 +95,44 @@ export const crearOrdenCompraSchema = z.object({
 });
 
 // =====================================================
+// SOLICITUDES DE INSUMOS (compras internas)
+// =====================================================
+
+export const crearSolicitudInsumoSchema = z.object({
+  organizacion_id: z.string().uuid().nullable().optional(),
+  categoria: z.string().min(1, 'Categoría requerida').max(64),
+  fecha_limite: z.string().nullable().optional(),
+  observaciones: z.string().max(2000).nullable().optional(),
+  items: z.array(z.object({
+    producto_codigo: z.string().max(64).nullable().optional(),
+    descripcion: z.string().min(1, 'Descripción requerida').max(500),
+    cantidad: z.number().positive(),
+    unidad: z.string().max(32).optional(),
+    observaciones: z.string().max(500).nullable().optional(),
+  })).min(1, 'Al menos un item'),
+});
+
+export const cambiarEstadoSolicitudSchema = z.object({
+  estado: z.enum(['pendiente','en_gestion','comprada','recibida','cerrada','cancelada']),
+  motivo: z.string().max(500).optional().nullable(),
+  fecha_ingreso: z.string().nullable().optional(),
+  orden_compra_id: z.string().uuid().nullable().optional(),
+  items_recibidos: z.array(z.object({
+    item_id: z.number(),
+    cantidad_recibida: z.number().nonnegative(),
+  })).optional(),
+});
+
+export const upsertRoutingInsumosSchema = z.object({
+  organizacion_id: z.string().uuid(),
+  categoria: z.string().min(1).max(64),
+  categoria_label: z.string().max(128).optional().nullable(),
+  gestor_emails: z.array(z.string().email()).max(20),
+  referente_emails: z.array(z.string().email()).max(20),
+  activa: z.boolean().optional(),
+});
+
+// =====================================================
 // GDPR
 // =====================================================
 
