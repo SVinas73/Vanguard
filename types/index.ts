@@ -2,11 +2,22 @@
 // TIPOS PRINCIPALES DEL SISTEMA
 // ============================================
 
+// Moneda — declarada acá arriba para que `Product` pueda referenciarla.
+// (También se re-exporta más abajo en la sección de facturación; ese
+// `export type Moneda` original quedó eliminado para evitar duplicado.)
+export type Moneda = 'USD' | 'UYU' | 'EUR' | 'BRL' | 'ARS';
+
 // Producto
 export interface Product {
   codigo: string;
   descripcion: string;
   precio: number;
+  /**
+   * Moneda en la que se guardó el precio/costo de este producto.
+   * Si viene undefined (producto creado antes de la migración 020),
+   * la app debe tratarlo como UYU.
+   */
+  moneda?: Moneda;
   categoria: string;
   stock: number;
   stockMinimo: number;
@@ -22,6 +33,7 @@ export interface ProductFormData {
   codigo: string;
   descripcion: string;
   precio: string | number;
+  moneda?: Moneda;
   categoria: string;
   stockMinimo: number;
 }
@@ -152,7 +164,7 @@ export interface StatsData {
   todayMovements: number;
 }
 
-export type TabType = 'dashboard' | 'executive' | 'pricing' | 'replenishment' | 'customer_risk' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes' | 'proyectos' | 'comercial' | 'finanzas' | 'taller' | 'qms' | 'wms' | 'demand' | 'chat' | 'aprobaciones' | 'facturacion' | 'tickets' | 'garantias' | 'clientes_360' | 'rrhh' | 'ayuda';
+export type TabType = 'dashboard' | 'executive' | 'pricing' | 'replenishment' | 'customer_risk' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes' | 'proyectos' | 'comercial' | 'finanzas' | 'taller' | 'qms' | 'wms' | 'demand' | 'chat' | 'aprobaciones' | 'facturacion' | 'tickets' | 'garantias' | 'clientes_360' | 'rrhh' | 'ayuda' | 'configuracion';
 
 export interface ModalState {
   showNewProduct: boolean;
@@ -2614,7 +2626,7 @@ export interface RentabilidadProductoCliente {
 // NOTAS DE CRÉDITO / DÉBITO
 // ============================================
 
-export type Moneda = 'USD' | 'UYU' | 'EUR' | 'BRL' | 'ARS';
+// Moneda ya declarada arriba (sección principal).
 export type TipoNota = 'credito' | 'debito';
 export type OrigenNota = 'cliente' | 'proveedor';
 export type EstadoNota = 'pendiente' | 'aplicada' | 'parcial' | 'anulada';

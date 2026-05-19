@@ -59,6 +59,7 @@ const PricingRecommender    = dynamic(() => import('@/components/pricing/Pricing
 const ReplenishmentDashboard = dynamic(() => import('@/components/replenishment/ReplenishmentDashboard'),                          { loading: ModuleLoader });
 const CustomerRiskModule    = dynamic(() => import('@/components/customer-risk/CustomerRiskModule'),                              { loading: ModuleLoader });
 const AyudaModule           = dynamic(() => import('@/components/ayuda/AyudaModule'),                                              { loading: ModuleLoader });
+const ConfigModulos         = dynamic(() => import('@/components/configuracion/ConfigModulos').then(m => m.ConfigModulos),         { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -227,6 +228,7 @@ export default function HomePage() {
     codigo: '',
     descripcion: '',
     precio: '',
+    moneda: 'UYU' as 'USD' | 'UYU' | 'EUR' | 'BRL' | 'ARS',
     categoria: '',
     stockMinimo: '10',
     almacenId: '',
@@ -539,6 +541,7 @@ export default function HomePage() {
       codigo: newProduct.codigo.toUpperCase(),
       descripcion: newProduct.descripcion,
       precio: parseFloat(newProduct.precio),
+      moneda: newProduct.moneda,
       categoria: newProduct.categoria,
       stockMinimo: parseInt(newProduct.stockMinimo) || 10,
       almacenId: newProduct.almacenId || null,
@@ -559,12 +562,13 @@ export default function HomePage() {
     }
 
     // Reset form
-    setNewProduct({ 
-      codigo: '', 
-      descripcion: '', 
-      precio: '', 
-      categoria: '', 
-      stockMinimo: '10', 
+    setNewProduct({
+      codigo: '',
+      descripcion: '',
+      precio: '',
+      moneda: 'UYU',
+      categoria: '',
+      stockMinimo: '10',
       almacenId: '',
       stockInicial: '',
       costoInicial: '',
@@ -825,6 +829,10 @@ export default function HomePage() {
           <AyudaModule />
         )}
 
+        {activeTab === 'configuracion' && (
+          <ConfigModulos />
+        )}
+
         {/* ==================== ANALYTICS ==================== */}
         {activeTab === 'analytics' && (
           <AnalyticsDashboard
@@ -970,7 +978,7 @@ export default function HomePage() {
             </AIAlert>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Input
               label={t('stock.salePrice')}
               type="number"
@@ -978,6 +986,18 @@ export default function HomePage() {
               value={newProduct.precio}
               onChange={(e) => setNewProduct({ ...newProduct, precio: e.target.value })}
               placeholder="0.00"
+            />
+            <Select
+              label="Moneda"
+              value={newProduct.moneda}
+              onChange={(e) => setNewProduct({ ...newProduct, moneda: e.target.value as typeof newProduct.moneda })}
+              options={[
+                { value: 'UYU', label: 'UYU — Pesos uruguayos' },
+                { value: 'USD', label: 'USD — Dólares' },
+                { value: 'ARS', label: 'ARS — Pesos argentinos' },
+                { value: 'EUR', label: 'EUR — Euros' },
+                { value: 'BRL', label: 'BRL — Reales' },
+              ]}
             />
             <Input
               label={t('stock.minStock')}

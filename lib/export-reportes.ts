@@ -1,4 +1,11 @@
 import * as XLSX from 'xlsx';
+import { formatMoney } from '@/lib/currency';
+import type { Moneda } from '@/types';
+
+// Moneda en la que se exporta. La setea el módulo de reportes
+// según `org.config.display_currency`. Default UYU.
+let MONEDA_EXPORT: Moneda = 'UYU';
+export function setMonedaExport(m: Moneda) { MONEDA_EXPORT = m; }
 
 // =====================================================
 // Export para el módulo de Reportes
@@ -21,9 +28,7 @@ export interface ReporteExportable {
 }
 
 function formatCurrencyShort(n: number): string {
-  return new Intl.NumberFormat('es-UY', {
-    style: 'currency', currency: 'USD', minimumFractionDigits: 0,
-  }).format(n);
+  return formatMoney(n, MONEDA_EXPORT);
 }
 
 function formatNumberShort(n: number): string {

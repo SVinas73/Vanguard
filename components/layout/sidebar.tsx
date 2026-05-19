@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
+import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
 import { Logo } from '@/components/ui/Logo';
 import { NotificacionesBell } from '@/components/proyectos/NotificacionesBell';
 import { ChatBadge } from '@/components/chat';
@@ -103,6 +104,9 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
   const { t } = useTranslation();
   const { user, signOut, rol } = useAuth(false);
   const { theme, toggleTheme } = useTheme();
+  const { modulos: modulosHabilitados, config: moduleConfig } = useModulosHabilitados();
+  const moduloSet = React.useMemo(() => new Set<string>(modulosHabilitados), [modulosHabilitados]);
+  const esLite = moduleConfig.preset === 'lite';
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -202,6 +206,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       title: t('nav.config') || 'Configuración',
       defaultOpen: false,
       items: [
+        { id: 'configuracion', label: 'Configuración', icon: Plug },
         { id: 'integraciones', label: t('nav.integrations'), icon: Plug },
         { id: 'ayuda', label: t('nav.help') || 'Centro de Ayuda', icon: HelpCircle },
       ]
@@ -216,6 +221,15 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
     if (!item.permission) return true;
     return permissions[item.permission];
   };
+
+  // Filtramos por módulos habilitados (preset Lite/Custom). Si el preset es 'full',
+  // moduloSet contiene todos y nada se filtra.
+  const navegacionFiltrada = navigation
+    .map(section => ({
+      ...section,
+      items: section.items.filter(it => moduloSet.has(it.id as string)),
+    }))
+    .filter(section => section.items.length > 0);
 
   return (
     <>
@@ -269,7 +283,13 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-2">
-        {navigation.map((section) => {
+        {esLite && !collapsed && (
+          <div className="mx-2 mb-3 px-3 py-2 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-300 flex items-center justify-between">
+            <span className="font-medium">Modo Lite</span>
+            <span className="text-[10px] text-indigo-400/80">{modulosHabilitados.length} módulos</span>
+          </div>
+        )}
+        {navegacionFiltrada.map((section) => {
           const isOpen = openSections[section.key] ?? section.defaultOpen;
 
           return (
