@@ -26,7 +26,7 @@ export function CrearOrgModal({ onClose, onCreado }: Props) {
     if (!user?.email || !nombre.trim()) return;
     setCreando(true);
     setError(null);
-    const org = await crearOrganizacion({
+    const { org, error: createError } = await crearOrganizacion({
       nombre: nombre.trim(),
       rut: rut.trim() || undefined,
       pais,
@@ -35,7 +35,7 @@ export function CrearOrgModal({ onClose, onCreado }: Props) {
     });
     setCreando(false);
     if (!org) {
-      setError(t('org.createError'));
+      setError(createError || 'No se pudo crear la organización');
       return;
     }
     onCreado();

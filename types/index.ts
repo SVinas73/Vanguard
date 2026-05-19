@@ -164,7 +164,7 @@ export interface StatsData {
   todayMovements: number;
 }
 
-export type TabType = 'dashboard' | 'executive' | 'pricing' | 'replenishment' | 'customer_risk' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes' | 'proyectos' | 'comercial' | 'finanzas' | 'taller' | 'qms' | 'wms' | 'demand' | 'chat' | 'aprobaciones' | 'facturacion' | 'tickets' | 'garantias' | 'clientes_360' | 'rrhh' | 'ayuda' | 'configuracion';
+export type TabType = 'dashboard' | 'executive' | 'pricing' | 'replenishment' | 'customer_risk' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes' | 'proyectos' | 'comercial' | 'finanzas' | 'taller' | 'qms' | 'wms' | 'demand' | 'chat' | 'aprobaciones' | 'facturacion' | 'tickets' | 'garantias' | 'clientes_360' | 'rrhh' | 'ayuda' | 'configuracion' | 'empresas';
 
 export interface ModalState {
   showNewProduct: boolean;

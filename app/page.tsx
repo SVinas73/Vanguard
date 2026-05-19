@@ -60,6 +60,7 @@ const ReplenishmentDashboard = dynamic(() => import('@/components/replenishment/
 const CustomerRiskModule    = dynamic(() => import('@/components/customer-risk/CustomerRiskModule'),                              { loading: ModuleLoader });
 const AyudaModule           = dynamic(() => import('@/components/ayuda/AyudaModule'),                                              { loading: ModuleLoader });
 const ConfigModulos         = dynamic(() => import('@/components/configuracion/ConfigModulos').then(m => m.ConfigModulos),         { loading: ModuleLoader });
+const MisEmpresasModule     = dynamic(() => import('@/components/organization/MisEmpresasModule'),                                  { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -829,8 +830,14 @@ export default function HomePage() {
           <AyudaModule />
         )}
 
+        {/* ==================== CONFIGURACIÓN MODO LITE/FULL ==================== */}
         {activeTab === 'configuracion' && (
           <ConfigModulos />
+        )}
+
+        {/* ==================== MIS EMPRESAS ==================== */}
+        {activeTab === 'empresas' && (
+          <MisEmpresasModule />
         )}
 
         {/* ==================== ANALYTICS ==================== */}

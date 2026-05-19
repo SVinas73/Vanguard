@@ -42,7 +42,8 @@ import {
   Sparkles,
   Truck,
   ShieldAlert,
-  HelpCircle
+  HelpCircle,
+  Building2
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -206,7 +207,8 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       title: t('nav.config') || 'Configuración',
       defaultOpen: false,
       items: [
-        { id: 'configuracion', label: 'Configuración', icon: Plug },
+        { id: 'empresas', label: 'Mis empresas', icon: Building2 },
+        { id: 'configuracion', label: 'Modo Lite / Full', icon: Sparkles },
         { id: 'integraciones', label: t('nav.integrations'), icon: Plug },
         { id: 'ayuda', label: t('nav.help') || 'Centro de Ayuda', icon: HelpCircle },
       ]

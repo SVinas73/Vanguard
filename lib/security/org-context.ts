@@ -89,7 +89,8 @@ export async function inicializarOrganizacion(email: string): Promise<Organizaci
 
 /**
  * Crea una nueva organización + agrega al usuario como owner.
- * Use en el wizard de onboarding.
+ * Llama al endpoint server-side que bypasa RLS (el cliente no puede
+ * leer la org recién creada por la policy organizaciones_select).
  */
 export async function crearOrganizacion(args: {
   nombre: string;
@@ -98,29 +99,31 @@ export async function crearOrganizacion(args: {
   pais?: string;
   moneda?: string;
   ownerEmail: string;
-}): Promise<Organizacion | null> {
-  const { data: org, error } = await supabase
-    .from('organizaciones')
-    .insert({
-      nombre: args.nombre,
-      slug: args.slug || null,
-      rut: args.rut || null,
-      pais: args.pais || 'UY',
-      moneda: args.moneda || 'UYU',
-    })
-    .select()
-    .single();
-  if (error || !org) {
-    console.error('crearOrganizacion error:', error);
-    return null;
+}): Promise<{ org: Organizacion | null; error: string | null }> {
+  try {
+    const resp = await fetch('/api/organizaciones', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: args.nombre,
+        slug: args.slug || null,
+        rut: args.rut || null,
+        pais: args.pais || 'UY',
+        moneda: args.moneda || 'UYU',
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      console.error('crearOrganizacion error:', data);
+      return {
+        org: null,
+        error: data?.error || data?.hint || `Error HTTP ${resp.status}`,
+      };
+    }
+    setOrganizacionActiva(data.organizacion.id);
+    return { org: data.organizacion as Organizacion, error: null };
+  } catch (e: any) {
+    console.error('crearOrganizacion network error:', e);
+    return { org: null, error: e?.message || 'Error de red' };
   }
-  // Agregar al owner
-  await supabase.from('usuario_organizacion').insert({
-    usuario_email: args.ownerEmail,
-    organizacion_id: org.id,
-    rol: 'owner',
-    es_default: true,
-  });
-  setOrganizacionActiva(org.id);
-  return org as Organizacion;
 }
