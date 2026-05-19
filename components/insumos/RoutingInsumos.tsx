@@ -58,7 +58,7 @@ export default function RoutingInsumos() {
         <div className="flex items-start gap-3">
           <Tag className="w-5 h-5 text-purple-400 mt-0.5" />
           <div className="flex-1">
-            <h3 className="font-medium text-slate-100">Routing de solicitudes de insumos</h3>
+            <h3 className="font-medium text-slate-100">Destinatarios por categoría</h3>
             <p className="text-sm text-slate-400 mt-1">
               Por cada categoría definí quiénes gestionan la compra (TO en el mail) y quiénes son referentes (CC).
               Cuando alguien crea una solicitud de esa categoría, esos emails reciben la notificación.

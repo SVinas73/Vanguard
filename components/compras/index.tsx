@@ -20,11 +20,9 @@ import {
   Clock,
   AlertTriangle,
   ChevronDown,
-  ChevronUp,
-  ClipboardList
+  ChevronUp
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import SolicitudesInsumosPanel from '@/components/insumos/SolicitudesInsumosPanel';
 
 // ============================================
 // PROVEEDORES PANEL
@@ -800,7 +798,7 @@ interface ComprasDashboardProps {
 
 export function ComprasDashboard({ products, userEmail }: ComprasDashboardProps) {
   const { t } = useTranslation();
-  const [activeView, setActiveView] = useState<'ordenes' | 'proveedores' | 'insumos'>('ordenes');
+  const [activeView, setActiveView] = useState<'ordenes' | 'proveedores'>('ordenes');
 
   return (
     <div className="space-y-6">
@@ -830,24 +828,11 @@ export function ComprasDashboard({ products, userEmail }: ComprasDashboardProps)
           <Truck size={18} />
           {t('purchases.suppliers')}
         </button>
-        <button
-          onClick={() => setActiveView('insumos')}
-          className={cn(
-            'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
-            activeView === 'insumos'
-              ? 'bg-slate-800 text-purple-400'
-              : 'text-slate-400 hover:text-slate-200'
-          )}
-        >
-          <ClipboardList size={18} />
-          Solicitudes de insumos
-        </button>
       </div>
 
       {/* Content */}
       {activeView === 'ordenes' && <OrdenesCompraPanel products={products} userEmail={userEmail} />}
       {activeView === 'proveedores' && <ProveedoresPanel />}
-      {activeView === 'insumos' && <SolicitudesInsumosPanel />}
     </div>
   );
 }

@@ -357,13 +357,13 @@ Cuando tu empresa **NO vende** los productos que compra (oficinas, talleres, fá
 8. Al marcar **recibida**: se carga la fecha de ingreso + cantidades efectivas. Si un item está vinculado a un producto del catálogo, **se genera automáticamente un movimiento de entrada al stock**
 9. *Cerrada* o *Cancelada* son los estados terminales
 
-## Routing por categoría
+## Destinatarios por categoría
 
 Cada categoría tiene:
 - **Gestores (TO)**: los que reciben el email y son responsables. Decide la compra.
 - **Referentes (CC)**: copia informativa. No son responsables pero quedan al tanto.
 
-Se configura en **Configuración → Integraciones → pestaña Insumos**. Es por organización (multi-tenant).
+Se configura en **Comercial → pestaña Destinatarios**. Es por organización (multi-tenant).
 
 Ejemplo de routing típico:
 - *Papelería*: Administración-Gonzalo (TO) + referentes (CC)
@@ -389,9 +389,13 @@ Cada transición:
 - **Auditoría**: cada acción queda registrada
 - **Compras**: opcionalmente, una solicitud puede generar una OC al proveedor (con el campo \`orden_compra_id\`)
 
+## PDF de la solicitud
+
+Desde el detalle de cualquier solicitud, botón **Descargar PDF** — genera un PDF profesional con header de la empresa, número, estado, metadata, items en tabla y observaciones. Útil para mandar al proveedor, archivar, o presentar al equipo.
+
 ## Tip
 
-Para arrancar: andá a **Integraciones → Insumos**, hay templates sugeridos (Papelería, Ferretería, Edintor, etc.). Cliqueás cualquiera, cargás los emails de gestor y referente, y ya está listo para usar.
+Para arrancar: andá a **Comercial → Destinatarios**, hay templates sugeridos (Papelería, Ferretería, Edintor, etc.). Cliqueás cualquiera, cargás los emails de gestor y referente, y ya está listo para usar.
 `,
   },
   {
