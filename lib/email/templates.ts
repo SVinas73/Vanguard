@@ -193,3 +193,95 @@ export function templateOCProveedor(data: OCEmailData & { nombreEmpresa: string;
 
   return { subject, html, text };
 }
+
+// =====================================================
+// SOLICITUD DE INSUMO — interno
+// =====================================================
+export interface SolicitudInsumoEmailData {
+  numero: string;
+  categoria: string;
+  categoriaLabel?: string;
+  solicitadoPor: string;
+  fechaSolicitud: string;
+  fechaLimite?: string | null;
+  observaciones?: string | null;
+  items: { descripcion: string; cantidad: number; unidad?: string; observaciones?: string | null }[];
+  linkSolicitud?: string;
+}
+
+export function templateSolicitudInsumo(data: SolicitudInsumoEmailData): { subject: string; html: string; text: string } {
+  const catLabel = data.categoriaLabel || data.categoria;
+  const subject = `[Vanguard] Solicitud de insumo ${data.numero} (${catLabel}) — ${data.solicitadoPor}`;
+
+  const itemsHtml = data.items
+    .map(it => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #e2e8f0;">${escapeHtml(it.descripcion)}</td>
+        <td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;">${it.cantidad}</td>
+        <td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b;">${escapeHtml(it.unidad || 'unidad')}</td>
+        <td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:12px;">${escapeHtml(it.observaciones || '')}</td>
+      </tr>`)
+    .join('');
+
+  const html = `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;color:#0f172a;">
+  <div style="max-width:640px;margin:24px auto;background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+    <div style="background:#7c3aed;padding:24px;color:white;">
+      <div style="font-size:12px;letter-spacing:0.2em;color:#ddd6fe;text-transform:uppercase;">Solicitud de insumo</div>
+      <h1 style="margin:8px 0 0;font-size:20px;font-weight:600;">${escapeHtml(catLabel)} · ${escapeHtml(data.numero)}</h1>
+    </div>
+
+    <div style="padding:24px;">
+      <p style="margin:0 0 16px;color:#475569;">
+        <strong>${escapeHtml(data.solicitadoPor)}</strong> generó una solicitud de insumos en la categoría <strong>${escapeHtml(catLabel)}</strong>.
+      </p>
+
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;background:#f8fafc;border-radius:6px;overflow:hidden;">
+        <tr><td style="padding:8px 12px;color:#64748b;font-size:13px;">Número</td><td style="padding:8px 12px;font-weight:600;">${escapeHtml(data.numero)}</td></tr>
+        <tr><td style="padding:8px 12px;color:#64748b;font-size:13px;">Solicitante</td><td style="padding:8px 12px;">${escapeHtml(data.solicitadoPor)}</td></tr>
+        <tr><td style="padding:8px 12px;color:#64748b;font-size:13px;">Categoría</td><td style="padding:8px 12px;">${escapeHtml(catLabel)}</td></tr>
+        <tr><td style="padding:8px 12px;color:#64748b;font-size:13px;">Fecha solicitud</td><td style="padding:8px 12px;">${escapeHtml(data.fechaSolicitud)}</td></tr>
+        ${data.fechaLimite ? `<tr><td style="padding:8px 12px;color:#64748b;font-size:13px;">Fecha límite</td><td style="padding:8px 12px;color:#dc2626;font-weight:600;">${escapeHtml(data.fechaLimite)}</td></tr>` : ''}
+      </table>
+
+      <h3 style="font-size:14px;color:#0f172a;margin:24px 0 8px;">Items solicitados (${data.items.length})</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="background:#f1f5f9;text-align:left;">
+            <th style="padding:8px;color:#64748b;font-weight:500;">Descripción</th>
+            <th style="padding:8px;color:#64748b;font-weight:500;text-align:right;">Cantidad</th>
+            <th style="padding:8px;color:#64748b;font-weight:500;">Unidad</th>
+            <th style="padding:8px;color:#64748b;font-weight:500;">Observ.</th>
+          </tr>
+        </thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+
+      ${data.observaciones ? `<div style="margin-top:24px;padding:12px;background:#fef9c3;border-left:3px solid #ca8a04;border-radius:4px;"><div style="font-size:12px;color:#854d0e;font-weight:600;margin-bottom:4px;">Observaciones de la solicitud</div><div style="color:#422006;font-size:14px;">${escapeHtml(data.observaciones)}</div></div>` : ''}
+
+      ${data.linkSolicitud ? `<div style="margin-top:24px;text-align:center;"><a href="${escapeHtml(data.linkSolicitud)}" style="display:inline-block;background:#7c3aed;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;">Gestionar solicitud →</a></div>` : ''}
+    </div>
+
+    <div style="padding:16px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">
+      Email automático generado por Vanguard. Si recibís esto como gestor, sos responsable de resolver esta solicitud. Si sos referente, es a título informativo.
+    </div>
+  </div>
+</body></html>`;
+
+  const text = [
+    `Solicitud de insumo ${data.numero}`,
+    `Categoría: ${catLabel}`,
+    `Solicitante: ${data.solicitadoPor}`,
+    `Fecha solicitud: ${data.fechaSolicitud}`,
+    data.fechaLimite ? `Fecha límite: ${data.fechaLimite}` : '',
+    '',
+    `Items (${data.items.length}):`,
+    ...data.items.map(it => `  - ${it.descripcion} — ${it.cantidad} ${it.unidad || 'unidad'}${it.observaciones ? ` (${it.observaciones})` : ''}`),
+    '',
+    data.observaciones ? `Observaciones: ${data.observaciones}` : '',
+    '',
+    data.linkSolicitud ? `Ver/gestionar: ${data.linkSolicitud}` : '',
+  ].filter(Boolean).join('\n');
+
+  return { subject, html, text };
+}

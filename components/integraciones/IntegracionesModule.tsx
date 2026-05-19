@@ -1,25 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plug, Key, Webhook, Bell } from 'lucide-react';
+import { Plug, Key, Webhook, Bell, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IntegracionesDashboard } from './index';
 import ApiKeysManager from '@/components/api/ApiKeysManager';
 import WebhooksManager from '@/components/api/WebhooksManager';
 import NotificacionesDestinatarios from './NotificacionesDestinatarios';
+import RoutingInsumos from '@/components/insumos/RoutingInsumos';
 
-// =====================================================
-// Wrapper con 4 tabs: E-commerce, API Keys, Webhooks,
-// Notificaciones
-// =====================================================
-
-type TabId = 'ecommerce' | 'api-keys' | 'webhooks' | 'notificaciones';
+type TabId = 'ecommerce' | 'api-keys' | 'webhooks' | 'notificaciones' | 'insumos';
 
 const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
   { id: 'ecommerce',     label: 'E-commerce',     icon: Plug },
   { id: 'api-keys',      label: 'API Keys',       icon: Key },
   { id: 'webhooks',      label: 'Webhooks',       icon: Webhook },
   { id: 'notificaciones', label: 'Notificaciones', icon: Bell },
+  { id: 'insumos',       label: 'Insumos',        icon: Tag },
 ];
 
 export default function IntegracionesModule() {
@@ -55,6 +52,7 @@ export default function IntegracionesModule() {
       {tab === 'api-keys'  && <ApiKeysManager />}
       {tab === 'webhooks'  && <WebhooksManager />}
       {tab === 'notificaciones' && <NotificacionesDestinatarios />}
+      {tab === 'insumos'   && <RoutingInsumos />}
     </div>
   );
 }

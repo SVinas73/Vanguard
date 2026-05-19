@@ -323,6 +323,78 @@ Si un cliente aparece en **Clientes en Riesgo**, tomá acción antes de mandar u
 `,
   },
   {
+    slug: 'solicitudes-insumos',
+    icon: 'ClipboardList',
+    titulo: 'Solicitudes de Insumos',
+    categoria: 'nucleo',
+    resumen: 'Pedidos internos de insumos con routing por categoría',
+    contenido: `# Solicitudes de Insumos
+
+Cuando tu empresa **NO vende** los productos que compra (oficinas, talleres, fábricas con consumo interno), las OC tradicionales no encajan. Para eso está este módulo: un colaborador genera una **solicitud de insumos**, que el gestor configurado para esa categoría resuelve.
+
+## Diferencia con Órdenes de Compra
+
+| Orden de Compra | Solicitud de Insumo |
+|---|---|
+| Compra mercadería para revender | Pedido interno de insumos |
+| Va al proveedor con datos fiscales | Va al gestor interno (compras, admin) |
+| Genera CFE / factura proveedor | No genera factura por sí misma |
+| El gestor puede convertirla en una OC si necesita comprar |
+
+## Flujo
+
+1. Colaborador entra a **Compras → Solicitudes de Insumos** y clickea "Nueva solicitud"
+2. Elige **categoría** (papelería, ferretería, edintor, estación de servicio, etc.)
+3. Agrega items: descripción, cantidad, unidad, SKU opcional, observaciones
+4. Pone **fecha límite** (cuándo lo necesita) y observaciones generales
+5. Al guardar:
+   - Se genera número (SI-2026-NNNN)
+   - Se manda **email automático** a los gestores configurados (TO) y referentes (CC) para esa categoría
+   - Se crea **notificación in-app** para los mismos destinatarios
+   - Queda en estado *pendiente*
+6. Un gestor toma la solicitud y la pasa a *en gestión*
+7. Cuando consigue los insumos (compra a proveedor o saca de stock existente), marca *comprada* o directamente *recibida*
+8. Al marcar **recibida**: se carga la fecha de ingreso + cantidades efectivas. Si un item está vinculado a un producto del catálogo, **se genera automáticamente un movimiento de entrada al stock**
+9. *Cerrada* o *Cancelada* son los estados terminales
+
+## Routing por categoría
+
+Cada categoría tiene:
+- **Gestores (TO)**: los que reciben el email y son responsables. Decide la compra.
+- **Referentes (CC)**: copia informativa. No son responsables pero quedan al tanto.
+
+Se configura en **Configuración → Integraciones → pestaña Insumos**. Es por organización (multi-tenant).
+
+Ejemplo de routing típico:
+- *Papelería*: Administración-Gonzalo (TO) + referentes (CC)
+- *Edintor*: Gonzalo-Ivan (TO) + referentes (CC)
+- *Ferretería*: Gonzalo (TO) + referentes (CC)
+
+## Estados
+
+\`\`\`
+pendiente → en_gestion → comprada → recibida → cerrada
+                     └→ cancelada (en cualquier momento)
+\`\`\`
+
+Cada transición:
+- Registra fecha + usuario + motivo opcional
+- Se loggea en **Auditoría** (hash chain inmutable)
+- Notifica al solicitante via in-app
+
+## Conexiones
+
+- **Stock**: al marcar "recibida" con item vinculado a producto, genera movimiento de entrada
+- **Notificaciones**: in-app + email a gestores/referentes configurados
+- **Auditoría**: cada acción queda registrada
+- **Compras**: opcionalmente, una solicitud puede generar una OC al proveedor (con el campo \`orden_compra_id\`)
+
+## Tip
+
+Para arrancar: andá a **Integraciones → Insumos**, hay templates sugeridos (Papelería, Ferretería, Edintor, etc.). Cliqueás cualquiera, cargás los emails de gestor y referente, y ya está listo para usar.
+`,
+  },
+  {
     slug: 'compras',
     icon: 'Truck',
     titulo: 'Compras',
