@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, AlertCircle, Loader2, Calendar, User, Tag, ClipboardList } from 'lucide-react';
+import { X, AlertCircle, Loader2, Calendar, User, Tag, ClipboardList, FileDown } from 'lucide-react';
 
 interface ItemSolicitud {
   id: number;
@@ -278,7 +278,15 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
           )}
         </div>
 
-        <div className="flex justify-end p-4 border-t border-slate-800 bg-slate-900/60">
+        <div className="flex justify-between items-center p-4 border-t border-slate-800 bg-slate-900/60">
+          <a
+            href={`/api/insumos/solicitudes/${solicitud.id}/pdf`}
+            download={`solicitud-${solicitud.numero}.pdf`}
+            className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-sm text-slate-200"
+          >
+            <FileDown className="w-4 h-4" />
+            Descargar PDF
+          </a>
           <button onClick={onClose} className="px-4 py-2 text-sm text-slate-300 hover:text-slate-100">
             Cerrar
           </button>
