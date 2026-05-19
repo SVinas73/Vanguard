@@ -49,7 +49,16 @@ export default function RoutingInsumos() {
   }, [orgActivaId]);
 
   if (!orgActivaId) {
-    return <div className="p-6 text-center text-slate-500">Seleccioná una organización primero.</div>;
+    return (
+      <div className="text-center py-12 px-6 bg-slate-900/50 border border-amber-500/30 rounded-lg">
+        <Tag className="w-12 h-12 mx-auto text-amber-400 mb-3" />
+        <h4 className="text-slate-100 font-medium mb-1">Falta seleccionar una empresa</h4>
+        <p className="text-sm text-slate-400 max-w-md mx-auto">
+          Para configurar destinatarios necesitás tener una empresa activa.
+          Mirá <strong>arriba a la derecha del header</strong> el botón <strong>"Elegir empresa"</strong> o <strong>"Crear empresa"</strong> (color ámbar).
+        </p>
+      </div>
+    );
   }
 
   return (

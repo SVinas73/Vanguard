@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Plus, Filter, Calendar, User, Tag, RefreshCw, AlertCircle, ClipboardList, ChevronRight } from 'lucide-react';
+import { Plus, Filter, Calendar, User, Tag, RefreshCw, AlertCircle, ClipboardList, ChevronRight, Building2 } from 'lucide-react';
 import { useOrganizacion } from '@/hooks/useOrganizacion';
 import { useAuth } from '@/hooks/useAuth';
 import CrearSolicitudInsumoModal from './CrearSolicitudInsumoModal';
@@ -153,8 +153,15 @@ export default function SolicitudesInsumosPanel() {
       )}
 
       {!orgActivaId && (
-        <div className="text-center py-12 text-slate-500">
-          Seleccioná una organización para ver solicitudes.
+        <div className="text-center py-12 px-6 bg-slate-900/50 border border-amber-500/30 rounded-lg">
+          <Building2 className="w-12 h-12 mx-auto text-amber-400 mb-3" />
+          <h4 className="text-slate-100 font-medium mb-1">Falta seleccionar una empresa</h4>
+          <p className="text-sm text-slate-400 mb-4 max-w-md mx-auto">
+            Las solicitudes de insumos se asocian a una organización. Mirá <strong>arriba a la derecha del header</strong> y vas a ver un botón <strong>"Elegir empresa"</strong> o <strong>"Crear empresa"</strong> (color ámbar).
+          </p>
+          <p className="text-xs text-slate-500">
+            Si no aparece el botón, es porque tu usuario no tiene asignada ninguna organización todavía. Pedile a un admin que te invite.
+          </p>
         </div>
       )}
 
