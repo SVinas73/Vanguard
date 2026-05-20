@@ -10,7 +10,6 @@ interface Product {
   codigo: string;
   descripcion: string;
   stock?: number;
-  unidad?: string | null;
   categoria?: string;
   almacen_id?: string | null;
 }
@@ -18,6 +17,7 @@ interface Product {
 interface Almacen {
   id: string;
   nombre: string;
+  es_insumos?: boolean;
 }
 
 interface ItemForm {
@@ -65,8 +65,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
   const { user } = useAuth(false);
   const [categorias, setCategorias] = useState<CategoriaRouting[]>([]);
   const [productos, setProductos] = useState<Product[]>([]);
-  const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
-  const [almacenSel, setAlmacenSel] = useState<string>('');
+  const [almacenesInsumos, setAlmacenesInsumos] = useState<Almacen[]>([]);
   const [fechaLimite, setFechaLimite] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [items, setItems] = useState<ItemForm[]>([emptyItem()]);
@@ -84,29 +83,24 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
 
     supabase
       .from('productos')
-      .select('codigo, descripcion, stock, unidad, categoria, almacen_id')
+      .select('codigo, descripcion, stock, categoria, almacen_id')
       .order('descripcion')
       .limit(2000)
       .then(({ data }) => setProductos((data as Product[]) || []));
 
+    // Cargo solo los almacenes marcados como es_insumos = true
     supabase
       .from('almacenes')
-      .select('id, nombre')
+      .select('id, nombre, es_insumos')
+      .eq('es_insumos', true)
       .order('nombre')
-      .then(({ data }) => {
-        const lista = (data as Almacen[]) || [];
-        setAlmacenes(lista);
-        // Preferir un almacén llamado "insumos" si existe
-        const insumosAlm = lista.find(a => /insumo/i.test(a.nombre));
-        if (insumosAlm) setAlmacenSel(insumosAlm.id);
-        else if (lista.length === 1) setAlmacenSel(lista[0].id);
-      });
+      .then(({ data }) => setAlmacenesInsumos((data as Almacen[]) || []));
   }, [organizacionId]);
 
   const refetchProductos = async () => {
     const { data } = await supabase
       .from('productos')
-      .select('codigo, descripcion, stock, unidad, categoria, almacen_id')
+      .select('codigo, descripcion, stock, categoria, almacen_id')
       .order('descripcion')
       .limit(2000);
     setProductos((data as Product[]) || []);
@@ -134,16 +128,22 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
     return Array.from(cats);
   }, [items, productos]);
 
+  // IDs de almacenes marcados como de insumos (BD: almacenes.es_insumos)
+  const idsInsumos = useMemo(() => new Set(almacenesInsumos.map(a => a.id)), [almacenesInsumos]);
+
   const productosFiltrados = useMemo(() => {
-    // Filtrar por almacén si está seleccionado
+    // Solo productos cuyo almacén esté marcado como es_insumos = TRUE.
+    // Si no hay ningún almacén marcado en la BD, muestra TODOS (fallback).
     let base = productos;
-    if (almacenSel) base = base.filter(p => p.almacen_id === almacenSel);
+    if (idsInsumos.size > 0) {
+      base = base.filter(p => p.almacen_id && idsInsumos.has(p.almacen_id));
+    }
     if (!search.trim()) return base.slice(0, 50);
     const q = search.toLowerCase();
     return base
       .filter(p => p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q))
       .slice(0, 50);
-  }, [search, productos, almacenSel]);
+  }, [search, productos, idsInsumos]);
 
   const seleccionarProducto = (itemId: string, p: Product) => {
     setItems(xs => xs.map(x => x.id === itemId ? {
@@ -151,7 +151,6 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
       producto_codigo: p.codigo,
       descripcion: p.descripcion,
       stock_actual: p.stock ?? null,
-      unidad: p.unidad || 'unidad',
     } : x));
     setSearchOpen(null);
     setSearch('');
@@ -219,22 +218,17 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
           </div>
 
           <div className="p-5 overflow-y-auto space-y-4">
-            {/* Almacén + fecha límite */}
+            {/* Info almacenes de insumos + fecha límite */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Almacén</label>
-                <select
-                  value={almacenSel}
-                  onChange={e => setAlmacenSel(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200 focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">— todos —</option>
-                  {almacenes.map(a => (
-                    <option key={a.id} value={a.id}>{a.nombre}</option>
-                  ))}
-                </select>
+                <div className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-300">
+                  {almacenesInsumos.length === 0
+                    ? <span className="text-amber-400">Ningún almacén marcado como insumos</span>
+                    : almacenesInsumos.map(a => a.nombre).join(' · ')}
+                </div>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Filtra los productos a mostrar. Default: almacén de insumos si existe.
+                  Configurable solo desde BD: <code className="text-slate-400">UPDATE almacenes SET es_insumos = TRUE WHERE nombre = 'X';</code>
                 </p>
               </div>
               <div>
