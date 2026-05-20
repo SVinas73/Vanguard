@@ -13,6 +13,31 @@ import {
 } from '@/lib/modules';
 import type { TabType } from '@/types';
 
+const LOCAL_KEY = 'vg:module-config';
+
+function leerLocal(): ModuleConfig | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<ModuleConfig>;
+    return {
+      preset: parsed.preset ?? 'full',
+      enabled_modules: parsed.enabled_modules ?? ALL_MODULES,
+      display_currency: parsed.display_currency ?? 'UYU',
+    };
+  } catch {
+    return null;
+  }
+}
+
+function guardarLocal(c: ModuleConfig) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(c));
+  } catch { /* quota / disabled */ }
+}
+
 interface State {
   modulos: TabType[];
   config: ModuleConfig;
@@ -29,8 +54,9 @@ export function useModulosHabilitados(): State {
 
   const cargar = useCallback(async () => {
     setLoading(true);
+    // Single-tenant fallback: si no hay org, leer/escribir en localStorage
     if (!orgActivaId) {
-      setConfig(DEFAULT_CONFIG);
+      setConfig(leerLocal() ?? DEFAULT_CONFIG);
       setLoading(false);
       return;
     }
@@ -50,16 +76,34 @@ export function useModulosHabilitados(): State {
 
   useEffect(() => { cargar(); }, [cargar]);
 
+  // Cuando otra instancia del hook cambia la config, aplicamos el
+  // nuevo valor que viene en el evento directo. Sin re-fetch, sin lag.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as ModuleConfig | undefined;
+      if (detail) setConfig(detail);
+      else cargar();
+    };
+    window.addEventListener('vg:modules-changed', handler);
+    return () => window.removeEventListener('vg:modules-changed', handler);
+  }, [cargar]);
+
   const guardar = useCallback(async (next: ModuleConfig) => {
-    if (!orgActivaId) return;
     setConfig(next);
-    await supabase
-      .from('organizaciones')
-      .update({ config: next })
-      .eq('id', orgActivaId);
-    // Avisar a la app para refrescar el sidebar
+    if (orgActivaId) {
+      await supabase
+        .from('organizaciones')
+        .update({ config: next })
+        .eq('id', orgActivaId);
+    } else {
+      // Fallback single-tenant: persistir en localStorage
+      guardarLocal(next);
+    }
+    // Avisar a la app para refrescar el sidebar — incluye el nuevo
+    // config en el evento para aplicarlo sin re-fetch
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('vg:modules-changed'));
+      window.dispatchEvent(new CustomEvent('vg:modules-changed', { detail: next }));
     }
   }, [orgActivaId]);
 

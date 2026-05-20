@@ -20,6 +20,7 @@ export const LITE_MODULES: TabType[] = [
   'facturacion',
   'ayuda',
   'configuracion',
+  'empresas',
 ];
 
 /**
@@ -35,14 +36,14 @@ export const ALL_MODULES: TabType[] = [
   'rrhh',
   'analytics', 'demand', 'pricing', 'reportes',
   'aprobaciones', 'seriales', 'trazabilidad', 'qms', 'auditoria',
-  'integraciones', 'ayuda', 'configuracion',
+  'integraciones', 'ayuda', 'configuracion', 'empresas',
 ];
 
 /**
  * Módulos que SIEMPRE deben estar visibles, sin importar el preset.
  * (Si no, el usuario podría dejarse sin manera de configurar nada.)
  */
-export const PINNED_MODULES: TabType[] = ['dashboard', 'ayuda', 'configuracion'];
+export const PINNED_MODULES: TabType[] = ['dashboard', 'ayuda', 'configuracion', 'empresas'];
 
 export interface ModuleConfig {
   preset: ModulePreset;
@@ -117,4 +118,5 @@ export const MODULE_LABELS: Record<TabType, string> = {
   integraciones: 'Integraciones',
   ayuda: 'Centro de Ayuda',
   configuracion: 'Configuración',
+  empresas: 'Mis empresas',
 } as Record<TabType, string>;

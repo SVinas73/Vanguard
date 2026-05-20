@@ -12,6 +12,12 @@ interface Product {
   stock?: number;
   unidad?: string | null;
   categoria?: string;
+  almacen_id?: string | null;
+}
+
+interface Almacen {
+  id: string;
+  nombre: string;
 }
 
 interface ItemForm {
@@ -59,7 +65,8 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
   const { user } = useAuth(false);
   const [categorias, setCategorias] = useState<CategoriaRouting[]>([]);
   const [productos, setProductos] = useState<Product[]>([]);
-  const [categoriaSel, setCategoriaSel] = useState<string>('');
+  const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
+  const [almacenSel, setAlmacenSel] = useState<string>('');
   const [fechaLimite, setFechaLimite] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [items, setItems] = useState<ItemForm[]>([emptyItem()]);
@@ -77,30 +84,66 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
 
     supabase
       .from('productos')
-      .select('codigo, descripcion, stock, unidad, categoria')
+      .select('codigo, descripcion, stock, unidad, categoria, almacen_id')
       .order('descripcion')
       .limit(2000)
       .then(({ data }) => setProductos((data as Product[]) || []));
+
+    supabase
+      .from('almacenes')
+      .select('id, nombre')
+      .order('nombre')
+      .then(({ data }) => {
+        const lista = (data as Almacen[]) || [];
+        setAlmacenes(lista);
+        // Preferir un almacén llamado "insumos" si existe
+        const insumosAlm = lista.find(a => /insumo/i.test(a.nombre));
+        if (insumosAlm) setAlmacenSel(insumosAlm.id);
+        else if (lista.length === 1) setAlmacenSel(lista[0].id);
+      });
   }, [organizacionId]);
 
   const refetchProductos = async () => {
     const { data } = await supabase
       .from('productos')
-      .select('codigo, descripcion, stock, unidad, categoria')
+      .select('codigo, descripcion, stock, unidad, categoria, almacen_id')
       .order('descripcion')
       .limit(2000);
     setProductos((data as Product[]) || []);
   };
 
-  const catActual = categorias.find(c => c.categoria === categoriaSel);
+  // Autodetectar categoría del primer producto seleccionado.
+  // El routing del email usa esta categoría — no se le pide al usuario.
+  const categoriaDetectada = useMemo<string | null>(() => {
+    const primerConCat = items.find(i => i.producto_codigo)?.producto_codigo;
+    if (!primerConCat) return null;
+    const p = productos.find(p => p.codigo === primerConCat);
+    return p?.categoria || null;
+  }, [items, productos]);
+
+  const catActual = categorias.find(c => c.categoria === categoriaDetectada);
+
+  // Si hay items de múltiples categorías, advertir
+  const categoriasMezcladas = useMemo<string[]>(() => {
+    const cats = new Set<string>();
+    for (const it of items) {
+      if (!it.producto_codigo) continue;
+      const p = productos.find(p => p.codigo === it.producto_codigo);
+      if (p?.categoria) cats.add(p.categoria);
+    }
+    return Array.from(cats);
+  }, [items, productos]);
 
   const productosFiltrados = useMemo(() => {
-    if (!search.trim()) return productos.slice(0, 50);
+    // Filtrar por almacén si está seleccionado
+    let base = productos;
+    if (almacenSel) base = base.filter(p => p.almacen_id === almacenSel);
+    if (!search.trim()) return base.slice(0, 50);
     const q = search.toLowerCase();
-    return productos
+    return base
       .filter(p => p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q))
       .slice(0, 50);
-  }, [search, productos]);
+  }, [search, productos, almacenSel]);
 
   const seleccionarProducto = (itemId: string, p: Product) => {
     setItems(xs => xs.map(x => x.id === itemId ? {
@@ -122,13 +165,14 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
 
   const guardar = async () => {
     setError(null);
-    if (!categoriaSel) return setError('Seleccioná una categoría');
     if (items.length === 0) return setError('Al menos un item');
     for (const it of items) {
       if (!it.descripcion.trim()) return setError('Todos los items necesitan producto o descripción');
       const c = parseFloat(it.cantidad);
       if (!c || c <= 0) return setError('Cantidades deben ser positivas');
     }
+    // Categoría auto-detectada del primer producto, fallback 'insumos'
+    const categoriaFinal = categoriaDetectada || 'insumos';
 
     setSaving(true);
     try {
@@ -137,7 +181,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           organizacion_id: organizacionId,
-          categoria: categoriaSel,
+          categoria: categoriaFinal,
           fecha_limite: fechaLimite || null,
           observaciones: observaciones.trim() || null,
           items: items.map(it => ({
@@ -175,22 +219,23 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
           </div>
 
           <div className="p-5 overflow-y-auto space-y-4">
-            {/* Categoría + fecha límite */}
+            {/* Almacén + fecha límite */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Categoría *</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">Almacén</label>
                 <select
-                  value={categoriaSel}
-                  onChange={e => setCategoriaSel(e.target.value)}
+                  value={almacenSel}
+                  onChange={e => setAlmacenSel(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200 focus:outline-none focus:border-blue-500"
                 >
-                  <option value="">— elegí una categoría —</option>
-                  {categorias.map(c => (
-                    <option key={c.id} value={c.categoria}>
-                      {c.categoria_label || c.categoria}
-                    </option>
+                  <option value="">— todos —</option>
+                  {almacenes.map(a => (
+                    <option key={a.id} value={a.id}>{a.nombre}</option>
                   ))}
                 </select>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Filtra los productos a mostrar. Default: almacén de insumos si existe.
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Fecha límite (opcional)</label>
@@ -203,20 +248,33 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
               </div>
             </div>
 
-            {categorias.length === 0 && (
-              <div className="text-xs text-amber-400 bg-amber-500/5 border border-amber-500/20 rounded px-3 py-2">
-                No hay categorías configuradas. Pedile a un admin que las cargue en <strong>Comercial → Solicitudes de Insumos → Destinatarios</strong>.
-              </div>
-            )}
-
-            {catActual && (
-              <div className="px-3 py-2 bg-slate-800 border border-slate-700 rounded text-xs">
-                <div className="text-slate-500 mb-1">Se va a notificar por email a:</div>
-                {catActual.gestor_emails.length > 0 && (
-                  <div className="text-slate-300"><strong>Para:</strong> {catActual.gestor_emails.join(', ')}</div>
+            {/* Categoría detectada del primer producto */}
+            {categoriaDetectada && (
+              <div className="px-3 py-2 bg-slate-800 border border-slate-700 rounded text-xs space-y-1">
+                <div className="text-slate-300">
+                  <strong>Categoría:</strong> <span className="text-blue-300">{categoriaDetectada}</span>
+                  <span className="text-slate-500 ml-2">(detectada del primer producto)</span>
+                </div>
+                {categoriasMezcladas.length > 1 && (
+                  <div className="text-amber-400">
+                    ⚠ Hay productos de varias categorías ({categoriasMezcladas.join(', ')}).
+                    Se va a usar "{categoriaDetectada}" para el destinatario.
+                  </div>
                 )}
-                {catActual.referente_emails.length > 0 && (
-                  <div className="text-slate-400"><strong>CC:</strong> {catActual.referente_emails.join(', ')}</div>
+                {catActual ? (
+                  <>
+                    {catActual.gestor_emails.length > 0 && (
+                      <div className="text-slate-400"><strong>Para:</strong> {catActual.gestor_emails.join(', ')}</div>
+                    )}
+                    {catActual.referente_emails.length > 0 && (
+                      <div className="text-slate-500"><strong>CC:</strong> {catActual.referente_emails.join(', ')}</div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-amber-400">
+                    No hay destinatarios configurados para esta categoría. Configurá en
+                    <strong> Comercial → Destinatarios</strong>.
+                  </div>
                 )}
               </div>
             )}
@@ -394,7 +452,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
             </button>
             <button
               onClick={guardar}
-              disabled={saving || !categoriaSel}
+              disabled={saving}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm transition disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

@@ -65,8 +65,11 @@ DROP INDEX IF EXISTS uq_solicitudes_insumos_numero;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_solicitudes_insumos_numero
   ON solicitudes_insumos (COALESCE(organizacion_id, '00000000-0000-0000-0000-000000000000'::uuid), numero);
 
--- Mismo tratamiento para destinatarios
-DROP INDEX IF EXISTS org_categorias_insumos_routing_organizacion_id_categoria_key;
+-- Mismo tratamiento para destinatarios.
+-- IMPORTANTE: hay que dropear el CONSTRAINT, no el índice. El índice es
+-- el storage del constraint UNIQUE creado por la cláusula
+-- `UNIQUE (organizacion_id, categoria)` en migration 021. Dropear el
+-- constraint elimina el índice automáticamente.
 ALTER TABLE org_categorias_insumos_routing
   DROP CONSTRAINT IF EXISTS org_categorias_insumos_routing_organizacion_id_categoria_key;
 
