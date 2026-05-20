@@ -378,7 +378,6 @@ export function TransferenciasDashboard({ products, userEmail, onRefreshProducts
           </button>
           <div>
             <h2 className="text-xl font-bold">Nueva Transferencia</h2>
-            <p className="text-sm text-slate-500">Mover productos entre almacenes</p>
           </div>
         </div>
 
@@ -540,7 +539,6 @@ export function TransferenciasDashboard({ products, userEmail, onRefreshProducts
           </div>
           <div>
             <h2 className="text-xl font-bold">Transferencias entre Almacenes</h2>
-            <p className="text-sm text-slate-500">Gestión de movimientos entre ubicaciones</p>
           </div>
         </div>
         <button

@@ -148,9 +148,6 @@ export default function HistorialCliente() {
           <User className="h-6 w-6 text-blue-400" />
           Historial 360° del Cliente
         </h3>
-        <p className="text-sm text-slate-400 mt-0.5">
-          Toda la actividad de un cliente en una sola vista: órdenes, soporte, garantías, RMAs, finanzas.
-        </p>
       </div>
 
       {/* Buscador */}

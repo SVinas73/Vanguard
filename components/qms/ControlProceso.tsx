@@ -1342,7 +1342,6 @@ function PuntoControlForm({ formData, setFormData, onGuardar, onCancelar, saving
         </button>
         <div>
           <h3 className="text-xl font-bold text-slate-100">Nuevo Punto de Control</h3>
-          <p className="text-sm text-slate-400">Defina un punto de inspección en el proceso</p>
         </div>
       </div>
 

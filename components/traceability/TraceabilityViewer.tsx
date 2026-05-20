@@ -1210,7 +1210,6 @@ export default function TraceabilityEnterprise({
               <span className="text-sm font-medium text-emerald-400">Lead Time Total</span>
               <span className="text-2xl font-bold text-emerald-300">{formatDuration(stats.leadTimeMinutos)}</span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">Desde el primer hasta el último evento</p>
           </div>
         </div>
       )}

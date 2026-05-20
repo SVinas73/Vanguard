@@ -310,7 +310,6 @@ export default function CriticalAlerts() {
           <div className="text-center py-12">
             <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
             <p className="text-emerald-400 font-medium">¡Sin alertas pendientes!</p>
-            <p className="text-sm text-slate-500 mt-1">Todos los productos tienen stock saludable</p>
           </div>
         )}
       </div>

@@ -618,7 +618,6 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
                     onChange={(e) => setBulkGeneration({ ...bulkGeneration, cantidad: parseInt(e.target.value) || 1 })}
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Seriales se generarán automáticamente</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>

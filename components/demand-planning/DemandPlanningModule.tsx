@@ -135,7 +135,6 @@ export default function DemandPlanningModule() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-100">Demand Planning</h2>
-            <p className="text-sm text-slate-400">Predicción y planificación de demanda con IA</p>
           </div>
         </div>
         

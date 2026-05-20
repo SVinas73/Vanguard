@@ -1410,15 +1410,13 @@ export function ProyectosDashboard() {
                         </div>
                       ))
                     }
-                    {tareas.filter(t => 
-                      t.fechaLimite && 
-                      !t.completado && 
+                    {tareas.filter(t =>
+                      t.fechaLimite &&
+                      !t.completado &&
                       new Date(t.fechaLimite) > new Date() &&
                       new Date(t.fechaLimite) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
                     ).length === 0 && (
-                      <p className="text-sm text-slate-500 text-center py-4">
-                        No hay tareas próximas
-                      </p>
+                      <p className="text-xs text-slate-500">Sin tareas próximas</p>
                     )}
                   </div>
                 </Card>

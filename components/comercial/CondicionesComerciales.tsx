@@ -292,7 +292,6 @@ export default function CondicionesComerciales() {
             <Tag className="h-6 w-6 text-violet-400" />
             Condiciones Comerciales
           </h2>
-          <p className="text-sm text-slate-400 mt-0.5">Listas de precios, descuentos por volumen y control de crédito</p>
         </div>
         <button onClick={loadAll} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors">
           <RefreshCw className="h-4 w-4" />
@@ -329,7 +328,6 @@ export default function CondicionesComerciales() {
       {!loading && seccion === 'listas' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">Define listas con descuento global. Asígnalas a clientes específicos.</p>
             <button
               onClick={() => { setShowListaForm(true); setEditLista(null); setListaForm({ nombre: '', descripcion: '', moneda: 'UYU', descuento_global_pct: '0' }); }}
               className="flex items-center gap-2 px-3 py-2 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 rounded-xl text-sm font-medium transition-colors"
@@ -444,7 +442,6 @@ export default function CondicionesComerciales() {
       {!loading && seccion === 'descuentos' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">Define rangos de cantidad con descuento automático por volumen.</p>
             <button
               onClick={() => { setShowDescForm(true); setEditDesc(null); setDescForm({ nombre: '', producto_codigo: '', categoria: '', min_cantidad: '1', max_cantidad: '', descuento_pct: '5' }); }}
               className="flex items-center gap-2 px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-xl text-sm font-medium transition-colors"
@@ -557,7 +554,6 @@ export default function CondicionesComerciales() {
       {!loading && seccion === 'credito' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">Gestiona límites de crédito, plazos de pago y bloqueo por cliente.</p>
             <div className="flex items-center gap-3 text-xs text-slate-500">
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block"></span> Bloqueado</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> &gt;80% límite</span>

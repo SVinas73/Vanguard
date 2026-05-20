@@ -324,7 +324,6 @@ function InventoryValuePanel({ data, periodLabel = '30 días' }: InventoryValueP
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-xl font-bold text-slate-100 tracking-tight">Valor del Inventario</h3>
-          <p className="text-sm text-slate-400 mt-0.5">Capital total en stock · Valuación FIFO</p>
         </div>
         {Number.isFinite(trend) && trend !== 0 && (
           <span className={cn(
@@ -474,7 +473,6 @@ function StockAlertsPanelLocal({ alertas }: StockAlertsPanelProps) {
       <div className="flex items-start justify-between mb-5">
         <div>
           <h3 className="text-sm font-semibold text-slate-100 tracking-tight">Alertas de Stock</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Productos que requieren atención</p>
         </div>
         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/10 text-red-300 ring-1 ring-inset ring-red-500/20 tabular-nums">
           {alertas.total}
@@ -576,7 +574,6 @@ function TopConsumptionPanel({ data }: TopConsumptionPanelProps) {
       <div className="flex items-start justify-between mb-5">
         <div>
           <h3 className="text-sm font-semibold text-slate-100 tracking-tight">Productos Más Consumidos</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Ranking por unidades salidas</p>
         </div>
 
         <div className="flex gap-0.5 p-0.5 rounded-md bg-slate-900 border border-slate-800">
@@ -674,7 +671,6 @@ function InsightsPanel({ insights }: InsightsPanelProps) {
               AI
             </span>
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">Lo que necesitás saber ahora</p>
         </div>
         <Brain size={14} className="text-slate-600" strokeWidth={1.75} />
       </div>
@@ -730,7 +726,6 @@ function RecentActivityPanelLocal({ actividad }: RecentActivityPanelProps) {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-semibold text-slate-100 tracking-tight">Actividad Reciente</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Últimos movimientos de inventario</p>
         </div>
         <Activity size={14} className="text-slate-600" strokeWidth={1.75} />
       </div>

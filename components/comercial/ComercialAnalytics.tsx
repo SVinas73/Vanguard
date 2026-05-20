@@ -401,7 +401,6 @@ export default function ComercialAnalytics() {
             <BarChart3 className="h-6 w-6 text-blue-400" />
             Inteligencia Comercial
           </h2>
-          <p className="text-sm text-slate-400 mt-0.5">KPIs financieros, rentabilidad y pipeline de ventas</p>
         </div>
         <div className="flex items-center gap-2">
           {(['3m', '6m', '12m'] as const).map(p => (

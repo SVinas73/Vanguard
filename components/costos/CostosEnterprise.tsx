@@ -2246,7 +2246,6 @@ export default function CostosEnterprise() {
               <div className="space-y-4">
                 <div className="p-4 border-2 border-dashed border-slate-700 rounded-xl text-center">
                   <Upload className="h-8 w-8 mx-auto mb-2 text-slate-500" />
-                  <p className="text-sm text-slate-400 mb-2">Arrastra un archivo CSV o haz clic para seleccionar</p>
                   <input
                     type="file"
                     accept=".csv"
@@ -2282,7 +2281,6 @@ export default function CostosEnterprise() {
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-lg font-semibold text-slate-200">Costos Indirectos</h3>
-              <p className="text-sm text-slate-400">Flete, seguros, comisiones y otros costos adicionales</p>
             </div>
             <button
               onClick={() => setModalType('nuevo_indirecto')}
@@ -2357,7 +2355,6 @@ export default function CostosEnterprise() {
                 </div>
                 <div>
                   <h4 className="font-medium text-slate-200">Lista de Costos</h4>
-                  <p className="text-xs text-slate-500">Todos los productos con costos y márgenes</p>
                 </div>
               </div>
               <button
@@ -2377,7 +2374,6 @@ export default function CostosEnterprise() {
                 </div>
                 <div>
                   <h4 className="font-medium text-slate-200">Análisis ABC</h4>
-                  <p className="text-xs text-slate-500">Clasificación por valor de inventario</p>
                 </div>
               </div>
               <button
@@ -2915,7 +2911,7 @@ function ModalDetalleProducto({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500">Sin lotes registrados</p>
+                <div className="text-xs text-slate-500">Sin lotes</div>
               )}
             </div>
 

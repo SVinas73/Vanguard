@@ -365,7 +365,6 @@ export default function ControlCalidad() {
             <ShieldCheck className="h-6 w-6 text-orange-400" />
             Control de Calidad
           </h3>
-          <p className="text-sm text-slate-400 mt-0.5">Inspección de recepciones y registro de no conformidades</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={loadData} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400">

@@ -265,7 +265,6 @@ export default function Packing() {
               <Package className="h-6 w-6 text-blue-400" />
               Packing & Despacho
             </h3>
-            <p className="text-sm text-slate-400 mt-0.5">Armado de bultos, asignación de transportista y tracking</p>
           </div>
           <button onClick={loadData} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400">
             <RefreshCw className="h-4 w-4" />

@@ -9,20 +9,7 @@ export default function MisEmpresasModule() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-100">Mis empresas</h2>
-        <p className="text-sm text-slate-400 mt-0.5 max-w-xl">
-          Empresas a las que pertenecés. La empresa activa es la que se usa en todos los módulos.
-        </p>
-      </div>
-
-      <div className="flex items-start gap-3 p-3 bg-slate-900/50 border border-slate-800 rounded-md text-sm text-slate-400">
-        <Info className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-        <p>
-          La creación de empresas se hace por fuera del sistema (panel de administración).
-          Si necesitás una empresa nueva, contactá al administrador.
-        </p>
-      </div>
+      <h2 className="text-lg font-semibold text-slate-100">Mis empresas</h2>
 
       {loading && (
         <div className="text-center py-12 text-slate-500">
@@ -35,10 +22,6 @@ export default function MisEmpresasModule() {
         <div className="text-center py-16 px-6 bg-slate-900/50 border border-slate-800 rounded-lg">
           <Building2 className="w-12 h-12 mx-auto text-slate-600 mb-3" />
           <h4 className="text-slate-200 font-medium mb-1">No tenés empresas asignadas</h4>
-          <p className="text-sm text-slate-500 max-w-md mx-auto">
-            Tu usuario no fue invitado a ninguna empresa todavía. Pedile al administrador que
-            te incluya en la empresa que corresponda.
-          </p>
         </div>
       )}
 

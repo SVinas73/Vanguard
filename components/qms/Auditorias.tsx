@@ -824,7 +824,6 @@ export default function Auditorias() {
               <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center">
                 <ClipboardList className="h-12 w-12 mx-auto mb-3 text-slate-600" />
                 <p className="text-slate-400">No se encontraron auditorías</p>
-                <p className="text-sm text-slate-500 mt-1">Crea una nueva auditoría para comenzar</p>
               </div>
             )}
           </div>
@@ -1496,9 +1495,7 @@ function AuditoriaDetalle({
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center">
               <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
               <p className="text-slate-400">No hay hallazgos registrados</p>
-              {aud.estado === 'en_proceso' && (
-                <p className="text-sm text-slate-500 mt-1">Agregue hallazgos durante la auditoría</p>
-              )}
+              {aud.estado === 'en_proceso' && null}
             </div>
           )}
         </div>
@@ -1508,7 +1505,6 @@ function AuditoriaDetalle({
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center">
           <Paperclip className="h-12 w-12 mx-auto mb-3 text-slate-600" />
           <p className="text-slate-400">Gestión de documentos próximamente</p>
-          <p className="text-sm text-slate-500 mt-1">Plan, checklist, informe, evidencias...</p>
         </div>
       )}
 

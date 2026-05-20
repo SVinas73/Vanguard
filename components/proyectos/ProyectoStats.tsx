@@ -93,7 +93,6 @@ export function ProyectoStats({ tareas, columnas }: ProyectoStatsProps) {
           </div>
           <div>
             <p className="text-2xl font-bold">{stats.totalTareas}</p>
-            <p className="text-xs text-slate-500">Total Tareas</p>
           </div>
         </div>
       </Card>

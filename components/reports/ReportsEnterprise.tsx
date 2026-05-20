@@ -2422,7 +2422,6 @@ export default function ReportsEnterprise() {
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center">
               <FileText className="h-16 w-16 mx-auto text-slate-700 mb-4" />
               <h3 className="text-lg font-semibold text-slate-400 mb-2">Selecciona un reporte</h3>
-              <p className="text-sm text-slate-500">Elige un reporte del panel izquierdo para comenzar</p>
             </div>
           )}
 

@@ -217,7 +217,7 @@ export function AuditLogPanel() {
   const renderDiff = (log: AuditLog) => {
     const antes = log.datos_anteriores;
     const despues = log.datos_nuevos;
-    if (!antes && !despues) return <p className="text-xs text-slate-500 italic">Sin datos de cambio</p>;
+    if (!antes && !despues) return;
 
     const allKeys = new Set([
       ...Object.keys(antes || {}),
@@ -231,7 +231,7 @@ export function AuditLogPanel() {
     });
 
     if (changedKeys.length === 0 && antes && despues) {
-      return <p className="text-xs text-slate-500 italic">Sin diferencias detectadas</p>;
+      return;
     }
 
     return (

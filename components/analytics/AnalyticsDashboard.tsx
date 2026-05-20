@@ -454,7 +454,6 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
           </div>
           <div>
             <h1 className="text-2xl font-bold">Analytics IA</h1>
-            <p className="text-sm text-slate-400">Análisis predictivo e insights de inventario</p>
           </div>
         </div>
 
@@ -673,7 +672,6 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
                   <p className="text-2xl font-bold text-red-400">
                     {sortedPredictions.filter(p => p.prediction.days !== null && p.prediction.days < 7 && p.prediction.days !== Infinity).length}
                   </p>
-                  <p className="text-sm text-slate-400">Crítico (&lt;7 días)</p>
                 </div>
               </div>
             </Card>
@@ -686,7 +684,6 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
                   <p className="text-2xl font-bold text-amber-400">
                     {sortedPredictions.filter(p => p.prediction.days !== null && p.prediction.days >= 7 && p.prediction.days < 14).length}
                   </p>
-                  <p className="text-sm text-slate-400">Atención (7-14 días)</p>
                 </div>
               </div>
             </Card>
@@ -699,7 +696,6 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
                   <p className="text-2xl font-bold text-emerald-400">
                     {sortedPredictions.filter(p => p.prediction.days === null || p.prediction.days === Infinity || p.prediction.days >= 14).length}
                   </p>
-                  <p className="text-sm text-slate-400">Saludable (&gt;14 días)</p>
                 </div>
               </div>
             </Card>

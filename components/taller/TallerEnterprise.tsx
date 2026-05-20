@@ -2277,9 +2277,6 @@ export default function TallerEnterprise() {
                       <Receipt className="h-4 w-4" />
                       Pendiente crear cotización
                     </h4>
-                    <p className="text-sm text-slate-400 mb-3">
-                      El diagnóstico está listo. Ahora debe crear la cotización con los repuestos y mano de obra.
-                    </p>
                     <button
                       onClick={() => setModalType('cotizacion')}
                       className="w-full px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-sm flex items-center justify-center gap-2"

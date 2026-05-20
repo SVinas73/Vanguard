@@ -522,7 +522,6 @@ export default function ComisionesVendedores() {
             <Award className="h-6 w-6 text-amber-400" />
             Comisiones de Vendedores
           </h2>
-          <p className="text-sm text-slate-400 mt-0.5">Reglas, metas y liquidación de comisiones</p>
         </div>
         <button onClick={loadAll} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors">
           <RefreshCw className="h-4 w-4" />
@@ -687,7 +686,6 @@ export default function ComisionesVendedores() {
       {!loading && seccion === 'reglas' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">Configura porcentajes de comisión por vendedor o global. Agrega bonos por superar metas.</p>
             <button onClick={() => { setShowReglaForm(true); setEditRegla(null); resetReglaForm(); setShowReglaForm(true); }}
               className="flex items-center gap-2 px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-xl text-sm font-medium transition-colors">
               <Plus className="h-4 w-4" /> Nueva Regla

@@ -861,7 +861,6 @@ function CAPAForm({ formData, setFormData, ncrsDisponibles, onGuardar, onCancela
         </button>
         <div>
           <h3 className="text-xl font-bold text-slate-100">Nueva CAPA</h3>
-          <p className="text-sm text-slate-400">Crear acción correctiva o preventiva</p>
         </div>
       </div>
 

@@ -466,9 +466,6 @@ export default function TicketsModule() {
             <Headphones className="h-6 w-6 text-blue-400" />
             Tickets de Soporte
           </h3>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Atención post-venta · SLA · Conversación con el cliente
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={loadData} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400">

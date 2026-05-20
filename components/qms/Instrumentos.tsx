@@ -875,7 +875,6 @@ function InstrumentoForm({ formData, setFormData, onGuardar, onCancelar, saving,
           <h3 className="text-xl font-bold text-slate-100">
             {isEditing ? 'Editar Instrumento' : 'Nuevo Instrumento'}
           </h3>
-          <p className="text-sm text-slate-400">Complete la información del equipo de medición</p>
         </div>
       </div>
 
@@ -1457,7 +1456,6 @@ function InstrumentoDetalle({ inst, tabActivo, setTabActivo, onVolver, onEditar,
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center">
           <FileText className="h-12 w-12 mx-auto mb-3 text-slate-600" />
           <p className="text-slate-400">Gestión de documentos próximamente</p>
-          <p className="text-sm text-slate-500 mt-1">Manual, ficha técnica, certificados...</p>
         </div>
       )}
     </div>

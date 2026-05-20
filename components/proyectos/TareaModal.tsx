@@ -1153,14 +1153,10 @@ export function TareaModal({
               {uploadingFiles ? (
                 <div className="flex flex-col items-center">
                   <Loader2 size={32} className="text-emerald-400 animate-spin mb-2" />
-                  <p className="text-sm text-slate-400">Subiendo archivos...</p>
                 </div>
               ) : (
                 <>
                   <Upload size={32} className={cn('mx-auto mb-2', dragOver ? 'text-emerald-400' : 'text-slate-500')} />
-                  <p className="text-sm text-slate-400 mb-1">
-                    Arrastrá archivos aquí o hacé click para seleccionar
-                  </p>
                   <p className="text-xs text-slate-600">Máximo 50MB por archivo</p>
                 </>
               )}

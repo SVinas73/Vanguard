@@ -282,9 +282,6 @@ export default function GarantiasModule() {
             <ShieldCheck className="h-6 w-6 text-emerald-400" />
             Garantías
           </h3>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Cobertura post-venta · alertas de vencimiento · trazabilidad por serial
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={loadData} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400">

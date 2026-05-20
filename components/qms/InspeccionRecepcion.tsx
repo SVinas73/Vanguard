@@ -1144,7 +1144,6 @@ function NuevaInspeccionForm({
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Calculado según AQL nivel II</p>
               </div>
 
               {/* Lote */}

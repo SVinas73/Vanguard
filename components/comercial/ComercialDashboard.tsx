@@ -672,7 +672,6 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
             {alertas.length === 0 ? (
               <div className="text-center py-6">
                 <CheckCircle className="h-10 w-10 text-emerald-400 mx-auto mb-2" />
-                <p className="text-sm text-slate-500">Sin alertas pendientes</p>
               </div>
             ) : (
               alertas.map((alerta, idx) => (
