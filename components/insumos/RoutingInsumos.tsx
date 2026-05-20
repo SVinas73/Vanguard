@@ -54,27 +54,15 @@ export default function RoutingInsumos() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <Tag className="w-5 h-5 text-purple-400 mt-0.5" />
-          <div className="flex-1">
-            <h3 className="font-medium text-slate-100">Destinatarios por categoría</h3>
-            <p className="text-sm text-slate-400 mt-1">
-              Por cada categoría definí quiénes gestionan la compra (TO en el mail) y quiénes son referentes (CC).
-              Cuando alguien crea una solicitud de esa categoría, esos emails reciben la notificación.
-              {orgActiva && <> Configuración para <strong className="text-slate-200">{orgActiva.nombre}</strong>.</>}
-            </p>
-          </div>
-        </div>
+      <div className="flex items-center gap-2">
+        <Tag className="w-5 h-5 text-purple-400" />
+        <h3 className="font-medium text-slate-100">Destinatarios por categoría</h3>
       </div>
 
       {/* Templates sugeridos */}
       {routings.filter(r => r.activa).length === 0 && (
         <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-lg">
           <div className="text-sm text-slate-200 mb-2 font-medium">Categorías sugeridas para empezar</div>
-          <p className="text-xs text-slate-400 mb-3">
-            Cliqueá para crear cualquiera de estas categorías y configurar los emails.
-          </p>
           <div className="flex flex-wrap gap-2">
             {TEMPLATES_SUGERIDOS.map(t => (
               <button
@@ -361,7 +349,7 @@ function SeleccionarEmpresaCardRouting() {
         <Building2 className="w-12 h-12 mx-auto text-amber-400 mb-3" />
         <h4 className="text-slate-100 font-medium mb-4">Selecciona una empresa</h4>
 
-        {loading && <p className="text-sm text-slate-500">Cargando empresas...</p>}
+        {loading && <div className="text-sm text-slate-500">Cargando...</div>}
 
         {!loading && orgs.length > 0 && (
           <div className="max-w-sm mx-auto space-y-2">
@@ -390,7 +378,6 @@ function SeleccionarEmpresaCardRouting() {
 
         {!loading && orgs.length === 0 && (
           <div className="max-w-sm mx-auto">
-            <p className="text-sm text-slate-400 mb-4">Todavía no tenés ninguna empresa creada.</p>
             <button
               onClick={() => setShowCrear(true)}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-medium transition"

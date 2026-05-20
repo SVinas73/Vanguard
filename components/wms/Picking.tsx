@@ -1122,9 +1122,6 @@ function AsistenteIA({
           </div>
           <div>
             <h3 className="text-lg font-bold text-slate-100">Asistente IA de Picking</h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Sugerencias de waves, balance de carga, predicciones y detección de anomalías — todo en tiempo real desde tus datos.
-            </p>
           </div>
         </div>
         <button

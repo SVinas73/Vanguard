@@ -74,10 +74,6 @@ export function ConfigModulos() {
     <div className="p-6 space-y-8 max-w-4xl">
       <header>
         <h1 className="text-xl font-semibold text-slate-100">Configuración</h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Elegí qué módulos ver, la moneda de los reportes, y cargá tipos de cambio.
-          Los datos del resto de los módulos se conservan aunque los ocultes.
-        </p>
       </header>
 
       {/* ============ MODO LITE / FULL / CUSTOM ============ */}
@@ -113,9 +109,6 @@ export function ConfigModulos() {
 
         {config.preset === 'custom' && (
           <div className="rounded-lg bg-slate-950/50 border border-slate-800 p-4">
-            <p className="text-xs text-slate-400 mb-3">
-              Tildá los módulos que querés ver. Dashboard y Ayuda son obligatorios.
-            </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {ALL_MODULES.map(m => {
                 const pinned = PINNED_MODULES.includes(m);
@@ -164,10 +157,6 @@ export function ConfigModulos() {
           <DollarSign className="text-emerald-400" size={18} />
           <h2 className="text-sm font-semibold text-slate-100">Moneda de reportes y dashboard</h2>
         </div>
-        <p className="text-xs text-slate-400 mb-3">
-          Los productos guardan su moneda original. Los reportes convierten todo a esta moneda
-          usando los tipos de cambio cargados abajo.
-        </p>
         <div className="flex gap-2 flex-wrap">
           {MONEDAS_DISPONIBLES.map(m => (
             <button
@@ -192,10 +181,6 @@ export function ConfigModulos() {
           <DollarSign className="text-amber-400" size={18} />
           <h2 className="text-sm font-semibold text-slate-100">Tipos de cambio</h2>
         </div>
-        <p className="text-xs text-slate-400 mb-4">
-          Cargá manualmente las cotizaciones. El sistema usa la más reciente para convertir
-          entre monedas en reportes, dashboards y análisis.
-        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-3">
           <select

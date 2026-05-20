@@ -313,9 +313,6 @@ export default function ScoringComercial() {
             <Star className="h-6 w-6 text-amber-400" />
             Scoring Comercial
           </h2>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Análisis RFM (Recency · Frequency · Monetary) y segmentación de clientes
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <select

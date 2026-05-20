@@ -118,17 +118,9 @@ export default function NotificacionesDestinatarios() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <Mail className="w-5 h-5 text-blue-400 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-slate-100">Destinatarios de notificaciones</h3>
-            <p className="text-sm text-slate-400 mt-1">
-              Por cada evento del sistema, configurá quiénes reciben aviso por email + notificación in-app.
-              {orgActiva && <> Configuración para <strong className="text-slate-200">{orgActiva.nombre}</strong>.</>}
-            </p>
-          </div>
-        </div>
+      <div className="flex items-center gap-2">
+        <Mail className="w-5 h-5 text-blue-400" />
+        <h3 className="font-medium text-slate-100">Destinatarios de notificaciones</h3>
       </div>
 
       {error && (

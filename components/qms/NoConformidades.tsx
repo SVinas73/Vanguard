@@ -922,13 +922,11 @@ export default function NoConformidades() {
                   <>
                     <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
                     <p className="text-slate-400">No hay NCRs activas</p>
-                    <p className="text-sm text-slate-500 mt-1">¡Excelente trabajo en calidad!</p>
                   </>
                 ) : (
                   <>
                     <AlertTriangle className="h-12 w-12 mx-auto mb-3 text-slate-600" />
                     <p className="text-slate-400">No se encontraron NCRs</p>
-                    <p className="text-sm text-slate-500 mt-1">Intenta ajustar los filtros</p>
                   </>
                 )}
               </div>
@@ -1435,9 +1433,7 @@ function NCRDetalle({
                 </div>
               ))}
               
-              {(!ncr.comentarios || ncr.comentarios.length === 0) && (
-                <p className="text-sm text-slate-500 text-center py-4">No hay comentarios</p>
-              )}
+              {(!ncr.comentarios || ncr.comentarios.length === 0) && null}
             </div>
             
             {ncr.estado !== 'cerrada' && ncr.estado !== 'cancelada' && (

@@ -435,9 +435,6 @@ export default function FacturasElectronicas() {
             <Receipt className="h-6 w-6 text-blue-400" />
             Facturación electrónica (DGI Uruguay)
           </h3>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Comprobantes Fiscales Electrónicos: e-Ticket, e-Factura, NC, ND, Remito.
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setVista('config')} className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg">

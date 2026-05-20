@@ -98,9 +98,6 @@ export default function SolicitudesInsumosPanel() {
       <div className="flex flex-wrap items-center gap-3">
         <div>
           <h3 className="text-lg font-semibold text-slate-100">Solicitudes de Insumos</h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Pedidos internos de insumos. Routing automático según categoría a gestores configurados.
-          </p>
         </div>
         <div className="flex-1" />
         <button
@@ -252,7 +249,7 @@ function SeleccionarEmpresaCard() {
         <h4 className="text-slate-100 font-medium mb-4">Selecciona una empresa</h4>
 
         {loading && (
-          <p className="text-sm text-slate-500">Cargando empresas...</p>
+          <div className="text-sm text-slate-500">Cargando...</div>
         )}
 
         {!loading && orgs.length > 0 && (
@@ -282,9 +279,6 @@ function SeleccionarEmpresaCard() {
 
         {!loading && orgs.length === 0 && (
           <div className="max-w-sm mx-auto">
-            <p className="text-sm text-slate-400 mb-4">
-              Todavía no tenés ninguna empresa creada.
-            </p>
             <button
               onClick={() => setShowCrear(true)}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-medium transition"

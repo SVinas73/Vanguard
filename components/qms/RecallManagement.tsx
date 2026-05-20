@@ -921,7 +921,6 @@ export default function RecallManagement() {
               <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center">
                 <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
                 <p className="text-slate-400">No hay recalls activos</p>
-                <p className="text-sm text-slate-500 mt-1">¡Excelente! No hay retiros de producto pendientes</p>
               </div>
             )}
           </div>
@@ -995,7 +994,6 @@ function RecallForm({
             <AlertOctagon className="h-6 w-6 text-red-400" />
             Iniciar Nuevo Recall
           </h3>
-          <p className="text-sm text-slate-400">Complete la información del retiro de producto</p>
         </div>
       </div>
 
@@ -1562,9 +1560,6 @@ function RecallDetalle({
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center">
               <Users className="h-12 w-12 mx-auto mb-3 text-slate-600" />
               <p className="text-slate-400">No hay seguimientos creados</p>
-              <p className="text-sm text-slate-500 mt-1">
-                Crea seguimientos automáticamente o agrega manualmente
-              </p>
             </div>
           )}
         </div>

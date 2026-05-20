@@ -86,9 +86,6 @@ export function PlantillasProyecto({ onSelectPlantilla, onCrearVacio }: Plantill
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h3 className="text-lg font-semibold mb-2">Elegí cómo empezar</h3>
-        <p className="text-sm text-slate-400">
-          Seleccioná una plantilla o creá un proyecto desde cero
-        </p>
       </div>
 
       {/* Opción: Crear vacío */}
@@ -104,9 +101,6 @@ export function PlantillasProyecto({ onSelectPlantilla, onCrearVacio }: Plantill
             <h4 className="font-medium group-hover:text-emerald-400 transition-colors">
               Proyecto en blanco
             </h4>
-            <p className="text-sm text-slate-500">
-              Empezá desde cero con columnas básicas
-            </p>
           </div>
           <ArrowRight size={20} className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
         </div>
@@ -292,7 +286,6 @@ export function CrearDesdeTemplateModal({
           </div>
 
           <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
-            <p className="text-xs text-slate-500 mb-2">Se creará con:</p>
             <ul className="text-sm text-slate-400 space-y-1">
               <li>• {plantilla.columnasConfig.length} columnas predefinidas</li>
               <li>• {plantilla.etiquetasConfig.length} etiquetas</li>

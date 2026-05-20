@@ -207,9 +207,6 @@ export default function MiDia({ onNavigate, onAskAI }: MiDiaProps) {
             <SaludoIcon className="h-7 w-7 text-amber-300" />
             <h1 className="text-3xl font-bold text-slate-100">{saludo}</h1>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
-            Acá está tu día — solo lo que importa.
-          </p>
         </div>
         <button
           onClick={cargar}
@@ -227,10 +224,6 @@ export default function MiDia({ onNavigate, onAskAI }: MiDiaProps) {
           <h3 className="text-lg font-semibold text-slate-100">
             {t('miDia.quietDay')}
           </h3>
-          <p className="text-sm text-slate-400 mt-1 max-w-md mx-auto">
-            No hay alertas críticas, vencimientos ni tareas urgentes. Buen momento para
-            trabajar en proyectos largos o tomarte un café.
-          </p>
         </div>
       )}
 

@@ -269,9 +269,6 @@ export default function ApprovalsInbox() {
             <ShieldCheck className="h-6 w-6 text-violet-400" />
             Inbox de Aprobaciones
           </h3>
-          <p className="text-sm text-slate-400 mt-0.5">
-            NC/ND grandes, comisiones, ajustes de stock — todo lo que requiere sign-off pasa por acá.
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setVistaConfig(true)} className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg">

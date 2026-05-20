@@ -61,9 +61,6 @@ function DefaultFallback({ error, eventId, reset }: { error: Error; eventId?: st
           </div>
           <div>
             <h3 className="font-semibold text-white">Algo salió mal</h3>
-            <p className="text-sm text-slate-400 mt-1">
-              Se produjo un error en este módulo. Ya fue reportado al equipo de soporte.
-            </p>
           </div>
         </div>
 

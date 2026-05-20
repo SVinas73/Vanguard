@@ -4242,9 +4242,6 @@ export default function FinanzasEnterprise() {
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Vincular permite trazabilidad: ver de qué OV/OC nació esta nota.
-                  </p>
                 </div>
               )}
               <div>
@@ -4470,9 +4467,6 @@ export default function FinanzasEnterprise() {
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-slate-500 mt-1">
-                  Solo se muestran documentos con saldo pendiente.
-                </p>
               </div>
 
               <div>

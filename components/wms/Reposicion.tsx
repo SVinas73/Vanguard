@@ -131,9 +131,6 @@ export default function Reposicion() {
             <Repeat className="h-6 w-6 text-cyan-400" />
             Reposición automática
           </h3>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Pick-from-bulk: detecta ubicaciones picking bajo mínimo y propone reabastecerlas desde almacenamiento.
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={loadData} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400">

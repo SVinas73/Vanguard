@@ -69,9 +69,6 @@ export default function Reportes() {
             <BarChart3 className="h-6 w-6 text-pink-400" />
             Reportes WMS
           </h3>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Productividad, exactitud y tiempos de ciclo · todo exportable a CSV.
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <select value={periodo} onChange={e => setPeriodo(parseInt(e.target.value) as any)}
