@@ -1,8 +1,9 @@
 // =====================================================
 // GET /api/insumos/solicitudes/[id]/pdf
 // =====================================================
-// Genera un PDF profesional de la solicitud para descarga.
-// Usa jsPDF + autoTable (mismo stack que el resto del sistema).
+// PDF sobrio de solicitud de insumos. Escudo Vanguard en
+// la esquina, layout de documento corporativo, sin colores
+// chillones ni sensación "generado por IA".
 // =====================================================
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,6 +24,66 @@ const ESTADO_LABEL: Record<string, string> = {
   cancelada: 'Cancelada',
 };
 
+// =====================================================
+// Escudo Vanguard — dibujado con primitives de jsPDF
+// Replica el SVG de components/ui/Logo.tsx en pequeño.
+// =====================================================
+function dibujarEscudoVanguard(doc: jsPDF, x: number, y: number, size = 14) {
+  // Escala: el escudo va de 0 a 64 en el SVG original (sin banner).
+  // Lo escalamos al tamaño deseado.
+  const s = size / 64;
+  const px = (n: number) => x + n * s;
+  const py = (n: number) => y + n * s;
+
+  // Shield path: M 32 4 L 56 14 V 32 C 56 46 46 56 32 60 C 18 56 8 46 8 32 V 14 Z
+  // jsPDF no tiene path API directa, así que aproximamos con líneas + curva.
+  // Simplificación: shield como un rect redondeado con punta abajo.
+  doc.setFillColor(45, 84, 128); // steel-blue (#2d5480)
+  doc.setDrawColor(45, 84, 128);
+
+  // Vertical sides + top
+  const path: [number, number][] = [
+    [px(32), py(4)],
+    [px(56), py(14)],
+    [px(56), py(32)],
+    [px(32), py(60)],
+    [px(8), py(32)],
+    [px(8), py(14)],
+  ];
+
+  // Dibujar shield con triangle approximation
+  // Top rectangle
+  doc.triangle(
+    path[0][0], path[0][1],
+    path[1][0], path[1][1],
+    path[5][0], path[5][1],
+    'F'
+  );
+  // Middle rectangle (rectángulo invertido en lugar de triángulo)
+  doc.rect(
+    path[5][0], path[5][1],
+    path[2][0] - path[5][0],
+    path[2][1] - path[5][1],
+    'F'
+  );
+  // Bottom point — triangle pointing down
+  doc.triangle(
+    path[5][0], path[2][1],
+    path[2][0], path[2][1],
+    path[3][0], path[3][1],
+    'F'
+  );
+
+  // V mark blanca: M 19 19 L 26 19 L 32 41.5 L 38 19 L 45 19 L 34.5 51 L 29.5 51 Z
+  doc.setFillColor(255, 255, 255);
+  doc.triangle(px(19), py(19), px(26), py(19), px(32), py(41.5), 'F');
+  doc.triangle(px(26), py(19), px(32), py(41.5), px(38), py(19), 'F');
+  doc.triangle(px(38), py(19), px(45), py(19), px(32), py(41.5), 'F');
+  doc.triangle(px(29.5), py(51), px(32), py(41.5), px(34.5), py(51), 'F');
+
+  doc.setFillColor(0, 0, 0); // reset
+}
+
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireAuth();
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -37,7 +98,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 
   if (error || !data) return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 });
 
-  // Org info (para header del PDF)
+  // Org info
   let empresa = 'Vanguard';
   if (data.organizacion_id) {
     const { data: org } = await supabase
@@ -49,11 +110,11 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   }
 
   // Categoría label
-  let categoriaLabel = data.categoria;
+  let categoriaLabel = data.categoria as string;
   if (data.organizacion_id) {
     const { data: cat } = await supabase
       .from('org_categorias_insumos_routing')
-      .select('categoria_label, gestor_emails, referente_emails')
+      .select('categoria_label')
       .eq('organizacion_id', data.organizacion_id)
       .eq('categoria', data.categoria)
       .maybeSingle();
@@ -65,148 +126,200 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   // =====================================================
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 15;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 18;
 
-  // Header banner
-  doc.setFillColor(124, 58, 237); // purple-600
-  doc.rect(0, 0, pageWidth, 35, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text('SOLICITUD DE INSUMOS', margin, 14);
-  doc.setFontSize(18);
+  // Slate gray base, no colorful banners
+  const COLOR_TEXT_DARK: [number, number, number] = [15, 23, 42];
+  const COLOR_TEXT_MUTED: [number, number, number] = [100, 116, 139];
+  const COLOR_RULE: [number, number, number] = [203, 213, 225];
+
+  // =====================================================
+  // ENCABEZADO — escudo + nombre + línea divisoria
+  // =====================================================
+  dibujarEscudoVanguard(doc, margin, margin - 2, 16);
+
   doc.setFont('helvetica', 'bold');
-  doc.text(data.numero, margin, 23);
-  doc.setFontSize(11);
+  doc.setFontSize(13);
+  doc.setTextColor(...COLOR_TEXT_DARK);
+  doc.text(empresa, margin + 22, margin + 4);
+
   doc.setFont('helvetica', 'normal');
-  doc.text(empresa, margin, 30);
+  doc.setFontSize(8);
+  doc.setTextColor(...COLOR_TEXT_MUTED);
+  doc.text('Sistema de gestión', margin + 22, margin + 9);
 
-  // Estado en la esquina
-  doc.setFillColor(255, 255, 255);
-  doc.setTextColor(124, 58, 237);
-  const estadoTxt = (ESTADO_LABEL[data.estado as string] || data.estado).toUpperCase();
-  doc.roundedRect(pageWidth - margin - 40, 11, 40, 8, 2, 2, 'F');
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text(estadoTxt, pageWidth - margin - 20, 16.5, { align: 'center' });
-
-  // Metadata box
-  let y = 45;
-  doc.setTextColor(15, 23, 42);
+  // Número de documento (derecha)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
-  doc.text('DETALLE DE LA SOLICITUD', margin, y);
-  y += 5;
+  doc.setTextColor(...COLOR_TEXT_DARK);
+  doc.text(data.numero as string, pageWidth - margin, margin + 4, { align: 'right' });
 
-  doc.setDrawColor(226, 232, 240);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...COLOR_TEXT_MUTED);
+  doc.text(`Emitido: ${new Date().toLocaleDateString('es-UY')}`, pageWidth - margin, margin + 9, { align: 'right' });
+
+  // Línea divisoria horizontal
+  doc.setDrawColor(...COLOR_RULE);
   doc.setLineWidth(0.3);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 5;
+  doc.line(margin, margin + 16, pageWidth - margin, margin + 16);
 
+  // =====================================================
+  // TÍTULO DEL DOCUMENTO
+  // =====================================================
+  let y = margin + 26;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...COLOR_TEXT_DARK);
+  doc.text('Solicitud de insumos', margin, y);
+
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  const drawRow = (label: string, value: string) => {
+  doc.setTextColor(...COLOR_TEXT_MUTED);
+  doc.text(`Categoría: ${categoriaLabel}`, margin, y + 5);
+  y += 14;
+
+  // =====================================================
+  // BLOQUE DE DATOS — dos columnas
+  // =====================================================
+  const colDer = pageWidth / 2 + 5;
+
+  const drawField = (label: string, value: string, fx: number, fy: number) => {
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 116, 139);
-    doc.text(label, margin, y);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text(value, margin + 45, y);
-    y += 6;
+    doc.setFontSize(7.5);
+    doc.setTextColor(...COLOR_TEXT_MUTED);
+    doc.text(label.toUpperCase(), fx, fy);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...COLOR_TEXT_DARK);
+    doc.text(value, fx, fy + 4.5);
   };
 
-  drawRow('Categoría:', categoriaLabel as string);
-  drawRow('Solicitante:', data.solicitado_por as string);
-  drawRow('Fecha solicitud:', new Date(data.fecha_solicitud).toLocaleString('es-UY'));
-  if (data.fecha_limite) drawRow('Fecha límite:', new Date(data.fecha_limite).toLocaleDateString('es-UY'));
-  if (data.fecha_ingreso) drawRow('Fecha ingreso:', new Date(data.fecha_ingreso).toLocaleDateString('es-UY'));
-  if (data.gestor_asignado) drawRow('Gestor asignado:', data.gestor_asignado as string);
+  drawField('Solicitante', data.solicitado_por as string, margin, y);
+  drawField('Estado', ESTADO_LABEL[data.estado as string] || (data.estado as string), colDer, y);
 
-  // Items
-  y += 4;
+  y += 11;
+  drawField('Fecha de solicitud', new Date(data.fecha_solicitud).toLocaleDateString('es-UY'), margin, y);
+  drawField('Fecha límite', data.fecha_limite ? new Date(data.fecha_limite).toLocaleDateString('es-UY') : 'No especificada', colDer, y);
+
+  y += 11;
+  if (data.gestor_asignado) {
+    drawField('Gestor asignado', data.gestor_asignado as string, margin, y);
+  }
+  if (data.fecha_ingreso) {
+    drawField('Fecha de ingreso', new Date(data.fecha_ingreso as string).toLocaleDateString('es-UY'), colDer, y);
+  }
+  if (data.gestor_asignado || data.fecha_ingreso) y += 11;
+
+  // =====================================================
+  // TABLA DE ITEMS
+  // =====================================================
+  y += 6;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text(`INSUMOS SOLICITADOS (${data.items.length})`, margin, y);
+  doc.setFontSize(9);
+  doc.setTextColor(...COLOR_TEXT_DARK);
+  doc.text('Detalle de items', margin, y);
   y += 3;
 
-  const itemsRows = data.items.map((it: any) => [
+  const itemsRows = (data.items as any[]).map(it => [
     it.producto_codigo || '—',
     it.descripcion,
-    String(it.cantidad),
-    it.unidad || 'unidad',
-    it.cantidad_recibida != null ? String(it.cantidad_recibida) : '—',
+    Number(it.cantidad).toString(),
+    it.unidad || '—',
+    it.cantidad_recibida != null ? Number(it.cantidad_recibida).toString() : '—',
     it.observaciones || '—',
   ]);
 
   autoTable(doc, {
     startY: y,
-    head: [['SKU', 'Descripción', 'Solicitado', 'Unidad', 'Recibido', 'Observaciones']],
+    head: [['Código', 'Descripción', 'Solicitado', 'Unidad', 'Recibido', 'Observaciones']],
     body: itemsRows,
     margin: { left: margin, right: margin },
+    theme: 'plain',
     headStyles: {
-      fillColor: [241, 245, 249],
+      fillColor: [248, 250, 252],
       textColor: [71, 85, 105],
       fontStyle: 'bold',
       fontSize: 8,
+      lineColor: [203, 213, 225],
+      lineWidth: { bottom: 0.4 },
+      cellPadding: 2.5,
     },
     bodyStyles: {
-      fontSize: 8,
+      fontSize: 9,
       textColor: [15, 23, 42],
-    },
-    alternateRowStyles: {
-      fillColor: [250, 252, 255],
+      lineColor: [226, 232, 240],
+      lineWidth: { bottom: 0.2 },
+      cellPadding: 2.5,
     },
     columnStyles: {
-      0: { cellWidth: 22, font: 'courier' },
+      0: { cellWidth: 26, font: 'courier', fontSize: 8 },
       2: { halign: 'right', cellWidth: 22 },
-      3: { cellWidth: 20 },
+      3: { cellWidth: 18 },
       4: { halign: 'right', cellWidth: 22 },
     },
   });
 
-  // Observaciones generales
-  // @ts-ignore - lastAutoTable está en runtime
-  let yAfter = (doc as any).lastAutoTable.finalY + 8;
+  // @ts-ignore lastAutoTable runtime
+  let yAfter = (doc as any).lastAutoTable.finalY + 10;
 
+  // =====================================================
+  // OBSERVACIONES
+  // =====================================================
   if (data.observaciones) {
-    if (yAfter > 250) { doc.addPage(); yAfter = 20; }
+    if (yAfter > pageHeight - 50) { doc.addPage(); yAfter = margin; }
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(15, 23, 42);
-    doc.text('OBSERVACIONES', margin, yAfter);
-    yAfter += 4;
-    doc.setDrawColor(226, 232, 240);
-    doc.line(margin, yAfter, pageWidth - margin, yAfter);
+    doc.setFontSize(9);
+    doc.setTextColor(...COLOR_TEXT_DARK);
+    doc.text('Observaciones', margin, yAfter);
     yAfter += 5;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(51, 65, 85);
+    doc.setFontSize(9.5);
+    doc.setTextColor(...COLOR_TEXT_DARK);
     const split = doc.splitTextToSize(data.observaciones as string, pageWidth - 2 * margin);
     doc.text(split, margin, yAfter);
-    yAfter += split.length * 4 + 4;
+    yAfter += split.length * 4.5 + 6;
   }
 
   if (data.estado_motivo) {
-    if (yAfter > 260) { doc.addPage(); yAfter = 20; }
+    if (yAfter > pageHeight - 30) { doc.addPage(); yAfter = margin; }
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text('Notas de estado:', margin, yAfter);
-    yAfter += 4;
+    doc.setFontSize(8.5);
+    doc.setTextColor(...COLOR_TEXT_MUTED);
+    doc.text('Notas de gestión', margin, yAfter);
+    yAfter += 4.5;
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(51, 65, 85);
+    doc.setFontSize(9);
+    doc.setTextColor(...COLOR_TEXT_DARK);
     const split = doc.splitTextToSize(data.estado_motivo as string, pageWidth - 2 * margin);
     doc.text(split, margin, yAfter);
   }
 
-  // Footer
+  // =====================================================
+  // PIE DE PÁGINA — todas las páginas
+  // =====================================================
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
+    doc.setDrawColor(...COLOR_RULE);
+    doc.setLineWidth(0.2);
+    doc.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
+
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.setTextColor(148, 163, 184);
-    doc.text(`Generado por Vanguard ERP · ${new Date().toLocaleString('es-UY')} · ${auth.user.email}`, margin, doc.internal.pageSize.getHeight() - 8);
-    doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
+    doc.setTextColor(...COLOR_TEXT_MUTED);
+    doc.text(
+      `${data.numero}  ·  ${empresa}  ·  Generado por ${auth.user.email}`,
+      margin,
+      pageHeight - 9,
+    );
+    doc.text(
+      `Página ${i} de ${pageCount}`,
+      pageWidth - margin,
+      pageHeight - 9,
+      { align: 'right' },
+    );
   }
 
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
