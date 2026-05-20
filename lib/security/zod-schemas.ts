@@ -124,7 +124,7 @@ export const cambiarEstadoSolicitudSchema = z.object({
 });
 
 export const upsertRoutingInsumosSchema = z.object({
-  organizacion_id: z.string().uuid(),
+  organizacion_id: z.string().uuid().nullable().optional(),
   categoria: z.string().min(1).max(64),
   categoria_label: z.string().max(128).optional().nullable(),
   gestor_emails: z.array(z.string().email()).max(20),

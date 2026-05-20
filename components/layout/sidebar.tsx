@@ -117,7 +117,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
     people: true,
     analysis: true,
     control: false,
-    config: false,
+    config: true,
   });
 
   // Configuración de roles - colores más sutiles

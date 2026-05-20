@@ -34,7 +34,7 @@ interface CategoriaRouting {
 }
 
 interface Props {
-  organizacionId: string;
+  organizacionId: string | null;
   onClose: () => void;
   onCreated: () => void;
 }
@@ -70,7 +70,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
   const [showNuevoProducto, setShowNuevoProducto] = useState<string | null>(null); // item.id que va a recibir el producto nuevo
 
   useEffect(() => {
-    fetch(`/api/insumos/routing?organizacion_id=${organizacionId}`)
+    fetch(organizacionId ? `/api/insumos/routing?organizacion_id=${organizacionId}` : `/api/insumos/routing`)
       .then(r => r.json())
       .then(data => setCategorias((data.routing || []).filter((r: CategoriaRouting) => r.activa)))
       .catch(() => setCategorias([]));

@@ -20,14 +20,16 @@ export async function GET(request: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const orgId = request.nextUrl.searchParams.get('organizacion_id');
-  if (!orgId) return NextResponse.json({ error: 'organizacion_id requerido' }, { status: 400 });
 
   const supabase = createClient(supabaseUrl, supabaseKey);
-  const { data, error } = await supabase
+  const q = supabase
     .from('org_categorias_insumos_routing')
     .select('*')
-    .eq('organizacion_id', orgId)
     .order('categoria');
+
+  const { data, error } = orgId
+    ? await q.eq('organizacion_id', orgId)
+    : await q.is('organizacion_id', null);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ routing: data || [] });
@@ -45,22 +47,44 @@ export async function POST(request: NextRequest) {
   if (!parsed.ok) return NextResponse.json(parsed, { status: 400 });
 
   const supabase = createClient(supabaseUrl, supabaseKey);
+  const orgId = parsed.data.organizacion_id || null;
 
-  const { data, error } = await supabase
+  // Upsert manual: el onConflict de Supabase no maneja bien NULL.
+  // Buscamos si existe (org_id, categoria) y hacemos insert o update.
+  const existQuery = supabase
     .from('org_categorias_insumos_routing')
-    .upsert(
-      {
-        organizacion_id: parsed.data.organizacion_id,
-        categoria: parsed.data.categoria,
-        categoria_label: parsed.data.categoria_label || parsed.data.categoria,
-        gestor_emails: parsed.data.gestor_emails,
-        referente_emails: parsed.data.referente_emails,
-        activa: parsed.data.activa !== false,
-      },
-      { onConflict: 'organizacion_id,categoria' },
-    )
-    .select()
-    .single();
+    .select('id')
+    .eq('categoria', parsed.data.categoria);
+  const { data: existente } = orgId
+    ? await existQuery.eq('organizacion_id', orgId).maybeSingle()
+    : await existQuery.is('organizacion_id', null).maybeSingle();
+
+  const payload = {
+    organizacion_id: orgId,
+    categoria: parsed.data.categoria,
+    categoria_label: parsed.data.categoria_label || parsed.data.categoria,
+    gestor_emails: parsed.data.gestor_emails,
+    referente_emails: parsed.data.referente_emails,
+    activa: parsed.data.activa !== false,
+  };
+
+  let data: any, error: any;
+  if (existente) {
+    const r = await supabase
+      .from('org_categorias_insumos_routing')
+      .update(payload)
+      .eq('id', (existente as any).id)
+      .select()
+      .single();
+    data = r.data; error = r.error;
+  } else {
+    const r = await supabase
+      .from('org_categorias_insumos_routing')
+      .insert(payload)
+      .select()
+      .single();
+    data = r.data; error = r.error;
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

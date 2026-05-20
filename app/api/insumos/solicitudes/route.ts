@@ -22,11 +22,13 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 
 async function generarNumero(supabase: any, orgId: string | null): Promise<string> {
   const año = new Date().getFullYear();
-  const { count } = await supabase
+  const q = supabase
     .from('solicitudes_insumos')
     .select('id', { count: 'exact', head: true })
-    .gte('created_at', `${año}-01-01`)
-    .eq('organizacion_id', orgId || '');
+    .gte('created_at', `${año}-01-01`);
+  const { count } = orgId
+    ? await q.eq('organizacion_id', orgId)
+    : await q.is('organizacion_id', null);
   return `SI-${año}-${String((count || 0) + 1).padStart(4, '0')}`;
 }
 
@@ -83,14 +85,16 @@ export async function POST(request: NextRequest) {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    // 1. Buscar routing de la categoría
+    // 1. Buscar routing de la categoría (global o por org)
     const orgId = parsed.data.organizacion_id || null;
-    const { data: routingRaw } = await supabase
+    const routingQuery = supabase
       .from('org_categorias_insumos_routing')
       .select('gestor_emails, referente_emails, categoria_label, activa')
-      .eq('organizacion_id', orgId || '')
-      .eq('categoria', parsed.data.categoria)
-      .maybeSingle();
+      .eq('categoria', parsed.data.categoria);
+
+    const { data: routingRaw } = orgId
+      ? await routingQuery.eq('organizacion_id', orgId).maybeSingle()
+      : await routingQuery.is('organizacion_id', null).maybeSingle();
 
     const routing = routingRaw as {
       gestor_emails?: string[];

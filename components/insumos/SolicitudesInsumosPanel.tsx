@@ -65,15 +65,11 @@ export default function SolicitudesInsumosPanel() {
   const [filtroCategoria, setFiltroCategoria] = useState<string>('');
 
   const fetchSolicitudes = async () => {
-    if (!orgActivaId) {
-      setSolicitudes([]);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ organizacion_id: orgActivaId, limit: '100' });
+      const params = new URLSearchParams({ limit: '100' });
+      if (orgActivaId) params.set('organizacion_id', orgActivaId);
       if (filtroEstado) params.set('estado', filtroEstado);
       if (filtroCategoria) params.set('categoria', filtroCategoria);
       const resp = await fetch(`/api/insumos/solicitudes?${params}`);
@@ -116,8 +112,7 @@ export default function SolicitudesInsumosPanel() {
         </button>
         <button
           onClick={() => setShowCrear(true)}
-          disabled={!orgActivaId}
-          className="flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm transition disabled:opacity-50"
+          className="flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm transition"
         >
           <Plus className="w-4 h-4" />
           Nueva solicitud
@@ -153,15 +148,11 @@ export default function SolicitudesInsumosPanel() {
         </div>
       )}
 
-      {!orgActivaId && (
-        <SeleccionarEmpresaCard />
-      )}
-
-      {loading && orgActivaId && (
+      {loading && (
         <div className="text-center py-12 text-slate-500">Cargando...</div>
       )}
 
-      {!loading && solicitudes.length === 0 && orgActivaId && (
+      {!loading && solicitudes.length === 0 && (
         <div className="text-center py-12 px-4">
           <ClipboardList className="w-12 h-12 mx-auto text-slate-700 mb-3" />
           <h4 className="text-slate-300 font-medium">No hay solicitudes</h4>
@@ -227,7 +218,7 @@ export default function SolicitudesInsumosPanel() {
         </div>
       )}
 
-      {showCrear && orgActivaId && (
+      {showCrear && (
         <CrearSolicitudInsumoModal
           organizacionId={orgActivaId}
           onClose={() => setShowCrear(false)}
