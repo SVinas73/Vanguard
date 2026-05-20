@@ -25,61 +25,59 @@ const ESTADO_LABEL: Record<string, string> = {
 };
 
 // =====================================================
-// Escudo Vanguard — dibujado con primitives de jsPDF
-// Replica el SVG de components/ui/Logo.tsx en pequeño.
+// Escudo Vanguard — réplica fiel del SVG de Logo.tsx
+// =====================================================
+// Reproduce el mismo path SVG con curvas Bézier usando
+// jsPDF.lines() — no triángulos aproximados.
+//
+// SVG original (de components/ui/Logo.tsx):
+//   Shield: M 32 4 L 56 14 V 32 C 56 46 46 56 32 60 C 18 56 8 46 8 32 V 14 Z
+//   V mark: M 19 19 L 26 19 L 32 41.5 L 38 19 L 45 19 L 34.5 51 L 29.5 51 Z
 // =====================================================
 function dibujarEscudoVanguard(doc: jsPDF, x: number, y: number, size = 14) {
-  // Escala: el escudo va de 0 a 64 en el SVG original (sin banner).
-  // Lo escalamos al tamaño deseado.
+  // El SVG está dibujado en viewBox 64x64.
   const s = size / 64;
-  const px = (n: number) => x + n * s;
-  const py = (n: number) => y + n * s;
 
-  // Shield path: M 32 4 L 56 14 V 32 C 56 46 46 56 32 60 C 18 56 8 46 8 32 V 14 Z
-  // jsPDF no tiene path API directa, así que aproximamos con líneas + curva.
-  // Simplificación: shield como un rect redondeado con punta abajo.
-  doc.setFillColor(45, 84, 128); // steel-blue (#2d5480)
+  // ---- Shield outline (steel-blue) ----
+  // jsPDF.lines() recibe offsets RELATIVOS al punto previo.
+  // - [dx, dy]                             → línea recta
+  // - [c1dx, c1dy, c2dx, c2dy, dx, dy]     → bezier cúbica
+  doc.setFillColor(45, 84, 128); // #2d5480
   doc.setDrawColor(45, 84, 128);
 
-  // Vertical sides + top
-  const path: [number, number][] = [
-    [px(32), py(4)],
-    [px(56), py(14)],
-    [px(56), py(32)],
-    [px(32), py(60)],
-    [px(8), py(32)],
-    [px(8), py(14)],
-  ];
-
-  // Dibujar shield con triangle approximation
-  // Top rectangle
-  doc.triangle(
-    path[0][0], path[0][1],
-    path[1][0], path[1][1],
-    path[5][0], path[5][1],
-    'F'
-  );
-  // Middle rectangle (rectángulo invertido en lugar de triángulo)
-  doc.rect(
-    path[5][0], path[5][1],
-    path[2][0] - path[5][0],
-    path[2][1] - path[5][1],
-    'F'
-  );
-  // Bottom point — triangle pointing down
-  doc.triangle(
-    path[5][0], path[2][1],
-    path[2][0], path[2][1],
-    path[3][0], path[3][1],
-    'F'
+  // Empezamos en (32, 4) en coord SVG → escaladas en mm
+  doc.lines(
+    [
+      [24, 10],                              // L 56 14
+      [0, 18],                               // V 32 → L 56 32
+      [0, 14, -10, 24, -24, 28],             // C 56 46 46 56 32 60
+      [-14, -4, -24, -14, -24, -28],         // C 18 56 8 46 8 32
+      [0, -18],                              // V 14 → L 8 14
+    ],
+    x + 32 * s, y + 4 * s,                   // punto inicial absoluto en mm
+    [s, s],                                  // escala uniforme
+    'F',                                     // fill
+    true,                                    // close path (Z)
   );
 
-  // V mark blanca: M 19 19 L 26 19 L 32 41.5 L 38 19 L 45 19 L 34.5 51 L 29.5 51 Z
+  // ---- V mark blanca ----
   doc.setFillColor(255, 255, 255);
-  doc.triangle(px(19), py(19), px(26), py(19), px(32), py(41.5), 'F');
-  doc.triangle(px(26), py(19), px(32), py(41.5), px(38), py(19), 'F');
-  doc.triangle(px(38), py(19), px(45), py(19), px(32), py(41.5), 'F');
-  doc.triangle(px(29.5), py(51), px(32), py(41.5), px(34.5), py(51), 'F');
+
+  // Empieza en (19, 19) en coord SVG
+  doc.lines(
+    [
+      [7, 0],          // L 26 19
+      [6, 22.5],       // L 32 41.5
+      [6, -22.5],      // L 38 19
+      [7, 0],          // L 45 19
+      [-10.5, 32],     // L 34.5 51
+      [-5, 0],         // L 29.5 51
+    ],
+    x + 19 * s, y + 19 * s,
+    [s, s],
+    'F',
+    true,
+  );
 
   doc.setFillColor(0, 0, 0); // reset
 }
