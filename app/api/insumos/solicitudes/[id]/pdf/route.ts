@@ -25,58 +25,74 @@ const ESTADO_LABEL: Record<string, string> = {
 };
 
 // =====================================================
-// Escudo Vanguard — réplica fiel del SVG de Logo.tsx
+// Escudo Vanguard COMPLETO — réplica fiel del SVG de Logo.tsx
 // =====================================================
-// Reproduce el mismo path SVG con curvas Bézier usando
-// jsPDF.lines() — no triángulos aproximados.
+// Incluye:
+//   - Banner inferior con cinta y "VANGUARD"
+//   - Shield azul con curvas Bézier
+//   - V mark blanca
 //
-// SVG original (de components/ui/Logo.tsx):
-//   Shield: M 32 4 L 56 14 V 32 C 56 46 46 56 32 60 C 18 56 8 46 8 32 V 14 Z
-//   V mark: M 19 19 L 26 19 L 32 41.5 L 38 19 L 45 19 L 34.5 51 L 29.5 51 Z
+// SVG original tiene viewBox 64x76 (banner ocupa filas 56-76).
 // =====================================================
 function dibujarEscudoVanguard(doc: jsPDF, x: number, y: number, size = 14) {
-  // El SVG está dibujado en viewBox 64x64.
+  // El SVG viewBox es 64x76. `size` define el ANCHO en mm.
   const s = size / 64;
 
-  // ---- Shield outline (steel-blue) ----
-  // jsPDF.lines() recibe offsets RELATIVOS al punto previo.
-  // - [dx, dy]                             → línea recta
-  // - [c1dx, c1dy, c2dx, c2dy, dx, dy]     → bezier cúbica
+  // ========== BANNER (dibujado primero, el shield lo solapa arriba) ==========
+
+  // Sides (#1c3354)
+  doc.setFillColor(28, 51, 84);
+  // Left tail
+  doc.lines(
+    [[8, -2], [0, 9], [-8, 2.5], [3, -6]],
+    x + 1 * s, y + 60.5 * s, [s, s], 'F', true,
+  );
+  // Right tail
+  doc.lines(
+    [[-8, -2], [0, 9], [8, 2.5], [-3, -6]],
+    x + 63 * s, y + 60.5 * s, [s, s], 'F', true,
+  );
+
+  // Banner main fill (#2d5480)
+  doc.setFillColor(45, 84, 128);
+  doc.lines(
+    [[46, 0], [-2, 14.5], [-42, 0]],
+    x + 9 * s, y + 57.5 * s, [s, s], 'F', true,
+  );
+
+  // ========== SHIELD ==========
   doc.setFillColor(45, 84, 128); // #2d5480
   doc.setDrawColor(45, 84, 128);
-
-  // Empezamos en (32, 4) en coord SVG → escaladas en mm
   doc.lines(
     [
       [24, 10],                              // L 56 14
-      [0, 18],                               // V 32 → L 56 32
+      [0, 18],                               // V 32
       [0, 14, -10, 24, -24, 28],             // C 56 46 46 56 32 60
       [-14, -4, -24, -14, -24, -28],         // C 18 56 8 46 8 32
-      [0, -18],                              // V 14 → L 8 14
+      [0, -18],                              // V 14
     ],
-    x + 32 * s, y + 4 * s,                   // punto inicial absoluto en mm
-    [s, s],                                  // escala uniforme
-    'F',                                     // fill
-    true,                                    // close path (Z)
+    x + 32 * s, y + 4 * s, [s, s], 'F', true,
   );
 
-  // ---- V mark blanca ----
+  // ========== V mark blanca ==========
   doc.setFillColor(255, 255, 255);
-
-  // Empieza en (19, 19) en coord SVG
   doc.lines(
     [
-      [7, 0],          // L 26 19
-      [6, 22.5],       // L 32 41.5
-      [6, -22.5],      // L 38 19
-      [7, 0],          // L 45 19
-      [-10.5, 32],     // L 34.5 51
-      [-5, 0],         // L 29.5 51
+      [7, 0], [6, 22.5], [6, -22.5], [7, 0], [-10.5, 32], [-5, 0],
     ],
-    x + 19 * s, y + 19 * s,
-    [s, s],
-    'F',
-    true,
+    x + 19 * s, y + 19 * s, [s, s], 'F', true,
+  );
+
+  // ========== Texto "VANGUARD" en el banner ==========
+  // En el SVG está en x=32, y=67 (centrado), tamaño 6.
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(size * 0.27);  // proporcional al tamaño del logo
+  doc.setTextColor(255, 255, 255);
+  doc.text(
+    'VANGUARD',
+    x + 32 * s,
+    y + 67 * s,
+    { align: 'center' },
   );
 
   doc.setFillColor(0, 0, 0); // reset
@@ -135,38 +151,45 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   // =====================================================
   // ENCABEZADO — escudo + nombre + línea divisoria
   // =====================================================
-  dibujarEscudoVanguard(doc, margin, margin - 2, 16);
+  // Escudo size=16mm, alto total ~19mm (incluye banner)
+  const escudoSize = 16;
+  const escudoH = escudoSize * 76 / 64;  // ~19mm
+  dibujarEscudoVanguard(doc, margin, margin, escudoSize);
+
+  // Texto al lado del escudo, centrado verticalmente con shield (no banner)
+  const textY = margin + escudoSize * 32 / 64;  // centro del shield
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(...COLOR_TEXT_DARK);
-  doc.text(empresa, margin + 22, margin + 4);
+  doc.text(empresa, margin + escudoSize + 6, textY);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...COLOR_TEXT_MUTED);
-  doc.text('Sistema de gestión', margin + 22, margin + 9);
+  doc.text('Sistema de gestión', margin + escudoSize + 6, textY + 5);
 
-  // Número de documento (derecha)
+  // Número de documento (derecha) — mismo Y que el texto izquierdo
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(...COLOR_TEXT_DARK);
-  doc.text(data.numero as string, pageWidth - margin, margin + 4, { align: 'right' });
+  doc.text(data.numero as string, pageWidth - margin, textY, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...COLOR_TEXT_MUTED);
-  doc.text(`Emitido: ${new Date().toLocaleDateString('es-UY')}`, pageWidth - margin, margin + 9, { align: 'right' });
+  doc.text(`Emitido: ${new Date().toLocaleDateString('es-UY')}`, pageWidth - margin, textY + 5, { align: 'right' });
 
-  // Línea divisoria horizontal
+  // Línea divisoria horizontal — debajo del banner del escudo
+  const lineY = margin + escudoH + 4;
   doc.setDrawColor(...COLOR_RULE);
   doc.setLineWidth(0.3);
-  doc.line(margin, margin + 16, pageWidth - margin, margin + 16);
+  doc.line(margin, lineY, pageWidth - margin, lineY);
 
   // =====================================================
   // TÍTULO DEL DOCUMENTO
   // =====================================================
-  let y = margin + 26;
+  let y = lineY + 10;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   doc.setTextColor(...COLOR_TEXT_DARK);
