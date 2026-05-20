@@ -76,10 +76,15 @@ export function useModulosHabilitados(): State {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  // Cuando otra instancia del hook cambia la config, recargo
+  // Cuando otra instancia del hook cambia la config, aplicamos el
+  // nuevo valor que viene en el evento directo. Sin re-fetch, sin lag.
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const handler = () => cargar();
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as ModuleConfig | undefined;
+      if (detail) setConfig(detail);
+      else cargar();
+    };
     window.addEventListener('vg:modules-changed', handler);
     return () => window.removeEventListener('vg:modules-changed', handler);
   }, [cargar]);
@@ -95,9 +100,10 @@ export function useModulosHabilitados(): State {
       // Fallback single-tenant: persistir en localStorage
       guardarLocal(next);
     }
-    // Avisar a la app para refrescar el sidebar
+    // Avisar a la app para refrescar el sidebar — incluye el nuevo
+    // config en el evento para aplicarlo sin re-fetch
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('vg:modules-changed'));
+      window.dispatchEvent(new CustomEvent('vg:modules-changed', { detail: next }));
     }
   }, [orgActivaId]);
 

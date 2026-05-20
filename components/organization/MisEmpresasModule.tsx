@@ -1,31 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Building2, Plus, Check, Star, Loader2 } from 'lucide-react';
+import React from 'react';
+import { Building2, Check, Star, Loader2, Info } from 'lucide-react';
 import { useOrganizacion } from '@/hooks/useOrganizacion';
-import { CrearOrgModal } from './CrearOrgModal';
 
 export default function MisEmpresasModule() {
-  const { orgs, orgActivaId, cambiarOrg, recargar, loading } = useOrganizacion();
-  const [showCrear, setShowCrear] = useState(false);
+  const { orgs, orgActivaId, cambiarOrg, loading } = useOrganizacion();
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-100">Mis empresas</h2>
-          <p className="text-sm text-slate-400 mt-0.5 max-w-xl">
-            Acá gestionás las empresas a las que pertenecés. Podés crear nuevas o cambiar entre las
-            existentes. La empresa activa es la que se usa en todos los módulos.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowCrear(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm transition"
-        >
-          <Plus className="w-4 h-4" />
-          Nueva empresa
-        </button>
+      <div>
+        <h2 className="text-lg font-semibold text-slate-100">Mis empresas</h2>
+        <p className="text-sm text-slate-400 mt-0.5 max-w-xl">
+          Empresas a las que pertenecés. La empresa activa es la que se usa en todos los módulos.
+        </p>
+      </div>
+
+      <div className="flex items-start gap-3 p-3 bg-slate-900/50 border border-slate-800 rounded-md text-sm text-slate-400">
+        <Info className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+        <p>
+          La creación de empresas se hace por fuera del sistema (panel de administración).
+          Si necesitás una empresa nueva, contactá al administrador.
+        </p>
       </div>
 
       {loading && (
@@ -38,18 +34,11 @@ export default function MisEmpresasModule() {
       {!loading && orgs.length === 0 && (
         <div className="text-center py-16 px-6 bg-slate-900/50 border border-slate-800 rounded-lg">
           <Building2 className="w-12 h-12 mx-auto text-slate-600 mb-3" />
-          <h4 className="text-slate-200 font-medium mb-1">Todavía no tenés empresas</h4>
-          <p className="text-sm text-slate-500 mb-4 max-w-md mx-auto">
-            Para empezar a usar Vanguard creá tu primera empresa. Esto separa tus datos de los de
-            otros usuarios y te deja invitar a tu equipo.
+          <h4 className="text-slate-200 font-medium mb-1">No tenés empresas asignadas</h4>
+          <p className="text-sm text-slate-500 max-w-md mx-auto">
+            Tu usuario no fue invitado a ninguna empresa todavía. Pedile al administrador que
+            te incluya en la empresa que corresponda.
           </p>
-          <button
-            onClick={() => setShowCrear(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-medium transition"
-          >
-            <Plus className="w-4 h-4" />
-            Crear primera empresa
-          </button>
         </div>
       )}
 
@@ -104,13 +93,6 @@ export default function MisEmpresasModule() {
             );
           })}
         </div>
-      )}
-
-      {showCrear && (
-        <CrearOrgModal
-          onClose={() => setShowCrear(false)}
-          onCreado={() => { setShowCrear(false); recargar(); }}
-        />
       )}
     </div>
   );
