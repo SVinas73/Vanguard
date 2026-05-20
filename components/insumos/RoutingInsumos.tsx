@@ -31,10 +31,11 @@ export default function RoutingInsumos() {
   const [editing, setEditing] = useState<Routing | null>(null);
 
   const fetchRouting = async () => {
-    if (!orgActivaId) return;
     setLoading(true);
     try {
-      const resp = await fetch(`/api/insumos/routing?organizacion_id=${orgActivaId}`);
+      const resp = await fetch(orgActivaId
+        ? `/api/insumos/routing?organizacion_id=${orgActivaId}`
+        : `/api/insumos/routing`);
       const data = await resp.json();
       setRoutings(data.routing || []);
     } catch (e: any) {
@@ -49,9 +50,7 @@ export default function RoutingInsumos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgActivaId]);
 
-  if (!orgActivaId) {
-    return <SeleccionarEmpresaCardRouting />;
-  }
+  // Sin empresa activa, trabaja con destinatarios "globales" (org_id NULL)
 
   return (
     <div className="space-y-4">
@@ -182,7 +181,7 @@ function EditarRoutingModal({
   onSaved,
 }: {
   inicial: Routing;
-  organizacionId: string;
+  organizacionId: string | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
