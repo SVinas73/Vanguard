@@ -58,7 +58,6 @@ const ExecutiveDashboard    = dynamic(() => import('@/components/executive/Execu
 const PricingRecommender    = dynamic(() => import('@/components/pricing/PricingRecommender'),                                    { loading: ModuleLoader });
 const ReplenishmentDashboard = dynamic(() => import('@/components/replenishment/ReplenishmentDashboard'),                          { loading: ModuleLoader });
 const CustomerRiskModule    = dynamic(() => import('@/components/customer-risk/CustomerRiskModule'),                              { loading: ModuleLoader });
-const AyudaModule           = dynamic(() => import('@/components/ayuda/AyudaModule'),                                              { loading: ModuleLoader });
 const ConfigModulos         = dynamic(() => import('@/components/configuracion/ConfigModulos').then(m => m.ConfigModulos),         { loading: ModuleLoader });
 const MisEmpresasModule     = dynamic(() => import('@/components/organization/MisEmpresasModule'),                                  { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
@@ -528,39 +527,82 @@ export default function HomePage() {
     }
   };
 
-  // Add product handler - UPDATED: now creates initial movement if stock > 0
+  // Add product handler - INSERT directo a Supabase (sin store) para que los
+  // errores no se silencien. Mismo patrón que usó PR #63 en NuevoProductoModal.
   const handleAddProduct = async () => {
     if (!newProduct.codigo || !newProduct.descripcion || !newProduct.precio || !newProduct.categoria) {
+      alert('Completá código, descripción, precio y categoría.');
       return;
     }
-    
+
+    const codigoFinal = newProduct.codigo.toUpperCase().trim();
     const stockInicial = parseInt(newProduct.stockInicial) || 0;
     const costoInicial = parseFloat(newProduct.costoInicial) || 0;
-    
-    // Primero crear el producto (con stock 0)
-    await addProduct({
-      codigo: newProduct.codigo.toUpperCase(),
-      descripcion: newProduct.descripcion,
+    const userEmail = user?.email || 'Sistema';
+
+    // 1. INSERT directo (no usamos addProduct del store: silencia errores).
+    const productoData = {
+      codigo: codigoFinal,
+      descripcion: newProduct.descripcion.trim(),
       precio: parseFloat(newProduct.precio),
       moneda: newProduct.moneda,
       categoria: newProduct.categoria,
-      stockMinimo: parseInt(newProduct.stockMinimo) || 10,
-      almacenId: newProduct.almacenId || null,
-    }, user?.email || 'Sistema');
+      stock: 0,
+      stock_minimo: parseInt(newProduct.stockMinimo) || 10,
+      costo_promedio: 0,
+      almacen_id: newProduct.almacenId || null,
+      creado_por: userEmail,
+      creado_at: new Date().toISOString(),
+      actualizado_por: userEmail,
+      actualizado_at: new Date().toISOString(),
+    };
 
-    // Si hay stock inicial, crear un movimiento de entrada
-    if (stockInicial > 0) {
-      // Pequeño delay para asegurar que el producto se creó
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      await addMovement({
-        codigo: newProduct.codigo.toUpperCase(),
-        tipo: 'entrada',
-        cantidad: stockInicial,
-        notas: 'Stock inicial al crear producto',
-        costoCompra: costoInicial > 0 ? costoInicial : undefined,
-      }, user?.email || 'Sistema');
+    const { error: insertError } = await supabase
+      .from('productos')
+      .insert(productoData);
+
+    if (insertError) {
+      const code = (insertError as any).code ?? '';
+      const detalle = code ? ` (${code})` : '';
+      alert(`No se pudo crear el producto${detalle}: ${insertError.message}`);
+      return;
     }
+
+    // 2. Si hay stock inicial, generar movimiento de entrada.
+    //    Usamos los nombres reales de columnas (codigo / notas / costo_compra)
+    //    y resolvemos el producto_id recién creado para no depender de timings.
+    if (stockInicial > 0) {
+      const { data: prodRow } = await supabase
+        .from('productos')
+        .select('id')
+        .eq('codigo', codigoFinal)
+        .single();
+
+      if (prodRow) {
+        const { error: movError } = await supabase.from('movimientos').insert({
+          producto_id: prodRow.id,
+          codigo: codigoFinal,
+          tipo: 'entrada',
+          cantidad: stockInicial,
+          costo_compra: costoInicial > 0 ? costoInicial : null,
+          moneda_costo: newProduct.moneda,
+          notas: 'Stock inicial al crear producto',
+          usuario_email: userEmail,
+        });
+        if (movError) {
+          // El producto ya se creó; mostramos warning pero no rompemos el flujo.
+          console.warn('Producto creado pero falló el movimiento inicial:', movError.message);
+        } else {
+          await supabase
+            .from('productos')
+            .update({ stock: stockInicial })
+            .eq('codigo', codigoFinal);
+        }
+      }
+    }
+
+    // 3. Refrescar el catálogo en memoria
+    await fetchProducts();
 
     // Reset form
     setNewProduct({
@@ -825,10 +867,6 @@ export default function HomePage() {
           <CustomerRiskModule />
         )}
 
-        {/* ==================== AYUDA ==================== */}
-        {activeTab === 'ayuda' && (
-          <AyudaModule />
-        )}
 
         {/* ==================== CONFIGURACIÓN MODO LITE/FULL ==================== */}
         {activeTab === 'configuracion' && (

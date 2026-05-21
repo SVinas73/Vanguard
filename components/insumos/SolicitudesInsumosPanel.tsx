@@ -108,7 +108,7 @@ export default function SolicitudesInsumosPanel() {
         >
           <option value="">Todos los estados</option>
           <option value="pendiente">Pendiente</option>
-          <option value="en_gestion">En gestión</option>
+          <option value="en_gestion">Aprobado</option>
           <option value="comprada">Comprada</option>
           <option value="recibida">Recibida</option>
           <option value="cerrada">Cerrada</option>

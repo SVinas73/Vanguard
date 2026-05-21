@@ -31,7 +31,7 @@ interface Solicitud {
 
 const ESTADO_LABEL: Record<Solicitud['estado'], string> = {
   pendiente: 'Pendiente',
-  en_gestion: 'En gestión',
+  en_gestion: 'Aprobado',
   comprada: 'Comprada',
   recibida: 'Recibida',
   cerrada: 'Cerrada',

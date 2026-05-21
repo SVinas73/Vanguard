@@ -42,7 +42,6 @@ import {
   Sparkles,
   Truck,
   ShieldAlert,
-  HelpCircle,
   Building2
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
@@ -210,7 +209,6 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'empresas', label: 'Mis empresas', icon: Building2 },
         { id: 'configuracion', label: 'Modo Lite / Full', icon: Sparkles },
         { id: 'integraciones', label: t('nav.integrations'), icon: Plug },
-        { id: 'ayuda', label: t('nav.help') || 'Centro de Ayuda', icon: HelpCircle },
       ]
     },
   ];
