@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, AlertCircle, Loader2, Calendar, User, Tag, ClipboardList, FileDown } from 'lucide-react';
+import { LinkifiedText } from '@/components/ui/LinkifiedText';
 
 interface ItemSolicitud {
   id: number;
@@ -155,7 +156,7 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
           {solicitud.observaciones && (
             <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-md">
               <div className="text-xs text-amber-400 font-medium mb-1">Observaciones</div>
-              <div className="text-sm text-slate-200">{solicitud.observaciones}</div>
+              <LinkifiedText text={solicitud.observaciones} className="text-sm text-slate-200" />
             </div>
           )}
 

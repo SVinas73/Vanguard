@@ -227,9 +227,6 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                     ? <span className="text-amber-400">Ningún almacén marcado como insumos</span>
                     : almacenesInsumos.map(a => a.nombre).join(' · ')}
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Configurable solo desde BD: <code className="text-slate-400">UPDATE almacenes SET es_insumos = TRUE WHERE nombre = 'X';</code>
-                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Fecha límite (opcional)</label>
@@ -463,13 +460,21 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
           onClose={() => setShowNuevoProducto(null)}
           onCreated={async (codigo) => {
             await refetchProductos();
-            // Buscar el producto recién creado y asignarlo al item
-            const { data } = await supabase
+            // Buscar el producto recién creado y asignarlo al item.
+            // NO usamos 'unidad' porque esa columna no existe en productos;
+            // la unidad se elige en el item de la solicitud.
+            const { data, error: queryErr } = await supabase
               .from('productos')
-              .select('codigo, descripcion, stock, unidad')
+              .select('codigo, descripcion, stock, categoria, almacen_id')
               .eq('codigo', codigo)
               .maybeSingle();
-            if (data) seleccionarProducto(showNuevoProducto, data as Product);
+            if (queryErr) {
+              setError(`No se pudo cargar el producto recién creado: ${queryErr.message}`);
+            } else if (data && showNuevoProducto) {
+              seleccionarProducto(showNuevoProducto, data as Product);
+            } else {
+              setError(`Producto "${codigo}" no encontrado tras crearlo. Recargá la página.`);
+            }
             setShowNuevoProducto(null);
             setSearch('');
           }}
