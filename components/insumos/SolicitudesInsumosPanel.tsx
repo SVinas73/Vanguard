@@ -6,7 +6,7 @@ import { useOrganizacion } from '@/hooks/useOrganizacion';
 import { useAuth } from '@/hooks/useAuth';
 import CrearSolicitudInsumoModal from './CrearSolicitudInsumoModal';
 import DetalleSolicitudInsumoModal from './DetalleSolicitudInsumoModal';
-import { CrearOrgModal } from '@/components/organization/CrearOrgModal';
+import { estadoEfectivo, ESTADO_LABEL as LABEL_EFECTIVO, ESTADO_COLOR as COLOR_EFECTIVO, diasParaLimite } from '@/lib/insumos/estado';
 
 interface ItemSolicitud {
   id: number;
@@ -34,24 +34,6 @@ interface Solicitud {
   organizacion_id?: string | null;
   created_at: string;
 }
-
-const ESTADO_LABEL: Record<Solicitud['estado'], string> = {
-  pendiente: 'Pendiente',
-  en_gestion: 'En gestión',
-  comprada: 'Comprada',
-  recibida: 'Recibida',
-  cerrada: 'Cerrada',
-  cancelada: 'Cancelada',
-};
-
-const ESTADO_COLOR: Record<Solicitud['estado'], string> = {
-  pendiente: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-  en_gestion: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  comprada: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
-  recibida: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-  cerrada: 'bg-slate-500/10 text-slate-400 border-slate-500/30',
-  cancelada: 'bg-red-500/10 text-red-400 border-red-500/30',
-};
 
 export default function SolicitudesInsumosPanel() {
   const { orgActivaId } = useOrganizacion();
@@ -125,7 +107,12 @@ export default function SolicitudesInsumosPanel() {
           className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200"
         >
           <option value="">Todos los estados</option>
-          {Object.entries(ESTADO_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          <option value="pendiente">Pendiente</option>
+          <option value="en_gestion">En gestión</option>
+          <option value="comprada">Comprada</option>
+          <option value="recibida">Recibida</option>
+          <option value="cerrada">Cerrada</option>
+          <option value="cancelada">Cancelada</option>
         </select>
         <select
           value={filtroCategoria}
@@ -171,16 +158,28 @@ export default function SolicitudesInsumosPanel() {
             >
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-xs text-slate-500">{s.numero}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${ESTADO_COLOR[s.estado]}`}>
-                      {ESTADO_LABEL[s.estado]}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-xs text-purple-400">
-                      <Tag className="w-3 h-3" />
-                      {s.categoria}
-                    </span>
-                  </div>
+                  {(() => {
+                    const efectivo = estadoEfectivo(s.estado, s.fecha_limite);
+                    const dias = diasParaLimite(s.fecha_limite);
+                    return (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-xs text-slate-500">{s.numero}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${COLOR_EFECTIVO[efectivo]}`}>
+                          {LABEL_EFECTIVO[efectivo]}
+                        </span>
+                        {efectivo === 'vencida' && dias !== null && (
+                          <span className="text-[11px] text-red-400">hace {-dias} {-dias === 1 ? 'día' : 'días'}</span>
+                        )}
+                        {efectivo === 'por_vencer' && dias !== null && (
+                          <span className="text-[11px] text-orange-400">en {dias} {dias === 1 ? 'día' : 'días'}</span>
+                        )}
+                        <span className="inline-flex items-center gap-1 text-xs text-purple-400">
+                          <Tag className="w-3 h-3" />
+                          {s.categoria}
+                        </span>
+                      </div>
+                    );
+                  })()}
                   <div className="mt-1.5 text-sm text-slate-200">
                     {s.items.length} {s.items.length === 1 ? 'item' : 'items'}
                     {s.items[0] && <span className="text-slate-500"> · {s.items[0].descripcion}{s.items.length > 1 ? '...' : ''}</span>}
@@ -235,67 +234,3 @@ export default function SolicitudesInsumosPanel() {
   );
 }
 
-// =====================================================
-// Empty-state card cuando no hay empresa activa
-// =====================================================
-function SeleccionarEmpresaCard() {
-  const { orgs, cambiarOrg, recargar, loading } = useOrganizacion();
-  const [showCrear, setShowCrear] = useState(false);
-
-  return (
-    <>
-      <div className="text-center py-12 px-6 bg-slate-900/50 border border-amber-500/30 rounded-lg">
-        <Building2 className="w-12 h-12 mx-auto text-amber-400 mb-3" />
-        <h4 className="text-slate-100 font-medium mb-4">Selecciona una empresa</h4>
-
-        {loading && (
-          <div className="text-sm text-slate-500">Cargando...</div>
-        )}
-
-        {!loading && orgs.length > 0 && (
-          <div className="max-w-sm mx-auto space-y-2">
-            {orgs.map(o => (
-              <button
-                key={o.organizacion_id}
-                onClick={() => cambiarOrg(o.organizacion_id)}
-                className="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-md text-left transition"
-              >
-                <Building2 className="w-4 h-4 text-blue-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-slate-100 truncate">{o.organizacion.nombre}</div>
-                  <div className="text-xs text-slate-500 capitalize">{o.rol}</div>
-                </div>
-              </button>
-            ))}
-            <button
-              onClick={() => setShowCrear(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm transition mt-3"
-            >
-              <Plus className="w-4 h-4" />
-              Crear otra empresa
-            </button>
-          </div>
-        )}
-
-        {!loading && orgs.length === 0 && (
-          <div className="max-w-sm mx-auto">
-            <button
-              onClick={() => setShowCrear(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-medium transition"
-            >
-              <Plus className="w-4 h-4" />
-              Crear mi primera empresa
-            </button>
-          </div>
-        )}
-      </div>
-
-      {showCrear && (
-        <CrearOrgModal
-          onClose={() => setShowCrear(false)}
-          onCreado={() => { setShowCrear(false); recargar(); }}
-        />
-      )}
-    </>
-  );
-}

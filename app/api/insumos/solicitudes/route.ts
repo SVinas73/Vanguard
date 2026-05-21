@@ -125,7 +125,16 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (solError || !solicitud) {
-      return NextResponse.json({ error: solError?.message || 'Error creando solicitud' }, { status: 500 });
+      reportarError(new Error(`Insert solicitud falló: ${solError?.message}`), {
+        modulo: 'insumos',
+        accion: 'crear-solicitud',
+        extra: { orgId, categoria: parsed.data.categoria, dbError: solError?.message, dbCode: (solError as any)?.code, dbHint: (solError as any)?.hint },
+      });
+      return NextResponse.json({
+        error: solError?.message || 'Error creando solicitud',
+        db_code: (solError as any)?.code,
+        db_hint: (solError as any)?.hint,
+      }, { status: 500 });
     }
 
     // 3. Items
