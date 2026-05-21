@@ -468,23 +468,19 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
           descripcionInicial={search}
           almacenIdInicial={almacenesInsumos[0]?.id || ''}
           onClose={() => setShowNuevoProducto(null)}
-          onCreated={async (codigo) => {
-            await refetchProductos();
-            // Buscar el producto recién creado y asignarlo al item.
-            // NO usamos 'unidad' porque esa columna no existe en productos;
-            // la unidad se elige en el item de la solicitud.
-            const { data, error: queryErr } = await supabase
-              .from('productos')
-              .select('codigo, descripcion, stock, categoria, almacen_id')
-              .eq('codigo', codigo)
-              .maybeSingle();
-            if (queryErr) {
-              setError(`No se pudo cargar el producto recién creado: ${queryErr.message}`);
-            } else if (data && showNuevoProducto) {
-              seleccionarProducto(showNuevoProducto, data as Product);
-            } else {
-              setError(`Producto "${codigo}" no encontrado tras crearlo. Recargá la página.`);
+          onCreated={(producto) => {
+            // Capturamos el item ID ANTES de cualquier async para evitar
+            // race conditions con setState.
+            const itemTarget = showNuevoProducto;
+            // Asignar inmediatamente al item con el objeto que devolvió
+            // el modal. SIN re-fetch (no depende de timing de la DB).
+            if (itemTarget) {
+              seleccionarProducto(itemTarget, producto as Product);
             }
+            // Actualizar la lista local de productos para que aparezca en
+            // futuras búsquedas también (best-effort, no bloquea).
+            setProductos(prev => [...prev, producto as Product]);
+            // Cerrar modal y limpiar búsqueda.
             setShowNuevoProducto(null);
             setSearch('');
           }}

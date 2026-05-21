@@ -6,10 +6,20 @@ import { useInventoryStore } from '@/store';
 import { CATEGORIA_NOMBRES } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 
+interface ProductoCreado {
+  codigo: string;
+  descripcion: string;
+  stock: number;
+  categoria: string;
+  almacen_id: string | null;
+}
+
 interface Props {
   onClose: () => void;
-  /** Llamado con el código del producto recién creado */
-  onCreated: (codigo: string) => void;
+  /** Llamado con el objeto completo del producto recién creado.
+   *  Pasamos el objeto entero (no solo el código) para evitar race
+   *  conditions con re-fetch del padre. */
+  onCreated: (producto: ProductoCreado) => void;
   userEmail: string;
   /** Pre-completa el código */
   codigoInicial?: string;
@@ -63,11 +73,17 @@ export default function NuevoProductoModal({
     if (!categoria) return setError('Categoría requerida');
 
     setSaving(true);
+    const codigoFinal = codigo.toUpperCase().trim();
+    const descripcionFinal = descripcion.trim();
+    const cantidadInicial = parseInt(stockInicial) || 0;
+    const costo = parseFloat(costoInicial) || 0;
+
     try {
+      // 1. Crear producto
       await addProduct(
         {
-          codigo: codigo.toUpperCase().trim(),
-          descripcion: descripcion.trim(),
+          codigo: codigoFinal,
+          descripcion: descripcionFinal,
           precio: parseFloat(precio),
           categoria,
           stockMinimo: parseInt(stockMinimo) || 10,
@@ -76,13 +92,11 @@ export default function NuevoProductoModal({
         userEmail,
       );
 
-      // Si hay stock inicial, generar movimiento de entrada
-      const cantidadInicial = parseInt(stockInicial) || 0;
-      const costo = parseFloat(costoInicial) || 0;
+      // 2. Si hay stock inicial, generar movimiento de entrada
       if (cantidadInicial > 0) {
         await new Promise(r => setTimeout(r, 250));
         await supabase.from('movimientos').insert({
-          producto_codigo: codigo.toUpperCase().trim(),
+          producto_codigo: codigoFinal,
           tipo: 'entrada',
           cantidad: cantidadInicial,
           costo_unitario: costo || null,
@@ -91,7 +105,14 @@ export default function NuevoProductoModal({
         });
       }
 
-      onCreated(codigo.toUpperCase().trim());
+      // 3. Devolver el producto completo al padre (no depender de re-fetch)
+      onCreated({
+        codigo: codigoFinal,
+        descripcion: descripcionFinal,
+        stock: cantidadInicial,
+        categoria,
+        almacen_id: almacenId || null,
+      });
     } catch (e: any) {
       setError(e?.message || 'Error creando producto');
     } finally {
