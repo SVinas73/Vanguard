@@ -6,16 +6,16 @@ import { supabase } from '@/lib/supabase';
 import { useOrganizacion } from '@/hooks/useOrganizacion';
 import { Proveedor, OrdenCompra, OrdenCompraItem, Product, OrdenCompraEstado } from '@/types';
 import { Button, Input, Select, Modal, Card } from '@/components/ui';
-import {
-  Plus,
-  Truck,
-  Package,
-  FileText,
-  Search,
-  Edit,
-  Trash2,
-  Send,
-  CheckCircle,
+import { 
+  Plus, 
+  Truck, 
+  Package, 
+  FileText, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Send, 
+  CheckCircle, 
   XCircle,
   Clock,
   AlertTriangle,
@@ -468,7 +468,10 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
 
     await supabase.from('ordenes_compra').update(updateData).eq('id', ordenId);
 
-    // Si se recibe la orden, actualizar el stock
+    // Si se recibe la orden, actualizar el stock.
+    // Si el producto no existe en la tabla productos, lo creamos al vuelo
+    // con la moneda de la orden de compra (no inventamos: tomamos la moneda
+    // explícita de la OC, default UYU).
     if (nuevoEstado === 'recibida') {
       const orden = ordenes.find(o => o.id === ordenId);
       if (orden?.items) {
@@ -479,41 +482,71 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
             .update({ cantidad_recibida: item.cantidadOrdenada })
             .eq('id', item.id);
 
-          // Crear movimiento de entrada
-          const { data: productData } = await supabase
+          // Buscar el producto
+          let { data: productData } = await supabase
             .from('productos')
             .select('id, stock')
             .eq('codigo', item.productoCodigo)
             .single();
 
-          if (productData) {
-            // Insertar movimiento
-            await supabase.from('movimientos').insert({
-              producto_id: productData.id,
-              codigo: item.productoCodigo,
-              tipo: 'entrada',
-              cantidad: item.cantidadOrdenada,
-              costo_compra: item.costoUnitario,
-              notas: `Recepción OC: ${orden.numero}`,
-              usuario_email: userEmail,
-            });
-
-            // Actualizar stock
-            await supabase
+          // Si no existe, lo creamos. Tomamos descripción del catálogo
+          // de productos cargados en memoria si está, sino usamos el código.
+          if (!productData) {
+            const ref = products.find(p => p.codigo === item.productoCodigo);
+            const { data: nuevo, error: errNuevo } = await supabase
               .from('productos')
-              .update({ stock: productData.stock + item.cantidadOrdenada })
-              .eq('codigo', item.productoCodigo);
+              .insert({
+                codigo: item.productoCodigo,
+                descripcion: ref?.descripcion ?? item.productoCodigo,
+                precio: item.costoUnitario,        // precio inicial = costo de compra
+                moneda: orden.moneda ?? 'UYU',
+                categoria: ref?.categoria ?? 'Sin categoría',
+                stock: 0,                          // se suma abajo con la cantidad recibida
+                stock_minimo: 5,
+                costo_promedio: 0,
+                creado_por: userEmail,
+                creado_at: new Date().toISOString(),
+                actualizado_por: userEmail,
+                actualizado_at: new Date().toISOString(),
+              })
+              .select('id, stock')
+              .single();
 
-            // Crear lote
-            await supabase.from('lotes').insert({
-              codigo: item.productoCodigo,
-              cantidad_inicial: item.cantidadOrdenada,
-              cantidad_disponible: item.cantidadOrdenada,
-              costo_unitario: item.costoUnitario,
-              usuario: userEmail,
-              notas: `OC: ${orden.numero}`,
-            });
+            if (errNuevo || !nuevo) {
+              console.error('No se pudo crear el producto desde la OC:', errNuevo);
+              continue; // saltamos este item, no rompemos toda la recepción
+            }
+            productData = nuevo;
           }
+
+          // Insertar movimiento de entrada
+          await supabase.from('movimientos').insert({
+            producto_id: productData.id,
+            codigo: item.productoCodigo,
+            tipo: 'entrada',
+            cantidad: item.cantidadOrdenada,
+            costo_compra: item.costoUnitario,
+            moneda_costo: orden.moneda ?? 'UYU',
+            notas: `Recepción OC: ${orden.numero}`,
+            usuario_email: userEmail,
+          });
+
+          // Sumar al stock existente
+          await supabase
+            .from('productos')
+            .update({ stock: productData.stock + item.cantidadOrdenada })
+            .eq('codigo', item.productoCodigo);
+
+          // Crear lote
+          await supabase.from('lotes').insert({
+            codigo: item.productoCodigo,
+            cantidad_inicial: item.cantidadOrdenada,
+            cantidad_disponible: item.cantidadOrdenada,
+            costo_unitario: item.costoUnitario,
+            moneda: orden.moneda ?? 'UYU',
+            usuario: userEmail,
+            notas: `OC: ${orden.numero}`,
+          });
         }
       }
     }
@@ -831,8 +864,11 @@ export function ComprasDashboard({ products, userEmail }: ComprasDashboardProps)
       </div>
 
       {/* Content */}
-      {activeView === 'ordenes' && <OrdenesCompraPanel products={products} userEmail={userEmail} />}
-      {activeView === 'proveedores' && <ProveedoresPanel />}
+      {activeView === 'ordenes' ? (
+        <OrdenesCompraPanel products={products} userEmail={userEmail} />
+      ) : (
+        <ProveedoresPanel />
+      )}
     </div>
   );
 }
