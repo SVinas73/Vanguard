@@ -30,14 +30,6 @@ interface ItemForm {
   observaciones: string;
 }
 
-interface CategoriaRouting {
-  id: number;
-  categoria: string;
-  categoria_label: string | null;
-  gestor_emails: string[];
-  referente_emails: string[];
-  activa: boolean;
-}
 
 interface Props {
   organizacionId: string | null;
@@ -63,11 +55,12 @@ function emptyItem(): ItemForm {
 
 export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onCreated }: Props) {
   const { user } = useAuth(false);
-  const [categorias, setCategorias] = useState<CategoriaRouting[]>([]);
   const [productos, setProductos] = useState<Product[]>([]);
   const [almacenesInsumos, setAlmacenesInsumos] = useState<Almacen[]>([]);
   const [fechaLimite, setFechaLimite] = useState('');
   const [observaciones, setObservaciones] = useState('');
+  const [emailsNotificar, setEmailsNotificar] = useState<string[]>([]);
+  const [nuevoEmail, setNuevoEmail] = useState('');
   const [items, setItems] = useState<ItemForm[]>([emptyItem()]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,11 +69,6 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
   const [showNuevoProducto, setShowNuevoProducto] = useState<string | null>(null); // item.id que va a recibir el producto nuevo
 
   useEffect(() => {
-    fetch(organizacionId ? `/api/insumos/routing?organizacion_id=${organizacionId}` : `/api/insumos/routing`)
-      .then(r => r.json())
-      .then(data => setCategorias((data.routing || []).filter((r: CategoriaRouting) => r.activa)))
-      .catch(() => setCategorias([]));
-
     supabase
       .from('productos')
       .select('codigo, descripcion, stock, categoria, almacen_id')
@@ -106,8 +94,6 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
     setProductos((data as Product[]) || []);
   };
 
-  // Autodetectar categoría del primer producto seleccionado.
-  // El routing del email usa esta categoría — no se le pide al usuario.
   const categoriaDetectada = useMemo<string | null>(() => {
     const primerConCat = items.find(i => i.producto_codigo)?.producto_codigo;
     if (!primerConCat) return null;
@@ -115,9 +101,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
     return p?.categoria || null;
   }, [items, productos]);
 
-  const catActual = categorias.find(c => c.categoria === categoriaDetectada);
-
-  // Si hay items de múltiples categorías, advertir
+  // ya no se usa pero lo mantenemos por si alguien lee categoria_label
   const categoriasMezcladas = useMemo<string[]>(() => {
     const cats = new Set<string>();
     for (const it of items) {
@@ -181,6 +165,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
         body: JSON.stringify({
           organizacion_id: organizacionId,
           categoria: categoriaFinal,
+          emails_notificar: emailsNotificar,
           fecha_limite: fechaLimite || null,
           observaciones: observaciones.trim() || null,
           items: items.map(it => ({
@@ -239,36 +224,60 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
               </div>
             </div>
 
-            {/* Categoría detectada del primer producto */}
-            {categoriaDetectada && (
-              <div className="px-3 py-2 bg-slate-800 border border-slate-700 rounded text-xs space-y-1">
-                <div className="text-slate-300">
-                  <strong>Categoría:</strong> <span className="text-blue-300">{categoriaDetectada}</span>
-                  <span className="text-slate-500 ml-2">(detectada del primer producto)</span>
-                </div>
-                {categoriasMezcladas.length > 1 && (
-                  <div className="text-amber-400">
-                    ⚠ Hay productos de varias categorías ({categoriasMezcladas.join(', ')}).
-                    Se va a usar "{categoriaDetectada}" para el destinatario.
+            {/* Emails a notificar */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                Notificar por email a
+              </label>
+              <div className="space-y-1.5 mb-2">
+                {emailsNotificar.map(e => (
+                  <div key={e} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-sm">
+                    <span className="text-slate-200 truncate">{e}</span>
+                    <button
+                      type="button"
+                      onClick={() => setEmailsNotificar(xs => xs.filter(x => x !== e))}
+                      className="text-slate-500 hover:text-red-400"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                )}
-                {catActual ? (
-                  <>
-                    {catActual.gestor_emails.length > 0 && (
-                      <div className="text-slate-400"><strong>Para:</strong> {catActual.gestor_emails.join(', ')}</div>
-                    )}
-                    {catActual.referente_emails.length > 0 && (
-                      <div className="text-slate-500"><strong>CC:</strong> {catActual.referente_emails.join(', ')}</div>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-amber-400">
-                    No hay destinatarios configurados para esta categoría. Configurá en
-                    <strong> Comercial → Destinatarios</strong>.
-                  </div>
-                )}
+                ))}
               </div>
-            )}
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={nuevoEmail}
+                  onChange={e => setNuevoEmail(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const v = nuevoEmail.trim();
+                      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { setError('Email inválido'); return; }
+                      if (emailsNotificar.includes(v)) { setNuevoEmail(''); return; }
+                      setError(null);
+                      setEmailsNotificar([...emailsNotificar, v]);
+                      setNuevoEmail('');
+                    }
+                  }}
+                  placeholder="email@empresa.com"
+                  className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const v = nuevoEmail.trim();
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { setError('Email inválido'); return; }
+                    if (emailsNotificar.includes(v)) { setNuevoEmail(''); return; }
+                    setError(null);
+                    setEmailsNotificar([...emailsNotificar, v]);
+                    setNuevoEmail('');
+                  }}
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-md text-sm text-slate-200"
+                >
+                  Agregar
+                </button>
+              </div>
+            </div>
 
             {/* Items */}
             <div>
@@ -457,6 +466,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
         <NuevoProductoModal
           userEmail={user?.email || ''}
           descripcionInicial={search}
+          almacenIdInicial={almacenesInsumos[0]?.id || ''}
           onClose={() => setShowNuevoProducto(null)}
           onCreated={async (codigo) => {
             await refetchProductos();

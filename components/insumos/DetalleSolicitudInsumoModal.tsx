@@ -239,13 +239,27 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-400 mb-1">Cantidades recibidas (si algún item se compone como producto, genera movimiento de entrada al stock)</label>
+                        <label className="block text-xs text-slate-400 mb-1">
+                          Cantidades recibidas — editá cada cantidad antes de confirmar.
+                          Los items con producto vinculado generan entrada al stock automática.
+                        </label>
                         <div className="space-y-1">
                           {solicitud.items.map(it => (
                             <div key={it.id} className="flex items-center gap-2 text-sm">
-                              <span className="flex-1 text-slate-300 truncate">{it.descripcion}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-slate-300 truncate">{it.descripcion}</div>
+                                <div className="text-[11px] text-slate-500">
+                                  Solicitado: {it.cantidad} {it.unidad}
+                                  {it.producto_codigo
+                                    ? <span className="ml-2 text-emerald-400">→ entra a stock ({it.producto_codigo})</span>
+                                    : <span className="ml-2 text-amber-400">→ sin producto vinculado</span>
+                                  }
+                                </div>
+                              </div>
                               <input
                                 type="number"
+                                step="0.01"
+                                min="0"
                                 value={itemsRecibidos[it.id]}
                                 onChange={e => setItemsRecibidos(m => ({ ...m, [it.id]: e.target.value }))}
                                 className="w-24 px-2 py-1 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200 text-right"
