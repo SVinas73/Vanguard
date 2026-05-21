@@ -18,7 +18,11 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM || 'no-reply@vanguard.local';
+// Si no se configura EMAIL_FROM, usamos el remitente de testing de Resend
+// (onboarding@resend.dev) que funciona sin dominio verificado. Limitación:
+// solo envía al email del owner de la cuenta Resend. Para producción real
+// hay que verificar un dominio y setear EMAIL_FROM.
+const EMAIL_FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO;
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;

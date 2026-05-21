@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { X, Plus, Package, Loader2 } from 'lucide-react';
-import { useInventoryStore } from '@/store';
 import { CATEGORIA_NOMBRES } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 
@@ -47,7 +46,6 @@ export default function NuevoProductoModal({
   descripcionInicial = '',
   almacenIdInicial = '',
 }: Props) {
-  const addProduct = useInventoryStore(s => s.addProduct);
   const [codigo, setCodigo] = useState(codigoInicial.toUpperCase());
   const [descripcion, setDescripcion] = useState(descripcionInicial);
   const [precio, setPrecio] = useState('');
@@ -79,23 +77,41 @@ export default function NuevoProductoModal({
     const costo = parseFloat(costoInicial) || 0;
 
     try {
-      // 1. Crear producto
-      await addProduct(
-        {
-          codigo: codigoFinal,
-          descripcion: descripcionFinal,
-          precio: parseFloat(precio),
-          categoria,
-          stockMinimo: parseInt(stockMinimo) || 10,
-          almacenId: almacenId || null,
-        } as any,
-        userEmail,
-      );
+      // 1. INSERT directo a Supabase (no usamos el store porque addProduct
+      //    no tira error en fallos — los pone en state silenciosamente).
+      //    Acá necesitamos garantía: si falló, frenamos y mostramos.
+      const nuevoProducto = {
+        codigo: codigoFinal,
+        descripcion: descripcionFinal,
+        precio: parseFloat(precio),
+        moneda: 'UYU',
+        categoria,
+        stock: 0,
+        stock_minimo: parseInt(stockMinimo) || 10,
+        costo_promedio: 0,
+        almacen_id: almacenId || null,
+        creado_por: userEmail,
+        creado_at: new Date().toISOString(),
+        actualizado_por: userEmail,
+        actualizado_at: new Date().toISOString(),
+      };
+
+      const { error: insertError } = await supabase
+        .from('productos')
+        .insert(nuevoProducto);
+
+      if (insertError) {
+        const detalle = (insertError as any).code
+          ? ` (${(insertError as any).code})`
+          : '';
+        setError(`No se pudo crear el producto${detalle}: ${insertError.message}`);
+        setSaving(false);
+        return;
+      }
 
       // 2. Si hay stock inicial, generar movimiento de entrada
       if (cantidadInicial > 0) {
-        await new Promise(r => setTimeout(r, 250));
-        await supabase.from('movimientos').insert({
+        const { error: movError } = await supabase.from('movimientos').insert({
           producto_codigo: codigoFinal,
           tipo: 'entrada',
           cantidad: cantidadInicial,
@@ -103,9 +119,13 @@ export default function NuevoProductoModal({
           motivo: 'Stock inicial al crear producto',
           usuario_email: userEmail,
         });
+        if (movError) {
+          // No bloqueamos: el producto se creó. Mostramos warning y seguimos.
+          console.warn('Producto creado pero el movimiento inicial falló:', movError.message);
+        }
       }
 
-      // 3. Devolver el producto completo al padre (no depender de re-fetch)
+      // 3. Devolver el producto al padre
       onCreated({
         codigo: codigoFinal,
         descripcion: descripcionFinal,
