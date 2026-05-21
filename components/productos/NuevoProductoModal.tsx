@@ -15,6 +15,8 @@ interface Props {
   codigoInicial?: string;
   /** Pre-completa la descripción */
   descripcionInicial?: string;
+  /** Pre-selecciona almacén (útil si lo creás desde un módulo que ya filtra por almacén) */
+  almacenIdInicial?: string;
 }
 
 interface Almacen {
@@ -33,6 +35,7 @@ export default function NuevoProductoModal({
   userEmail,
   codigoInicial = '',
   descripcionInicial = '',
+  almacenIdInicial = '',
 }: Props) {
   const addProduct = useInventoryStore(s => s.addProduct);
   const [codigo, setCodigo] = useState(codigoInicial.toUpperCase());
@@ -40,7 +43,7 @@ export default function NuevoProductoModal({
   const [precio, setPrecio] = useState('');
   const [stockMinimo, setStockMinimo] = useState('10');
   const [categoria, setCategoria] = useState('');
-  const [almacenId, setAlmacenId] = useState('');
+  const [almacenId, setAlmacenId] = useState(almacenIdInicial);
   const [stockInicial, setStockInicial] = useState('');
   const [costoInicial, setCostoInicial] = useState('');
   const [almacenes, setAlmacenes] = useState<Almacen[]>([]);

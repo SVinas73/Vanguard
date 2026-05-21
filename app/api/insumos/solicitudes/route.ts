@@ -85,27 +85,12 @@ export async function POST(request: NextRequest) {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    // 1. Buscar routing de la categoría (global o por org)
+    // 1. Emails directos del form (single source of truth).
+    //    El concepto "destinatarios por categoría" fue removido:
+    //    el solicitante elige a quién notificar caso a caso.
     const orgId = parsed.data.organizacion_id || null;
-    const routingQuery = supabase
-      .from('org_categorias_insumos_routing')
-      .select('gestor_emails, referente_emails, categoria_label, activa')
-      .eq('categoria', parsed.data.categoria);
-
-    const { data: routingRaw } = orgId
-      ? await routingQuery.eq('organizacion_id', orgId).maybeSingle()
-      : await routingQuery.is('organizacion_id', null).maybeSingle();
-
-    const routing = routingRaw as {
-      gestor_emails?: string[];
-      referente_emails?: string[];
-      categoria_label?: string | null;
-      activa?: boolean;
-    } | null;
-
-    const gestores = routing?.gestor_emails || [];
-    const referentes = routing?.referente_emails || [];
-    const categoriaLabel = routing?.categoria_label || parsed.data.categoria;
+    const destinatarios = parsed.data.emails_notificar || [];
+    const categoriaLabel = parsed.data.categoria;
 
     // 2. Generar número y crear solicitud
     const numero = await generarNumero(supabase, orgId);
@@ -165,36 +150,33 @@ export async function POST(request: NextRequest) {
         id: solicitud.id,
         categoria: parsed.data.categoria,
         items_count: parsed.data.items.length,
-        gestores_notificados: gestores.length,
-        referentes_notificados: referentes.length,
+        destinatarios_count: destinatarios.length,
       },
       usuarioEmail: auth.user.email,
       contexto: extraerContextoAudit(request),
     });
 
-    // 5. Notificación in-app a gestores + referentes
-    const todosNotificar = [...new Set([...gestores, ...referentes])];
-    for (const email of todosNotificar) {
+    // 5. Notificación in-app a los emails que el solicitante eligió
+    for (const email of destinatarios) {
       await crearNotificacion({
         tipo: 'solicitud_insumo_creada',
         severidad: 'info',
-        titulo: `Nueva solicitud ${numero} — ${categoriaLabel}`,
-        mensaje: `${auth.user.email} solicitó insumos en categoría "${categoriaLabel}". ${parsed.data.items.length} items.`,
+        titulo: `Nueva solicitud ${numero}`,
+        mensaje: `${auth.user.email} solicitó insumos. ${parsed.data.items.length} items.`,
         entidadTipo: 'solicitudes_insumos',
         entidadId: solicitud.id,
         entidadCodigo: numero,
         usuarioEmail: email,
         dedupKey: `solicitud_insumo:${solicitud.id}:${email}`,
         metadata: {
-          categoria: parsed.data.categoria,
           solicitante: auth.user.email,
           fecha_limite: parsed.data.fecha_limite,
         },
       });
     }
 
-    // 6. Email a gestores (TO) + referentes (CC)
-    if (gestores.length > 0 || referentes.length > 0) {
+    // 6. Email a destinatarios elegidos
+    if (destinatarios.length > 0) {
       const fechaSolicitud = new Date().toLocaleString('es-UY', { dateStyle: 'short', timeStyle: 'short' });
       const tpl = templateSolicitudInsumo({
         numero,
@@ -212,13 +194,12 @@ export async function POST(request: NextRequest) {
         })),
       });
       await enviarEmail({
-        to: gestores.length > 0 ? gestores : referentes,  // Si no hay gestores, mandar al menos a referentes como TO
-        cc: gestores.length > 0 ? referentes : undefined,
+        to: destinatarios,
         subject: tpl.subject,
         html: tpl.html,
         text: tpl.text,
         replyTo: auth.user.email,
-        tags: { evento: 'solicitud_insumo', solicitud: numero, categoria: parsed.data.categoria },
+        tags: { evento: 'solicitud_insumo', solicitud: numero },
         entidadTipo: 'solicitudes_insumos',
         entidadId: solicitud.id,
         organizacionId: orgId || undefined,
@@ -229,10 +210,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       solicitud: { ...solicitud, items: itemsInsert },
-      gestores_notificados: gestores.length,
-      referentes_notificados: referentes.length,
-      aviso: gestores.length + referentes.length === 0
-        ? `No hay routing configurado para la categoría "${parsed.data.categoria}". Configurá los emails en Integraciones → Insumos.`
+      destinatarios_notificados: destinatarios.length,
+      aviso: destinatarios.length === 0
+        ? 'Solicitud creada sin destinatarios de email. Quedó como pendiente.'
         : null,
     });
   } catch (err: any) {

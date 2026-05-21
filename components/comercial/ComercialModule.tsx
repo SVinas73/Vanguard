@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import {
   BarChart3, ShoppingCart, TrendingUp, Landmark, CircleDollarSign,
-  Brain, Tag, Award, Star, ClipboardList, Users
+  Brain, Tag, Award, Star, ClipboardList
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types';
@@ -20,9 +20,8 @@ import ScoringComercial from './ScoringComercial';
 import FinanzasEnterprise from '@/components/finanzas/FinanzasEnterprise';
 import CostosEnterprise from '@/components/costos/CostosEnterprise';
 import SolicitudesInsumosPanel from '@/components/insumos/SolicitudesInsumosPanel';
-import RoutingInsumos from '@/components/insumos/RoutingInsumos';
 
-export type ComercialSubTab = 'dashboard' | 'compras' | 'ventas' | 'finanzas' | 'costos' | 'analytics' | 'condiciones' | 'comisiones' | 'scoring' | 'insumos' | 'destinatarios';
+export type ComercialSubTab = 'dashboard' | 'compras' | 'ventas' | 'finanzas' | 'costos' | 'analytics' | 'condiciones' | 'comisiones' | 'scoring' | 'insumos';
 
 interface ComercialModuleProps {
   products: Product[];
@@ -55,7 +54,6 @@ export default function ComercialModule({
     { id: 'compras', label: t('nav.purchases', 'Compras'), icon: ShoppingCart, visible: true },
     { id: 'ventas', label: t('nav.sales', 'Ventas'), icon: TrendingUp, visible: true },
     { id: 'insumos', label: 'Solicitudes de insumos', icon: ClipboardList, visible: true },
-    { id: 'destinatarios', label: 'Destinatarios', icon: Users, visible: true },
     { id: 'finanzas', label: t('modules.finance', 'Finanzas'), icon: Landmark, visible: hasPermission('canViewFinanzas') },
     { id: 'costos', label: t('nav.costs', 'Costos'), icon: CircleDollarSign, visible: hasPermission('canViewCosts') },
     { id: 'analytics', label: 'Inteligencia', icon: Brain, visible: true },
@@ -136,10 +134,6 @@ export default function ComercialModule({
 
       {subTab === 'insumos' && (
         <SolicitudesInsumosPanel />
-      )}
-
-      {subTab === 'destinatarios' && (
-        <RoutingInsumos />
       )}
     </div>
   );

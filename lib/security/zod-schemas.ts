@@ -101,6 +101,7 @@ export const crearOrdenCompraSchema = z.object({
 export const crearSolicitudInsumoSchema = z.object({
   organizacion_id: z.string().uuid().nullable().optional(),
   categoria: z.string().min(1, 'Categoría requerida').max(64),
+  emails_notificar: z.array(z.string().email()).max(20).optional().default([]),
   fecha_limite: z.string().nullable().optional(),
   observaciones: z.string().max(2000).nullable().optional(),
   items: z.array(z.object({
