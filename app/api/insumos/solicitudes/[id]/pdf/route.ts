@@ -17,7 +17,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 
 const ESTADO_LABEL: Record<string, string> = {
   pendiente: 'Pendiente',
-  en_gestion: 'En gestión',
+  en_gestion: 'Aprobado',
   comprada: 'Comprada',
   recibida: 'Recibida',
   cerrada: 'Cerrada',

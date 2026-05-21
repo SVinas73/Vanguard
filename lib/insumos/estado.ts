@@ -35,7 +35,7 @@ export function estadoEfectivo(
 
 export const ESTADO_LABEL: Record<EstadoEfectivo, string> = {
   pendiente: 'Pendiente',
-  en_gestion: 'En gestión',
+  en_gestion: 'Aprobado',
   comprada: 'Comprada',
   recibida: 'Recibida',
   cerrada: 'Cerrada',
