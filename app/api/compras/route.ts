@@ -20,7 +20,7 @@ import { chequearRateLimit, extraerIP } from '@/lib/security/rate-limit';
 import { registrarAuditoriaSegura, extraerContextoAudit } from '@/lib/security/audit-enhanced';
 import { crearNotificacion } from '@/lib/notifications';
 import { enviarEmail } from '@/lib/email/send';
-import { templateOCInterno } from '@/lib/email/templates';
+import { templateOCInterno, formatFechaHora } from '@/lib/email/templates';
 import { reportarError } from '@/lib/security/error-reporting';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -156,7 +156,8 @@ export async function POST(request: NextRequest) {
 
     // 7b. Email interno (si está habilitado)
     if (destinatarios.enviar_email && destinatarios.emails.length > 0) {
-      const fechaCreacion = new Date().toLocaleString('es-UY', { dateStyle: 'short', timeStyle: 'short' });
+      // Zona horaria fija de Montevideo: el server corre en UTC.
+      const fechaCreacion = formatFechaHora(new Date());
       const tpl = templateOCInterno({
         numero,
         proveedorNombre,

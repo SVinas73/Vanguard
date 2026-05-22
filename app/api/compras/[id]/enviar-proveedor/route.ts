@@ -15,7 +15,7 @@ import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from '@/lib/security/permissions';
 import { registrarAuditoriaSegura, extraerContextoAudit } from '@/lib/security/audit-enhanced';
 import { enviarEmail } from '@/lib/email/send';
-import { templateOCProveedor } from '@/lib/email/templates';
+import { templateOCProveedor, formatFechaHora } from '@/lib/email/templates';
 import { reportarError } from '@/lib/security/error-reporting';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const tpl = templateOCProveedor({
       numero: oc.numero,
       proveedorNombre: proveedor.nombre,
-      fechaCreacion: new Date(oc.created_at).toLocaleString('es-UY', { dateStyle: 'short' }),
+      fechaCreacion: formatFechaHora(oc.created_at),
       fechaEsperada: oc.fecha_esperada,
       creadoPor: oc.creado_por,
       contactoCompras: oc.creado_por,
