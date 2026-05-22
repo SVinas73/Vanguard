@@ -93,6 +93,16 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
         const b = await resp.json().catch(() => ({}));
         throw new Error(b.error || `HTTP ${resp.status}`);
       }
+
+      // Si la transición fue a 'recibida', el backend acaba de sumar al stock
+      // (crea/actualiza productos, movimientos y lotes). Avisamos al resto
+      // de la app para que refresque sin requerir reload manual.
+      if (accion === 'recibida' && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('vg:stock-changed', {
+          detail: { source: 'solicitud-insumo', solicitudId: solicitud.id },
+        }));
+      }
+
       onChanged();
     } catch (e: any) {
       setError(e.message || 'Error');

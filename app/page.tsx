@@ -292,6 +292,20 @@ export default function HomePage() {
     setLastRefresh(new Date());
   }, [fetchProducts, fetchMovements, refreshPredictions]);
 
+  // Auto-refresh ante eventos de la app que cambian stock (recepciones de
+  // solicitudes de insumos, recepciones de OC, etc.) — así el módulo Stock
+  // queda en vivo sin necesidad de F5.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = () => {
+      fetchProducts();
+      fetchMovements();
+      setLastRefresh(new Date());
+    };
+    window.addEventListener('vg:stock-changed', handler);
+    return () => window.removeEventListener('vg:stock-changed', handler);
+  }, [fetchProducts, fetchMovements]);
+
   // Period days mapping — fuente única de período para todo el dashboard
   const periodDays = dashboardPeriod === '7d' ? 7
     : dashboardPeriod === '90d' ? 90
@@ -601,8 +615,13 @@ export default function HomePage() {
       }
     }
 
-    // 3. Refrescar el catálogo en memoria
+    // 3. Refrescar el catálogo en memoria + broadcast a otros módulos
     await fetchProducts();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('vg:stock-changed', {
+        detail: { source: 'producto-creado', codigo: codigoFinal },
+      }));
+    }
 
     // Reset form
     setNewProduct({
@@ -795,8 +814,66 @@ export default function HomePage() {
           <StockDashboard
             products={products}
             predictions={predictions}
-            onDeleteProduct={hasPermission('canDeleteProducts') 
-              ? (codigo: string) => deleteProduct(codigo, user?.email || 'Sistema')
+            onDeleteProduct={hasPermission('canDeleteProducts')
+              ? async (codigo: string) => {
+                  // Defensa extra: el botón ya está gateado por permisos,
+                  // pero alguien podría llamar el callback desde la consola.
+                  if (!hasPermission('canDeleteProducts')) {
+                    alert('No tenés permisos para eliminar productos. Solo administradores.');
+                    return;
+                  }
+
+                  // DELETE directo a Supabase, sin el store que silencia
+                  // errores. Mismo patrón que el fix de creación (PR #63).
+                  const { data: prev } = await supabase
+                    .from('productos')
+                    .select('*')
+                    .eq('codigo', codigo)
+                    .single();
+
+                  const { error } = await supabase
+                    .from('productos')
+                    .delete()
+                    .eq('codigo', codigo);
+
+                  if (error) {
+                    // 23503 = foreign_key_violation. Caso típico: hay
+                    // movimientos / lotes / BOM / órdenes que referencian
+                    // el producto y no tienen ON DELETE CASCADE.
+                    if ((error as any).code === '23503') {
+                      alert(
+                        `No se puede eliminar el producto "${codigo}" porque tiene ` +
+                        `registros relacionados (movimientos, lotes, BOM, órdenes u otros).\n\n` +
+                        `Detalle: ${error.message}`
+                      );
+                    } else {
+                      const c = (error as any).code ?? 'sin código';
+                      alert(`Error al eliminar el producto: ${error.message} (${c})`);
+                    }
+                    return;
+                  }
+
+                  // Auditoría — no bloqueante
+                  if (prev) {
+                    await supabase.from('auditoria').insert({
+                      tabla: 'productos',
+                      accion: 'ELIMINAR',
+                      codigo,
+                      datos_anteriores: prev,
+                      datos_nuevos: null,
+                      usuario_email: user?.email || 'Sistema',
+                    });
+                  }
+
+                  // Refresh inmediato + broadcast para que otros módulos
+                  // (Dashboard, Reportes, etc.) también recalculen.
+                  await fetchProducts();
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('vg:stock-changed', {
+                      detail: { source: 'producto-eliminado', codigo },
+                    }));
+                  }
+                }
               : undefined
             }
             onEditProduct={handleOpenEdit}
