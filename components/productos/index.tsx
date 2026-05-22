@@ -265,12 +265,12 @@ export function ProductTable({
     return () => { cancelled = true; };
   }, [products]);
 
-  // Moneda BASE y DESTINO desde Configuración. Convertimos base → target
-  // con las tasas. Si falta tasa, mostramos en base con * para que se note.
+  // Origen = UYU (hardcoded: así guardan los productos). Destino =
+  // moneda elegida en Configuración. Si destino = UYU no convierte.
   const { config: orgConfig } = useModulosHabilitados();
   const { rates: ratesTable } = useTiposCambio();
-  const monedaBase: Moneda = (orgConfig.base_currency as Moneda) ?? 'UYU';
-  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? monedaBase;
+  const monedaBase: Moneda = 'UYU';
+  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
 
   const summary = useMemo(() => {
     const critical = products.filter(p => p.stock <= p.stockMinimo).length;

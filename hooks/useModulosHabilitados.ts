@@ -67,11 +67,15 @@ export function useModulosHabilitados(): State {
       .eq('id', orgActivaId)
       .single();
     const c = (data?.config ?? {}) as Partial<ModuleConfig>;
+    // Moneda BASE forzada a UYU: así guardan los productos/movimientos/lotes
+    // a nivel schema. Si algún usuario seteó base_currency a algo distinto
+    // antes de este fix, lo ignoramos: solo display_currency controla cómo
+    // se MUESTRA, y la conversión asume siempre origen UYU.
     setConfig({
       preset: c.preset ?? 'full',
       enabled_modules: c.enabled_modules ?? ALL_MODULES,
-      base_currency: c.base_currency ?? 'UYU',
-      display_currency: c.display_currency ?? c.base_currency ?? 'UYU',
+      base_currency: 'UYU',
+      display_currency: c.display_currency ?? 'UYU',
     });
     setLoading(false);
   }, [orgActivaId]);
@@ -121,14 +125,11 @@ export function useModulosHabilitados(): State {
     await guardar({ ...config, display_currency: m });
   }, [config, guardar]);
 
-  const setBaseCurrency = useCallback(async (m: string) => {
-    // Cambiar la moneda base afecta cómo se interpretan TODOS los valores
-    // existentes (no los convierte: cambia el supuesto). Si no se setea
-    // display_currency, también la alineamos para no dejar config inconsistente.
-    const next = { ...config, base_currency: m };
-    if (!config.display_currency) next.display_currency = m;
-    await guardar(next);
-  }, [config, guardar]);
+  // Deprecada: ya no se ofrece cambiar la moneda base desde la UI. Se deja
+  // como no-op para no romper consumidores existentes durante la transición.
+  const setBaseCurrency = useCallback(async (_m: string) => {
+    // intencionalmente no hacemos nada.
+  }, []);
 
   return {
     modulos: resolverModulosHabilitados(config),

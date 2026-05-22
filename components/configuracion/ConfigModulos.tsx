@@ -15,7 +15,7 @@ import type { Moneda, TabType } from '@/types';
 import { cn } from '@/lib/utils';
 
 export function ConfigModulos() {
-  const { config, modulos, cambiarPreset, setDisplayCurrency, setBaseCurrency, loading } = useModulosHabilitados();
+  const { config, modulos, cambiarPreset, setDisplayCurrency, loading } = useModulosHabilitados();
   const { raw: rates, agregar, eliminar } = useTiposCambio();
 
   const [custom, setCustom] = useState<Set<TabType>>(new Set(config.enabled_modules));
@@ -151,43 +151,17 @@ export function ConfigModulos() {
         </p>
       </section>
 
-      {/* ============ MONEDA BASE DEL SISTEMA ============ */}
-      <section className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <DollarSign className="text-cyan-400" size={18} />
-          <h2 className="text-sm font-semibold text-slate-100">Moneda base del sistema</h2>
-        </div>
-        <p className="text-xs text-slate-400 mb-3">
-          En esta moneda se interpretan los precios y costos guardados. Cambiala solo si tu empresa
-          opera en una moneda distinta a la actual — no se convierten los valores existentes.
-        </p>
-        <div className="flex gap-2 flex-wrap">
-          {MONEDAS_DISPONIBLES.map(m => (
-            <button
-              key={m}
-              onClick={() => setBaseCurrency(m)}
-              className={cn(
-                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                (config.base_currency ?? 'UYU') === m
-                  ? 'bg-cyan-500 text-white'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-              )}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* ============ MONEDA DE VISUALIZACIÓN ============ */}
+      {/* ============ MONEDA DEL SISTEMA ============ */}
       <section className="rounded-xl bg-slate-900 border border-slate-800 p-5">
         <div className="flex items-center gap-2 mb-2">
           <DollarSign className="text-emerald-400" size={18} />
-          <h2 className="text-sm font-semibold text-slate-100">Moneda de reportes y dashboard</h2>
+          <h2 className="text-sm font-semibold text-slate-100">Moneda del sistema</h2>
         </div>
         <p className="text-xs text-slate-400 mb-3">
-          Reportes, dashboard y stock muestran los valores convertidos a esta moneda
-          (desde la base, usando los tipos de cambio de abajo).
+          Todo el sistema (Stock, Movimientos, Dashboard, Reportes, exports) muestra los
+          valores convertidos a esta moneda usando los tipos de cambio cargados abajo.
+          Los precios y costos se siguen guardando en pesos uruguayos internamente;
+          al cambiar acá NO se modifican datos, solo cómo se muestran.
         </p>
         <div className="flex gap-2 flex-wrap">
           {MONEDAS_DISPONIBLES.map(m => (

@@ -523,10 +523,12 @@ export default function ReportsEnterprise() {
   const { config: orgConfig } = useModulosHabilitados();
   const { rates: ratesTable } = useTiposCambio();
 
-  // Moneda BASE (origen de los valores guardados) + DESTINO (mostrar).
-  // Ambas vienen de Configuración. Single source of truth.
-  const monedaBase = (orgConfig.base_currency as Moneda) ?? 'UYU';
-  const monedaReporte = (orgConfig.display_currency as Moneda) ?? monedaBase;
+  // ORIGEN hardcoded en UYU: así guardan los productos / movimientos /
+  // lotes (default del schema). No se ofrece cambiarlo en la UI porque
+  // requeriría migrar TODOS los valores existentes. DESTINO viene de
+  // Configuración. Si destino = UYU, no se convierte.
+  const monedaBase: Moneda = 'UYU';
+  const monedaReporte = (orgConfig.display_currency as Moneda) ?? 'UYU';
 
   // Sincronizar las variables de módulo con la config + las tasas vigentes.
   useEffect(() => {

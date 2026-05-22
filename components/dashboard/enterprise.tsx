@@ -319,12 +319,12 @@ function InventoryValuePanel({ data, periodLabel = '30 días' }: InventoryValueP
     value: a.valor,
   }));
 
-  // Moneda BASE (origen) y DESTINO desde Configuración. Convertimos
-  // base → target con las tasas. Si falta tasa, mostramos en base con *.
+  // Origen = UYU (hardcoded: así guardan los datos). Destino = moneda
+  // elegida en Configuración. Si destino = UYU no convierte.
   const { config: orgConfig } = useModulosHabilitados();
   const { rates: ratesTable } = useTiposCambio();
-  const monedaBase: Moneda   = (orgConfig.base_currency    as Moneda) ?? 'UYU';
-  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? monedaBase;
+  const monedaBase: Moneda   = 'UYU';
+  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
 
   const convertirSiCorresponde = (v: number): { valor: number; sinTasa: boolean } => {
     if (monedaTarget === monedaBase) return { valor: v, sinTasa: false };
