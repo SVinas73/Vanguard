@@ -46,6 +46,7 @@ export function formatMoney(
 // ============================================
 
 export interface TipoCambio {
+  id?: string;
   moneda_origen: Moneda;
   moneda_destino: Moneda;
   tasa: number;

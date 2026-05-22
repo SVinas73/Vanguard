@@ -18,6 +18,7 @@ interface UseTiposCambioState {
     fecha?: string;
     notas?: string;
   }) => Promise<{ ok: boolean; error?: string }>;
+  eliminar: (id: string) => Promise<{ ok: boolean; error?: string }>;
 }
 
 export function useTiposCambio(): UseTiposCambioState {
@@ -29,7 +30,7 @@ export function useTiposCambio(): UseTiposCambioState {
     setLoading(true);
     let query = supabase
       .from('tipos_cambio')
-      .select('moneda_origen, moneda_destino, tasa, fecha')
+      .select('id, moneda_origen, moneda_destino, tasa, fecha')
       .order('fecha', { ascending: false })
       .limit(500);
     if (orgActivaId) query = query.eq('organizacion_id', orgActivaId);
@@ -43,6 +44,14 @@ export function useTiposCambio(): UseTiposCambioState {
 
   useEffect(() => {
     cargar();
+  }, [cargar]);
+
+  // Reaccionar a cambios en otras pestañas/hooks (alta/baja de TC).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const h = () => cargar();
+    window.addEventListener('vg:rates-changed', h);
+    return () => window.removeEventListener('vg:rates-changed', h);
   }, [cargar]);
 
   const agregar: UseTiposCambioState['agregar'] = useCallback(async (args) => {
@@ -66,8 +75,17 @@ export function useTiposCambio(): UseTiposCambioState {
     );
     if (error) return { ok: false, error: error.message };
     await cargar();
+    notificarCambio();
     return { ok: true };
   }, [orgActivaId, cargar]);
+
+  const eliminar: UseTiposCambioState['eliminar'] = useCallback(async (id) => {
+    const { error } = await supabase.from('tipos_cambio').delete().eq('id', id);
+    if (error) return { ok: false, error: error.message };
+    await cargar();
+    notificarCambio();
+    return { ok: true };
+  }, [cargar]);
 
   return {
     rates: buildRatesTable(raw),
@@ -75,5 +93,15 @@ export function useTiposCambio(): UseTiposCambioState {
     loading,
     recargar: cargar,
     agregar,
+    eliminar,
   };
+}
+
+// Avisamos a otros hooks (Reports, Dashboard, Stock) que las tasas
+// cambiaron, así re-fetchean sin esperar reload. Sin esto, el toggle
+// de moneda en otras pantallas seguiría usando tasas viejas.
+function notificarCambio() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('vg:rates-changed'));
+  }
 }

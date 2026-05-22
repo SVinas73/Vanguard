@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 
 export function ConfigModulos() {
   const { config, modulos, cambiarPreset, setDisplayCurrency, loading } = useModulosHabilitados();
-  const { raw: rates, agregar, recargar } = useTiposCambio();
+  const { raw: rates, agregar, eliminar } = useTiposCambio();
 
   const [custom, setCustom] = useState<Set<TabType>>(new Set(config.enabled_modules));
 
@@ -224,21 +224,37 @@ export function ConfigModulos() {
                 <th className="px-3 py-2 text-right">Tasa</th>
                 <th className="px-3 py-2 text-left">Fecha</th>
                 <th className="px-3 py-2 text-right">Ejemplo (1)</th>
+                <th className="px-3 py-2 text-center w-12"></th>
               </tr>
             </thead>
             <tbody>
               {rates.length === 0 && (
-                <tr><td colSpan={4} className="px-3 py-6 text-center text-slate-500 text-xs">
+                <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500 text-xs">
                   Todavía no cargaste tipos de cambio.
                 </td></tr>
               )}
               {rates.slice(0, 30).map((r, i) => (
-                <tr key={i} className="border-t border-slate-800/60">
+                <tr key={r.id ?? i} className="border-t border-slate-800/60">
                   <td className="px-3 py-2 text-slate-300">{r.moneda_origen} → {r.moneda_destino}</td>
                   <td className="px-3 py-2 text-right font-mono text-slate-200">{r.tasa}</td>
                   <td className="px-3 py-2 text-slate-400 text-xs">{r.fecha}</td>
                   <td className="px-3 py-2 text-right text-xs text-slate-400">
                     {formatMoney(1, r.moneda_origen)} = {formatMoney(r.tasa, r.moneda_destino)}
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    {r.id && (
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Eliminar tasa ${r.moneda_origen} → ${r.moneda_destino} (${r.fecha})?`)) return;
+                          const res = await eliminar(r.id!);
+                          if (!res.ok) alert(`No se pudo eliminar: ${res.error}`);
+                        }}
+                        title="Eliminar tasa"
+                        className="p-1.5 rounded hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
