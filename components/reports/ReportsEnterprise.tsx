@@ -14,7 +14,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { valuarInventarioSync } from '@/lib/inventory-valuation';
 import { exportarReporteExcel, exportarReportePDF, setMonedaExport } from '@/lib/export-reportes';
-import { formatMoney, MONEDAS_DISPONIBLES, convertir, type RatesTable } from '@/lib/currency';
+import { formatMoney, convertir, type RatesTable } from '@/lib/currency';
 import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
 import { useTiposCambio } from '@/hooks/useTiposCambio';
 import type { Moneda } from '@/types';
@@ -520,22 +520,16 @@ function useToast() {
 export default function ReportsEnterprise() {
   const { user } = useAuth();
   const toast = useToast();
-  const { config: orgConfig, setDisplayCurrency } = useModulosHabilitados();
+  const { config: orgConfig } = useModulosHabilitados();
   const { rates: ratesTable } = useTiposCambio();
 
-  // Moneda objetivo de los reportes. Por defecto la de la organización.
-  // Se puede cambiar desde el toggle del header sin tocar el resto de la app.
-  const [monedaReporte, setMonedaReporteState] = useState<Moneda>(
-    (orgConfig.display_currency as Moneda) ?? 'UYU'
-  );
+  // Moneda objetivo = la elegida en Configuración. ÚNICA fuente de verdad.
+  // Antes había un toggle local en este header; lo sacamos para no tener
+  // dos lugares donde elegir lo mismo. Si la org cambia su display_currency,
+  // este componente reacciona automáticamente.
+  const monedaReporte = (orgConfig.display_currency as Moneda) ?? 'UYU';
 
-  useEffect(() => {
-    setMonedaReporteState((orgConfig.display_currency as Moneda) ?? 'UYU');
-  }, [orgConfig.display_currency]);
-
-  // Sincronizar las variables de módulo con el estado y las tasas vigentes.
-  // Cuando cambia cualquiera, el siguiente render usa los nuevos números
-  // y el toggle del header pasa a convertir, no sólo a cambiar el símbolo.
+  // Sincronizar las variables de módulo con la config + las tasas vigentes.
   useEffect(() => {
     setMonedaReporte(monedaReporte);
     setMonedaExport(monedaReporte);
@@ -545,9 +539,9 @@ export default function ReportsEnterprise() {
     setRatesReporte(ratesTable);
   }, [ratesTable]);
 
-  // Cuando el usuario cambia la moneda objetivo o llegan nuevas tasas,
-  // re-generamos el reporte activo así los KPIs / totales se recalculan
-  // (no alcanza con cambiar el símbolo: los strings ya quedaron renderizados).
+  // Cuando cambia la moneda de la org o llegan nuevas tasas, re-generamos
+  // el reporte activo así KPIs / totales / filas se recalculan
+  // (los strings ya quedaron renderizados con la moneda vieja).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (reporteSeleccionado && datosReporte) {
@@ -2341,30 +2335,10 @@ export default function ReportsEnterprise() {
             <BarChart3 className="h-7 w-7 text-cyan-400" />
             Centro de Reportes
           </h2>
-          <p className="text-slate-400 text-sm mt-1">Genera reportes detallados de todo el sistema</p>
-          <div className="mt-3 flex items-center gap-2 text-xs">
-            <span className="text-slate-500">Mostrar valores en:</span>
-            {MONEDAS_DISPONIBLES.map(m => (
-              <button
-                key={m}
-                onClick={() => {
-                  setMonedaReporteState(m);
-                  setDisplayCurrency(m); // persiste en la org
-                }}
-                className={
-                  'px-2 py-1 rounded-md font-medium transition-colors ' +
-                  (monedaReporte === m
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700')
-                }
-              >
-                {m}
-              </button>
-            ))}
-            <span className="ml-2 text-slate-600">
-              · Los productos guardan su moneda original; se convierte con tipos de cambio cargados.
-            </span>
-          </div>
+          <p className="text-slate-400 text-sm mt-1">
+            Reportes en <strong className="text-emerald-400">{monedaReporte}</strong>
+            <span className="text-slate-600"> · cambiá la moneda en Configuración → Moneda de reportes</span>
+          </p>
         </div>
         {datosReporte && (
           <div className="flex gap-2">

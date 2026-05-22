@@ -11,8 +11,11 @@ import {
   DollarSign, Package, AlertCircle, ArrowLeftRight,
 } from 'lucide-react';
 import { ProductThumbnail } from './product-image';
-import { formatMoney } from '@/lib/currency';
+import { formatMoney, convertir } from '@/lib/currency';
 import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valuation';
+import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
+import { useTiposCambio } from '@/hooks/useTiposCambio';
+import type { Moneda } from '@/types';
 
 // ============================================
 // CATEGORY BADGE
@@ -262,17 +265,27 @@ export function ProductTable({
     return () => { cancelled = true; };
   }, [products]);
 
-  // Para el chip de resumen, hoy mostramos todo en UYU (igual que Dashboard).
-  // Si tu org maneja varias monedas, la pantalla de Reportes hace la
-  // conversión con los tipos de cambio cargados.
+  // Moneda objetivo desde Configuración (única fuente de verdad).
+  // Convertimos UYU → target con las tasas cargadas. Si falta tasa,
+  // mostramos UYU con asterisco para que se note.
+  const { config: orgConfig } = useModulosHabilitados();
+  const { rates: ratesTable } = useTiposCambio();
+  const monedaTarget = ((orgConfig.display_currency as Moneda) ?? 'UYU');
+
   const summary = useMemo(() => {
     const critical = products.filter(p => p.stock <= p.stockMinimo).length;
+    const valorUYU = valuacion?.total ?? 0;
+    const conv = monedaTarget === 'UYU'
+      ? valorUYU
+      : convertir(valorUYU, 'UYU', monedaTarget, ratesTable);
     return {
       count: products.length,
-      valor: valuacion?.total ?? 0,
+      valor: conv,
+      valorOrigen: valorUYU,
+      sinTasa: conv === null,
       critical,
     };
-  }, [products, valuacion]);
+  }, [products, valuacion, monedaTarget, ratesTable]);
 
   const thClass = 'px-3 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider cursor-pointer select-none group';
 
@@ -287,7 +300,14 @@ export function ProductTable({
           </span>
           <span className="flex items-center gap-1.5 text-slate-400">
             <DollarSign size={13} />
-            Valor: <strong className="text-white">{formatMoney(summary.valor, 'UYU')}</strong>
+            Valor: <strong className="text-white">
+              {summary.sinTasa
+                ? `${formatMoney(summary.valorOrigen, 'UYU')} *`
+                : formatMoney(summary.valor ?? 0, monedaTarget)}
+            </strong>
+            {summary.sinTasa && (
+              <span title="Falta tasa de cambio en Configuración" className="text-amber-400">⚠</span>
+            )}
           </span>
           {summary.critical > 0 && (
             <span className="flex items-center gap-1.5 text-red-400">

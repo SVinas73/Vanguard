@@ -10,6 +10,10 @@ import {
 import { cn } from '@/lib/utils';
 import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valuation';
 import { Donut, HorizontalBars, CHART_COLORS } from '@/components/ui/charts-bi';
+import { formatMoney, convertir } from '@/lib/currency';
+import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
+import { useTiposCambio } from '@/hooks/useTiposCambio';
+import type { Moneda } from '@/types';
 
 // ============================================
 // TYPES
@@ -315,8 +319,29 @@ function InventoryValuePanel({ data, periodLabel = '30 días' }: InventoryValueP
     value: a.valor,
   }));
 
-  const fmtMoney = (v: number) => `$${(v / 1000).toFixed(1)}k`;
-  const fmtMoneyFull = (v: number) => `$${v.toLocaleString('es-UY', { minimumFractionDigits: 0 })}`;
+  // Moneda objetivo desde Configuración + tasas vigentes. Convertimos
+  // todo lo que mostramos en este card UYU → target. Si no hay tasa,
+  // formateamos en UYU con asterisco para que el usuario lo note.
+  const { config: orgConfig } = useModulosHabilitados();
+  const { rates: ratesTable } = useTiposCambio();
+  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
+
+  const convertirSiCorresponde = (v: number): { valor: number; sinTasa: boolean } => {
+    if (monedaTarget === 'UYU') return { valor: v, sinTasa: false };
+    const c = convertir(v, 'UYU', monedaTarget, ratesTable);
+    return c === null ? { valor: v, sinTasa: true } : { valor: c, sinTasa: false };
+  };
+
+  const fmtMoney = (v: number) => {
+    const { valor } = convertirSiCorresponde(v);
+    return `${formatMoney(valor / 1000, monedaTarget, { maximumFractionDigits: 1 })}k`;
+  };
+  const fmtMoneyFull = (v: number) => {
+    const { valor, sinTasa } = convertirSiCorresponde(v);
+    return sinTasa
+      ? `${formatMoney(v, 'UYU')} *`
+      : formatMoney(valor, monedaTarget);
+  };
 
   return (
     <div className="rounded-xl bg-slate-900/40 border border-slate-800 p-6">
