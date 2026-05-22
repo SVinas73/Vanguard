@@ -795,8 +795,59 @@ export default function HomePage() {
           <StockDashboard
             products={products}
             predictions={predictions}
-            onDeleteProduct={hasPermission('canDeleteProducts') 
-              ? (codigo: string) => deleteProduct(codigo, user?.email || 'Sistema')
+            onDeleteProduct={hasPermission('canDeleteProducts')
+              ? async (codigo: string) => {
+                  // Doble check de permisos en el handler (defensa en profundidad:
+                  // el botón ya está gateado, pero alguien podría llamar el callback
+                  // desde la consola).
+                  if (!hasPermission('canDeleteProducts')) {
+                    alert('No tenés permisos para eliminar productos. Solo administradores.');
+                    return;
+                  }
+
+                  // Delete directo a Supabase, sin store intermedio que silencie
+                  // errores (mismo patrón que el fix de creación en PR #63).
+                  // Guardamos el producto antes para la auditoría.
+                  const { data: prev } = await supabase
+                    .from('productos')
+                    .select('*')
+                    .eq('codigo', codigo)
+                    .single();
+
+                  const { error } = await supabase
+                    .from('productos')
+                    .delete()
+                    .eq('codigo', codigo);
+
+                  if (error) {
+                    // 23503 = foreign_key_violation. Es lo más común al borrar
+                    // un producto con movimientos / lotes / BOM / etc. referenciándolo.
+                    if (error.code === '23503') {
+                      alert(
+                        `No se puede eliminar el producto "${codigo}" porque tiene registros relacionados ` +
+                        `(movimientos, lotes, BOM, órdenes u otros). ` +
+                        `Detalle: ${error.message}`
+                      );
+                    } else {
+                      alert(`Error al eliminar el producto: ${error.message} (${error.code ?? 'sin código'})`);
+                    }
+                    return;
+                  }
+
+                  // Auditoría — no bloqueante
+                  if (prev) {
+                    await supabase.from('auditoria').insert({
+                      tabla: 'productos',
+                      accion: 'ELIMINAR',
+                      codigo,
+                      datos_anteriores: prev,
+                      datos_nuevos: null,
+                      usuario_email: user?.email || 'Sistema',
+                    });
+                  }
+
+                  await fetchProducts();
+                }
               : undefined
             }
             onEditProduct={handleOpenEdit}
