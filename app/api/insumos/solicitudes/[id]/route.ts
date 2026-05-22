@@ -97,28 +97,111 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     if (errUpdate) return NextResponse.json({ error: errUpdate.message }, { status: 500 });
 
-    // 4. Si recibió items, actualizar cantidad_recibida y generar movimientos de stock
+    // 4. Si recibió items, actualizar cantidad_recibida y sincronizar STOCK.
+    //
+    // FLUJO COMPLETO (después del fix):
+    //   a) Para cada item recibido, persistir cantidad_recibida.
+    //   b) Si el item está vinculado a un producto existente → upsert sobre
+    //      ese código. Si NO está vinculado (insumo nuevo) → AUTOCREAR el
+    //      producto con un código generado a partir de la solicitud, y
+    //      guardar el código de vuelta en el item para futuras referencias.
+    //   c) Insertar movimiento de entrada con los nombres REALES de
+    //      columna (codigo / notas / costo_compra / producto_id),
+    //      no los falsos (producto_codigo / motivo / referencia_*) que
+    //      antes hacían fallar silenciosamente el INSERT.
+    //   d) Incrementar productos.stock con la cantidad recibida.
+    //   e) Crear lote (FIFO) para mantener la valuación coherente con
+    //      Dashboard / Reportes / Centro de Costos.
     if (parsed.data.estado === 'recibida' && parsed.data.items_recibidos?.length) {
       for (const ir of parsed.data.items_recibidos) {
+        // a) cantidad recibida
         await supabase
           .from('solicitudes_insumos_items')
           .update({ cantidad_recibida: ir.cantidad_recibida })
           .eq('id', ir.item_id);
 
-        // Si el item está vinculado a un producto existente, generar movimiento de entrada
+        if (!(ir.cantidad_recibida > 0)) continue;
+
         const item = actual.items.find((i: any) => i.id === ir.item_id);
-        if (item?.producto_codigo && ir.cantidad_recibida > 0) {
-          await supabase.from('movimientos').insert({
-            producto_codigo: item.producto_codigo,
-            tipo: 'entrada',
-            cantidad: ir.cantidad_recibida,
-            motivo: `Ingreso por solicitud de insumo ${actual.numero}`,
-            referencia_tipo: 'solicitud_insumo',
-            referencia_id: actual.id,
-            usuario_email: auth.user.email,
-            organizacion_id: actual.organizacion_id,
-          }).select();
+        if (!item) continue;
+
+        // b) resolver producto (existente o autocreado)
+        let codigoProducto = item.producto_codigo as string | null;
+
+        if (!codigoProducto) {
+          // Autogeneramos un código predecible y único por item.
+          codigoProducto = `INS-${actual.numero}-${item.id}`.toUpperCase();
         }
+
+        let { data: prod } = await supabase
+          .from('productos')
+          .select('id, stock')
+          .eq('codigo', codigoProducto)
+          .maybeSingle();
+
+        if (!prod) {
+          const { data: creado, error: errCrear } = await supabase
+            .from('productos')
+            .insert({
+              codigo: codigoProducto,
+              descripcion: item.descripcion ?? codigoProducto,
+              precio: 0,              // placeholder, editable después en Stock
+              moneda: 'UYU',
+              categoria: 'Insumos',
+              stock: 0,               // se suma abajo
+              stock_minimo: 5,
+              costo_promedio: 0,
+              almacen_id: null,
+              creado_por: auth.user.email,
+              creado_at: new Date().toISOString(),
+              actualizado_por: auth.user.email,
+              actualizado_at: new Date().toISOString(),
+            })
+            .select('id, stock')
+            .single();
+
+          if (errCrear || !creado) {
+            console.error('No se pudo autocrear el producto desde insumo:', errCrear);
+            continue; // no abortamos toda la recepción
+          }
+          prod = creado;
+
+          // Guardar el código auto-generado de vuelta en el item para que
+          // futuras recepciones del mismo item reconozcan el producto.
+          await supabase
+            .from('solicitudes_insumos_items')
+            .update({ producto_codigo: codigoProducto })
+            .eq('id', item.id);
+        }
+
+        // c) movimiento de entrada (nombres reales de columna)
+        await supabase.from('movimientos').insert({
+          producto_id: prod.id,
+          codigo: codigoProducto,
+          tipo: 'entrada',
+          cantidad: ir.cantidad_recibida,
+          costo_compra: null,
+          moneda_costo: 'UYU',
+          notas: `Ingreso por solicitud de insumo ${actual.numero}`,
+          usuario_email: auth.user.email,
+        });
+
+        // d) sumar al stock del producto
+        await supabase
+          .from('productos')
+          .update({ stock: (prod.stock ?? 0) + Number(ir.cantidad_recibida) })
+          .eq('codigo', codigoProducto);
+
+        // e) lote para valuación FIFO
+        await supabase.from('lotes').insert({
+          codigo: codigoProducto,
+          cantidad_inicial: ir.cantidad_recibida,
+          cantidad_disponible: ir.cantidad_recibida,
+          costo_unitario: 0,           // placeholder, editable después
+          moneda: 'UYU',
+          usuario: auth.user.email,
+          notas: `Solicitud ${actual.numero}`,
+        });
       }
     }
 
