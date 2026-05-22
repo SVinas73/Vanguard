@@ -265,27 +265,28 @@ export function ProductTable({
     return () => { cancelled = true; };
   }, [products]);
 
-  // Moneda objetivo desde Configuración (única fuente de verdad).
-  // Convertimos UYU → target con las tasas cargadas. Si falta tasa,
-  // mostramos UYU con asterisco para que se note.
+  // Moneda BASE y DESTINO desde Configuración. Convertimos base → target
+  // con las tasas. Si falta tasa, mostramos en base con * para que se note.
   const { config: orgConfig } = useModulosHabilitados();
   const { rates: ratesTable } = useTiposCambio();
-  const monedaTarget = ((orgConfig.display_currency as Moneda) ?? 'UYU');
+  const monedaBase: Moneda = (orgConfig.base_currency as Moneda) ?? 'UYU';
+  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? monedaBase;
 
   const summary = useMemo(() => {
     const critical = products.filter(p => p.stock <= p.stockMinimo).length;
-    const valorUYU = valuacion?.total ?? 0;
-    const conv = monedaTarget === 'UYU'
-      ? valorUYU
-      : convertir(valorUYU, 'UYU', monedaTarget, ratesTable);
+    const valorBase = valuacion?.total ?? 0;
+    const conv = monedaTarget === monedaBase
+      ? valorBase
+      : convertir(valorBase, monedaBase, monedaTarget, ratesTable);
     return {
       count: products.length,
       valor: conv,
-      valorOrigen: valorUYU,
+      valorOrigen: valorBase,
+      monedaOrigen: monedaBase,
       sinTasa: conv === null,
       critical,
     };
-  }, [products, valuacion, monedaTarget, ratesTable]);
+  }, [products, valuacion, monedaBase, monedaTarget, ratesTable]);
 
   const thClass = 'px-3 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider cursor-pointer select-none group';
 
@@ -302,7 +303,7 @@ export function ProductTable({
             <DollarSign size={13} />
             Valor: <strong className="text-white">
               {summary.sinTasa
-                ? `${formatMoney(summary.valorOrigen, 'UYU')} *`
+                ? `${formatMoney(summary.valorOrigen, summary.monedaOrigen)} *`
                 : formatMoney(summary.valor ?? 0, monedaTarget)}
             </strong>
             {summary.sinTasa && (

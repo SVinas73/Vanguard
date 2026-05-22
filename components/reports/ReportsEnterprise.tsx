@@ -523,17 +523,17 @@ export default function ReportsEnterprise() {
   const { config: orgConfig } = useModulosHabilitados();
   const { rates: ratesTable } = useTiposCambio();
 
-  // Moneda objetivo = la elegida en Configuración. ÚNICA fuente de verdad.
-  // Antes había un toggle local en este header; lo sacamos para no tener
-  // dos lugares donde elegir lo mismo. Si la org cambia su display_currency,
-  // este componente reacciona automáticamente.
-  const monedaReporte = (orgConfig.display_currency as Moneda) ?? 'UYU';
+  // Moneda BASE (origen de los valores guardados) + DESTINO (mostrar).
+  // Ambas vienen de Configuración. Single source of truth.
+  const monedaBase = (orgConfig.base_currency as Moneda) ?? 'UYU';
+  const monedaReporte = (orgConfig.display_currency as Moneda) ?? monedaBase;
 
   // Sincronizar las variables de módulo con la config + las tasas vigentes.
   useEffect(() => {
     setMonedaReporte(monedaReporte);
+    setMonedaOrigen(monedaBase);
     setMonedaExport(monedaReporte);
-  }, [monedaReporte]);
+  }, [monedaReporte, monedaBase]);
 
   useEffect(() => {
     setRatesReporte(ratesTable);

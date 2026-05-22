@@ -47,12 +47,16 @@ export const PINNED_MODULES: TabType[] = ['dashboard', 'configuracion', 'empresa
 export interface ModuleConfig {
   preset: ModulePreset;
   enabled_modules: TabType[];
+  /** Moneda en la que el sistema almacena precios/costos (base). */
+  base_currency?: string;
+  /** Moneda en la que se muestran reportes/dashboards (convierte desde la base). */
   display_currency?: string;
 }
 
 export const DEFAULT_CONFIG: ModuleConfig = {
   preset: 'full',
   enabled_modules: ALL_MODULES,
+  base_currency: 'UYU',
   display_currency: 'UYU',
 };
 
