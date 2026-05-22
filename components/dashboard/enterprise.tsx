@@ -319,16 +319,16 @@ function InventoryValuePanel({ data, periodLabel = '30 días' }: InventoryValueP
     value: a.valor,
   }));
 
-  // Moneda objetivo desde Configuración + tasas vigentes. Convertimos
-  // todo lo que mostramos en este card UYU → target. Si no hay tasa,
-  // formateamos en UYU con asterisco para que el usuario lo note.
+  // Moneda BASE (origen) y DESTINO desde Configuración. Convertimos
+  // base → target con las tasas. Si falta tasa, mostramos en base con *.
   const { config: orgConfig } = useModulosHabilitados();
   const { rates: ratesTable } = useTiposCambio();
-  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
+  const monedaBase: Moneda   = (orgConfig.base_currency    as Moneda) ?? 'UYU';
+  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? monedaBase;
 
   const convertirSiCorresponde = (v: number): { valor: number; sinTasa: boolean } => {
-    if (monedaTarget === 'UYU') return { valor: v, sinTasa: false };
-    const c = convertir(v, 'UYU', monedaTarget, ratesTable);
+    if (monedaTarget === monedaBase) return { valor: v, sinTasa: false };
+    const c = convertir(v, monedaBase, monedaTarget, ratesTable);
     return c === null ? { valor: v, sinTasa: true } : { valor: c, sinTasa: false };
   };
 
@@ -339,7 +339,7 @@ function InventoryValuePanel({ data, periodLabel = '30 días' }: InventoryValueP
   const fmtMoneyFull = (v: number) => {
     const { valor, sinTasa } = convertirSiCorresponde(v);
     return sinTasa
-      ? `${formatMoney(v, 'UYU')} *`
+      ? `${formatMoney(v, monedaBase)} *`
       : formatMoney(valor, monedaTarget);
   };
 

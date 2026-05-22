@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useOrganizacion } from '@/hooks/useOrganizacion';
 import { buildRatesTable, type RatesTable, type TipoCambio } from '@/lib/currency';
@@ -87,8 +87,14 @@ export function useTiposCambio(): UseTiposCambioState {
     return { ok: true };
   }, [cargar]);
 
+  // IMPORTANTE: memoizamos para que la identidad del Map no cambie en
+  // cada render. Sin esto, los useEffect dependientes de `rates`
+  // se disparan infinitamente (ej: en Reports se generaba un bucle
+  // de "reporte generado" porque cada render creaba un nuevo Map).
+  const rates = useMemo(() => buildRatesTable(raw), [raw]);
+
   return {
-    rates: buildRatesTable(raw),
+    rates,
     raw,
     loading,
     recargar: cargar,
