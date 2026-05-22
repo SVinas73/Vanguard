@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Product, StockPrediction } from '@/types';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { ProductThumbnail } from './product-image';
 import { formatMoney } from '@/lib/currency';
+import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valuation';
 
 // ============================================
 // CATEGORY BADGE
@@ -239,18 +240,39 @@ export function ProductTable({
     onEdit?.(product);
   };
 
-  // Summary stats — agrupado por moneda para evitar sumar peras con manzanas.
-  // (La conversión a una sola moneda se hace en Reportes, donde sí hay tasas.)
-  const summary = useMemo(() => {
-    const porMoneda = new Map<string, number>();
-    for (const p of products) {
-      const m = p.moneda ?? 'UYU';
-      const v = p.stock * (p.costoPromedio || p.precio);
-      porMoneda.set(m, (porMoneda.get(m) ?? 0) + v);
-    }
-    const critical = products.filter(p => p.stock <= p.stockMinimo).length;
-    return { count: products.length, porMoneda, critical };
+  // Valuación unificada: misma fuente de verdad que Dashboard y Reportes
+  // (FIFO sobre lotes + fallback a costo_promedio). Antes calculábamos
+  // localmente con `stock × (costoPromedio || precio)`, lo que daba
+  // números distintos al Dashboard porque caía al precio de VENTA.
+  const [valuacion, setValuacion] = useState<ResultadoValuacion | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    valuarInventario({
+      productos: products.map(p => ({
+        codigo: p.codigo,
+        descripcion: p.descripcion,
+        stock: p.stock,
+        stockMinimo: p.stockMinimo,
+        costoPromedio: p.costoPromedio || 0,
+        categoria: p.categoria,
+        almacenId: p.almacenId,
+        almacen: p.almacen,
+      })),
+    }).then(r => { if (!cancelled) setValuacion(r); });
+    return () => { cancelled = true; };
   }, [products]);
+
+  // Para el chip de resumen, hoy mostramos todo en UYU (igual que Dashboard).
+  // Si tu org maneja varias monedas, la pantalla de Reportes hace la
+  // conversión con los tipos de cambio cargados.
+  const summary = useMemo(() => {
+    const critical = products.filter(p => p.stock <= p.stockMinimo).length;
+    return {
+      count: products.length,
+      valor: valuacion?.total ?? 0,
+      critical,
+    };
+  }, [products, valuacion]);
 
   const thClass = 'px-3 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider cursor-pointer select-none group';
 
@@ -263,15 +285,9 @@ export function ProductTable({
             <Package size={13} />
             <strong className="text-white">{summary.count}</strong> productos
           </span>
-          <span className="flex items-center gap-1.5 text-slate-400 flex-wrap">
+          <span className="flex items-center gap-1.5 text-slate-400">
             <DollarSign size={13} />
-            Valor:
-            {Array.from(summary.porMoneda.entries()).map(([moneda, valor]) => (
-              <strong key={moneda} className="text-white">
-                {formatMoney(valor, moneda as 'UYU' | 'USD' | 'EUR' | 'BRL' | 'ARS')}
-              </strong>
-            ))}
-            {summary.porMoneda.size === 0 && <strong className="text-white">—</strong>}
+            Valor: <strong className="text-white">{formatMoney(summary.valor, 'UYU')}</strong>
           </span>
           {summary.critical > 0 && (
             <span className="flex items-center gap-1.5 text-red-400">
