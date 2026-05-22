@@ -14,8 +14,9 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { valuarInventarioSync } from '@/lib/inventory-valuation';
 import { exportarReporteExcel, exportarReportePDF, setMonedaExport } from '@/lib/export-reportes';
-import { formatMoney, MONEDAS_DISPONIBLES } from '@/lib/currency';
+import { formatMoney, MONEDAS_DISPONIBLES, convertir, type RatesTable } from '@/lib/currency';
 import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
+import { useTiposCambio } from '@/hooks/useTiposCambio';
 import type { Moneda } from '@/types';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -404,16 +405,44 @@ const COLORS_CHART = ['#9ec9b1', '#4a7fb5', '#6b5488', '#d6b97a', '#dfa6a6', '#b
 // HELPERS
 // ============================================
 
-// Moneda objetivo dinámica para los reportes. La setea el componente
-// según `org.config.display_currency` (default UYU para que los datos
-// en pesos no se muestren como dólares).
-// Es una variable de módulo porque formatCurrency se usa en muchísimos
-// call-sites dentro y fuera del render; centralizar el cambio acá evita
-// tener que hacer prop drilling por todo el archivo.
-let MONEDA_REPORTE: Moneda = 'UYU';
-export function setMonedaReporte(m: Moneda) { MONEDA_REPORTE = m; }
+// =====================================================
+// Moneda objetivo + tipos de cambio para reportes
+// =====================================================
+// Estos son variables de MÓDULO porque formatCurrency se usa en
+// decenas de call-sites en este archivo (en kpis, totales, tablas,
+// y dentro de funciones puras como armarReporte_*). Centralizar el
+// cambio acá evita prop drilling por todo el archivo.
+//
+// Supuesto: los valores que recibe formatCurrency vienen en UYU
+// (moneda base de la organización en este despliegue). Si cambia el
+// target, convertimos UYU → target con `convertir()` y las tasas de
+// `tipos_cambio` cargadas por la org. Si no hay tasa para el par,
+// la conversión devuelve null y mostramos el valor en UYU con un *.
 
-const formatCurrency = (value: number): string => formatMoney(value, MONEDA_REPORTE);
+let MONEDA_REPORTE: Moneda = 'UYU';
+let MONEDA_ORIGEN: Moneda = 'UYU';
+let RATES: RatesTable = new Map();
+
+export function setMonedaReporte(m: Moneda) { MONEDA_REPORTE = m; }
+export function setMonedaOrigen(m: Moneda)  { MONEDA_ORIGEN  = m; }
+export function setRatesReporte(r: RatesTable) { RATES = r; }
+
+/**
+ * Convierte de la moneda base (típicamente UYU) a la moneda elegida
+ * por el usuario y formatea con su símbolo. Si falta tasa, muestra
+ * el valor en la moneda origen con un asterisco para que se note.
+ */
+const formatCurrency = (value: number): string => {
+  if (MONEDA_REPORTE === MONEDA_ORIGEN) {
+    return formatMoney(value, MONEDA_REPORTE);
+  }
+  const conv = convertir(value, MONEDA_ORIGEN, MONEDA_REPORTE, RATES);
+  if (conv === null) {
+    // Tasa faltante → no inventamos: dejamos el valor en origen + asterisco.
+    return `${formatMoney(value, MONEDA_ORIGEN)} *`;
+  }
+  return formatMoney(conv, MONEDA_REPORTE);
+};
 
 const formatNumber = (value: number): string => {
   return new Intl.NumberFormat('es-UY').format(value);
@@ -492,6 +521,7 @@ export default function ReportsEnterprise() {
   const { user } = useAuth();
   const toast = useToast();
   const { config: orgConfig, setDisplayCurrency } = useModulosHabilitados();
+  const { rates: ratesTable } = useTiposCambio();
 
   // Moneda objetivo de los reportes. Por defecto la de la organización.
   // Se puede cambiar desde el toggle del header sin tocar el resto de la app.
@@ -503,11 +533,28 @@ export default function ReportsEnterprise() {
     setMonedaReporteState((orgConfig.display_currency as Moneda) ?? 'UYU');
   }, [orgConfig.display_currency]);
 
-  // Sincronizar la variable de módulo con el estado.
+  // Sincronizar las variables de módulo con el estado y las tasas vigentes.
+  // Cuando cambia cualquiera, el siguiente render usa los nuevos números
+  // y el toggle del header pasa a convertir, no sólo a cambiar el símbolo.
   useEffect(() => {
     setMonedaReporte(monedaReporte);
     setMonedaExport(monedaReporte);
   }, [monedaReporte]);
+
+  useEffect(() => {
+    setRatesReporte(ratesTable);
+  }, [ratesTable]);
+
+  // Cuando el usuario cambia la moneda objetivo o llegan nuevas tasas,
+  // re-generamos el reporte activo así los KPIs / totales se recalculan
+  // (no alcanza con cambiar el símbolo: los strings ya quedaron renderizados).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (reporteSeleccionado && datosReporte) {
+      generarReporte();
+    }
+    // intencionalmente no incluimos datosReporte para evitar loop
+  }, [monedaReporte, ratesTable]);
 
   // Estado principal
   const [loading, setLoading] = useState(false);

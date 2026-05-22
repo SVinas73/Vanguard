@@ -13,17 +13,16 @@ import type { Moneda } from '@/types';
 
 export const MONEDAS_DISPONIBLES: Moneda[] = ['UYU', 'USD', 'EUR', 'BRL', 'ARS'];
 
-const LOCALE_POR_MONEDA: Record<Moneda, string> = {
-  UYU: 'es-UY',
-  USD: 'en-US',
-  EUR: 'de-DE',
-  BRL: 'pt-BR',
-  ARS: 'es-AR',
-};
-
 /**
  * Formatea un valor en la moneda dada. NO convierte: usa la moneda tal cual.
  * Si querés convertir antes, llamá a `convertir()` y después a `formatMoney`.
+ *
+ * Usamos siempre el locale 'es-UY' (no el locale "nativo" de cada moneda)
+ * para que el separador de miles/decimales sea consistente (1.234,56)
+ * y el símbolo de la moneda quede inequívoco (US$, UYU $U, AR$, R$, €).
+ * Antes alternábamos entre 'en-US' / 'es-AR' / etc. y eso hacía que el
+ * mismo número se mostrara con símbolos parecidos pero monedas distintas,
+ * confundiendo al usuario al cambiar el selector.
  */
 export function formatMoney(
   value: number | null | undefined,
@@ -33,10 +32,10 @@ export function formatMoney(
   if (value === null || value === undefined || !Number.isFinite(value)) {
     return '—';
   }
-  const locale = LOCALE_POR_MONEDA[moneda] ?? 'es-UY';
-  return new Intl.NumberFormat(locale, {
+  return new Intl.NumberFormat('es-UY', {
     style: 'currency',
     currency: moneda,
+    currencyDisplay: 'symbol',
     minimumFractionDigits: opts.minimumFractionDigits ?? 0,
     maximumFractionDigits: opts.maximumFractionDigits ?? 2,
   }).format(value);
