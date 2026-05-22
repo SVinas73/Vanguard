@@ -14,7 +14,7 @@ import { chequearRateLimit, extraerIP } from '@/lib/security/rate-limit';
 import { registrarAuditoriaSegura, extraerContextoAudit } from '@/lib/security/audit-enhanced';
 import { crearNotificacion } from '@/lib/notifications';
 import { enviarEmail } from '@/lib/email/send';
-import { templateSolicitudInsumo } from '@/lib/email/templates';
+import { templateSolicitudInsumo, formatFechaHora } from '@/lib/email/templates';
 import { reportarError } from '@/lib/security/error-reporting';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -177,7 +177,9 @@ export async function POST(request: NextRequest) {
 
     // 6. Email a destinatarios elegidos
     if (destinatarios.length > 0) {
-      const fechaSolicitud = new Date().toLocaleString('es-UY', { dateStyle: 'short', timeStyle: 'short' });
+      // formatFechaHora fuerza zona América/Montevideo. Sin esto, el server
+      // (Vercel/Node) usa UTC y la hora del mail venía con offset.
+      const fechaSolicitud = formatFechaHora(new Date());
       const tpl = templateSolicitudInsumo({
         numero,
         categoria: parsed.data.categoria,

@@ -18,7 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { crearNotificacion } from '@/lib/notifications';
 import { enviarEmail } from '@/lib/email/send';
-import { templateSolicitudInsumo } from '@/lib/email/templates';
+import { templateSolicitudInsumo, formatFechaHora } from '@/lib/email/templates';
 import { reportarError } from '@/lib/security/error-reporting';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
               categoria: s.categoria,
               categoriaLabel: routing?.categoria_label || s.categoria,
               solicitadoPor: s.solicitado_por,
-              fechaSolicitud: new Date(s.fecha_solicitud).toLocaleString('es-UY', { dateStyle: 'short' }),
+              fechaSolicitud: formatFechaHora(s.fecha_solicitud),
               fechaLimite: s.fecha_limite,
               observaciones: s.observaciones,
               items: (s.items || []).map((it: any) => ({
