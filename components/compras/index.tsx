@@ -549,6 +549,14 @@ export function OrdenesCompraPanel({ products, userEmail }: OrdenesCompraPanelPr
           });
         }
       }
+
+      // Recepción modificó stock — avisar al resto de la app para que
+      // refresque sin necesidad de reload manual.
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('vg:stock-changed', {
+          detail: { source: 'oc-recibida', ordenId },
+        }));
+      }
     }
 
     fetchOrdenes();
