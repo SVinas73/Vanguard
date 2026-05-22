@@ -38,13 +38,17 @@ const ESTADO_LABEL: Record<Solicitud['estado'], string> = {
   cancelada: 'Cancelada',
 };
 
+// Flujo lineal estricto: pendiente → en_gestion → comprada → recibida → cerrada.
+// Cancelar disponible en cualquier estado activo (decisión de negocio).
+// NO se puede saltear etapas: ej. desde en_gestion no se puede pasar
+// directo a 'recibida' sin pasar por 'comprada'.
 const TRANSICIONES: Record<Solicitud['estado'], Solicitud['estado'][]> = {
-  pendiente: ['en_gestion', 'cancelada'],
-  en_gestion: ['comprada', 'recibida', 'cancelada'],
-  comprada: ['recibida', 'cancelada'],
-  recibida: ['cerrada'],
-  cerrada: [],
-  cancelada: [],
+  pendiente:  ['en_gestion', 'cancelada'],
+  en_gestion: ['comprada', 'cancelada'],
+  comprada:   ['recibida', 'cancelada'],
+  recibida:   ['cerrada'],
+  cerrada:    [],
+  cancelada:  [],
 };
 
 interface Props {

@@ -33,8 +33,8 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 }
 
 const TRANSICIONES_VALIDAS: Record<string, string[]> = {
-  pendiente: ['en_gestion', 'cancelada'],
-  en_gestion: ['comprada', 'recibida', 'cancelada'],
+  pendiente:  ['en_gestion', 'cancelada'],
+  en_gestion: ['comprada', 'cancelada'],
   comprada: ['recibida', 'cancelada'],
   recibida: ['cerrada'],
   cerrada: [],

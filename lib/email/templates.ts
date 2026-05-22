@@ -73,29 +73,21 @@ function formatFecha(d: Date): string {
 }
 
 // =====================================================
-// Escudo de Vanguard — SVG inline
+// Escudo de Vanguard — PNG hospedado (no SVG)
 // =====================================================
-// Misma forma que el PDF (lib/.../pdf/route.ts). viewBox 64x76.
-// Lo embebemos directo en el HTML como <svg>; los clientes modernos
-// lo renderizan. Outlook desktop muestra el texto del header igual.
-function escudoVanguardSvg(size = 44): string {
-  const banner = '#2d5480';
-  const bannerLado = '#1c3354';
-  const shieldFill = '#2d5480';
-  return `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 76" width="${size}" height="${Math.round(size * 76 / 64)}" style="display:block;">
-  <!-- Banner laterales (más oscuro) -->
-  <path d="M 1 60.5 L 9 58.5 L 9 67.5 L 1 70 L 4 64 Z" fill="${bannerLado}"/>
-  <path d="M 63 60.5 L 55 58.5 L 55 67.5 L 63 70 L 60 64 Z" fill="${bannerLado}"/>
-  <!-- Banner principal -->
-  <path d="M 9 57.5 L 55 57.5 L 53 72 L 11 72 Z" fill="${banner}"/>
-  <!-- Shield -->
-  <path d="M 32 4 L 56 14 L 56 32 C 56 46 46 56 32 60 C 18 56 8 46 8 32 L 8 14 Z" fill="${shieldFill}"/>
-  <!-- V mark blanca -->
-  <path d="M 19 19 L 26 19 L 32 41.5 L 38 19 L 45 19 L 34.5 51 L 29.5 51 Z" fill="#ffffff"/>
-  <!-- Texto VANGUARD -->
-  <text x="32" y="68" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="6" fill="#ffffff" letter-spacing="0.3">VANGUARD</text>
-</svg>`;
+// Gmail, Outlook desktop y muchos otros clientes filtran <svg> inline
+// por seguridad — el escudo no se veía. Usamos un <img> apuntando al
+// PNG público que ya vive en /public/vang.png.
+//
+// URL base: NEXT_PUBLIC_APP_URL si está seteada (recomendado en Vercel),
+// con fallback al dominio de producción para que la imagen igual cargue
+// si el env var no se configuró.
+const PUBLIC_BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://vanguard-beryl.vercel.app').replace(/\/+$/, '');
+
+function escudoVanguardImg(size = 48): string {
+  const w = size;
+  const h = Math.round(size * 76 / 64);
+  return `<img src="${PUBLIC_BASE_URL}/vang.png" width="${w}" height="${h}" alt="Vanguard" style="display:block;border:0;outline:none;text-decoration:none;width:${w}px;height:${h}px;" />`;
 }
 
 // =====================================================
@@ -113,7 +105,7 @@ function header(opts: {
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
         <tr>
           <td style="vertical-align:middle;width:60px;padding-right:16px;">
-            ${escudoVanguardSvg(48)}
+            ${escudoVanguardImg(48)}
           </td>
           <td style="vertical-align:middle;">
             <div style="font-size:11px;letter-spacing:0.22em;color:${opts.acento};text-transform:uppercase;font-weight:600;">${escapeHtml(opts.eyebrow)}</div>
