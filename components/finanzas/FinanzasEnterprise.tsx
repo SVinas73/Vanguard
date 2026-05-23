@@ -339,12 +339,9 @@ interface AgingBucket {
 // CONFIGURACIÓN
 // ============================================
 
-const MONEDAS_CONFIG: Record<Moneda, { simbolo: string; nombre: string; decimales: number }> = {
-  USD: { simbolo: '$', nombre: 'Dólar Americano', decimales: 2 },
+const MONEDAS_CONFIG: Partial<Record<Moneda, { simbolo: string; nombre: string; decimales: number }>> = {
   UYU: { simbolo: '$U', nombre: 'Peso Uruguayo', decimales: 0 },
-  EUR: { simbolo: '€', nombre: 'Euro', decimales: 2 },
-  BRL: { simbolo: 'R$', nombre: 'Real Brasileño', decimales: 2 },
-  ARS: { simbolo: 'AR$', nombre: 'Peso Argentino', decimales: 0 },
+  USD: { simbolo: '$', nombre: 'Dólar Americano', decimales: 2 },
 };
 
 const TIPOS_CUENTA_CONFIG: Record<TipoCuenta, { nombre: string; icono: React.ReactNode }> = {
@@ -421,11 +418,11 @@ const COLORS_CHART = ['#9ec9b1', '#4a7fb5', '#6b5488', '#d6b97a', '#dfa6a6', '#9
 // HELPERS
 // ============================================
 
-const formatCurrency = (value: number, moneda: Moneda = 'USD'): string => {
-  const config = MONEDAS_CONFIG[moneda];
-  return `${config.simbolo} ${value.toLocaleString('es-UY', { 
-    minimumFractionDigits: config.decimales, 
-    maximumFractionDigits: config.decimales 
+const formatCurrency = (value: number, moneda: Moneda = 'UYU'): string => {
+  const config = MONEDAS_CONFIG[moneda] ?? MONEDAS_CONFIG.UYU!;
+  return `${config.simbolo} ${value.toLocaleString('es-UY', {
+    minimumFractionDigits: config.decimales,
+    maximumFractionDigits: config.decimales
   })}`;
 };
 
