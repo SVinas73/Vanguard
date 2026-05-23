@@ -228,7 +228,7 @@ export default function HomePage() {
     codigo: '',
     descripcion: '',
     precio: '',
-    moneda: 'UYU' as 'USD' | 'UYU' | 'EUR' | 'BRL' | 'ARS',
+    moneda: 'UYU' as 'USD' | 'UYU',
     categoria: '',
     stockMinimo: '10',
     almacenId: '',
@@ -1116,9 +1116,6 @@ export default function HomePage() {
               options={[
                 { value: 'UYU', label: 'UYU — Pesos uruguayos' },
                 { value: 'USD', label: 'USD — Dólares' },
-                { value: 'ARS', label: 'ARS — Pesos argentinos' },
-                { value: 'EUR', label: 'EUR — Euros' },
-                { value: 'BRL', label: 'BRL — Reales' },
               ]}
             />
             <Input
