@@ -27,73 +27,31 @@ const ESTADO_LABEL: Record<string, string> = {
 // =====================================================
 // Escudo Vanguard COMPLETO — réplica fiel del SVG de Logo.tsx
 // =====================================================
-// Incluye:
-//   - Banner inferior con cinta y "VANGUARD"
-//   - Shield azul con curvas Bézier
-//   - V mark blanca
-//
-// SVG original tiene viewBox 64x76 (banner ocupa filas 56-76).
 // =====================================================
+// Logo Vanguard — "V" de doble haz (nuevo símbolo)
+// =====================================================
+// Dibuja la V en azul dentro de un cuadrado de lado `size` (mm).
+// Sin escudo ni banner. viewBox lógico 64x64.
 function dibujarEscudoVanguard(doc: jsPDF, x: number, y: number, size = 14) {
-  // El SVG viewBox es 64x76. `size` define el ANCHO en mm.
   const s = size / 64;
 
-  // ========== BANNER (dibujado primero, el shield lo solapa arriba) ==========
-
-  // Sides (#1c3354)
-  doc.setFillColor(28, 51, 84);
-  // Left tail
-  doc.lines(
-    [[8, -2], [0, 9], [-8, 2.5], [3, -6]],
-    x + 1 * s, y + 60.5 * s, [s, s], 'F', true,
-  );
-  // Right tail
-  doc.lines(
-    [[-8, -2], [0, 9], [8, 2.5], [-3, -6]],
-    x + 63 * s, y + 60.5 * s, [s, s], 'F', true,
-  );
-
-  // Banner main fill (#2d5480)
-  doc.setFillColor(45, 84, 128);
-  doc.lines(
-    [[46, 0], [-2, 14.5], [-42, 0]],
-    x + 9 * s, y + 57.5 * s, [s, s], 'F', true,
-  );
-
-  // ========== SHIELD ==========
-  doc.setFillColor(45, 84, 128); // #2d5480
-  doc.setDrawColor(45, 84, 128);
+  // Haz de la V (mismo path que el SVG del componente Logo).
+  doc.setFillColor(74, 127, 181); // #4a7fb5
   doc.lines(
     [
-      [24, 10],                              // L 56 14
-      [0, 18],                               // V 32
-      [0, 14, -10, 24, -24, 28],             // C 56 46 46 56 32 60
-      [-14, -4, -24, -14, -24, -28],         // C 18 56 8 46 8 32
-      [0, -18],                              // V 14
+      [11, 0],    // 6,11 -> 17,11
+      [15, 33],   // -> 32,44
+      [15, -33],  // -> 47,11
+      [11, 0],    // -> 58,11
+      [-20, 44],  // -> 38,55
+      [-12, 0],   // -> 26,55
     ],
-    x + 32 * s, y + 4 * s, [s, s], 'F', true,
+    x + 6 * s, y + 11 * s, [s, s], 'F', true,
   );
 
-  // ========== V mark blanca ==========
-  doc.setFillColor(255, 255, 255);
-  doc.lines(
-    [
-      [7, 0], [6, 22.5], [6, -22.5], [7, 0], [-10.5, 32], [-5, 0],
-    ],
-    x + 19 * s, y + 19 * s, [s, s], 'F', true,
-  );
-
-  // ========== Texto "VANGUARD" en el banner ==========
-  // En el SVG está en x=32, y=67 (centrado), tamaño 6.
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(size * 0.27);  // proporcional al tamaño del logo
-  doc.setTextColor(255, 255, 255);
-  doc.text(
-    'VANGUARD',
-    x + 32 * s,
-    y + 67 * s,
-    { align: 'center' },
-  );
+  // Punto central (glow simplificado)
+  doc.setFillColor(220, 239, 255); // #dcefff
+  doc.circle(x + 32 * s, y + 42 * s, 2.4 * s, 'F');
 
   doc.setFillColor(0, 0, 0); // reset
 }

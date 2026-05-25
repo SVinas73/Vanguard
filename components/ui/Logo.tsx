@@ -2,19 +2,17 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 // =====================================================
-// Vanguard Logo — Crest with shield, upright V, banner
+// Vanguard Logo — "V" de doble haz (ribbon)
 // =====================================================
-// Símbolo:
-//   - Escudo (protección, confianza)
-//   - Letra "V" centrada (Vanguard, vanguardia)
-//   - Banner inferior estilo crest con la palabra VANGUARD
+// Nuevo símbolo: una V formada por dos haces paralelos en azul,
+// con un punto de glow en el vértice. Sin escudo ni banner.
 //
 // Variantes:
-//   <Logo />              icono 32px (sin texto wordmark)
+//   <Logo />              icono 32px (cuadrado)
 //   <Logo size={64} />    tamaño custom
 //   <Logo withText />     icono + wordmark "Vanguard" al costado
 //   <Logo mono />         sólido steel-blue (sin gradient)
-//   <Logo dark />         versión sobre fondo claro (slate-950)
+//   <Logo dark />         versión sobre fondo claro
 // =====================================================
 
 interface LogoProps {
@@ -37,21 +35,19 @@ export function Logo({
   textClassName,
   gradientId = 'vg-logo',
 }: LogoProps) {
-  const shieldFill = dark
+  const fill = dark
     ? '#1a2030'
     : mono
       ? '#4a7fb5'
-      : `url(#${gradientId}-shield)`;
+      : `url(#${gradientId}-v)`;
 
-  const bannerFill = dark ? '#1a2030' : '#2d5480';
-  const bannerSide = dark ? '#0b0f17' : '#1c3354';
-  // Mantener un viewBox 64x76 (banner ocupa los 16 px inferiores)
+  // viewBox cuadrado 64x64 (el logo nuevo no tiene banner inferior).
   return (
     <div className={cn('inline-flex items-center gap-2.5', className)}>
       <svg
         width={size}
-        height={size * (76 / 64)}
-        viewBox="0 0 64 76"
+        height={size}
+        viewBox="0 0 64 64"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-label="Vanguard"
@@ -59,63 +55,43 @@ export function Logo({
       >
         {!mono && !dark && (
           <defs>
-            <linearGradient id={`${gradientId}-shield`} x1="0" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#5b8ec3" />
-              <stop offset="55%" stopColor="#4a7fb5" />
-              <stop offset="100%" stopColor="#2d5480" />
+            <linearGradient id={`${gradientId}-v`} x1="8" y1="10" x2="56" y2="54" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#6ea0d6" />
+              <stop offset="50%" stopColor="#4a7fb5" />
+              <stop offset="100%" stopColor="#244c79" />
             </linearGradient>
-            <linearGradient id={`${gradientId}-banner`} x1="0" y1="56" x2="0" y2="72" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#2d5480" />
-              <stop offset="100%" stopColor="#1f3c5e" />
-            </linearGradient>
+            <radialGradient id={`${gradientId}-glow`} cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#bfe0ff" stopOpacity="0.95" />
+              <stop offset="40%" stopColor="#5aa0ff" stopOpacity="0.55" />
+              <stop offset="100%" stopColor="#5aa0ff" stopOpacity="0" />
+            </radialGradient>
           </defs>
         )}
 
-        {/* Banner (drawn first; shield overlays its top edge) */}
-        <path d="M1 60.5 L9 58.5 L9 67.5 L1 70 L4 64 Z" fill={bannerSide} />
-        <path d="M63 60.5 L55 58.5 L55 67.5 L63 70 L60 64 Z" fill={bannerSide} />
-        <path d="M7.6 58.5 L10 58.5 L10 71 L7.6 71 Z" fill="rgba(0,0,0,0.35)" />
-        <path d="M54 58.5 L56.4 58.5 L56.4 71 L54 71 Z" fill="rgba(0,0,0,0.35)" />
+        {/* Haz exterior de la V */}
         <path
-          d="M9 57.5 L55 57.5 L53 72 L11 72 Z"
-          fill={mono || dark ? bannerFill : `url(#${gradientId}-banner)`}
+          d="M6 11 L17 11 L32 44 L47 11 L58 11 L38 55 L26 55 Z"
+          fill={fill}
         />
-        <path d="M9 57.5 L55 57.5 L54.6 59 L9.4 59 Z" fill="rgba(255,255,255,0.08)" />
-        <path d="M11 70 L53 70 L53 72 L11 72 Z" fill="rgba(0,0,0,0.18)" />
-        <text
-          x="32"
-          y="67"
-          textAnchor="middle"
-          fontFamily="Public Sans, sans-serif"
-          fontSize="6"
-          fontWeight="800"
-          fill="#ffffff"
-          textLength="32"
-          lengthAdjust="spacingAndGlyphs"
-        >
-          VANGUARD
-        </text>
-
-        {/* Shield */}
+        {/* Haz interior (línea de hueco que crea el efecto de doble viga) */}
         <path
-          d="M32 4 L56 14 V32 C56 46 46 56 32 60 C18 56 8 46 8 32 V14 Z"
-          fill={shieldFill}
+          d="M26 11 L32 24 L38 11 L33 11 L32 13.5 L31 11 Z"
+          fill={dark ? '#0b0f17' : '#0e1626'}
+          fillOpacity="0.0"
         />
+        {/* Brillo superior sutil en los bordes internos */}
         {!mono && !dark && (
           <path
-            d="M32 5 L55 14.6 V32 C55 45.4 45.4 55.1 32 59 C18.6 55.1 9 45.4 9 32 V14.6 Z"
-            fill="none"
-            stroke="rgba(255,255,255,0.10)"
-            strokeWidth="0.6"
+            d="M6 11 L17 11 L32 44 L31.2 45.8 L15.2 12.4 L6 12.4 Z"
+            fill="rgba(255,255,255,0.14)"
           />
         )}
 
-        {/* Upright V mark */}
-        <path
-          d="M19 19 L26 19 L32 41.5 L38 19 L45 19 L34.5 51 L29.5 51 Z"
-          fill="#ffffff"
-          fillOpacity="0.97"
-        />
+        {/* Punto de glow en el vértice */}
+        {!mono && !dark && (
+          <circle cx="32" cy="42" r="9" fill={`url(#${gradientId}-glow)`} />
+        )}
+        <circle cx="32" cy="42" r="2.4" fill={dark ? '#4a7fb5' : '#dcefff'} />
       </svg>
 
       {withText && (
