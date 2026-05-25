@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { aiApi } from '@/lib/ai-api';
 import { cn } from '@/lib/utils';
+import { getStockAlerts, findAllAnomalies } from '@/lib/ai';
+import type { Product, Movement, StockPrediction } from '@/types';
 import {
   Brain,
   TrendingUp,
@@ -216,29 +218,52 @@ interface PredictionsSummary {
   total_criticos: number;
 }
 
-export function AIPredictionsPanel() {
+interface AIPanelDataProps {
+  products?: Product[];
+  movements?: Movement[];
+  predictions?: Record<string, StockPrediction>;
+}
+
+export function AIPredictionsPanel({ products = [], movements = [], predictions = {} }: AIPanelDataProps) {
   const { t } = useTranslation();
-  const [data, setData] = useState<PredictionsSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await aiApi.getPredictionsSummary();
-      setData(result);
-    } catch (err) {
-      setError(t('common.loading'));
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Computamos los productos críticos LOCALMENTE con el predictor que ya
+  // corre en la app (sin depender del backend Python que no está deployado).
+  const data: PredictionsSummary = useMemo(() => {
+    const alertas = getStockAlerts(products, predictions);
+    const criticos = alertas
+      .map((p) => {
+        const pred = predictions[p.codigo];
+        const dias = pred?.days;
+        const diasRestantes = dias === null || dias === undefined || !Number.isFinite(dias)
+          ? (p.stock <= p.stockMinimo ? 0 : 999)
+          : dias;
+        const consumoDiario = pred?.dailyRate ? parseFloat(pred.dailyRate) : 0;
+        const urgencia: 'critica' | 'media' | 'baja' =
+          p.stock === 0 || diasRestantes < 7 ? 'critica'
+          : diasRestantes < 15 ? 'media'
+          : 'baja';
+        return {
+          codigo: p.codigo,
+          descripcion: p.descripcion,
+          stock_actual: p.stock,
+          stock_minimo: p.stockMinimo,
+          consumo_diario: consumoDiario,
+          dias_restantes: diasRestantes,
+          urgencia,
+        };
+      })
+      .sort((a, b) => a.dias_restantes - b.dias_restantes);
+    return {
+      productos_criticos: criticos,
+      total_analizado: products.length,
+      total_criticos: criticos.length,
+    };
+  }, [products, predictions]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const loading = false;
+  const error = null;
+  const fetchData = () => {}; // datos locales: el refresh viene de los props
 
   const accentColor = '#836ba0'; // violet
 
@@ -358,29 +383,38 @@ interface AnomaliesData {
   total_anomalias: number;
 }
 
-export function AIAnomaliesPanel() {
+export function AIAnomaliesPanel({ products = [], movements = [] }: AIPanelDataProps) {
   const { t } = useTranslation();
-  const [data, setData] = useState<AnomaliesData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await aiApi.detectAnomalies(30);
-      setData(result);
-    } catch (err) {
-      setError(t('common.loading'));
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Detección de anomalías LOCAL (Z-score sobre el historial) — sin backend.
+  const data: AnomaliesData = useMemo(() => {
+    const encontradas = findAllAnomalies(products, movements);
+    const anomalias: Anomaly[] = encontradas.slice(0, 20).map(({ movement, anomaly }, i) => {
+      const prod = products.find((p) => p.codigo === movement.codigo);
+      const sev = anomaly.severity >= 0.66 ? 'alta' : anomaly.severity >= 0.33 ? 'media' : 'baja';
+      return {
+        id: String(movement.id ?? i),
+        codigo: movement.codigo,
+        descripcion: prod?.descripcion ?? movement.codigo,
+        tipo: movement.tipo,
+        cantidad: movement.cantidad,
+        fecha: (movement.timestamp instanceof Date ? movement.timestamp : new Date(movement.timestamp)).toISOString(),
+        usuario: movement.usuario ?? '',
+        anomaly_score: anomaly.severity,
+        razon: anomaly.reason ?? '',
+        severidad: sev as 'alta' | 'media' | 'baja',
+      };
+    });
+    return {
+      anomalias,
+      total_analizado: movements.length,
+      total_anomalias: anomalias.length,
+    };
+  }, [products, movements]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const loading = false;
+  const error = null;
+  const fetchData = () => {};
 
   const accentColor = '#dfa6a6'; // rose
 
@@ -493,29 +527,61 @@ interface AssociationsData {
   total_transacciones: number;
 }
 
-export function AIAssociationsPanel() {
+export function AIAssociationsPanel({ products = [], movements = [] }: AIPanelDataProps) {
   const { t } = useTranslation();
-  const [data, setData] = useState<AssociationsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await aiApi.getAssociationRules(0.05, 0.3, 90);
-      setData(result);
-    } catch (err) {
-      setError(t('common.loading'));
-      console.error(err);
-    } finally {
-      setLoading(false);
+  // Reglas de asociación LOCALES: productos cuyas SALIDAS ocurren el mismo
+  // día. Es un Apriori simplificado client-side (sin backend Python).
+  const data: AssociationsData = useMemo(() => {
+    const desc = new Map(products.map((p) => [p.codigo, p.descripcion]));
+
+    // Agrupar salidas por día → "canastas"
+    const canastas = new Map<string, Set<string>>();
+    for (const m of movements) {
+      if (m.tipo !== 'salida') continue;
+      const d = (m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp));
+      if (Number.isNaN(d.getTime())) continue;
+      const dia = d.toISOString().slice(0, 10);
+      if (!canastas.has(dia)) canastas.set(dia, new Set());
+      canastas.get(dia)!.add(m.codigo);
     }
-  };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+    const totalCanastas = canastas.size;
+    const conteoItem = new Map<string, number>();
+    const conteoPar = new Map<string, number>();
+    for (const set of canastas.values()) {
+      const items = Array.from(set);
+      for (const a of items) conteoItem.set(a, (conteoItem.get(a) ?? 0) + 1);
+      for (let i = 0; i < items.length; i++) {
+        for (let j = i + 1; j < items.length; j++) {
+          const [a, b] = [items[i], items[j]].sort();
+          const key = `${a}|${b}`;
+          conteoPar.set(key, (conteoPar.get(key) ?? 0) + 1);
+        }
+      }
+    }
+
+    const reglas: AssociationRule[] = Array.from(conteoPar.entries())
+      .map(([key, cuenta]) => {
+        const [a, b] = key.split('|');
+        const confianza = conteoItem.get(a) ? cuenta / conteoItem.get(a)! : 0;
+        return {
+          si_compran: [{ codigo: a, descripcion: desc.get(a) ?? a }],
+          tambien_compran: [{ codigo: b, descripcion: desc.get(b) ?? b }],
+          confianza,
+          interpretacion: `Salieron juntos ${cuenta} ${cuenta === 1 ? 'vez' : 'veces'}.`,
+        };
+      })
+      .filter((r) => r.confianza >= 0.3)
+      .sort((a, b) => b.confianza - a.confianza)
+      .slice(0, 10);
+
+    return { reglas, total_transacciones: totalCanastas };
+  }, [products, movements]);
+
+  const loading = false;
+  const error = null;
+  const fetchData = () => {};
 
   const accentColor = '#4a7fb5'; // cyan
 

@@ -6,6 +6,10 @@ import {
   Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { cn } from '@/lib/utils';
+import { formatMoney, convertir } from '@/lib/currency';
+import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
+import { useTiposCambio } from '@/hooks/useTiposCambio';
+import type { Moneda } from '@/types';
 
 // =====================================================
 // Flujo de Inventario — estilo dashboard ejecutivo
@@ -36,6 +40,11 @@ export function InventoryTrendChart({
   movements, products, days: initialDays = 30, showPeriodSelector = true,
 }: InventoryTrendChartProps) {
   const [days, setDays] = useState(initialDays);
+
+  // Moneda destino desde Configuración. Origen = UYU (base del sistema).
+  const { config: orgConfig } = useModulosHabilitados();
+  const { rates: ratesTable } = useTiposCambio();
+  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
 
   const chartData = useMemo(() => {
     const productCostMap = new Map(
@@ -86,10 +95,23 @@ export function InventoryTrendChart({
     };
   }, [chartData]);
 
+  // Los valores se calculan en UYU (base). Convertimos a la moneda elegida.
+  const conv = (v: number): number => {
+    if (monedaTarget === 'UYU') return v;
+    const c = convertir(v, 'UYU', monedaTarget, ratesTable);
+    return c === null ? v : c;
+  };
+  const sinTasa = monedaTarget !== 'UYU'
+    && convertir(1, 'UYU', monedaTarget, ratesTable) === null;
+
   const fmt = (v: number) =>
-    `$${v.toLocaleString('es-UY', { minimumFractionDigits: 0 })}`;
-  const fmtShort = (v: number) =>
-    v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`;
+    sinTasa ? `${formatMoney(v, 'UYU')} *` : formatMoney(conv(v), monedaTarget);
+  const fmtShort = (v: number) => {
+    const x = conv(v);
+    return x >= 1000
+      ? `${formatMoney(x / 1000, monedaTarget, { maximumFractionDigits: 0 })}k`
+      : formatMoney(x, monedaTarget, { maximumFractionDigits: 0 });
+  };
 
   return (
     <div className="rounded-xl p-6 bg-slate-900/40 border border-slate-800">

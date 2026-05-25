@@ -83,14 +83,18 @@ export function Donut({
           </Pie>
           <Tooltip
             {...TooltipStyle}
+            // Pin arriba del donut: así el tooltip nunca se superpone con el
+            // texto central (TOTAL / valor). zIndex alto para quedar por encima.
+            position={{ y: -12 }}
+            wrapperStyle={{ zIndex: 50 }}
             formatter={(v: number) => [valueFormatter ? valueFormatter(v) : v.toLocaleString('es-UY'), '']}
           />
         </PieChart>
       </ResponsiveContainer>
       {(centerLabel || centerValue) && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-center">
-            {centerLabel && <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold">{centerLabel}</div>}
+          <div className="text-center px-3 py-1.5 rounded-lg bg-slate-950/60 backdrop-blur-sm">
+            {centerLabel && <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">{centerLabel}</div>}
             {centerValue && <div className="text-2xl font-bold text-slate-50 tabular-nums mt-0.5">{centerValue}</div>}
           </div>
         </div>
