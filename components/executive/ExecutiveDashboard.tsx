@@ -8,10 +8,14 @@ import {
 } from 'recharts';
 import {
   TrendingUp, TrendingDown, DollarSign, Percent, Wallet, Clock,
-  AlertTriangle, Award, ChevronRight, Calendar, RefreshCw,
+  AlertTriangle, Award, ChevronRight, RefreshCw,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { formatMoney, convertir } from '@/lib/currency';
+import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
+import { useTiposCambio } from '@/hooks/useTiposCambio';
+import type { Moneda } from '@/types';
 
 // =====================================================
 // Vista Ejecutiva — Dashboard C-level
@@ -71,14 +75,6 @@ function getRangoFecha(periodo: Periodo): { inicio: Date; fin: Date; inicioAnter
   return { inicio, fin, inicioAnterior, finAnterior };
 }
 
-const fmtMoney = (v: number, compact = false) => {
-  if (compact && Math.abs(v) >= 1000) {
-    if (Math.abs(v) >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
-    return `$${(v / 1000).toFixed(1)}k`;
-  }
-  return `$${v.toLocaleString('es-UY', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-};
-
 const fmtPct = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
 
 export function ExecutiveDashboard() {
@@ -86,6 +82,23 @@ export function ExecutiveDashboard() {
   const [periodo, setPeriodo] = useState<Periodo>('ytd');
   const [data, setData] = useState<KpiData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Moneda destino desde Configuración. Origen = UYU (base del sistema).
+  // Los valores de ventas/CxC se guardan en UYU; convertimos para mostrar.
+  const { config: orgConfig } = useModulosHabilitados();
+  const { rates: ratesTable } = useTiposCambio();
+  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
+
+  const fmtMoney = (v: number, compact = false) => {
+    const conv = monedaTarget === 'UYU' ? v : convertir(v, 'UYU', monedaTarget, ratesTable);
+    if (conv === null) return `${formatMoney(v, 'UYU', { maximumFractionDigits: 0 })} *`;
+    if (compact && Math.abs(conv) >= 1000) {
+      const sym = formatMoney(0, monedaTarget).replace(/[\d.,\s]/g, '');
+      if (Math.abs(conv) >= 1_000_000) return `${sym}${(conv / 1_000_000).toFixed(1)}M`;
+      return `${sym}${(conv / 1000).toFixed(1)}k`;
+    }
+    return formatMoney(conv, monedaTarget, { maximumFractionDigits: 0 });
+  };
 
   useEffect(() => {
     cargar();
@@ -169,7 +182,7 @@ export function ExecutiveDashboard() {
     // --- Top productos por margen ---
     const { data: itemsData } = await supabase
       .from('ordenes_venta_items')
-      .select('producto_codigo, cantidad, precio_unitario, costo_unitario, productos(nombre)')
+      .select('producto_codigo, cantidad, precio_unitario, costo_unitario, productos(descripcion)')
       .limit(2000);
     const itemsByProd: Record<string, { nombre: string; ingresos: number; margen: number }> = {};
     (itemsData || []).forEach((it: any) => {
@@ -177,7 +190,7 @@ export function ExecutiveDashboard() {
       if (!code) return;
       const ingreso = Number(it.cantidad || 0) * Number(it.precio_unitario || 0);
       const costo = Number(it.cantidad || 0) * Number(it.costo_unitario || 0);
-      if (!itemsByProd[code]) itemsByProd[code] = { nombre: it.productos?.nombre || code, ingresos: 0, margen: 0 };
+      if (!itemsByProd[code]) itemsByProd[code] = { nombre: it.productos?.descripcion || code, ingresos: 0, margen: 0 };
       itemsByProd[code].ingresos += ingreso;
       itemsByProd[code].margen += ingreso - costo;
     });
@@ -460,12 +473,8 @@ export function ExecutiveDashboard() {
         </div>
       </div>
 
-      {/* Footer: período y nota */}
-      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2">
-        <span className="flex items-center gap-1.5">
-          <Calendar size={11} />
-          {t('executive.dataFromSource') || 'Datos en vivo desde Supabase'}
-        </span>
+      {/* Footer: nota */}
+      <div className="flex items-center justify-end text-[11px] text-slate-500 pt-2">
         <span>{t('executive.footerNote') || 'Vista ejecutiva — Vanguard'}</span>
       </div>
     </div>
