@@ -140,6 +140,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           .maybeSingle();
 
         if (!prod) {
+          // Asignamos el almacén principal (o el primero) en vez de null,
+          // para que el producto no quede "huérfano": si quedara sin almacén,
+          // aparecería en el dashboard bajo "Todos" pero no al filtrar por el
+          // único almacén, dando métricas inconsistentes.
+          const { data: almacenPrincipal } = await supabase
+            .from('almacenes')
+            .select('id')
+            .eq('activo', true)
+            .order('es_principal', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
           const { data: creado, error: errCrear } = await supabase
             .from('productos')
             .insert({
@@ -151,7 +163,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
               stock: 0,               // se suma abajo
               stock_minimo: 5,
               costo_promedio: 0,
-              almacen_id: null,
+              almacen_id: almacenPrincipal?.id ?? null,
               creado_por: auth.user.email,
               creado_at: new Date().toISOString(),
               actualizado_por: auth.user.email,

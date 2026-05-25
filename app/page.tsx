@@ -802,9 +802,9 @@ export default function HomePage() {
 
             {/* Paneles de IA — predicciones, anomalías, asociaciones */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <AIPredictionsPanel />
-              <AIAnomaliesPanel />
-              <AIAssociationsPanel />
+              <AIPredictionsPanel products={dashboardProducts} movements={dashboardMovements} predictions={predictions} />
+              <AIAnomaliesPanel products={dashboardProducts} movements={dashboardMovements} />
+              <AIAssociationsPanel products={dashboardProducts} movements={dashboardMovements} />
             </div>
           </div>
         )}
