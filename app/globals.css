@@ -903,3 +903,36 @@ tr:hover td {
   transform: translateY(-1px);
   transition: all 120ms ease-out;
 }
+
+/* =====================================================
+   REGLAS GLOBALES DE NÚMEROS Y CARDS (todo el sistema)
+   =====================================================
+   Pedido:
+   - Los números de las cards/KPIs NO llevan color.
+       · Dark  → blancos  (var(--content) ≈ #e8ecf1)
+       · Light → negros   (var(--content) ≈ #1a2030)
+   - Solo las GRÁFICAS llevan color (recharts pinta con fill/stroke
+     en SVG, no con clases text-*, así que estas reglas no las tocan).
+   - Bold reservado para resultados finales: NO forzamos peso acá, así
+     los títulos/heroes que ya son font-bold se mantienen; el resto
+     queda como lo dejó el rediseño.
+
+   Implementación: los números del sistema usan la clase `tabular-nums`
+   de Tailwind de forma consistente. Forzamos su color al neutral del
+   tema en ambos modos, ganándole a las clases text-emerald/red/amber/etc.
+   ===================================================== */
+.tabular-nums { color: var(--content) !important; }
+.light-mode .tabular-nums { color: var(--content) !important; }
+
+/* Cobertura extra de fondos oscuros en MODO CLARO.
+   Algunos módulos usan gray/zinc/neutral en vez de slate; sin esto
+   quedaban cards oscuras sobre fondo claro. */
+.light-mode .bg-gray-950, .light-mode .bg-zinc-950, .light-mode .bg-neutral-950 { background-color: #eaecf1 !important; }
+.light-mode .bg-gray-900, .light-mode .bg-zinc-900, .light-mode .bg-neutral-900 { background-color: #f0f2f6 !important; }
+.light-mode .bg-gray-800, .light-mode .bg-zinc-800, .light-mode .bg-neutral-800 { background-color: #ffffff !important; }
+.light-mode .bg-gray-900\/60, .light-mode .bg-gray-900\/50, .light-mode .bg-gray-900\/40,
+.light-mode .bg-zinc-900\/60, .light-mode .bg-zinc-900\/50, .light-mode .bg-zinc-900\/40,
+.light-mode .bg-neutral-900\/60, .light-mode .bg-neutral-900\/50, .light-mode .bg-neutral-900\/40 { background-color: rgba(240,242,246,0.7) !important; }
+.light-mode .border-gray-800, .light-mode .border-zinc-800, .light-mode .border-neutral-800 { border-color: #d8dce5 !important; }
+.light-mode .text-gray-100, .light-mode .text-zinc-100, .light-mode .text-neutral-100,
+.light-mode .text-gray-50,  .light-mode .text-zinc-50,  .light-mode .text-neutral-50 { color: #1e2638 !important; }
