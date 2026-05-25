@@ -119,7 +119,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
     config: true,
   });
 
-  // Configuración de roles - colores más sutiles
+  // Configuración de roles - colores más sutiles (Linear style)
   const rolConfig: Record<string, { label: string; color: string; bg: string }> = {
     admin: { label: 'Admin', color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
     vendedor: { label: t('roles.seller') || 'Vendedor', color: 'text-slate-300', bg: 'bg-slate-800' },
@@ -236,55 +236,55 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       {/* Mobile hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-[#0D0D0D] border border-[#2E2E2E] text-[#A0A0A0] hover:text-[#F1F1F1] hover:bg-[#1A1A1A] transition-colors"
         aria-label="Open menu"
       >
-        <Menu size={20} />
+        <Menu size={18} />
       </button>
 
       {/* Mobile overlay backdrop */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-[55] transition-opacity duration-300"
+          className="lg:hidden fixed inset-0 bg-black/50 z-[55] transition-opacity duration-200"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
     <aside
       className={cn(
-        'fixed left-0 top-0 h-screen flex flex-col transition-transform duration-300 lg:transition-all lg:duration-200 z-[60]',
-        'bg-slate-950 border-r border-slate-800',
-        collapsed ? 'w-[68px]' : 'w-[240px]',
+        'fixed left-0 top-0 h-screen flex flex-col transition-transform duration-200 lg:transition-all lg:duration-150 z-[60]',
+        'bg-[#0D0D0D] border-r border-[#1A1A1A]',
+        collapsed ? 'w-[56px]' : 'w-[220px]',
         mobileOpen ? 'translate-x-0' : '-translate-x-full',
         'lg:translate-x-0'
       )}
     >
       {/* Logo */}
       <div className={cn(
-        'flex items-center gap-3 h-16 px-4 border-b border-slate-800',
+        'flex items-center gap-2.5 h-14 px-4 border-b border-[#1A1A1A]',
         collapsed && 'justify-center px-2'
       )}>
-        <Logo size={28} />
+        <Logo size={24} />
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <h1 className="text-[14px] font-semibold text-slate-100 tracking-tight">
+            <h1 className="text-[13px] font-medium text-[#F1F1F1] tracking-tight">
               Vanguard
             </h1>
           </div>
         )}
         <button
           onClick={() => setMobileOpen(false)}
-          className="lg:hidden p-1.5 rounded-md hover:bg-slate-900 text-slate-500 hover:text-slate-100 transition-colors"
+          className="lg:hidden p-1 rounded text-[#6B6B6B] hover:text-[#F1F1F1] hover:bg-[#1A1A1A] transition-colors"
           aria-label="Close menu"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2">
+      <nav className="flex-1 overflow-y-auto py-2 px-2">
         {esLite && !collapsed && (
-          <div className="mx-2 mb-3 px-3 py-2 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-300 flex items-center justify-between">
+          <div className="mx-1 mb-2 px-2.5 py-1.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-300 flex items-center justify-between">
             <span className="font-medium">Modo Lite</span>
             <span className="text-[10px] text-indigo-400/80">{modulosHabilitados.length} módulos</span>
           </div>
@@ -293,17 +293,17 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
           const isOpen = openSections[section.key] ?? section.defaultOpen;
 
           return (
-            <div key={section.key} className="mb-1">
+            <div key={section.key} className="mb-0.5">
               {!collapsed && (
                 <button
                   onClick={() => toggleSection(section.key)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-medium text-slate-500 uppercase tracking-[0.08em] hover:text-slate-300 transition-colors"
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 text-[10px] font-medium text-[#6B6B6B] uppercase tracking-[0.06em] hover:text-[#A0A0A0] transition-colors"
                 >
                   <span>{section.title}</span>
                   <ChevronDown
-                    size={12}
+                    size={10}
                     className={cn(
-                      'transition-transform duration-200',
+                      'transition-transform duration-150',
                       isOpen && 'rotate-180'
                     )}
                   />
@@ -326,29 +326,29 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                       disabled={!hasPermission}
                       title={collapsed ? item.label : undefined}
                       className={cn(
-                        'w-full flex items-center gap-3 px-3 py-1.5 rounded-md transition-colors duration-150 group relative',
+                        'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded transition-colors duration-100 group relative',
                         isActive
-                          ? 'bg-slate-900 text-slate-100'
+                          ? 'bg-[#1A1A1A] text-[#F1F1F1]'
                           : hasPermission
-                            ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/60'
-                            : 'text-slate-700 cursor-not-allowed',
+                            ? 'text-[#A0A0A0] hover:text-[#F1F1F1] hover:bg-[#1A1A1A]/60'
+                            : 'text-[#4A4A4A] cursor-not-allowed',
                         collapsed && 'justify-center px-2'
                       )}
                     >
-                      {/* Active indicator — barra fina indigo */}
+                      {/* Active indicator */}
                       {isActive && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 bg-indigo-500 rounded-r-full" />
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-3.5 bg-indigo-500 rounded-r-full" />
                       )}
 
                       <Icon
-                        size={16}
-                        strokeWidth={isActive ? 2 : 1.75}
+                        size={15}
+                        strokeWidth={isActive ? 2 : 1.5}
                         className={cn('flex-shrink-0', isActive && 'text-indigo-400')}
                       />
 
                       {!collapsed && (
                         <>
-                          <span className="flex-1 text-left text-[13px] font-medium">
+                          <span className="flex-1 text-left text-[12px] font-medium">
                             {item.label}
                           </span>
 
@@ -356,22 +356,22 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
                           {item.id === 'aprobaciones' && <ApprovalsBadge />}
 
                           {item.badge && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-semibold bg-indigo-500/10 text-indigo-300 rounded ring-1 ring-inset ring-indigo-500/20">
+                            <span className="px-1 py-0.5 text-[9px] font-semibold bg-indigo-500/10 text-indigo-400 rounded">
                               {item.badge}
                             </span>
                           )}
 
                           {!hasPermission && (
-                            <Lock size={11} className="text-slate-700" />
+                            <Lock size={10} className="text-[#4A4A4A]" />
                           )}
                         </>
                       )}
 
                       {collapsed && (
-                        <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-slate-100 text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
+                        <div className="absolute left-full ml-2 px-2 py-1 bg-[#1A1A1A] border border-[#2E2E2E] text-[#F1F1F1] text-[11px] font-medium rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
                           {item.label}
                           {item.badge && (
-                            <span className="ml-1.5 text-indigo-400">{item.badge}</span>
+                            <span className="ml-1 text-indigo-400">{item.badge}</span>
                           )}
                         </div>
                       )}
@@ -386,20 +386,20 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
 
       {/* Footer */}
       <div className={cn(
-        'border-t border-slate-800 p-2 space-y-1',
+        'border-t border-[#1A1A1A] p-2 space-y-0.5',
         collapsed && 'px-1.5'
       )}>
         <button
           onClick={toggleTheme}
           className={cn(
-            'w-full flex items-center gap-3 px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-900/60 transition-colors',
+            'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded text-[#A0A0A0] hover:text-[#F1F1F1] hover:bg-[#1A1A1A]/60 transition-colors',
             collapsed && 'justify-center px-2'
           )}
           title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          {theme === 'dark' ? <Sun size={16} strokeWidth={1.75} /> : <Moon size={16} strokeWidth={1.75} />}
+          {theme === 'dark' ? <Sun size={15} strokeWidth={1.5} /> : <Moon size={15} strokeWidth={1.5} />}
           {!collapsed && (
-            <span className="text-[13px] font-medium">
+            <span className="text-[12px] font-medium">
               {theme === 'dark' ? t('theme.lightMode') : t('theme.darkMode')}
             </span>
           )}
@@ -410,30 +410,30 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
 
         {user && (
           <div className={cn(
-            'flex items-center gap-3 p-2 mt-1 rounded-md border-t border-slate-800/60 pt-3',
+            'flex items-center gap-2.5 p-2 mt-1 rounded border-t border-[#1A1A1A]/60 pt-2.5',
             collapsed && 'justify-center p-2 border-t-0 pt-2'
           )}>
-            <div className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold bg-slate-800 text-slate-200 ring-1 ring-inset ring-slate-700">
+            <div className="w-6 h-6 rounded flex items-center justify-center text-[11px] font-medium bg-[#1A1A1A] text-[#F1F1F1] ring-1 ring-inset ring-[#2E2E2E]">
               {(user.nombre || user.email || 'U').charAt(0).toUpperCase()}
             </div>
 
             {!collapsed && (
               <>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-slate-100 truncate">
+                  <p className="text-[12px] font-medium text-[#F1F1F1] truncate">
                     {user.nombre || user.email?.split('@')[0]}
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[10px] text-[#6B6B6B]">
                     {currentRol.label}
                   </p>
                 </div>
 
                 <button
                   onClick={signOut}
-                  className="p-1.5 rounded-md hover:bg-slate-900 text-slate-500 hover:text-red-400 transition-colors"
+                  className="p-1 rounded hover:bg-[#1A1A1A] text-[#6B6B6B] hover:text-red-400 transition-colors"
                   title={t('header.logout') || 'Cerrar sesión'}
                 >
-                  <LogOut size={14} />
+                  <LogOut size={13} />
                 </button>
               </>
             )}
@@ -445,11 +445,11 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       <button
         onClick={() => setCollapsed(!collapsed)}
         className={cn(
-          'absolute -right-3 top-[64px] w-6 h-6 bg-slate-900 border border-slate-800 rounded-full',
-          'flex items-center justify-center text-slate-500 hover:text-slate-100 hover:bg-slate-800 transition-colors'
+          'absolute -right-3 top-[52px] w-5 h-5 bg-[#0D0D0D] border border-[#2E2E2E] rounded-full',
+          'flex items-center justify-center text-[#6B6B6B] hover:text-[#F1F1F1] hover:bg-[#1A1A1A] transition-colors'
         )}
       >
-        {collapsed ? <ChevronRight size={11} /> : <ChevronLeft size={11} />}
+        {collapsed ? <ChevronRight size={10} /> : <ChevronLeft size={10} />}
       </button>
     </aside>
     </>
@@ -467,13 +467,13 @@ interface TopBarProps {
 
 export function TopBar({ title, children }: TopBarProps) {
   return (
-    <header className="h-14 border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm flex items-center justify-between px-6">
+    <header className="h-12 border-b border-[#1A1A1A] bg-[#0D0D0D]/80 backdrop-blur-sm flex items-center justify-between px-5">
       <div>
         {title && (
-          <h1 className="text-sm font-semibold text-slate-100 tracking-tight">{title}</h1>
+          <h1 className="text-[13px] font-medium text-[#F1F1F1] tracking-tight">{title}</h1>
         )}
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {children}
       </div>
     </header>
@@ -495,15 +495,15 @@ export function AppLayout({ children, activeTab, onTabChange, permissions }: App
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-[#0D0D0D]">
       <Sidebar 
         activeTab={activeTab} 
         onTabChange={onTabChange}
         permissions={permissions}
       />
       <main className={cn(
-        'transition-all duration-200',
-        sidebarCollapsed ? 'ml-0 lg:ml-[68px]' : 'ml-0 lg:ml-[240px]'
+        'transition-all duration-150',
+        sidebarCollapsed ? 'ml-0 lg:ml-[56px]' : 'ml-0 lg:ml-[220px]'
       )}>
         {children}
       </main>
