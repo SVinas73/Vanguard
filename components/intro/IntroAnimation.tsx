@@ -122,14 +122,6 @@ export default function IntroAnimation({ force = false, onComplete }: IntroAnima
                 transition={{ duration: 1.2, delay: 1.0, ease: 'easeOut' }}
                 className="mt-2 h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent mx-auto"
               />
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 1.4 }}
-                className="mt-3 text-xs tracking-[0.4em] text-blue-400 uppercase"
-              >
-                Enterprise Resource Planning
-              </motion.p>
             </motion.div>
           </motion.div>
 
