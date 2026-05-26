@@ -71,17 +71,17 @@ type VistaActiva = 'lista' | 'mapa' | 'detalle' | 'generar';
 // ============================================
 
 const ESTADO_CONFIG: Record<EstadoUbicacion, { label: string; color: string; bg: string }> = {
-  disponible: { label: 'Disponible', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  ocupada: { label: 'Ocupada', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  reservada: { label: 'Reservada', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  bloqueada: { label: 'Bloqueada', color: 'text-red-400', bg: 'bg-red-500/20' },
+  disponible: { label: 'Disponible', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  ocupada: { label: 'Ocupada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  reservada: { label: 'Reservada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  bloqueada: { label: 'Bloqueada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
   mantenimiento: { label: 'Mantenimiento', color: 'text-slate-400', bg: 'bg-slate-500/20' },
 };
 
 const ABC_CONFIG: Record<ClasificacionABC, { label: string; color: string; bg: string }> = {
-  A: { label: 'A', color: 'text-red-400', bg: 'bg-red-500/20' },
-  B: { label: 'B', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  C: { label: 'C', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+  A: { label: 'A', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  B: { label: 'B', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  C: { label: 'C', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 // ============================================
@@ -296,7 +296,7 @@ export default function Ubicaciones() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-blue-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -311,7 +311,7 @@ export default function Ubicaciones() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <MapPin className="h-6 w-6 text-blue-400" />
+                <MapPin className="h-6 w-6 text-slate-300" />
                 Gestión de Ubicaciones
               </h3>
               <p className="text-slate-400 text-sm mt-1">Pasillo-Rack-Nivel-Posición</p>
@@ -322,13 +322,13 @@ export default function Ubicaciones() {
                 <div className="text-xs text-slate-400">Total</div>
                 <div className="text-xl font-bold text-slate-200">{stats.total}</div>
               </div>
-              <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center">
-                <div className="text-xs text-emerald-400">Disponibles</div>
-                <div className="text-xl font-bold text-emerald-400">{stats.disponibles}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl text-center">
+                <div className="text-xs text-slate-300">Disponibles</div>
+                <div className="text-xl font-bold text-slate-300">{stats.disponibles}</div>
               </div>
-              <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-xl text-center">
-                <div className="text-xs text-blue-400">Ocupación</div>
-                <div className="text-xl font-bold text-blue-400">{stats.porcentaje}%</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl text-center">
+                <div className="text-xs text-slate-300">Ocupación</div>
+                <div className="text-xl font-bold text-slate-300">{stats.porcentaje}%</div>
               </div>
             </div>
           </div>
@@ -403,13 +403,13 @@ export default function Ubicaciones() {
                   >
                     <div className="flex items-center gap-3">
                       <ChevronRight className={`h-5 w-5 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                      <Layers className="h-5 w-5 text-blue-400" />
+                      <Layers className="h-5 w-5 text-slate-300" />
                       <span className="font-semibold text-slate-200">Pasillo {pasillo}</span>
                       <span className="px-2 py-0.5 bg-slate-800 rounded-full text-xs text-slate-400">{ubis.length} ubicaciones</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="text-sm text-emerald-400">{disponibles} disp.</span>
-                      <span className="text-sm text-blue-400">{ocupadas} ocup.</span>
+                      <span className="text-sm text-slate-300">{disponibles} disp.</span>
+                      <span className="text-sm text-slate-300">{ocupadas} ocup.</span>
                     </div>
                   </button>
                   
@@ -424,9 +424,9 @@ export default function Ubicaciones() {
                               onClick={() => handleVerDetalle(ub)}
                               className={`p-3 rounded-lg border cursor-pointer transition-all hover:scale-105 ${
                                 ub.estado === 'disponible' ? 'bg-slate-800/30 border-slate-700/50' :
-                                ub.estado === 'ocupada' ? 'bg-blue-500/10 border-blue-500/30' :
-                                ub.estado === 'reservada' ? 'bg-amber-500/10 border-amber-500/30' :
-                                ub.estado === 'bloqueada' ? 'bg-red-500/10 border-red-500/30' :
+                                ub.estado === 'ocupada' ? 'bg-slate-800/40 border-slate-700/40' :
+                                ub.estado === 'reservada' ? 'bg-slate-800/40 border-slate-700/40' :
+                                ub.estado === 'bloqueada' ? 'bg-slate-800/40 border-slate-700/40' :
                                 'bg-slate-800/50 border-slate-700/50'
                               }`}
                             >
@@ -436,7 +436,7 @@ export default function Ubicaciones() {
                               </div>
                               {ub.producto_codigo ? (
                                 <div className="mt-1">
-                                  <div className="text-xs text-blue-400 truncate">{ub.producto_codigo}</div>
+                                  <div className="text-xs text-slate-300 truncate">{ub.producto_codigo}</div>
                                   <div className="text-xs text-slate-500">{ub.cantidad} uds</div>
                                 </div>
                               ) : (
@@ -491,7 +491,7 @@ export default function Ubicaciones() {
                 return (
                   <div key={pasillo} className="flex-shrink-0">
                     <div className="text-center mb-4">
-                      <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium">
+                      <span className="px-3 py-1 bg-slate-800/40 text-slate-300 rounded-full text-sm font-medium">
                         Pasillo {pasillo}
                       </span>
                     </div>
@@ -592,7 +592,7 @@ export default function Ubicaciones() {
 
             <div className="p-4 bg-slate-800/50 rounded-xl">
               <div className="text-sm text-slate-400 mb-1">Se generarán:</div>
-              <div className="text-2xl font-bold text-blue-400">
+              <div className="text-2xl font-bold text-slate-300">
                 {generarData.pasillos.length * generarData.racks_por_pasillo * generarData.niveles_por_rack * generarData.posiciones_por_nivel} ubicaciones
               </div>
             </div>
@@ -622,7 +622,7 @@ export default function Ubicaciones() {
               </button>
               <div>
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-lg text-blue-400">{ubicacionSeleccionada.codigo_completo}</span>
+                  <span className="font-mono text-lg text-slate-300">{ubicacionSeleccionada.codigo_completo}</span>
                   <span className={`px-2 py-1 rounded-full text-xs ${ESTADO_CONFIG[ubicacionSeleccionada.estado].bg} ${ESTADO_CONFIG[ubicacionSeleccionada.estado].color}`}>
                     {ESTADO_CONFIG[ubicacionSeleccionada.estado].label}
                   </span>
@@ -642,12 +642,12 @@ export default function Ubicaciones() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h4 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
-                <Package className="h-5 w-5 text-blue-400" /> Contenido
+                <Package className="h-5 w-5 text-slate-300" /> Contenido
               </h4>
               {ubicacionSeleccionada.producto_codigo ? (
                 <div className="space-y-3">
                   <div className="p-3 bg-slate-800/50 rounded-lg">
-                    <div className="font-mono text-sm text-blue-400">{ubicacionSeleccionada.producto_codigo}</div>
+                    <div className="font-mono text-sm text-slate-300">{ubicacionSeleccionada.producto_codigo}</div>
                     <div className="text-slate-200">{ubicacionSeleccionada.producto_nombre}</div>
                   </div>
                   <div className="grid grid-cols-3 gap-4 text-center">
@@ -655,13 +655,13 @@ export default function Ubicaciones() {
                       <div className="text-2xl font-bold text-slate-100">{ubicacionSeleccionada.cantidad}</div>
                       <div className="text-xs text-slate-400">Total</div>
                     </div>
-                    <div className="p-3 bg-amber-500/10 rounded-lg">
-                      <div className="text-2xl font-bold text-amber-400">{ubicacionSeleccionada.cantidad_reservada}</div>
-                      <div className="text-xs text-amber-400">Reservado</div>
+                    <div className="p-3 bg-slate-800/40 rounded-lg">
+                      <div className="text-2xl font-bold text-slate-300">{ubicacionSeleccionada.cantidad_reservada}</div>
+                      <div className="text-xs text-slate-300">Reservado</div>
                     </div>
-                    <div className="p-3 bg-emerald-500/10 rounded-lg">
-                      <div className="text-2xl font-bold text-emerald-400">{ubicacionSeleccionada.cantidad_disponible}</div>
-                      <div className="text-xs text-emerald-400">Disponible</div>
+                    <div className="p-3 bg-slate-800/40 rounded-lg">
+                      <div className="text-2xl font-bold text-slate-300">{ubicacionSeleccionada.cantidad_disponible}</div>
+                      <div className="text-xs text-slate-300">Disponible</div>
                     </div>
                   </div>
                 </div>
@@ -689,13 +689,13 @@ export default function Ubicaciones() {
                 <div className="grid grid-cols-2 gap-2">
                   {ubicacionSeleccionada.estado !== 'disponible' && !ubicacionSeleccionada.producto_codigo && (
                     <button onClick={() => handleCambiarEstado(ubicacionSeleccionada.id, 'disponible')}
-                      className="px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-sm flex items-center justify-center gap-2">
+                      className="px-3 py-2 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded-lg text-sm flex items-center justify-center gap-2">
                       <Unlock className="h-4 w-4" /> Disponible
                     </button>
                   )}
                   {ubicacionSeleccionada.estado !== 'bloqueada' && (
                     <button onClick={() => handleCambiarEstado(ubicacionSeleccionada.id, 'bloqueada')}
-                      className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm flex items-center justify-center gap-2">
+                      className="px-3 py-2 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded-lg text-sm flex items-center justify-center gap-2">
                       <Lock className="h-4 w-4" /> Bloquear
                     </button>
                   )}

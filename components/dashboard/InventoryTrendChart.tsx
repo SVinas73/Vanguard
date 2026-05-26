@@ -240,29 +240,26 @@ export function InventoryTrendChart({
           {/* Panel ENTRADAS / SALIDAS / NETO — estilo mockup */}
           <div className="grid grid-cols-3 gap-4 pt-5 border-t border-slate-800/60">
             <div>
-              <div className="text-xs font-bold uppercase tracking-[0.08em] text-slate-400">
+              <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
                 Entradas
               </div>
-              <div className="text-3xl font-bold text-emerald-400 tabular-nums mt-1 leading-none">
+              <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
                 {fmt(totals.entradas)}
               </div>
             </div>
             <div>
-              <div className="text-xs font-bold uppercase tracking-[0.08em] text-slate-400">
+              <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
                 Salidas
               </div>
-              <div className="text-3xl font-bold text-red-400 tabular-nums mt-1 leading-none">
+              <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
                 {fmt(totals.salidas)}
               </div>
             </div>
             <div>
-              <div className="text-xs font-bold uppercase tracking-[0.08em] text-slate-400">
+              <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
                 Neto
               </div>
-              <div className={cn(
-                'text-3xl font-bold tabular-nums mt-1 leading-none',
-                totals.neto >= 0 ? 'text-emerald-400' : 'text-red-400',
-              )}>
+              <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
                 {totals.neto >= 0 ? '+' : ''}{fmt(Math.abs(totals.neto))}
               </div>
             </div>

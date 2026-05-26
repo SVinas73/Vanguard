@@ -222,9 +222,11 @@ interface AIPanelDataProps {
   products?: Product[];
   movements?: Movement[];
   predictions?: Record<string, StockPrediction>;
+  /** Refresca los datos de origen (productos/movimientos) en el padre. */
+  onRefresh?: () => void;
 }
 
-export function AIPredictionsPanel({ products = [], movements = [], predictions = {} }: AIPanelDataProps) {
+export function AIPredictionsPanel({ products = [], movements = [], predictions = {}, onRefresh }: AIPanelDataProps) {
   const { t } = useTranslation();
 
   // Computamos los productos críticos LOCALMENTE con el predictor que ya
@@ -263,7 +265,7 @@ export function AIPredictionsPanel({ products = [], movements = [], predictions 
 
   const loading = false;
   const error = null;
-  const fetchData = () => {}; // datos locales: el refresh viene de los props
+  const fetchData = () => { onRefresh?.(); };
 
   const accentColor = '#836ba0'; // violet
 
@@ -414,7 +416,7 @@ export function AIAnomaliesPanel({ products = [], movements = [] }: AIPanelDataP
 
   const loading = false;
   const error = null;
-  const fetchData = () => {};
+  const fetchData = () => { onRefresh?.(); };
 
   const accentColor = '#dfa6a6'; // rose
 
@@ -581,7 +583,7 @@ export function AIAssociationsPanel({ products = [], movements = [] }: AIPanelDa
 
   const loading = false;
   const error = null;
-  const fetchData = () => {};
+  const fetchData = () => { onRefresh?.(); };
 
   const accentColor = '#4a7fb5'; // cyan
 

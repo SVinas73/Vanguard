@@ -160,15 +160,15 @@ const CONFIG_DEFAULT: ConfiguracionSlotting = {
 // ============================================
 
 const ABC_CONFIG: Record<ClasificacionABC, { label: string; color: string; bg: string; descripcion: string }> = {
-  A: { label: 'A - Alta Rotación', color: 'text-red-400', bg: 'bg-red-500/20', descripcion: '~20% productos, ~80% valor/movimientos' },
-  B: { label: 'B - Media Rotación', color: 'text-amber-400', bg: 'bg-amber-500/20', descripcion: '~30% productos, ~15% valor/movimientos' },
-  C: { label: 'C - Baja Rotación', color: 'text-emerald-400', bg: 'bg-emerald-500/20', descripcion: '~50% productos, ~5% valor/movimientos' },
+  A: { label: 'A - Alta Rotación', color: 'text-slate-300', bg: 'bg-slate-800/40', descripcion: '~20% productos, ~80% valor/movimientos' },
+  B: { label: 'B - Media Rotación', color: 'text-slate-300', bg: 'bg-slate-800/40', descripcion: '~30% productos, ~15% valor/movimientos' },
+  C: { label: 'C - Baja Rotación', color: 'text-slate-300', bg: 'bg-slate-800/40', descripcion: '~50% productos, ~5% valor/movimientos' },
 };
 
 const XYZ_CONFIG: Record<ClasificacionXYZ, { label: string; color: string; bg: string; descripcion: string }> = {
-  X: { label: 'X - Demanda Estable', color: 'text-blue-400', bg: 'bg-blue-500/20', descripcion: 'Baja variabilidad, fácil de predecir' },
-  Y: { label: 'Y - Demanda Variable', color: 'text-purple-400', bg: 'bg-purple-500/20', descripcion: 'Variabilidad media, estacional' },
-  Z: { label: 'Z - Demanda Errática', color: 'text-pink-400', bg: 'bg-pink-500/20', descripcion: 'Alta variabilidad, difícil predecir' },
+  X: { label: 'X - Demanda Estable', color: 'text-slate-300', bg: 'bg-slate-800/40', descripcion: 'Baja variabilidad, fácil de predecir' },
+  Y: { label: 'Y - Demanda Variable', color: 'text-slate-300', bg: 'bg-slate-800/40', descripcion: 'Variabilidad media, estacional' },
+  Z: { label: 'Z - Demanda Errática', color: 'text-slate-300', bg: 'bg-slate-800/40', descripcion: 'Alta variabilidad, difícil predecir' },
 };
 
 // ============================================
@@ -609,7 +609,7 @@ export default function Slotting() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-pink-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -631,14 +631,14 @@ export default function Slotting() {
               onClick={() => setVistaActiva(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 vistaActiva === tab.id
-                  ? 'bg-pink-500/20 text-pink-400'
+                  ? 'bg-slate-800/40 text-slate-300'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
               <Icon className="h-4 w-4" />
               {tab.label}
               {tab.count !== undefined && tab.count > 0 && (
-                <span className="px-1.5 py-0.5 bg-pink-500/30 rounded text-xs">{tab.count}</span>
+                <span className="px-1.5 py-0.5 bg-slate-800/40 rounded text-xs">{tab.count}</span>
               )}
             </button>
           );
@@ -653,7 +653,7 @@ export default function Slotting() {
             {/* Distribución ABC */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h4 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-                <PieChart className="h-5 w-5 text-pink-400" />
+                <PieChart className="h-5 w-5 text-slate-300" />
                 Distribución ABC
               </h4>
               <div className="space-y-3">
@@ -685,7 +685,7 @@ export default function Slotting() {
             {/* Métricas clave */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h4 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-                <Activity className="h-5 w-5 text-pink-400" />
+                <Activity className="h-5 w-5 text-slate-300" />
                 Métricas Clave
               </h4>
               <div className="grid grid-cols-2 gap-3">
@@ -693,39 +693,39 @@ export default function Slotting() {
                   <div className="text-2xl font-bold text-slate-200">{resumen.total_productos}</div>
                   <div className="text-xs text-slate-400">Productos</div>
                 </div>
-                <div className="text-center p-3 bg-red-500/10 rounded-lg">
-                  <div className="text-2xl font-bold text-red-400">{resumen.productos_a}</div>
-                  <div className="text-xs text-red-400">Clase A</div>
+                <div className="text-center p-3 bg-slate-800/40 rounded-lg">
+                  <div className="text-2xl font-bold text-slate-300">{resumen.productos_a}</div>
+                  <div className="text-xs text-slate-300">Clase A</div>
                 </div>
-                <div className="text-center p-3 bg-amber-500/10 rounded-lg">
-                  <div className="text-2xl font-bold text-amber-400">{resumen.productos_b}</div>
-                  <div className="text-xs text-amber-400">Clase B</div>
+                <div className="text-center p-3 bg-slate-800/40 rounded-lg">
+                  <div className="text-2xl font-bold text-slate-300">{resumen.productos_b}</div>
+                  <div className="text-xs text-slate-300">Clase B</div>
                 </div>
-                <div className="text-center p-3 bg-emerald-500/10 rounded-lg">
-                  <div className="text-2xl font-bold text-emerald-400">{resumen.productos_c}</div>
-                  <div className="text-xs text-emerald-400">Clase C</div>
+                <div className="text-center p-3 bg-slate-800/40 rounded-lg">
+                  <div className="text-2xl font-bold text-slate-300">{resumen.productos_c}</div>
+                  <div className="text-xs text-slate-300">Clase C</div>
                 </div>
               </div>
             </div>
 
             {/* Oportunidades */}
-            <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/30 rounded-xl p-4">
-              <h4 className="font-semibold text-pink-400 mb-4 flex items-center gap-2">
+            <div className="bg-gradient-to-br from-slate-800 to-slate-800 border border-slate-700/40 rounded-xl p-4">
+              <h4 className="font-semibold text-slate-300 mb-4 flex items-center gap-2">
                 <Zap className="h-5 w-5" />
                 Oportunidades de Mejora
               </h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-300">Productos mal ubicados</span>
-                  <span className="font-bold text-pink-400">{resumen.productos_mal_ubicados}</span>
+                  <span className="font-bold text-slate-300">{resumen.productos_mal_ubicados}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-300">Ahorro tiempo potencial</span>
-                  <span className="font-bold text-emerald-400">{resumen.ahorro_potencial_tiempo} min/día</span>
+                  <span className="font-bold text-slate-300">{resumen.ahorro_potencial_tiempo} min/día</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-300">Ahorro distancia potencial</span>
-                  <span className="font-bold text-blue-400">{resumen.ahorro_potencial_distancia} m/día</span>
+                  <span className="font-bold text-slate-300">{resumen.ahorro_potencial_distancia} m/día</span>
                 </div>
                 <button
                   onClick={() => setVistaActiva('recomendaciones')}
@@ -794,7 +794,7 @@ export default function Slotting() {
                 <div 
                   key={a.producto_codigo}
                   className={`bg-slate-900/50 border rounded-xl p-4 ${
-                    tieneRecomendacion ? 'border-pink-500/50' : 'border-slate-800/50'
+                    tieneRecomendacion ? 'border-slate-700/40' : 'border-slate-800/50'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -832,7 +832,7 @@ export default function Slotting() {
                       </div>
                       
                       {tieneRecomendacion && (
-                        <span className="px-2 py-1 bg-pink-500/20 text-pink-400 rounded text-xs flex items-center gap-1">
+                        <span className="px-2 py-1 bg-slate-800/40 text-slate-300 rounded text-xs flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3" />
                           Reubicar
                         </span>
@@ -858,7 +858,7 @@ export default function Slotting() {
         <>
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <Zap className="h-6 w-6 text-pink-400" />
+              <Zap className="h-6 w-6 text-slate-300" />
               Recomendaciones de Slotting
             </h3>
             
@@ -882,8 +882,8 @@ export default function Slotting() {
                 <div 
                   key={rec.id}
                   className={`bg-slate-900/50 border rounded-xl p-4 ${
-                    rec.estado === 'pendiente' ? 'border-pink-500/30' :
-                    rec.estado === 'aprobada' ? 'border-emerald-500/30' :
+                    rec.estado === 'pendiente' ? 'border-slate-700/40' :
+                    rec.estado === 'aprobada' ? 'border-slate-700/40' :
                     rec.estado === 'ejecutada' ? 'border-slate-700' :
                     'border-slate-800/50'
                   }`}
@@ -900,9 +900,9 @@ export default function Slotting() {
                             Clase {rec.clasificacion_abc}
                           </span>
                           <span className={`px-2 py-0.5 rounded text-xs ${
-                            rec.estado === 'pendiente' ? 'bg-amber-500/20 text-amber-400' :
-                            rec.estado === 'aprobada' ? 'bg-blue-500/20 text-blue-400' :
-                            rec.estado === 'ejecutada' ? 'bg-emerald-500/20 text-emerald-400' :
+                            rec.estado === 'pendiente' ? 'bg-slate-800/40 text-slate-300' :
+                            rec.estado === 'aprobada' ? 'bg-slate-800/40 text-slate-300' :
+                            rec.estado === 'ejecutada' ? 'bg-slate-800/40 text-slate-300' :
                             'bg-slate-500/20 text-slate-400'
                           }`}>
                             {rec.estado === 'pendiente' ? 'Pendiente' :
@@ -913,8 +913,8 @@ export default function Slotting() {
                         
                         <div className="flex items-center gap-2 text-sm mb-2">
                           <span className="font-mono text-slate-400">{rec.ubicacion_origen}</span>
-                          <ArrowRight className="h-4 w-4 text-pink-400" />
-                          <span className="font-mono text-emerald-400">{rec.ubicacion_destino}</span>
+                          <ArrowRight className="h-4 w-4 text-slate-300" />
+                          <span className="font-mono text-slate-300">{rec.ubicacion_destino}</span>
                         </div>
                         
                         <p className="text-sm text-slate-400">{rec.razon}</p>
@@ -922,10 +922,10 @@ export default function Slotting() {
                         {(rec.ahorro_tiempo_min || rec.ahorro_distancia_m) && (
                           <div className="flex gap-4 mt-2 text-xs">
                             {rec.ahorro_tiempo_min && (
-                              <span className="text-emerald-400">⏱ -{rec.ahorro_tiempo_min} min/día</span>
+                              <span className="text-slate-300">⏱ -{rec.ahorro_tiempo_min} min/día</span>
                             )}
                             {rec.ahorro_distancia_m && (
-                              <span className="text-blue-400">📏 -{rec.ahorro_distancia_m} m/día</span>
+                              <span className="text-slate-300">📏 -{rec.ahorro_distancia_m} m/día</span>
                             )}
                           </div>
                         )}
@@ -962,7 +962,7 @@ export default function Slotting() {
                     )}
                     
                     {rec.estado === 'ejecutada' && (
-                      <CheckCircle className="h-6 w-6 text-emerald-400" />
+                      <CheckCircle className="h-6 w-6 text-slate-300" />
                     )}
                   </div>
                 </div>
@@ -971,8 +971,8 @@ export default function Slotting() {
             
             {recomendaciones.length === 0 && (
               <div className="text-center py-12 text-slate-500">
-                <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
-                <p className="text-emerald-400">¡Excelente! No hay recomendaciones pendientes</p>
+                <CheckCircle className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+                <p className="text-slate-300">¡Excelente! No hay recomendaciones pendientes</p>
                 <p className="text-sm mt-1">El almacén está optimizado</p>
               </div>
             )}
@@ -1006,7 +1006,7 @@ function ConfiguracionSlottingView({ config, setConfig, onGuardar }: Configuraci
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-        <Settings className="h-6 w-6 text-pink-400" />
+        <Settings className="h-6 w-6 text-slate-300" />
         Configuración de Slotting
       </h3>
 
@@ -1068,7 +1068,7 @@ function ConfiguracionSlottingView({ config, setConfig, onGuardar }: Configuraci
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-red-400 mb-2">Zona Premium (Clase A)</label>
+              <label className="block text-sm text-slate-300 mb-2">Zona Premium (Clase A)</label>
               <input
                 type="text"
                 value={config.zona_premium.join(', ')}
@@ -1079,7 +1079,7 @@ function ConfiguracionSlottingView({ config, setConfig, onGuardar }: Configuraci
             </div>
             
             <div>
-              <label className="block text-sm text-amber-400 mb-2">Zona Media (Clase B)</label>
+              <label className="block text-sm text-slate-300 mb-2">Zona Media (Clase B)</label>
               <input
                 type="text"
                 value={config.zona_media.join(', ')}
@@ -1090,7 +1090,7 @@ function ConfiguracionSlottingView({ config, setConfig, onGuardar }: Configuraci
             </div>
             
             <div>
-              <label className="block text-sm text-emerald-400 mb-2">Zona Baja Rotación (Clase C)</label>
+              <label className="block text-sm text-slate-300 mb-2">Zona Baja Rotación (Clase C)</label>
               <input
                 type="text"
                 value={config.zona_baja.join(', ')}

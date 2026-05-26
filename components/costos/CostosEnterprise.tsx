@@ -151,15 +151,15 @@ type VistaProductos = 'tabla' | 'abc' | 'alertas';
 // ============================================
 
 const CLASIFICACION_ABC = {
-  A: { label: 'Clase A', color: 'text-emerald-400', bg: 'bg-emerald-500/20', porcentaje: 80, descripcion: '80% del valor' },
-  B: { label: 'Clase B', color: 'text-amber-400', bg: 'bg-amber-500/20', porcentaje: 15, descripcion: '15% del valor' },
+  A: { label: 'Clase A', color: 'text-slate-300', bg: 'bg-slate-800/40', porcentaje: 80, descripcion: '80% del valor' },
+  B: { label: 'Clase B', color: 'text-slate-300', bg: 'bg-slate-800/40', porcentaje: 15, descripcion: '15% del valor' },
   C: { label: 'Clase C', color: 'text-slate-400', bg: 'bg-slate-500/20', porcentaje: 5, descripcion: '5% del valor' },
 };
 
 const ALERTA_MARGEN = {
-  negativo: { label: 'Margen Negativo', color: 'text-red-500', bg: 'bg-red-500/20', umbral: 0 },
-  critico: { label: 'Margen Crítico', color: 'text-red-400', bg: 'bg-red-500/10', umbral: 5 },
-  bajo: { label: 'Margen Bajo', color: 'text-amber-400', bg: 'bg-amber-500/10', umbral: 15 },
+  negativo: { label: 'Margen Negativo', color: 'text-slate-300', bg: 'bg-slate-800/40', umbral: 0 },
+  critico: { label: 'Margen Crítico', color: 'text-slate-300', bg: 'bg-slate-800/40', umbral: 5 },
+  bajo: { label: 'Margen Bajo', color: 'text-slate-300', bg: 'bg-slate-800/40', umbral: 15 },
 };
 
 const COLORES_GRAFICO = ['#9ec9b1', '#d6b97a', '#64748b', '#4a7fb5', '#6b5488', '#b5547a', '#cc7a33'];
@@ -246,9 +246,9 @@ function useToast() {
     <div className="fixed bottom-4 right-4 z-50 space-y-2">
       {toasts.map(t => (
         <div key={t.id} className={`px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3 ${
-          t.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
-          t.type === 'error' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
-          'bg-amber-500/20 border-amber-500/30 text-amber-400'
+          t.type === 'success' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          t.type === 'error' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          'bg-slate-800/40 border-slate-700/40 text-slate-300'
         }`}>
           {t.type === 'success' ? <CheckCircle className="h-5 w-5" /> :
            t.type === 'error' ? <XCircle className="h-5 w-5" /> :
@@ -1340,7 +1340,7 @@ export default function CostosEnterprise() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-cyan-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -1353,7 +1353,7 @@ export default function CostosEnterprise() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-            <CircleDollarSign className="h-7 w-7 text-cyan-400" />
+            <CircleDollarSign className="h-7 w-7 text-slate-300" />
             Centro de Costos
           </h2>
           <p className="text-slate-400 text-sm mt-1">Gestión integral de costos, márgenes y rentabilidad</p>
@@ -1399,39 +1399,39 @@ export default function CostosEnterprise() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Layers className="h-5 w-5 text-cyan-400" />
+                <Layers className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">Costo Inventario</span>
               </div>
-              <div className="text-2xl font-bold text-cyan-400">{formatCurrency(metricas.valorInventarioFIFO)}</div>
+              <div className="text-2xl font-bold text-slate-300">{formatCurrency(metricas.valorInventarioFIFO)}</div>
               <div className="text-xs text-slate-500 mt-1">Valoración FIFO</div>
             </div>
 
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="h-5 w-5 text-emerald-400" />
+                <DollarSign className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">Valor a Venta</span>
               </div>
-              <div className="text-2xl font-bold text-emerald-400">{formatCurrency(metricas.valorVenta)}</div>
+              <div className="text-2xl font-bold text-slate-300">{formatCurrency(metricas.valorVenta)}</div>
               <div className="text-xs text-slate-500 mt-1">{productos.length} productos</div>
             </div>
 
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-purple-400" />
+                <TrendingUp className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">Margen Bruto</span>
               </div>
-              <div className="text-2xl font-bold text-purple-400">{formatCurrency(metricas.margenBruto)}</div>
-              <div className={`text-xs mt-1 ${metricas.margenPorcentaje >= 20 ? 'text-emerald-400' : metricas.margenPorcentaje >= 10 ? 'text-amber-400' : 'text-red-400'}`}>
+              <div className="text-2xl font-bold text-slate-300">{formatCurrency(metricas.margenBruto)}</div>
+              <div className={`text-xs mt-1 ${metricas.margenPorcentaje >= 20 ? 'text-slate-300' : metricas.margenPorcentaje >= 10 ? 'text-slate-300' : 'text-slate-300'}`}>
                 {formatPercent(metricas.margenPorcentaje)}
               </div>
             </div>
 
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Activity className="h-5 w-5 text-amber-400" />
+                <Activity className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">Margen Promedio</span>
               </div>
-              <div className={`text-2xl font-bold ${metricas.margenPromedio >= 20 ? 'text-emerald-400' : metricas.margenPromedio >= 10 ? 'text-amber-400' : 'text-red-400'}`}>
+              <div className={`text-2xl font-bold ${metricas.margenPromedio >= 20 ? 'text-slate-300' : metricas.margenPromedio >= 10 ? 'text-slate-300' : 'text-slate-300'}`}>
                 {formatPercent(metricas.margenPromedio)}
               </div>
               <div className="text-xs text-slate-500 mt-1">Por producto</div>
@@ -1443,21 +1443,21 @@ export default function CostosEnterprise() {
             {/* Alertas de margen */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h3 className="text-sm font-semibold text-slate-400 mb-3 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-400" />
+                <AlertTriangle className="h-4 w-4 text-slate-300" />
                 Alertas de Margen
               </h3>
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-red-500/10">
-                  <span className="text-sm text-red-400">Margen negativo</span>
-                  <span className="font-bold text-red-400">{metricas.alertasNegativos}</span>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-800/40">
+                  <span className="text-sm text-slate-300">Margen negativo</span>
+                  <span className="font-bold text-slate-300">{metricas.alertasNegativos}</span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-red-500/5">
-                  <span className="text-sm text-red-300">Margen crítico (&lt;5%)</span>
-                  <span className="font-bold text-red-300">{metricas.alertasCriticos}</span>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-800/40">
+                  <span className="text-sm text-slate-300">Margen crítico (&lt;5%)</span>
+                  <span className="font-bold text-slate-300">{metricas.alertasCriticos}</span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-amber-500/10">
-                  <span className="text-sm text-amber-400">Margen bajo (&lt;15%)</span>
-                  <span className="font-bold text-amber-400">{metricas.alertasBajos}</span>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-800/40">
+                  <span className="text-sm text-slate-300">Margen bajo (&lt;15%)</span>
+                  <span className="font-bold text-slate-300">{metricas.alertasBajos}</span>
                 </div>
               </div>
               {metricas.alertasMargen.length > 0 && (
@@ -1473,14 +1473,14 @@ export default function CostosEnterprise() {
             {/* Tendencia de costos */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h3 className="text-sm font-semibold text-slate-400 mb-3 flex items-center gap-2">
-                <Trend className="h-4 w-4 text-purple-400" />
+                <Trend className="h-4 w-4 text-slate-300" />
                 Tendencia de Costos
               </h3>
-              <div className={`text-3xl font-bold ${metricas.tendenciaCostos > 0 ? 'text-red-400' : metricas.tendenciaCostos < 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
+              <div className={`text-3xl font-bold ${metricas.tendenciaCostos > 0 ? 'text-slate-300' : metricas.tendenciaCostos < 0 ? 'text-slate-300' : 'text-slate-400'}`}>
                 {metricas.tendenciaCostos > 0 ? '+' : ''}{formatPercent(metricas.tendenciaCostos)}
               </div>
               <div className="text-xs text-slate-500 mt-1">Últimos 30 días vs anteriores</div>
-              <div className={`flex items-center gap-1 mt-2 text-sm ${metricas.tendenciaCostos > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+              <div className={`flex items-center gap-1 mt-2 text-sm ${metricas.tendenciaCostos > 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                 {metricas.tendenciaCostos > 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
                 {metricas.tendenciaCostos > 0 ? 'Costos subiendo' : 'Costos estables/bajando'}
               </div>
@@ -1489,10 +1489,10 @@ export default function CostosEnterprise() {
             {/* Costos indirectos */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h3 className="text-sm font-semibold text-slate-400 mb-3 flex items-center gap-2">
-                <Truck className="h-4 w-4 text-orange-400" />
+                <Truck className="h-4 w-4 text-slate-300" />
                 Costos Indirectos
               </h3>
-              <div className="text-2xl font-bold text-orange-400">{formatCurrency(metricas.totalCostosIndirectos)}</div>
+              <div className="text-2xl font-bold text-slate-300">{formatCurrency(metricas.totalCostosIndirectos)}</div>
               <div className="text-xs text-slate-500 mt-1">{costosIndirectos.filter(c => c.activo).length} conceptos activos</div>
               <button 
                 onClick={() => setTabActiva('indirectos')}
@@ -1508,7 +1508,7 @@ export default function CostosEnterprise() {
             {/* Análisis ABC */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
-                <PieChart className="h-4 w-4 text-cyan-400" />
+                <PieChart className="h-4 w-4 text-slate-300" />
                 Análisis ABC
               </h3>
               <div className="h-64">
@@ -1548,7 +1548,7 @@ export default function CostosEnterprise() {
             {/* Margen por categoría */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
-                <BarChart2 className="h-4 w-4 text-purple-400" />
+                <BarChart2 className="h-4 w-4 text-slate-300" />
                 Margen por Categoría
               </h3>
               <div className="h-64">
@@ -1571,7 +1571,7 @@ export default function CostosEnterprise() {
           {/* Tendencia mensual */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
             <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
-              <LineChart className="h-4 w-4 text-emerald-400" />
+              <LineChart className="h-4 w-4 text-slate-300" />
               Evolución de Costos (últimos 12 meses)
             </h3>
             <div className="h-64">
@@ -1593,7 +1593,7 @@ export default function CostosEnterprise() {
           {/* Top productos por valor */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
             <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
-              <Award className="h-4 w-4 text-amber-400" />
+              <Award className="h-4 w-4 text-slate-300" />
               Top 10 Productos por Valor en Stock
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1612,7 +1612,7 @@ export default function CostosEnterprise() {
                     <div className="text-xs text-slate-500 truncate">{p.descripcion}</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-mono font-bold text-cyan-400">{formatCurrency(p.valorStock || 0)}</div>
+                    <div className="font-mono font-bold text-slate-300">{formatCurrency(p.valorStock || 0)}</div>
                     <div className={`text-xs ${CLASIFICACION_ABC[p.clasificacionABC || 'C'].color}`}>
                       {CLASIFICACION_ABC[p.clasificacionABC || 'C'].label}
                     </div>
@@ -1694,12 +1694,12 @@ export default function CostosEnterprise() {
                         <td className="px-4 py-3 text-right font-mono text-sm text-slate-400">{formatCurrency(p.costoPromedio || p.costo)}</td>
                         <td className="px-4 py-3 text-right font-mono text-sm text-slate-200">{formatCurrency(p.precio)}</td>
                         <td className="px-4 py-3 text-right">
-                          <span className={`font-mono text-sm ${(p.margenPorcentaje || 0) < 0 ? 'text-red-400' : (p.margenPorcentaje || 0) < 10 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          <span className={`font-mono text-sm ${(p.margenPorcentaje || 0) < 0 ? 'text-slate-300' : (p.margenPorcentaje || 0) < 10 ? 'text-slate-300' : 'text-slate-300'}`}>
                             {formatPercent(p.margenPorcentaje || 0)}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm text-slate-300">{p.stock}</td>
-                        <td className="px-4 py-3 text-right font-mono text-sm text-cyan-400">{formatCurrency(p.valorStock || 0)}</td>
+                        <td className="px-4 py-3 text-right font-mono text-sm text-slate-300">{formatCurrency(p.valorStock || 0)}</td>
                         <td className="px-4 py-3 text-center">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${CLASIFICACION_ABC[p.clasificacionABC || 'C'].bg} ${CLASIFICACION_ABC[p.clasificacionABC || 'C'].color}`}>
                             {p.clasificacionABC}
@@ -1754,7 +1754,7 @@ export default function CostosEnterprise() {
               })}
               {metricas.alertasMargen.length === 0 && (
                 <div className="text-center py-12 text-slate-500">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
+                  <CheckCircle className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                   <p>Todos los productos tienen márgenes saludables</p>
                 </div>
               )}
@@ -1770,7 +1770,7 @@ export default function CostosEnterprise() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Layers className="h-5 w-5 text-cyan-400" />
+                <Layers className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">Total Lotes</span>
               </div>
               <div className="text-2xl font-bold text-slate-200">{lotes.length}</div>
@@ -1783,7 +1783,7 @@ export default function CostosEnterprise() {
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="text-sm text-slate-400">Costo Promedio</div>
-              <div className="text-2xl font-bold text-emerald-400">
+              <div className="text-2xl font-bold text-slate-300">
                 {formatCurrency(lotes.length > 0 
                   ? lotes.reduce((sum, l) => sum + l.costo_unitario, 0) / lotes.length 
                   : 0
@@ -1818,7 +1818,7 @@ export default function CostosEnterprise() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           {idx === 0 || lotes[idx - 1]?.codigo !== lote.codigo ? (
-                            <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded">FIFO</span>
+                            <span className="px-1.5 py-0.5 bg-slate-800/40 text-slate-300 text-xs rounded">FIFO</span>
                           ) : null}
                           <span className="font-mono text-sm text-slate-200">{lote.codigo}</span>
                         </div>
@@ -1829,7 +1829,7 @@ export default function CostosEnterprise() {
                         <span className="font-mono text-sm text-slate-200">{lote.cantidad_disponible}</span>
                         <span className="text-slate-500 text-xs">/{lote.cantidad_inicial}</span>
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-sm text-cyan-400">
+                      <td className="px-4 py-3 text-right font-mono text-sm text-slate-300">
                         {formatCurrency(lote.costo_unitario)}
                       </td>
                       <td className="px-4 py-3 text-right font-mono text-sm text-slate-200">
@@ -1866,7 +1866,7 @@ export default function CostosEnterprise() {
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl">
               <div className="p-4 border-b border-slate-800">
                 <h3 className="font-semibold text-slate-200 flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-emerald-400" />
+                  <DollarSign className="h-5 w-5 text-slate-300" />
                   Historial de Precios
                 </h3>
               </div>
@@ -1884,7 +1884,7 @@ export default function CostosEnterprise() {
                       <span className="text-sm text-slate-400 line-through">{formatCurrency(h.valor_anterior)}</span>
                       <ArrowRight className="h-3 w-3 text-slate-600" />
                       <span className="text-sm font-medium text-slate-200">{formatCurrency(h.valor_nuevo)}</span>
-                      <span className={`text-xs font-medium ${h.variacion > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                      <span className={`text-xs font-medium ${h.variacion > 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                         {h.variacion > 0 ? '+' : ''}{formatPercent(h.variacion_porcentaje)}
                       </span>
                     </div>
@@ -1898,7 +1898,7 @@ export default function CostosEnterprise() {
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl">
               <div className="p-4 border-b border-slate-800">
                 <h3 className="font-semibold text-slate-200 flex items-center gap-2">
-                  <Layers className="h-5 w-5 text-cyan-400" />
+                  <Layers className="h-5 w-5 text-slate-300" />
                   Historial de Costos
                 </h3>
               </div>
@@ -1915,7 +1915,7 @@ export default function CostosEnterprise() {
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-slate-400 line-through">{formatCurrency(h.costo_anterior)}</span>
                       <ArrowRight className="h-3 w-3 text-slate-600" />
-                      <span className="text-sm font-medium text-cyan-400">{formatCurrency(h.costo_nuevo)}</span>
+                      <span className="text-sm font-medium text-slate-300">{formatCurrency(h.costo_nuevo)}</span>
                     </div>
                     <div className="text-xs text-slate-500 mt-1">
                       {h.cantidad > 0 && `${h.cantidad} uds • `}
@@ -1936,7 +1936,7 @@ export default function CostosEnterprise() {
           {/* Panel de configuración */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
-              <Calculator className="h-5 w-5 text-purple-400" />
+              <Calculator className="h-5 w-5 text-slate-300" />
               Simulador de Precios
             </h3>
             
@@ -2025,7 +2025,7 @@ export default function CostosEnterprise() {
                   <div className="text-sm text-slate-400">Variación promedio</div>
                   <div className={`text-2xl font-bold ${
                     resultadosSimulacion.reduce((s, r) => s + r.diferenciaPct, 0) / resultadosSimulacion.length > 0 
-                      ? 'text-emerald-400' : 'text-red-400'
+                      ? 'text-slate-300' : 'text-slate-300'
                   }`}>
                     {formatPercent(resultadosSimulacion.reduce((s, r) => s + r.diferenciaPct, 0) / resultadosSimulacion.length)}
                   </div>
@@ -2038,7 +2038,7 @@ export default function CostosEnterprise() {
                 </div>
                 <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
                   <div className="text-sm text-slate-400">Margen nuevo promedio</div>
-                  <div className="text-2xl font-bold text-purple-400">
+                  <div className="text-2xl font-bold text-slate-300">
                     {formatPercent(resultadosSimulacion.reduce((s, r) => s + r.margenNuevoPct, 0) / resultadosSimulacion.length)}
                   </div>
                 </div>
@@ -2072,14 +2072,14 @@ export default function CostosEnterprise() {
                           <td className="px-4 py-3 text-right font-mono text-sm text-slate-300">
                             {formatCurrency(r.precioActual)}
                           </td>
-                          <td className="px-4 py-3 text-right font-mono text-sm font-medium text-purple-400">
+                          <td className="px-4 py-3 text-right font-mono text-sm font-medium text-slate-300">
                             {formatCurrency(r.precioNuevo)}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className={`font-mono text-sm ${r.diferencia > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            <span className={`font-mono text-sm ${r.diferencia > 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                               {r.diferencia > 0 ? '+' : ''}{formatCurrency(r.diferencia)}
                             </span>
-                            <div className={`text-xs ${r.diferenciaPct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            <div className={`text-xs ${r.diferenciaPct > 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                               {r.diferenciaPct > 0 ? '+' : ''}{formatPercent(r.diferenciaPct)}
                             </div>
                           </td>
@@ -2088,9 +2088,9 @@ export default function CostosEnterprise() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             <span className={`font-mono text-sm font-medium ${
-                              r.margenNuevoPct < 0 ? 'text-red-400' :
-                              r.margenNuevoPct < 10 ? 'text-amber-400' :
-                              'text-emerald-400'
+                              r.margenNuevoPct < 0 ? 'text-slate-300' :
+                              r.margenNuevoPct < 10 ? 'text-slate-300' :
+                              'text-slate-300'
                             }`}>
                               {formatPercent(r.margenNuevoPct)}
                             </span>
@@ -2132,7 +2132,7 @@ export default function CostosEnterprise() {
             {/* Actualización por porcentaje/fijo */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
-                <Percent className="h-5 w-5 text-amber-400" />
+                <Percent className="h-5 w-5 text-slate-300" />
                 Actualización Masiva
               </h3>
               
@@ -2214,8 +2214,8 @@ export default function CostosEnterprise() {
                   </div>
                 )}
 
-                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-                  <div className="flex items-center gap-2 text-amber-400 text-sm">
+                <div className="p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                  <div className="flex items-center gap-2 text-slate-300 text-sm">
                     <AlertTriangle className="h-4 w-4" />
                     <span>
                       {actualizacionMasivaForm.tipo === 'porcentaje' 
@@ -2239,7 +2239,7 @@ export default function CostosEnterprise() {
             {/* Importar CSV */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
-                <Upload className="h-5 w-5 text-cyan-400" />
+                <Upload className="h-5 w-5 text-slate-300" />
                 Importar desde CSV
               </h3>
               
@@ -2312,19 +2312,19 @@ export default function CostosEnterprise() {
                   <div className="flex gap-1">
                     <button
                       onClick={() => toggleCostoIndirecto(costo)}
-                      className={`p-1.5 rounded-lg ${costo.activo ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-500'}`}
+                      className={`p-1.5 rounded-lg ${costo.activo ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-700 text-slate-500'}`}
                     >
                       {costo.activo ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                     </button>
                     <button
                       onClick={() => eliminarCostoIndirecto(costo.id)}
-                      className="p-1.5 hover:bg-red-500/20 text-red-400 rounded-lg"
+                      className="p-1.5 hover:bg-slate-800/40 text-slate-300 rounded-lg"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-orange-400">
+                <div className="text-2xl font-bold text-slate-300">
                   {costo.tipo === 'porcentaje' ? `${costo.valor}%` : formatCurrency(costo.valor)}
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
@@ -2350,8 +2350,8 @@ export default function CostosEnterprise() {
             {/* Exportar productos */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-cyan-500/20 rounded-xl">
-                  <FileSpreadsheet className="h-6 w-6 text-cyan-400" />
+                <div className="p-3 bg-slate-800/40 rounded-xl">
+                  <FileSpreadsheet className="h-6 w-6 text-slate-300" />
                 </div>
                 <div>
                   <h4 className="font-medium text-slate-200">Lista de Costos</h4>
@@ -2369,8 +2369,8 @@ export default function CostosEnterprise() {
             {/* Análisis ABC */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-emerald-500/20 rounded-xl">
-                  <PieChart className="h-6 w-6 text-emerald-400" />
+                <div className="p-3 bg-slate-800/40 rounded-xl">
+                  <PieChart className="h-6 w-6 text-slate-300" />
                 </div>
                 <div>
                   <h4 className="font-medium text-slate-200">Análisis ABC</h4>
@@ -2388,8 +2388,8 @@ export default function CostosEnterprise() {
             {/* Alertas */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-amber-500/20 rounded-xl">
-                  <AlertTriangle className="h-6 w-6 text-amber-400" />
+                <div className="p-3 bg-slate-800/40 rounded-xl">
+                  <AlertTriangle className="h-6 w-6 text-slate-300" />
                 </div>
                 <div>
                   <h4 className="font-medium text-slate-200">Alertas de Margen</h4>
@@ -2427,8 +2427,8 @@ export default function CostosEnterprise() {
             {/* Historial de precios */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-purple-500/20 rounded-xl">
-                  <History className="h-6 w-6 text-purple-400" />
+                <div className="p-3 bg-slate-800/40 rounded-xl">
+                  <History className="h-6 w-6 text-slate-300" />
                 </div>
                 <div>
                   <h4 className="font-medium text-slate-200">Historial de Precios</h4>
@@ -2465,8 +2465,8 @@ export default function CostosEnterprise() {
             {/* Lotes FIFO */}
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-blue-500/20 rounded-xl">
-                  <Layers className="h-6 w-6 text-blue-400" />
+                <div className="p-3 bg-slate-800/40 rounded-xl">
+                  <Layers className="h-6 w-6 text-slate-300" />
                 </div>
                 <div>
                   <h4 className="font-medium text-slate-200">Inventario FIFO</h4>
@@ -2589,9 +2589,9 @@ export default function CostosEnterprise() {
               </div>
 
               {loteForm.productoId && loteForm.cantidad > 0 && loteForm.costoUnitario > 0 && (
-                <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl">
-                  <div className="text-sm text-cyan-400">Valor del lote:</div>
-                  <div className="text-xl font-bold text-cyan-400">
+                <div className="p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                  <div className="text-sm text-slate-300">Valor del lote:</div>
+                  <div className="text-xl font-bold text-slate-300">
                     {formatCurrency(loteForm.cantidad * loteForm.costoUnitario)}
                   </div>
                 </div>
@@ -2714,8 +2714,8 @@ export default function CostosEnterprise() {
               </button>
             </div>
 
-            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl mb-4">
-              <div className="flex items-center gap-2 text-amber-400 mb-2">
+            <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl mb-4">
+              <div className="flex items-center gap-2 text-slate-300 mb-2">
                 <AlertTriangle className="h-5 w-5" />
                 <span className="font-medium">Esta acción no se puede deshacer</span>
               </div>
@@ -2824,7 +2824,7 @@ function ModalDetalleProducto({
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-cyan-400">{formatCurrency(producto.costoPromedio || producto.costo)}</span>
+                    <span className="font-mono font-bold text-slate-300">{formatCurrency(producto.costoPromedio || producto.costo)}</span>
                     <button onClick={() => setEditandoCosto(true)} className="p-1 hover:bg-slate-700 rounded">
                       <Edit className="h-3 w-3 text-slate-500" />
                     </button>
@@ -2854,7 +2854,7 @@ function ModalDetalleProducto({
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-emerald-400">{formatCurrency(producto.precio)}</span>
+                    <span className="font-mono font-bold text-slate-300">{formatCurrency(producto.precio)}</span>
                     <button onClick={() => setEditandoPrecio(true)} className="p-1 hover:bg-slate-700 rounded">
                       <Edit className="h-3 w-3 text-slate-500" />
                     </button>
@@ -2866,9 +2866,9 @@ function ModalDetalleProducto({
               <div className="flex items-center justify-between pt-3 border-t border-slate-700">
                 <span className="text-slate-400">Margen:</span>
                 <span className={`font-mono font-bold ${
-                  (producto.margenPorcentaje || 0) < 0 ? 'text-red-400' :
-                  (producto.margenPorcentaje || 0) < 10 ? 'text-amber-400' :
-                  'text-emerald-400'
+                  (producto.margenPorcentaje || 0) < 0 ? 'text-slate-300' :
+                  (producto.margenPorcentaje || 0) < 10 ? 'text-slate-300' :
+                  'text-slate-300'
                 }`}>
                   {formatCurrency(producto.margen || 0)} ({formatPercent(producto.margenPorcentaje || 0)})
                 </span>
@@ -2883,7 +2883,7 @@ function ModalDetalleProducto({
               </div>
               <div className="flex items-center justify-between mt-2">
                 <span className="text-slate-400">Valor en stock:</span>
-                <span className="font-mono font-bold text-cyan-400">{formatCurrency(producto.valorStock || 0)}</span>
+                <span className="font-mono font-bold text-slate-300">{formatCurrency(producto.valorStock || 0)}</span>
               </div>
               <div className="flex items-center justify-between mt-2">
                 <span className="text-slate-400">Clasificación:</span>
@@ -2902,7 +2902,7 @@ function ModalDetalleProducto({
               {lotes.length > 0 ? (
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {lotes.map((l, idx) => (
-                    <div key={l.id} className={`p-2 rounded-lg ${idx === 0 ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-slate-700/30'}`}>
+                    <div key={l.id} className={`p-2 rounded-lg ${idx === 0 ? 'bg-slate-800/40 border border-slate-700/40' : 'bg-slate-700/30'}`}>
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-300">{l.cantidad_disponible} uds @ {formatCurrency(l.costo_unitario)}</span>
                         <span className="text-slate-500">{formatDate(l.fecha_compra)}</span>
@@ -2921,10 +2921,10 @@ function ModalDetalleProducto({
                 <h4 className="text-sm font-semibold text-slate-400 mb-3">Comparativa Proveedores</h4>
                 <div className="space-y-2">
                   {comparativa.map((c, idx) => (
-                    <div key={c.proveedor_id} className={`p-2 rounded-lg ${idx === 0 ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-slate-700/30'}`}>
+                    <div key={c.proveedor_id} className={`p-2 rounded-lg ${idx === 0 ? 'bg-slate-800/40 border border-slate-700/40' : 'bg-slate-700/30'}`}>
                       <div className="flex justify-between">
                         <span className="text-sm text-slate-300">{c.proveedor_nombre}</span>
-                        <span className="font-mono text-sm text-cyan-400">{formatCurrency(c.costo_promedio)}</span>
+                        <span className="font-mono text-sm text-slate-300">{formatCurrency(c.costo_promedio)}</span>
                       </div>
                       <div className="text-xs text-slate-500">
                         {c.cantidad_compras} compras • Último: {formatCurrency(c.ultimo_costo)}

@@ -61,13 +61,13 @@ type SortField = 'rfm' | 'monetary' | 'frequency' | 'recency' | 'riesgo';
 // ============================================
 
 const SEGMENTOS: Record<Segmento, { label: string; color: string; bg: string; border: string; icon: React.ElementType; descripcion: string }> = {
-  champions:    { label: 'Campeones',    color: 'text-amber-300',   bg: 'bg-amber-500/15',   border: 'border-amber-500/30',   icon: Trophy,      descripcion: 'Compran reciente, frecuente y mucho. Tu mejor activo.' },
-  loyal:        { label: 'Leales',       color: 'text-emerald-300', bg: 'bg-emerald-500/15', border: 'border-emerald-500/30', icon: Star,        descripcion: 'Frecuentes, valiosos. Mantenelos contentos.' },
-  potential:    { label: 'Potenciales',  color: 'text-blue-300',    bg: 'bg-blue-500/15',    border: 'border-blue-500/30',    icon: TrendingUp,  descripcion: 'Compran reciente pero poco. Buen target para crecer.' },
-  new:          { label: 'Nuevos',       color: 'text-cyan-300',    bg: 'bg-cyan-500/15',    border: 'border-cyan-500/30',    icon: Sparkles,    descripcion: 'Primera compra reciente. Onboardealos.' },
-  at_risk:      { label: 'En Riesgo',    color: 'text-orange-300',  bg: 'bg-orange-500/15',  border: 'border-orange-500/30',  icon: AlertTriangle, descripcion: 'Eran buenos pero no compran hace tiempo. Recuperalos.' },
+  champions:    { label: 'Campeones',    color: 'text-slate-300',   bg: 'bg-slate-800/40',   border: 'border-slate-700/40',   icon: Trophy,      descripcion: 'Compran reciente, frecuente y mucho. Tu mejor activo.' },
+  loyal:        { label: 'Leales',       color: 'text-slate-300', bg: 'bg-slate-800/40', border: 'border-slate-700/40', icon: Star,        descripcion: 'Frecuentes, valiosos. Mantenelos contentos.' },
+  potential:    { label: 'Potenciales',  color: 'text-slate-300',    bg: 'bg-slate-800/40',    border: 'border-slate-700/40',    icon: TrendingUp,  descripcion: 'Compran reciente pero poco. Buen target para crecer.' },
+  new:          { label: 'Nuevos',       color: 'text-slate-300',    bg: 'bg-slate-800/40',    border: 'border-slate-700/40',    icon: Sparkles,    descripcion: 'Primera compra reciente. Onboardealos.' },
+  at_risk:      { label: 'En Riesgo',    color: 'text-slate-300',  bg: 'bg-slate-800/40',  border: 'border-slate-700/40',  icon: AlertTriangle, descripcion: 'Eran buenos pero no compran hace tiempo. Recuperalos.' },
   hibernating:  { label: 'Hibernando',   color: 'text-slate-300',   bg: 'bg-slate-500/15',   border: 'border-slate-500/30',   icon: Clock,       descripcion: 'Poca actividad. Reactivar con campañas puntuales.' },
-  lost:         { label: 'Perdidos',     color: 'text-red-300',     bg: 'bg-red-500/15',     border: 'border-red-500/30',     icon: XCircle,     descripcion: 'Sin actividad relevante. Costo de reactivación alto.' },
+  lost:         { label: 'Perdidos',     color: 'text-slate-300',     bg: 'bg-slate-800/40',     border: 'border-slate-700/40',     icon: XCircle,     descripcion: 'Sin actividad relevante. Costo de reactivación alto.' },
 };
 
 const SEGMENTO_ORDER: Segmento[] = ['champions', 'loyal', 'potential', 'new', 'at_risk', 'hibernating', 'lost'];
@@ -310,7 +310,7 @@ export default function ScoringComercial() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Star className="h-6 w-6 text-amber-400" />
+            <Star className="h-6 w-6 text-slate-300" />
             Scoring Comercial
           </h2>
         </div>
@@ -344,18 +344,18 @@ export default function ScoringComercial() {
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <KpiCard icon={Users} label="Clientes" value={String(kpis.total)} color="text-slate-300" />
-            <KpiCard icon={ShoppingBag} label="Activos" value={String(kpis.activos)} color="text-blue-300" />
-            <KpiCard icon={Trophy} label="Campeones" value={String(kpis.champions)} color="text-amber-300" />
-            <KpiCard icon={AlertTriangle} label="En Riesgo" value={String(kpis.enRiesgo)} color="text-orange-300" />
-            <KpiCard icon={DollarSign} label="Ventas período" value={formatCurrency(kpis.ventasTotal)} color="text-emerald-300" />
-            <KpiCard icon={ShieldAlert} label="Riesgo crédito alto" value={String(kpis.altoRiesgo)} color="text-red-300" />
+            <KpiCard icon={ShoppingBag} label="Activos" value={String(kpis.activos)} color="text-slate-300" />
+            <KpiCard icon={Trophy} label="Campeones" value={String(kpis.champions)} color="text-slate-300" />
+            <KpiCard icon={AlertTriangle} label="En Riesgo" value={String(kpis.enRiesgo)} color="text-slate-300" />
+            <KpiCard icon={DollarSign} label="Ventas período" value={formatCurrency(kpis.ventasTotal)} color="text-slate-300" />
+            <KpiCard icon={ShieldAlert} label="Riesgo crédito alto" value={String(kpis.altoRiesgo)} color="text-slate-300" />
           </div>
 
           {/* Distribución de segmentos */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-slate-900/50 rounded-xl border border-slate-800 p-4">
               <h3 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
-                <Target className="h-4 w-4 text-violet-400" />
+                <Target className="h-4 w-4 text-slate-300" />
                 Clientes por segmento
               </h3>
               <ResponsiveContainer width="100%" height={240}>
@@ -378,7 +378,7 @@ export default function ScoringComercial() {
 
             <div className="bg-slate-900/50 rounded-xl border border-slate-800 p-4">
               <h3 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-emerald-400" />
+                <DollarSign className="h-4 w-4 text-slate-300" />
                 Ventas por segmento
               </h3>
               <ResponsiveContainer width="100%" height={240}>
@@ -538,12 +538,12 @@ export default function ScoringComercial() {
                                 <DetalleItem
                                   label="Utilización crédito"
                                   value={s.limiteCredito > 0 ? `${s.utilizacionCredito.toFixed(1)}%` : '—'}
-                                  highlight={s.utilizacionCredito >= 90 ? 'text-red-300' : s.utilizacionCredito >= 60 ? 'text-orange-300' : undefined}
+                                  highlight={s.utilizacionCredito >= 90 ? 'text-slate-300' : s.utilizacionCredito >= 60 ? 'text-slate-300' : undefined}
                                 />
                                 <DetalleItem
                                   label="Bloqueado"
                                   value={s.bloqueado ? 'Sí' : 'No'}
-                                  highlight={s.bloqueado ? 'text-red-300' : undefined}
+                                  highlight={s.bloqueado ? 'text-slate-300' : undefined}
                                 />
                                 <DetalleItem label="Recomendación" value={cfg.descripcion} />
                               </div>
@@ -598,10 +598,10 @@ function KpiCard({
 
 function ScoreBadge({ score }: { score: number }) {
   const color =
-    score >= 4 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
-    score === 3 ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' :
-    score === 2 ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
-    'bg-red-500/20 text-red-300 border-red-500/30';
+    score >= 4 ? 'bg-slate-800/40 text-slate-300 border-slate-700/40' :
+    score === 3 ? 'bg-slate-800/40 text-slate-300 border-slate-700/40' :
+    score === 2 ? 'bg-slate-800/40 text-slate-300 border-slate-700/40' :
+    'bg-slate-800/40 text-slate-300 border-slate-700/40';
   return (
     <span className={cn('inline-flex items-center justify-center w-6 h-6 rounded text-[11px] font-bold border', color)}>
       {score}
@@ -612,16 +612,16 @@ function ScoreBadge({ score }: { score: number }) {
 function RiesgoBadge({ nivel, bloqueado }: { nivel: 'bajo' | 'medio' | 'alto'; bloqueado: boolean }) {
   if (bloqueado) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border bg-red-500/15 border-red-500/30 text-red-300">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border bg-slate-800/40 border-slate-700/40 text-slate-300">
         <ShieldAlert className="h-3 w-3" />
         Bloqueado
       </span>
     );
   }
   const cfg =
-    nivel === 'alto' ? { label: 'Alto',  cls: 'bg-red-500/15 border-red-500/30 text-red-300' } :
-    nivel === 'medio' ? { label: 'Medio', cls: 'bg-orange-500/15 border-orange-500/30 text-orange-300' } :
-                        { label: 'Bajo',  cls: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' };
+    nivel === 'alto' ? { label: 'Alto',  cls: 'bg-slate-800/40 border-slate-700/40 text-slate-300' } :
+    nivel === 'medio' ? { label: 'Medio', cls: 'bg-slate-800/40 border-slate-700/40 text-slate-300' } :
+                        { label: 'Bajo',  cls: 'bg-slate-800/40 border-slate-700/40 text-slate-300' };
   return (
     <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border', cfg.cls)}>
       {cfg.label}

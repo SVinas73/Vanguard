@@ -57,7 +57,7 @@ export default function Reportes() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-pink-400" /></div>;
+    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-slate-300" /></div>;
   }
 
   return (
@@ -66,7 +66,7 @@ export default function Reportes() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-pink-400" />
+            <BarChart3 className="h-6 w-6 text-slate-300" />
             Reportes WMS
           </h3>
         </div>
@@ -91,28 +91,28 @@ export default function Reportes() {
             label="Tiempo de picking promedio"
             value={`${tiempos.picking_a_pack_promedio_min} min`}
             sub={`${tiempos.muestras} órdenes`}
-            color="text-purple-300"
+            color="text-slate-300"
           />
           <KpiCard
             icon={Clock}
             label="Pack → Despacho"
             value={`${tiempos.pack_a_despacho_promedio_min} min`}
             sub="promedio"
-            color="text-blue-300"
+            color="text-slate-300"
           />
           <KpiCard
             icon={TrendingUp}
             label="Ciclo completo"
             value={`${tiempos.ciclo_completo_promedio_horas} h`}
             sub="picking + despacho"
-            color="text-cyan-300"
+            color="text-slate-300"
           />
           <KpiCard
             icon={ShieldCheck}
             label="Exactitud global"
             value={exactitud.length > 0 ? `${exactitud[0].exactitud_pct}%` : '—'}
             sub={exactitud.length > 0 ? `${exactitud[0].conteos_totales} conteos` : 'Sin conteos'}
-            color="text-emerald-300"
+            color="text-slate-300"
           />
         </div>
       )}
@@ -121,7 +121,7 @@ export default function Reportes() {
       <div className="bg-slate-900/50 border border-slate-800 rounded-xl">
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-            <Users className="h-4 w-4 text-blue-400" />
+            <Users className="h-4 w-4 text-slate-300" />
             Productividad por picker
           </h4>
           <button onClick={exportarProductividad}
@@ -159,9 +159,9 @@ export default function Reportes() {
                   <td className="px-4 py-2 text-right text-slate-300">{p.lineas_completadas}</td>
                   <td className="px-4 py-2 text-right">
                     <span className={cn('font-semibold',
-                      p.picks_por_hora > 30 ? 'text-emerald-300' :
-                      p.picks_por_hora > 15 ? 'text-blue-300' :
-                      'text-amber-300'
+                      p.picks_por_hora > 30 ? 'text-slate-300' :
+                      p.picks_por_hora > 15 ? 'text-slate-300' :
+                      'text-slate-300'
                     )}>
                       {p.picks_por_hora}
                     </span>
@@ -169,9 +169,9 @@ export default function Reportes() {
                   <td className="px-4 py-2 text-right text-slate-400">{p.min_por_unidad}</td>
                   <td className="px-4 py-2 text-right">
                     <span className={cn(
-                      p.exactitud_pct >= 99 ? 'text-emerald-300' :
-                      p.exactitud_pct >= 95 ? 'text-blue-300' :
-                      'text-orange-300'
+                      p.exactitud_pct >= 99 ? 'text-slate-300' :
+                      p.exactitud_pct >= 95 ? 'text-slate-300' :
+                      'text-slate-300'
                     )}>
                       {p.exactitud_pct}%
                     </span>
@@ -187,7 +187,7 @@ export default function Reportes() {
       <div className="bg-slate-900/50 border border-slate-800 rounded-xl">
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            <ShieldCheck className="h-4 w-4 text-slate-300" />
             Exactitud de inventario (últimos 90 días)
           </h4>
           <button onClick={exportarExactitud}
@@ -209,14 +209,14 @@ export default function Reportes() {
               </div>
               <div>
                 <div className="text-xs text-slate-500 uppercase">Con diferencias</div>
-                <div className="text-xl font-bold text-amber-300 mt-0.5">{e.con_diferencias}</div>
+                <div className="text-xl font-bold text-slate-300 mt-0.5">{e.con_diferencias}</div>
               </div>
               <div>
                 <div className="text-xs text-slate-500 uppercase">Exactitud</div>
                 <div className={cn('text-xl font-bold mt-0.5',
-                  e.exactitud_pct >= 98 ? 'text-emerald-300' :
-                  e.exactitud_pct >= 95 ? 'text-blue-300' :
-                  'text-orange-300'
+                  e.exactitud_pct >= 98 ? 'text-slate-300' :
+                  e.exactitud_pct >= 95 ? 'text-slate-300' :
+                  'text-slate-300'
                 )}>
                   {e.exactitud_pct}%
                 </div>
