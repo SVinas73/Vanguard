@@ -564,7 +564,11 @@ export default function HomePage() {
       stock: 0,
       stock_minimo: parseInt(newProduct.stockMinimo) || 10,
       costo_promedio: 0,
-      almacen_id: newProduct.almacenId || null,
+      // Default al almacén principal (primero de la lista, ordenada por
+      // es_principal) si no se eligió uno. Evita productos "huérfanos" sin
+      // almacén, que aparecían en "Todos" pero no al filtrar por el único
+      // almacén — descuadrando los KPIs del dashboard.
+      almacen_id: newProduct.almacenId || almacenes[0]?.id || null,
       creado_por: userEmail,
       creado_at: new Date().toISOString(),
       actualizado_por: userEmail,
