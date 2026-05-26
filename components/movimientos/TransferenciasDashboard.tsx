@@ -552,13 +552,13 @@ export function TransferenciasDashboard({ products, userEmail, onRefreshProducts
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'Total', value: stats.total, color: 'text-white', bg: 'bg-slate-900 border-slate-800' },
-          { label: 'Pendientes', value: stats.pendientes, color: 'text-amber-400', bg: 'bg-amber-500/5 border-amber-500/20' },
-          { label: 'En Tránsito', value: stats.enTransito, color: 'text-blue-400', bg: 'bg-blue-500/5 border-blue-500/20' },
-          { label: 'Completadas', value: stats.completadas, color: 'text-emerald-400', bg: 'bg-emerald-500/5 border-emerald-500/20' },
+          { label: 'Total', value: stats.total },
+          { label: 'Pendientes', value: stats.pendientes },
+          { label: 'En Tránsito', value: stats.enTransito },
+          { label: 'Completadas', value: stats.completadas },
         ].map(s => (
-          <div key={s.label} className={cn('p-4 rounded-xl border text-center', s.bg)}>
-            <div className={cn('text-2xl font-bold', s.color)}>{s.value}</div>
+          <div key={s.label} className="p-4 rounded-xl border bg-slate-900 border-slate-800 text-center">
+            <div className="text-xl font-medium text-white tabular-nums">{s.value}</div>
             <div className="text-xs text-slate-500 mt-1">{s.label}</div>
           </div>
         ))}

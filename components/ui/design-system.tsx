@@ -209,7 +209,7 @@ export function Button({
   children, className, ...rest
 }: BtnProps) {
   const variants = {
-    primary:   'bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm',
+    primary:   'bg-blue-500 hover:bg-blue-400 text-white shadow-sm',
     secondary: 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700',
     ghost:     'bg-transparent hover:bg-slate-800 text-slate-300',
     danger:    'bg-red-600/90 hover:bg-red-500 text-white',
