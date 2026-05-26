@@ -42,7 +42,8 @@ import {
   Sparkles,
   Truck,
   ShieldAlert,
-  Building2
+  Building2,
+  Home
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -136,6 +137,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       title: t('nav.main') || 'Principal',
       defaultOpen: true,
       items: [
+        { id: 'inicio', label: 'Inicio', icon: Home },
         { id: 'dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
         { id: 'executive', label: t('nav.executive') || 'Vista Ejecutiva', icon: Briefcase, badge: 'C' },
         { id: 'stock', label: t('nav.stock'), icon: Package },

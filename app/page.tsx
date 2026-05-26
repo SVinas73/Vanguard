@@ -60,6 +60,7 @@ const ReplenishmentDashboard = dynamic(() => import('@/components/replenishment/
 const CustomerRiskModule    = dynamic(() => import('@/components/customer-risk/CustomerRiskModule'),                              { loading: ModuleLoader });
 const ConfigModulos         = dynamic(() => import('@/components/configuracion/ConfigModulos').then(m => m.ConfigModulos),         { loading: ModuleLoader });
 const MisEmpresasModule     = dynamic(() => import('@/components/organization/MisEmpresasModule'),                                  { loading: ModuleLoader });
+const InicioHome            = dynamic(() => import('@/components/inicio/InicioHome').then(m => m.InicioHome),                        { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -116,7 +117,7 @@ export default function HomePage() {
   } = useInventoryStore();
 
   // UI State
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabType>('inicio');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [dashboardPeriod, setDashboardPeriod] = useState('30d');
@@ -722,6 +723,15 @@ export default function HomePage() {
           <Breadcrumbs activeTab={activeTab} onNavigate={handleTabChange} />
           <NotificationBell />
         </div>
+
+        {/* ==================== INICIO (escritorio) ==================== */}
+        {activeTab === 'inicio' && (
+          <InicioHome
+            user={user}
+            onTabChange={handleTabChange}
+            products={products}
+          />
+        )}
 
         {/* ==================== DASHBOARD ==================== */}
         {activeTab === 'dashboard' && (

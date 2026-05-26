@@ -13,6 +13,7 @@ export type ModulePreset = 'lite' | 'full' | 'custom';
  * Cubre control de inventario + facturación + reportes básicos.
  */
 export const LITE_MODULES: TabType[] = [
+  'inicio',
   'dashboard',
   'stock',
   'movimientos',
@@ -28,6 +29,7 @@ export const LITE_MODULES: TabType[] = [
  * Si agregás un módulo nuevo al sidebar, agregalo acá también.
  */
 export const ALL_MODULES: TabType[] = [
+  'inicio',
   'dashboard', 'executive', 'stock', 'movimientos', 'chat',
   'comercial', 'replenishment', 'proyectos', 'wms', 'facturacion',
   'clientes_360', 'bom', 'ensamblajes',
@@ -42,7 +44,7 @@ export const ALL_MODULES: TabType[] = [
  * Módulos que SIEMPRE deben estar visibles, sin importar el preset.
  * (Si no, el usuario podría dejarse sin manera de configurar nada.)
  */
-export const PINNED_MODULES: TabType[] = ['dashboard', 'configuracion', 'empresas'];
+export const PINNED_MODULES: TabType[] = ['inicio', 'dashboard', 'configuracion', 'empresas'];
 
 export interface ModuleConfig {
   preset: ModulePreset;
@@ -90,6 +92,7 @@ export function resolverModulosHabilitados(
  * Etiquetas legibles para mostrar en la pantalla de configuración.
  */
 export const MODULE_LABELS: Record<TabType, string> = {
+  inicio: 'Inicio',
   dashboard: 'Dashboard',
   executive: 'Vista Ejecutiva',
   stock: 'Stock',
