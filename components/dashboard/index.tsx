@@ -248,7 +248,6 @@ export function WelcomeHeader({ userName, products, predictions }: WelcomeHeader
             {userName ? `, ${userName}` : ''}
           </h1>
           <p className="text-sm" style={{ color: 'rgba(148,163,184,0.6)' }}>
-            {t('dashboard.businessSummary', 'Resumen de tu negocio')} ·{' '}
             {new Date().toLocaleDateString('es-UY', {
               weekday: 'long',
               day: 'numeric',

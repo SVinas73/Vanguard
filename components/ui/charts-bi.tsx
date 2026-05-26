@@ -93,9 +93,9 @@ export function Donut({
       </ResponsiveContainer>
       {(centerLabel || centerValue) && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-center px-3 py-1.5 rounded-lg bg-slate-950/60 backdrop-blur-sm">
+          <div className="text-center px-3 py-1.5">
             {centerLabel && <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">{centerLabel}</div>}
-            {centerValue && <div className="text-2xl font-bold text-slate-50 tabular-nums mt-0.5">{centerValue}</div>}
+            {centerValue && <div className="text-2xl font-semibold text-slate-100 tabular-nums mt-0.5">{centerValue}</div>}
           </div>
         </div>
       )}
