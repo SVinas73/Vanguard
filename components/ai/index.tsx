@@ -385,7 +385,7 @@ interface AnomaliesData {
   total_anomalias: number;
 }
 
-export function AIAnomaliesPanel({ products = [], movements = [] }: AIPanelDataProps) {
+export function AIAnomaliesPanel({ products = [], movements = [], onRefresh }: AIPanelDataProps) {
   const { t } = useTranslation();
 
   // Detección de anomalías LOCAL (Z-score sobre el historial) — sin backend.
@@ -529,7 +529,7 @@ interface AssociationsData {
   total_transacciones: number;
 }
 
-export function AIAssociationsPanel({ products = [], movements = [] }: AIPanelDataProps) {
+export function AIAssociationsPanel({ products = [], movements = [], onRefresh }: AIPanelDataProps) {
   const { t } = useTranslation();
 
   // Reglas de asociación LOCALES: productos cuyas SALIDAS ocurren el mismo
