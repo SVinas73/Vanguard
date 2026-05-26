@@ -222,9 +222,11 @@ interface AIPanelDataProps {
   products?: Product[];
   movements?: Movement[];
   predictions?: Record<string, StockPrediction>;
+  /** Refresca los datos de origen (productos/movimientos) en el padre. */
+  onRefresh?: () => void;
 }
 
-export function AIPredictionsPanel({ products = [], movements = [], predictions = {} }: AIPanelDataProps) {
+export function AIPredictionsPanel({ products = [], movements = [], predictions = {}, onRefresh }: AIPanelDataProps) {
   const { t } = useTranslation();
 
   // Computamos los productos críticos LOCALMENTE con el predictor que ya
@@ -263,7 +265,7 @@ export function AIPredictionsPanel({ products = [], movements = [], predictions 
 
   const loading = false;
   const error = null;
-  const fetchData = () => {}; // datos locales: el refresh viene de los props
+  const fetchData = () => { onRefresh?.(); };
 
   const accentColor = '#836ba0'; // violet
 
@@ -383,7 +385,7 @@ interface AnomaliesData {
   total_anomalias: number;
 }
 
-export function AIAnomaliesPanel({ products = [], movements = [] }: AIPanelDataProps) {
+export function AIAnomaliesPanel({ products = [], movements = [], onRefresh }: AIPanelDataProps) {
   const { t } = useTranslation();
 
   // Detección de anomalías LOCAL (Z-score sobre el historial) — sin backend.
@@ -414,7 +416,7 @@ export function AIAnomaliesPanel({ products = [], movements = [] }: AIPanelDataP
 
   const loading = false;
   const error = null;
-  const fetchData = () => {};
+  const fetchData = () => { onRefresh?.(); };
 
   const accentColor = '#dfa6a6'; // rose
 
@@ -527,7 +529,7 @@ interface AssociationsData {
   total_transacciones: number;
 }
 
-export function AIAssociationsPanel({ products = [], movements = [] }: AIPanelDataProps) {
+export function AIAssociationsPanel({ products = [], movements = [], onRefresh }: AIPanelDataProps) {
   const { t } = useTranslation();
 
   // Reglas de asociación LOCALES: productos cuyas SALIDAS ocurren el mismo
@@ -581,7 +583,7 @@ export function AIAssociationsPanel({ products = [], movements = [] }: AIPanelDa
 
   const loading = false;
   const error = null;
-  const fetchData = () => {};
+  const fetchData = () => { onRefresh?.(); };
 
   const accentColor = '#4a7fb5'; // cyan
 

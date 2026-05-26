@@ -257,10 +257,10 @@ export default function WMSDashboard() {
   };
 
   const getColorOcupacion = (porcentaje: number) => {
-    if (porcentaje >= 90) return { bg: 'bg-red-500', text: 'text-red-400' };
-    if (porcentaje >= 75) return { bg: 'bg-amber-500', text: 'text-amber-400' };
-    if (porcentaje >= 50) return { bg: 'bg-emerald-500', text: 'text-emerald-400' };
-    return { bg: 'bg-blue-500', text: 'text-blue-400' };
+    if (porcentaje >= 90) return { bg: 'bg-red-500', text: 'text-slate-300' };
+    if (porcentaje >= 75) return { bg: 'bg-amber-500', text: 'text-slate-300' };
+    if (porcentaje >= 50) return { bg: 'bg-emerald-500', text: 'text-slate-300' };
+    return { bg: 'bg-blue-500', text: 'text-slate-300' };
   };
 
   const getIconActividad = (tipo: ActividadReciente['tipo']) => {
@@ -279,7 +279,7 @@ export default function WMSDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-blue-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -297,7 +297,7 @@ export default function WMSDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Warehouse className="h-6 w-6 text-blue-400" />
+            <Warehouse className="h-6 w-6 text-slate-300" />
             Dashboard WMS
           </h3>
           <p className="text-slate-400 text-sm mt-1">
@@ -317,7 +317,7 @@ export default function WMSDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <KpiCard
           icon={Layers}
-          color="text-blue-400"
+          color="text-slate-300"
           label="Ocupación"
           value={`${metricas.porcentaje_ocupacion}%`}
           sub={`${metricas.ubicaciones_ocupadas} / ${metricas.ubicaciones_totales}`}
@@ -325,35 +325,35 @@ export default function WMSDashboard() {
         />
         <KpiCard
           icon={Truck}
-          color="text-amber-400"
+          color="text-slate-300"
           label="Recepciones Pend."
           value={String(metricas.recepciones_pendientes)}
           sub={`${metricas.recepciones_en_proceso} en proceso`}
         />
         <KpiCard
           icon={Target}
-          color="text-purple-400"
+          color="text-slate-300"
           label="Picking Pend."
           value={String(metricas.picking_pendientes)}
           sub={`${metricas.picking_en_proceso} en proceso`}
         />
         <KpiCard
           icon={Archive}
-          color="text-cyan-400"
+          color="text-slate-300"
           label="Putaway Pend."
           value={String(metricas.putaway_pendientes)}
           sub="tareas por acomodar"
         />
         <KpiCard
           icon={CheckCircle}
-          color="text-emerald-400"
+          color="text-slate-300"
           label="Recibidas Hoy"
           value={String(metricas.recepciones_hoy)}
           sub={`${metricas.unidades_recibidas_hoy.toLocaleString()} uds`}
         />
         <KpiCard
           icon={CheckCircle}
-          color="text-emerald-400"
+          color="text-slate-300"
           label="Pickeadas Hoy"
           value={String(metricas.picking_completados_hoy)}
           sub={`${metricas.unidades_pickeadas_hoy.toLocaleString()} uds`}
@@ -366,7 +366,7 @@ export default function WMSDashboard() {
         <div className="lg:col-span-2 bg-slate-900/50 border border-slate-800/50 rounded-xl">
           <div className="p-4 border-b border-slate-800/50">
             <h4 className="font-semibold text-slate-200 flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-blue-400" />
+              <MapPin className="h-5 w-5 text-slate-300" />
               Ocupación por zonas
             </h4>
           </div>
@@ -424,8 +424,8 @@ export default function WMSDashboard() {
               const inProc = act.estado === 'en_proceso';
               return (
                 <div key={act.id} className="p-3 flex items-start gap-3">
-                  <div className={`p-2 rounded-lg ${ok ? 'bg-emerald-500/20' : inProc ? 'bg-blue-500/20' : 'bg-slate-800'}`}>
-                    <Icon className={`h-4 w-4 ${ok ? 'text-emerald-400' : inProc ? 'text-blue-400' : 'text-slate-400'}`} />
+                  <div className={`p-2 rounded-lg ${ok ? 'bg-slate-800/40' : inProc ? 'bg-slate-800/40' : 'bg-slate-800'}`}>
+                    <Icon className={`h-4 w-4 ${ok ? 'text-slate-300' : inProc ? 'text-slate-300' : 'text-slate-400'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-200 truncate">{act.descripcion}</p>
@@ -522,9 +522,9 @@ function AlertCard({
 }) {
   const isActive = value > 0;
   const palette = {
-    red: { bg: 'bg-red-500/10 border-red-500/30', text: 'text-red-400' },
-    amber: { bg: 'bg-amber-500/10 border-amber-500/30', text: 'text-amber-400' },
-    orange: { bg: 'bg-orange-500/10 border-orange-500/30', text: 'text-orange-400' },
+    red: { bg: 'bg-slate-800/40 border-slate-700/40', text: 'text-slate-300' },
+    amber: { bg: 'bg-slate-800/40 border-slate-700/40', text: 'text-slate-300' },
+    orange: { bg: 'bg-slate-800/40 border-slate-700/40', text: 'text-slate-300' },
     slate: { bg: 'bg-slate-700/30 border-slate-600/50', text: 'text-slate-300' },
   }[color];
 

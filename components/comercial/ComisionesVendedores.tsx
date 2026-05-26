@@ -97,9 +97,9 @@ function useToast() {
       {toasts.map(t => (
         <div key={t.id} className={cn(
           'px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3',
-          t.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
-          t.type === 'warning' ? 'bg-amber-500/20 border-amber-500/30 text-amber-400' :
-          'bg-red-500/20 border-red-500/30 text-red-400'
+          t.type === 'success' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          t.type === 'warning' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          'bg-slate-800/40 border-slate-700/40 text-slate-300'
         )}>
           {t.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
           <span className="text-sm font-medium">{t.title}</span>
@@ -519,7 +519,7 @@ export default function ComisionesVendedores() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Award className="h-6 w-6 text-amber-400" />
+            <Award className="h-6 w-6 text-slate-300" />
             Comisiones de Vendedores
           </h2>
         </div>
@@ -536,7 +536,7 @@ export default function ComisionesVendedores() {
             <button key={s.id} onClick={() => setSeccion(s.id)}
               className={cn(
                 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                seccion === s.id ? 'bg-amber-500/15 text-amber-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                seccion === s.id ? 'bg-slate-800/40 text-slate-300' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               )}>
               <Icon size={15} />
               {s.label}
@@ -547,7 +547,7 @@ export default function ComisionesVendedores() {
 
       {loading && (
         <div className="flex items-center justify-center p-12">
-          <RefreshCw className="h-6 w-6 animate-spin text-amber-400" />
+          <RefreshCw className="h-6 w-6 animate-spin text-slate-300" />
         </div>
       )}
 
@@ -557,31 +557,31 @@ export default function ComisionesVendedores() {
           {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-              <div className="p-2 rounded-xl bg-emerald-500/20 w-fit mb-3">
-                <DollarSign className="h-5 w-5 text-emerald-400" />
+              <div className="p-2 rounded-xl bg-slate-800/40 w-fit mb-3">
+                <DollarSign className="h-5 w-5 text-slate-300" />
               </div>
-              <div className="text-2xl font-bold text-emerald-400">{formatCurrency(totalVentas)}</div>
+              <div className="text-2xl font-bold text-slate-300">{formatCurrency(totalVentas)}</div>
               <div className="text-sm text-slate-400">Ventas del Mes</div>
             </div>
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-              <div className="p-2 rounded-xl bg-amber-500/20 w-fit mb-3">
-                <Award className="h-5 w-5 text-amber-400" />
+              <div className="p-2 rounded-xl bg-slate-800/40 w-fit mb-3">
+                <Award className="h-5 w-5 text-slate-300" />
               </div>
-              <div className="text-2xl font-bold text-amber-400">{formatCurrency(totalComisiones)}</div>
+              <div className="text-2xl font-bold text-slate-300">{formatCurrency(totalComisiones)}</div>
               <div className="text-sm text-slate-400">Comisiones Generadas</div>
             </div>
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-              <div className="p-2 rounded-xl bg-blue-500/20 w-fit mb-3">
-                <Users className="h-5 w-5 text-blue-400" />
+              <div className="p-2 rounded-xl bg-slate-800/40 w-fit mb-3">
+                <Users className="h-5 w-5 text-slate-300" />
               </div>
-              <div className="text-2xl font-bold text-blue-400">{resumen.length}</div>
+              <div className="text-2xl font-bold text-slate-300">{resumen.length}</div>
               <div className="text-sm text-slate-400">Vendedores Activos</div>
             </div>
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-              <div className="p-2 rounded-xl bg-purple-500/20 w-fit mb-3">
-                <Percent className="h-5 w-5 text-purple-400" />
+              <div className="p-2 rounded-xl bg-slate-800/40 w-fit mb-3">
+                <Percent className="h-5 w-5 text-slate-300" />
               </div>
-              <div className="text-2xl font-bold text-purple-400">
+              <div className="text-2xl font-bold text-slate-300">
                 {totalVentas > 0 ? ((totalComisiones / totalVentas) * 100).toFixed(1) : '0'}%
               </div>
               <div className="text-sm text-slate-400">% Comisión Promedio</div>
@@ -592,7 +592,7 @@ export default function ComisionesVendedores() {
           {chartData.length > 0 && (
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
               <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-emerald-400" />
+                <BarChart3 className="h-4 w-4 text-slate-300" />
                 Ventas vs Meta por Vendedor
               </h3>
               <ResponsiveContainer width="100%" height={250}>
@@ -642,22 +642,22 @@ export default function ComisionesVendedores() {
                           <div className="font-medium text-slate-200">{v.nombre}</div>
                           <div className="text-xs text-slate-500">{v.email}</div>
                         </td>
-                        <td className="py-3 text-right text-emerald-400 font-medium">{formatCurrency(v.ventasMes)}</td>
+                        <td className="py-3 text-right text-slate-300 font-medium">{formatCurrency(v.ventasMes)}</td>
                         <td className="py-3 text-right text-slate-400">{v.meta > 0 ? formatCurrency(v.meta) : '—'}</td>
                         <td className="py-3 text-right">
                           {v.meta > 0 ? (
                             <span className={cn(
                               'px-2 py-0.5 rounded text-xs font-medium',
-                              v.pctCumplimiento >= 100 ? 'bg-emerald-500/20 text-emerald-400' :
-                              v.pctCumplimiento >= 70 ? 'bg-amber-500/20 text-amber-400' :
-                              'bg-red-500/20 text-red-400'
+                              v.pctCumplimiento >= 100 ? 'bg-slate-800/40 text-slate-300' :
+                              v.pctCumplimiento >= 70 ? 'bg-slate-800/40 text-slate-300' :
+                              'bg-slate-800/40 text-slate-300'
                             )}>
                               {v.pctCumplimiento.toFixed(0)}%
                             </span>
                           ) : <span className="text-slate-600 text-xs">Sin meta</span>}
                         </td>
                         <td className="py-3 text-right text-slate-300">{formatCurrency(v.comisionBase)}</td>
-                        <td className="py-3 text-right text-amber-400">{v.comisionExtra > 0 ? formatCurrency(v.comisionExtra) : '—'}</td>
+                        <td className="py-3 text-right text-slate-300">{v.comisionExtra > 0 ? formatCurrency(v.comisionExtra) : '—'}</td>
                         <td className="py-3 text-right font-bold text-slate-100">{formatCurrency(v.comisionTotal)}</td>
                         <td className="py-3 text-right text-slate-400">{v.ordenes}</td>
                       </tr>
@@ -666,11 +666,11 @@ export default function ComisionesVendedores() {
                   <tfoot className="border-t border-slate-700">
                     <tr className="font-semibold">
                       <td className="py-3 text-slate-300">TOTAL</td>
-                      <td className="py-3 text-right text-emerald-400">{formatCurrency(totalVentas)}</td>
+                      <td className="py-3 text-right text-slate-300">{formatCurrency(totalVentas)}</td>
                       <td className="py-3 text-right text-slate-400">{formatCurrency(resumen.reduce((s, v) => s + v.meta, 0))}</td>
                       <td className="py-3 text-right"></td>
                       <td className="py-3 text-right text-slate-300">{formatCurrency(resumen.reduce((s, v) => s + v.comisionBase, 0))}</td>
-                      <td className="py-3 text-right text-amber-400">{formatCurrency(resumen.reduce((s, v) => s + v.comisionExtra, 0))}</td>
+                      <td className="py-3 text-right text-slate-300">{formatCurrency(resumen.reduce((s, v) => s + v.comisionExtra, 0))}</td>
                       <td className="py-3 text-right text-slate-100">{formatCurrency(totalComisiones)}</td>
                       <td className="py-3 text-right text-slate-400">{resumen.reduce((s, v) => s + v.ordenes, 0)}</td>
                     </tr>
@@ -687,13 +687,13 @@ export default function ComisionesVendedores() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <button onClick={() => { setShowReglaForm(true); setEditRegla(null); resetReglaForm(); setShowReglaForm(true); }}
-              className="flex items-center gap-2 px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-xl text-sm font-medium transition-colors">
+              className="flex items-center gap-2 px-3 py-2 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded-xl text-sm font-medium transition-colors">
               <Plus className="h-4 w-4" /> Nueva Regla
             </button>
           </div>
 
           {showReglaForm && (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
+            <div className="rounded-xl border border-slate-700/40 bg-slate-800/40 p-5">
               <h3 className="font-semibold text-slate-200 mb-4">{editRegla ? 'Editar Regla' : 'Nueva Regla de Comisión'}</h3>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
@@ -767,11 +767,11 @@ export default function ComisionesVendedores() {
                     <tr key={r.id} className="hover:bg-slate-800/30 transition-colors">
                       <td className="px-4 py-3 text-slate-200 font-medium">{r.vendedor_email ? (r.vendedor_nombre || r.vendedor_email.split('@')[0]) : <span className="text-slate-400 italic">Todos</span>}</td>
                       <td className="px-4 py-3 text-slate-400">{r.categoria || <span className="italic">Todas</span>}</td>
-                      <td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400">{r.pct_comision}%</span></td>
-                      <td className="px-4 py-3">{r.pct_comision_extra ? <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400">+{r.pct_comision_extra}%</span> : '—'}</td>
+                      <td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-800/40 text-slate-300">{r.pct_comision}%</span></td>
+                      <td className="px-4 py-3">{r.pct_comision_extra ? <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-800/40 text-slate-300">+{r.pct_comision_extra}%</span> : '—'}</td>
                       <td className="px-4 py-3 text-slate-400">{r.meta_minima ? formatCurrency(r.meta_minima) : '—'}</td>
                       <td className="px-4 py-3">
-                        <span className={cn('px-2 py-0.5 rounded text-xs font-medium', r.activa ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-500')}>
+                        <span className={cn('px-2 py-0.5 rounded text-xs font-medium', r.activa ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-700 text-slate-500')}>
                           {r.activa ? 'Activa' : 'Inactiva'}
                         </span>
                       </td>
@@ -790,7 +790,7 @@ export default function ComisionesVendedores() {
                           }} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors">
                             <Edit className="h-4 w-4" />
                           </button>
-                          <button onClick={() => eliminarRegla(r)} className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors">
+                          <button onClick={() => eliminarRegla(r)} className="p-1.5 rounded-lg hover:bg-slate-800/40 text-slate-300 transition-colors">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
@@ -812,13 +812,13 @@ export default function ComisionesVendedores() {
               Define metas de ventas mensuales por vendedor — {new Date().toLocaleDateString('es-UY', { month: 'long', year: 'numeric' })}
             </p>
             <button onClick={() => setShowMetaForm(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-xl text-sm font-medium transition-colors">
+              className="flex items-center gap-2 px-3 py-2 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded-xl text-sm font-medium transition-colors">
               <Plus className="h-4 w-4" /> Asignar Meta
             </button>
           </div>
 
           {showMetaForm && (
-            <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-5">
+            <div className="rounded-xl border border-slate-700/40 bg-slate-800/40 p-5">
               <h3 className="font-semibold text-slate-200 mb-4">Asignar Meta Mensual</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -866,7 +866,7 @@ export default function ComisionesVendedores() {
                       <div className="text-xs text-slate-500">{v.email}</div>
                     </div>
                     {pct >= 100 && metaVal > 0 && (
-                      <Award className="h-5 w-5 text-amber-400" />
+                      <Award className="h-5 w-5 text-slate-300" />
                     )}
                   </div>
 
@@ -876,7 +876,7 @@ export default function ComisionesVendedores() {
                         <span>{formatCurrency(ventasVal)} de {formatCurrency(metaVal)}</span>
                         <span className={cn(
                           'font-bold',
-                          pct >= 100 ? 'text-emerald-400' : pct >= 70 ? 'text-amber-400' : 'text-red-400'
+                          pct >= 100 ? 'text-slate-300' : pct >= 70 ? 'text-slate-300' : 'text-slate-300'
                         )}>{pct.toFixed(0)}%</span>
                       </div>
                       <div className="w-full bg-slate-800 rounded-full h-2">
@@ -944,17 +944,17 @@ export default function ComisionesVendedores() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
                   <div className="text-xs text-slate-400 mb-1">Pendientes</div>
-                  <div className="text-xl font-bold text-amber-400">{formatCurrency(sumar(pendientes))}</div>
+                  <div className="text-xl font-bold text-slate-300">{formatCurrency(sumar(pendientes))}</div>
                   <div className="text-xs text-slate-500">{pendientes.length} liquidaciones</div>
                 </div>
                 <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
                   <div className="text-xs text-slate-400 mb-1">Aprobadas</div>
-                  <div className="text-xl font-bold text-blue-400">{formatCurrency(sumar(aprobadas))}</div>
+                  <div className="text-xl font-bold text-slate-300">{formatCurrency(sumar(aprobadas))}</div>
                   <div className="text-xs text-slate-500">{aprobadas.length} liquidaciones</div>
                 </div>
                 <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
                   <div className="text-xs text-slate-400 mb-1">Pagadas</div>
-                  <div className="text-xl font-bold text-emerald-400">{formatCurrency(sumar(pagadas))}</div>
+                  <div className="text-xl font-bold text-slate-300">{formatCurrency(sumar(pagadas))}</div>
                   <div className="text-xs text-slate-500">{pagadas.length} liquidaciones</div>
                 </div>
                 <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
@@ -992,9 +992,9 @@ export default function ComisionesVendedores() {
                     </tr>
                   ) : liquidaciones.map(l => {
                     const cfg = {
-                      pendiente: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'Pendiente' },
-                      aprobada: { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Aprobada' },
-                      pagada: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: 'Pagada' },
+                      pendiente: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Pendiente' },
+                      aprobada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Aprobada' },
+                      pagada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Pagada' },
                       anulada: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Anulada' },
                     }[l.estado];
                     return (
@@ -1007,14 +1007,14 @@ export default function ComisionesVendedores() {
                         <td className="px-4 py-3 text-right">
                           <span className={cn(
                             'font-bold',
-                            l.pct_cumplimiento >= 100 ? 'text-emerald-400' :
-                            l.pct_cumplimiento >= 70 ? 'text-amber-400' : 'text-red-400'
+                            l.pct_cumplimiento >= 100 ? 'text-slate-300' :
+                            l.pct_cumplimiento >= 70 ? 'text-slate-300' : 'text-slate-300'
                           )}>
                             {l.pct_cumplimiento.toFixed(0)}%
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <div className="font-bold text-amber-400 font-mono">{formatCurrency(l.comision_total)}</div>
+                          <div className="font-bold text-slate-300 font-mono">{formatCurrency(l.comision_total)}</div>
                           {l.comision_extra > 0 && (
                             <div className="text-[10px] text-slate-500">+{formatCurrency(l.comision_extra)} bono</div>
                           )}
@@ -1033,7 +1033,7 @@ export default function ComisionesVendedores() {
                               <button
                                 onClick={() => cambiarEstadoLiquidacion(l, 'aprobada')}
                                 disabled={procesandoLiq === l.id}
-                                className="px-2 py-1 rounded-lg text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 disabled:opacity-50"
+                                className="px-2 py-1 rounded-lg text-xs bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 disabled:opacity-50"
                                 title="Aprobar"
                               >
                                 Aprobar
@@ -1043,7 +1043,7 @@ export default function ComisionesVendedores() {
                               <button
                                 onClick={() => cambiarEstadoLiquidacion(l, 'pagada')}
                                 disabled={procesandoLiq === l.id}
-                                className="px-2 py-1 rounded-lg text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 disabled:opacity-50 flex items-center gap-1"
+                                className="px-2 py-1 rounded-lg text-xs bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 disabled:opacity-50 flex items-center gap-1"
                                 title="Marcar como pagada"
                               >
                                 <CheckCircle className="h-3 w-3" />
@@ -1054,7 +1054,7 @@ export default function ComisionesVendedores() {
                               <button
                                 onClick={() => cambiarEstadoLiquidacion(l, 'anulada')}
                                 disabled={procesandoLiq === l.id}
-                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 disabled:opacity-50"
+                                className="p-1.5 rounded-lg hover:bg-slate-800/40 text-slate-300 disabled:opacity-50"
                                 title="Anular"
                               >
                                 <XCircle className="h-3.5 w-3.5" />

@@ -74,9 +74,9 @@ function useToast() {
       {toasts.map(t => (
         <div key={t.id} className={cn(
           'px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3 animate-in slide-in-from-right',
-          t.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
-          t.type === 'error' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
-          'bg-amber-500/20 border-amber-500/30 text-amber-400'
+          t.type === 'success' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          t.type === 'error' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          'bg-slate-800/40 border-slate-700/40 text-slate-300'
         )}>
           {t.type === 'success' ? <CheckCircle className="h-5 w-5" /> :
            t.type === 'error' ? <XCircle className="h-5 w-5" /> :
@@ -105,10 +105,10 @@ function useToast() {
 const getEstadoConfig = (estado: OrdenCompra['estado']) => {
   const configs = {
     borrador: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Borrador' },
-    enviada: { color: 'text-cyan-400', bg: 'bg-cyan-500/20', label: 'Enviada' },
-    parcial: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'Parcial' },
-    recibida: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: 'Recibida' },
-    cancelada: { color: 'text-red-400', bg: 'bg-red-500/20', label: 'Cancelada' },
+    enviada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Enviada' },
+    parcial: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Parcial' },
+    recibida: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Recibida' },
+    cancelada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Cancelada' },
   };
   return configs[estado];
 };
@@ -116,9 +116,9 @@ const getEstadoConfig = (estado: OrdenCompra['estado']) => {
 const getPrioridadConfig = (prioridad: OrdenCompra['prioridad']) => {
   const configs = {
     baja: { color: 'text-slate-400', bg: 'bg-slate-500/20' },
-    normal: { color: 'text-blue-400', bg: 'bg-blue-500/20' },
-    alta: { color: 'text-amber-400', bg: 'bg-amber-500/20' },
-    urgente: { color: 'text-red-400', bg: 'bg-red-500/20' },
+    normal: { color: 'text-slate-300', bg: 'bg-slate-800/40' },
+    alta: { color: 'text-slate-300', bg: 'bg-slate-800/40' },
+    urgente: { color: 'text-slate-300', bg: 'bg-slate-800/40' },
   };
   return configs[prioridad];
 };
@@ -606,7 +606,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-cyan-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -619,7 +619,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-            <Truck className="h-7 w-7 text-cyan-400" />
+            <Truck className="h-7 w-7 text-slate-300" />
             Órdenes de Compra
           </h2>
           <p className="text-slate-400 text-sm mt-1">Gestión con recepciones parciales</p>
@@ -653,25 +653,25 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Send className="h-4 w-4 text-cyan-400" />
+            <Send className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">En Tránsito</span>
           </div>
-          <div className="text-2xl font-bold text-cyan-400">{stats.enTransito}</div>
+          <div className="text-2xl font-bold text-slate-300">{stats.enTransito}</div>
           <div className="text-xs text-slate-500">{formatCurrency(stats.totalTransito)}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="h-4 w-4 text-amber-400" />
+            <Clock className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">Parciales</span>
           </div>
-          <div className="text-2xl font-bold text-amber-400">{stats.parciales}</div>
+          <div className="text-2xl font-bold text-slate-300">{stats.parciales}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="h-4 w-4 text-red-400" />
+            <AlertTriangle className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">Atrasadas</span>
           </div>
-          <div className="text-2xl font-bold text-red-400">{stats.atrasadas}</div>
+          <div className="text-2xl font-bold text-slate-300">{stats.atrasadas}</div>
         </div>
       </div>
 
@@ -740,7 +740,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
 
                   return (
                     <React.Fragment key={orden.id}>
-                      <tr className={cn('hover:bg-slate-800/30', atrasada && 'bg-red-500/5')}>
+                      <tr className={cn('hover:bg-slate-800/30', atrasada && 'bg-slate-800/40')}>
                         <td className="px-4 py-4">
                           <button onClick={() => toggleRow(orden.id)} className="p-1 hover:bg-slate-700 rounded">
                             {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
@@ -785,7 +785,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                         </td>
                         <td className="px-4 py-4">
                           {orden.fechaEsperada ? (
-                            <div className={cn('flex items-center gap-1', atrasada && 'text-red-400')}>
+                            <div className={cn('flex items-center gap-1', atrasada && 'text-slate-300')}>
                               {atrasada && <AlertTriangle className="h-4 w-4" />}
                               <span>{new Date(orden.fechaEsperada).toLocaleDateString('es-UY')}</span>
                             </div>
@@ -796,20 +796,20 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                             {orden.estado === 'borrador' && (
                               <>
                                 <button onClick={() => cambiarEstado(orden, 'enviada')} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Enviar">
-                                  <Send className="h-4 w-4 text-cyan-400" />
+                                  <Send className="h-4 w-4 text-slate-300" />
                                 </button>
                                 <button onClick={() => cambiarEstado(orden, 'cancelada')} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Cancelar">
-                                  <XCircle className="h-4 w-4 text-red-400" />
+                                  <XCircle className="h-4 w-4 text-slate-300" />
                                 </button>
                               </>
                             )}
                             {(orden.estado === 'enviada' || orden.estado === 'parcial') && (
                               <button onClick={() => abrirRecepcion(orden)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Recibir">
-                                <PackageCheck className="h-4 w-4 text-emerald-400" />
+                                <PackageCheck className="h-4 w-4 text-slate-300" />
                               </button>
                             )}
                             <button onClick={() => { setSelectedOrden(orden); setModalType('view'); }} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Ver">
-                              <Eye className="h-4 w-4 text-blue-400" />
+                              <Eye className="h-4 w-4 text-slate-300" />
                             </button>
                           </div>
                         </td>
@@ -829,9 +829,9 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                                     </div>
                                     <div className="flex items-center gap-6 text-sm">
                                       <span className="text-slate-400">Ord: {item.cantidadOrdenada}</span>
-                                      <span className="text-emerald-400">Rec: {item.cantidadRecibida}</span>
-                                      <span className={pendiente > 0 ? 'text-amber-400' : 'text-slate-500'}>Pend: {pendiente}</span>
-                                      <span className="text-cyan-400">{formatCurrency(item.subtotal)}</span>
+                                      <span className="text-slate-300">Rec: {item.cantidadRecibida}</span>
+                                      <span className={pendiente > 0 ? 'text-slate-300' : 'text-slate-500'}>Pend: {pendiente}</span>
+                                      <span className="text-slate-300">{formatCurrency(item.subtotal)}</span>
                                     </div>
                                   </div>
                                 );
@@ -930,7 +930,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm text-slate-400">Productos *</label>
-                  <button onClick={addItem} className="text-sm text-cyan-400 hover:text-cyan-300">+ Agregar</button>
+                  <button onClick={addItem} className="text-sm text-slate-300 hover:text-slate-300">+ Agregar</button>
                 </div>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {newOrden.items.map((item, idx) => (
@@ -959,7 +959,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                         placeholder="Costo"
                         step="0.01"
                       />
-                      <button onClick={() => removeItem(idx)} className="p-1 text-red-400 hover:text-red-300">
+                      <button onClick={() => removeItem(idx)} className="p-1 text-slate-300 hover:text-slate-300">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -969,9 +969,9 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                   )}
                 </div>
                 {newOrden.items.length > 0 && (
-                  <div className="mt-2 p-2 bg-cyan-500/10 border border-cyan-500/20 rounded-xl flex justify-between">
+                  <div className="mt-2 p-2 bg-slate-800/40 border border-slate-700/40 rounded-xl flex justify-between">
                     <span className="text-sm text-slate-400">Total:</span>
-                    <span className="font-bold text-cyan-400">
+                    <span className="font-bold text-slate-300">
                       {formatCurrency(newOrden.items.reduce((s, i) => s + i.cantidad * i.costoUnitario, 0))}
                     </span>
                   </div>
@@ -1012,7 +1012,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <PackageCheck className="h-5 w-5 text-emerald-400" />
+                <PackageCheck className="h-5 w-5 text-slate-300" />
                 Registrar Recepción
               </h3>
               <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg">
@@ -1050,7 +1050,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                       <div key={item.id} className="p-3 bg-slate-800/30 rounded-xl">
                         <div className="flex justify-between mb-2">
                           <span className="text-sm text-slate-200">{producto?.descripcion || item.productoCodigo}</span>
-                          <span className="text-sm text-amber-400">Pend: {pendiente}</span>
+                          <span className="text-sm text-slate-300">Pend: {pendiente}</span>
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                           <div>
@@ -1065,7 +1065,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                               }}
                               min="0"
                               max={pendiente}
-                              className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-emerald-400"
+                              className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-300"
                             />
                           </div>
                           <div>
@@ -1079,7 +1079,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                                 setRecepcionForm({ ...recepcionForm, items });
                               }}
                               min="0"
-                              className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-red-400"
+                              className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-300"
                             />
                           </div>
                           <div>
@@ -1248,7 +1248,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
               </div>
               <div className="bg-slate-800/50 rounded-xl p-3">
                 <div className="text-xs text-slate-500">Total</div>
-                <div className="text-cyan-400 font-semibold">{formatCurrency(selectedOrden.total)}</div>
+                <div className="text-slate-300 font-semibold">{formatCurrency(selectedOrden.total)}</div>
               </div>
               <div className="bg-slate-800/50 rounded-xl p-3">
                 <div className="text-xs text-slate-500">Fecha</div>
@@ -1268,7 +1268,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                     </div>
                     <div className="flex gap-4 text-sm">
                       <span className="text-slate-400">{item.cantidadRecibida}/{item.cantidadOrdenada}</span>
-                      <span className="text-cyan-400">{formatCurrency(item.subtotal)}</span>
+                      <span className="text-slate-300">{formatCurrency(item.subtotal)}</span>
                     </div>
                   </div>
                 );

@@ -149,7 +149,7 @@ export default function ConfiguracionWMS() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {dirty && <span className="text-xs text-amber-400">Cambios sin guardar</span>}
+          {dirty && <span className="text-xs text-slate-300">Cambios sin guardar</span>}
           <button
             onClick={handleSave}
             disabled={!dirty || saving}

@@ -108,28 +108,28 @@ type FiltroTipo = 'todos' | TipoMovimientoWMS;
 // ============================================
 
 const TIPO_MOVIMIENTO_CONFIG: Record<TipoMovimientoWMS, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  transferencia: { label: 'Transferencia', color: 'text-blue-400', bg: 'bg-blue-500/20', icon: ArrowLeftRight },
-  reposicion: { label: 'Reposición', color: 'text-purple-400', bg: 'bg-purple-500/20', icon: ArrowDown },
-  consolidacion: { label: 'Consolidación', color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: Package },
-  reubicacion: { label: 'Reubicación', color: 'text-orange-400', bg: 'bg-orange-500/20', icon: Shuffle },
-  entrada: { label: 'Entrada', color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: ArrowDown },
-  salida: { label: 'Salida', color: 'text-red-400', bg: 'bg-red-500/20', icon: ArrowUp },
-  ajuste: { label: 'Ajuste', color: 'text-amber-400', bg: 'bg-amber-500/20', icon: RotateCcw },
+  transferencia: { label: 'Transferencia', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: ArrowLeftRight },
+  reposicion: { label: 'Reposición', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: ArrowDown },
+  consolidacion: { label: 'Consolidación', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: Package },
+  reubicacion: { label: 'Reubicación', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: Shuffle },
+  entrada: { label: 'Entrada', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: ArrowDown },
+  salida: { label: 'Salida', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: ArrowUp },
+  ajuste: { label: 'Ajuste', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: RotateCcw },
 };
 
 const ESTADO_MOVIMIENTO_CONFIG: Record<EstadoMovimientoWMS, { label: string; color: string; bg: string }> = {
   pendiente: { label: 'Pendiente', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  en_proceso: { label: 'En Proceso', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  completado: { label: 'Completado', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  cancelado: { label: 'Cancelado', color: 'text-red-400', bg: 'bg-red-500/20' },
+  en_proceso: { label: 'En Proceso', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  completado: { label: 'Completado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  cancelado: { label: 'Cancelado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 const ESTADO_TRANSFERENCIA_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   borrador: { label: 'Borrador', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  enviada: { label: 'Enviada', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  en_transito: { label: 'En Tránsito', color: 'text-purple-400', bg: 'bg-purple-500/20' },
-  recibida: { label: 'Recibida', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  cancelada: { label: 'Cancelada', color: 'text-red-400', bg: 'bg-red-500/20' },
+  enviada: { label: 'Enviada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_transito: { label: 'En Tránsito', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  recibida: { label: 'Recibida', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  cancelada: { label: 'Cancelada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 // ============================================
@@ -648,7 +648,7 @@ export default function Movimientos() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-orange-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -669,7 +669,7 @@ export default function Movimientos() {
               onClick={() => setVistaActiva(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 vistaActiva === tab.id
-                  ? 'bg-orange-500/20 text-orange-400'
+                  ? 'bg-slate-800/40 text-slate-300'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
@@ -692,22 +692,22 @@ export default function Movimientos() {
               <div className="text-2xl font-bold text-slate-200">{stats.movHoy}</div>
               <div className="text-xs text-slate-400">Mov. Hoy</div>
             </div>
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-emerald-400">+{stats.entradas}</div>
-              <div className="text-xs text-emerald-400">Entradas</div>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-slate-300">+{stats.entradas}</div>
+              <div className="text-xs text-slate-300">Entradas</div>
             </div>
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-red-400">-{stats.salidas}</div>
-              <div className="text-xs text-red-400">Salidas</div>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-slate-300">-{stats.salidas}</div>
+              <div className="text-xs text-slate-300">Salidas</div>
             </div>
-            <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-purple-400">{stats.transferenciasActivas}</div>
-              <div className="text-xs text-purple-400">En Tránsito</div>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-slate-300">{stats.transferenciasActivas}</div>
+              <div className="text-xs text-slate-300">En Tránsito</div>
             </div>
             {stats.pendientes > 0 && (
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-amber-400">{stats.pendientes}</div>
-                <div className="text-xs text-amber-400">Pendientes</div>
+              <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-slate-300">{stats.pendientes}</div>
+                <div className="text-xs text-slate-300">Pendientes</div>
               </div>
             )}
           </div>
@@ -778,7 +778,7 @@ export default function Movimientos() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-mono text-sm text-orange-400">{mov.numero}</span>
+                          <span className="font-mono text-sm text-slate-300">{mov.numero}</span>
                           <span className={`px-2 py-0.5 rounded-full text-xs ${estadoConfig.bg} ${estadoConfig.color}`}>
                             {estadoConfig.label}
                           </span>
@@ -797,7 +797,7 @@ export default function Movimientos() {
                             <ArrowRight className="h-3 w-3" />
                           )}
                           {mov.ubicacion_destino_codigo && (
-                            <span className="font-mono text-emerald-400">{mov.ubicacion_destino_codigo}</span>
+                            <span className="font-mono text-slate-300">{mov.ubicacion_destino_codigo}</span>
                           )}
                           <span>•</span>
                           <span>{formatDateTime(mov.created_at)}</span>
@@ -807,8 +807,8 @@ export default function Movimientos() {
                     
                     <div className="flex items-center gap-4">
                       <div className={`text-xl font-bold ${
-                        mov.tipo === 'entrada' ? 'text-emerald-400' :
-                        mov.tipo === 'salida' ? 'text-red-400' : 'text-slate-200'
+                        mov.tipo === 'entrada' ? 'text-slate-300' :
+                        mov.tipo === 'salida' ? 'text-slate-300' : 'text-slate-200'
                       }`}>
                         {mov.tipo === 'entrada' ? '+' : mov.tipo === 'salida' ? '-' : ''}{mov.cantidad}
                       </div>
@@ -851,7 +851,7 @@ export default function Movimientos() {
         <>
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <Truck className="h-6 w-6 text-orange-400" />
+              <Truck className="h-6 w-6 text-slate-300" />
               Transferencias entre Almacenes
             </h3>
             
@@ -873,7 +873,7 @@ export default function Movimientos() {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="font-mono text-sm text-orange-400">{trans.numero}</span>
+                        <span className="font-mono text-sm text-slate-300">{trans.numero}</span>
                         <span className={`px-2 py-0.5 rounded-full text-xs ${estadoConfig.bg} ${estadoConfig.color}`}>
                           {estadoConfig.label}
                         </span>
@@ -881,7 +881,7 @@ export default function Movimientos() {
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-slate-200">{trans.almacen_origen?.nombre || 'Origen'}</span>
                         <ArrowRight className="h-4 w-4 text-slate-500" />
-                        <span className="text-emerald-400 font-medium">{trans.almacen_destino?.nombre || 'Destino'}</span>
+                        <span className="text-slate-300 font-medium">{trans.almacen_destino?.nombre || 'Destino'}</span>
                       </div>
                       <div className="text-xs text-slate-500 mt-1">
                         {trans.items.length} producto(s) • {formatDateTime(trans.fecha_solicitud)}
@@ -1205,7 +1205,7 @@ function NuevaTransferenciaForm({
                       <span className="font-bold text-slate-200">{item.cantidad}</span>
                       <button
                         onClick={() => setForm({ ...form, items: form.items.filter((_: any, i: number) => i !== idx) })}
-                        className="p-1 text-slate-500 hover:text-red-400"
+                        className="p-1 text-slate-500 hover:text-slate-300"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -1270,7 +1270,7 @@ function DetalleTransferencia({
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-lg text-orange-400">{transferencia.numero}</span>
+              <span className="font-mono text-lg text-slate-300">{transferencia.numero}</span>
               <span className={`px-2 py-1 rounded-full text-xs ${estadoConfig.bg} ${estadoConfig.color}`}>
                 {estadoConfig.label}
               </span>
@@ -1310,9 +1310,9 @@ function DetalleTransferencia({
         <div className="flex items-center justify-center">
           <ArrowRight className="h-8 w-8 text-slate-600" />
         </div>
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
-          <div className="text-xs text-emerald-400 mb-1">Destino</div>
-          <div className="font-semibold text-emerald-400">{almacenDestino?.nombre || '-'}</div>
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 text-center">
+          <div className="text-xs text-slate-300 mb-1">Destino</div>
+          <div className="font-semibold text-slate-300">{almacenDestino?.nombre || '-'}</div>
         </div>
       </div>
 
@@ -1333,7 +1333,7 @@ function DetalleTransferencia({
                 <div className="text-right">
                   <div className="font-bold text-slate-200">{item.cantidad_solicitada}</div>
                   {transferencia.estado === 'recibida' && (
-                    <div className="text-xs text-emerald-400">Recibido: {item.cantidad_recibida}</div>
+                    <div className="text-xs text-slate-300">Recibido: {item.cantidad_recibida}</div>
                   )}
                 </div>
               </div>

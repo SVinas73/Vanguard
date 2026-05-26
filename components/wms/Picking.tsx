@@ -122,27 +122,27 @@ type VistaActiva = 'ordenes' | 'waves' | 'asistente' | 'nueva_wave' | 'detalle_w
 
 const ESTADO_WAVE_CONFIG: Record<EstadoWave, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   borrador: { label: 'Borrador', color: 'text-slate-400', bg: 'bg-slate-500/20', icon: Edit },
-  planificada: { label: 'Planificada', color: 'text-blue-400', bg: 'bg-blue-500/20', icon: Calendar },
-  liberada: { label: 'Liberada', color: 'text-purple-400', bg: 'bg-purple-500/20', icon: Play },
-  en_proceso: { label: 'En Proceso', color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Zap },
-  completada: { label: 'Completada', color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle },
-  cancelada: { label: 'Cancelada', color: 'text-red-400', bg: 'bg-red-500/20', icon: XCircle },
+  planificada: { label: 'Planificada', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: Calendar },
+  liberada: { label: 'Liberada', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: Play },
+  en_proceso: { label: 'En Proceso', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: Zap },
+  completada: { label: 'Completada', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: CheckCircle },
+  cancelada: { label: 'Cancelada', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: XCircle },
 };
 
 const ESTADO_ORDEN_CONFIG: Record<EstadoOrdenPicking, { label: string; color: string; bg: string }> = {
   pendiente: { label: 'Pendiente', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  asignada: { label: 'Asignada', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  en_proceso: { label: 'En Proceso', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  completada: { label: 'Completada', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  parcial: { label: 'Parcial', color: 'text-orange-400', bg: 'bg-orange-500/20' },
-  cancelada: { label: 'Cancelada', color: 'text-red-400', bg: 'bg-red-500/20' },
+  asignada: { label: 'Asignada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_proceso: { label: 'En Proceso', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  completada: { label: 'Completada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  parcial: { label: 'Parcial', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  cancelada: { label: 'Cancelada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 const ESTADO_LINEA_CONFIG: Record<EstadoLineaPicking, { label: string; color: string; bg: string }> = {
   pendiente: { label: 'Pendiente', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  en_proceso: { label: 'En Proceso', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  completada: { label: 'Completada', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  short_pick: { label: 'Short Pick', color: 'text-red-400', bg: 'bg-red-500/20' },
+  en_proceso: { label: 'En Proceso', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  completada: { label: 'Completada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  short_pick: { label: 'Short Pick', color: 'text-slate-300', bg: 'bg-slate-800/40' },
   cancelada: { label: 'Cancelada', color: 'text-slate-400', bg: 'bg-slate-500/20' },
 };
 
@@ -736,7 +736,7 @@ export default function Picking() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-purple-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -758,7 +758,7 @@ export default function Picking() {
               onClick={() => setVistaActiva(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 vistaActiva === tab.id
-                  ? 'bg-purple-500/20 text-purple-400'
+                  ? 'bg-slate-800/40 text-slate-300'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
@@ -781,21 +781,21 @@ export default function Picking() {
               <div className="text-2xl font-bold text-slate-200">{stats.pendientes}</div>
               <div className="text-xs text-slate-400">Pendientes</div>
             </div>
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-amber-400">{stats.enProceso}</div>
-              <div className="text-xs text-amber-400">En Proceso</div>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-slate-300">{stats.enProceso}</div>
+              <div className="text-xs text-slate-300">En Proceso</div>
             </div>
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-emerald-400">{stats.completadasHoy}</div>
-              <div className="text-xs text-emerald-400">Completadas Hoy</div>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-slate-300">{stats.completadasHoy}</div>
+              <div className="text-xs text-slate-300">Completadas Hoy</div>
             </div>
-            <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-purple-400">{stats.wavesActivas}</div>
-              <div className="text-xs text-purple-400">Waves Activas</div>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-slate-300">{stats.wavesActivas}</div>
+              <div className="text-xs text-slate-300">Waves Activas</div>
             </div>
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-blue-400">{stats.sinAsignar}</div>
-              <div className="text-xs text-blue-400">Sin Wave</div>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-slate-300">{stats.sinAsignar}</div>
+              <div className="text-xs text-slate-300">Sin Wave</div>
             </div>
           </div>
 
@@ -874,7 +874,7 @@ export default function Picking() {
                     
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <span className="font-mono text-sm text-purple-400">{orden.numero}</span>
+                        <span className="font-mono text-sm text-slate-300">{orden.numero}</span>
                         <span className={`px-2 py-0.5 rounded-full text-xs ${estadoConfig.bg} ${estadoConfig.color}`}>
                           {estadoConfig.label}
                         </span>
@@ -950,7 +950,7 @@ export default function Picking() {
         <>
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <Layers className="h-6 w-6 text-purple-400" />
+              <Layers className="h-6 w-6 text-slate-300" />
               Waves de Picking
             </h3>
           </div>
@@ -968,13 +968,13 @@ export default function Picking() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="font-mono text-sm text-purple-400">{wave.numero}</span>
+                        <span className="font-mono text-sm text-slate-300">{wave.numero}</span>
                         <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${estadoConfig.bg} ${estadoConfig.color}`}>
                           <EstadoIcon className="h-3 w-3" />
                           {estadoConfig.label}
                         </span>
                         {wave.ruta_optimizada && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full text-xs">
+                          <span className="flex items-center gap-1 px-2 py-0.5 bg-slate-800/40 text-slate-300 rounded-full text-xs">
                             <Route className="h-3 w-3" />
                             Ruta Optimizada
                           </span>
@@ -1115,10 +1115,10 @@ function AsistenteIA({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-emerald-500/10 border border-purple-500/30 rounded-xl p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-slate-800 via-slate-800 to-slate-800 border border-slate-700/40 rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <div className="p-2 bg-purple-500/20 rounded-lg">
-            <Sparkles className="h-5 w-5 text-purple-300" />
+          <div className="p-2 bg-slate-800/40 rounded-lg">
+            <Sparkles className="h-5 w-5 text-slate-300" />
           </div>
           <div>
             <h3 className="text-lg font-bold text-slate-100">Asistente IA de Picking</h3>
@@ -1137,7 +1137,7 @@ function AsistenteIA({
       {/* Sugerencias de waves */}
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
         <h4 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
-          <Layers className="h-4 w-4 text-blue-400" />
+          <Layers className="h-4 w-4 text-slate-300" />
           Waves sugeridas ({waveSugerencias.length})
         </h4>
         {waveSugerencias.length === 0 ? (
@@ -1152,10 +1152,10 @@ function AsistenteIA({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${
-                        sug.motivo === 'urgencia' ? 'bg-red-500/20 text-red-300' :
-                        sug.motivo === 'batch_producto' ? 'bg-blue-500/20 text-blue-300' :
-                        sug.motivo === 'cluster_cliente' ? 'bg-emerald-500/20 text-emerald-300' :
-                        'bg-purple-500/20 text-purple-300'
+                        sug.motivo === 'urgencia' ? 'bg-slate-800/40 text-slate-300' :
+                        sug.motivo === 'batch_producto' ? 'bg-slate-800/40 text-slate-300' :
+                        sug.motivo === 'cluster_cliente' ? 'bg-slate-800/40 text-slate-300' :
+                        'bg-slate-800/40 text-slate-300'
                       }`}>
                         {sug.motivo.replace('_', ' ')}
                       </span>
@@ -1169,7 +1169,7 @@ function AsistenteIA({
                   </div>
                   <button
                     onClick={() => onAplicarWave(sug)}
-                    className="px-2.5 py-1 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-xs font-medium rounded-lg flex-shrink-0"
+                    className="px-2.5 py-1 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 text-xs font-medium rounded-lg flex-shrink-0"
                   >
                     Aplicar
                   </button>
@@ -1183,7 +1183,7 @@ function AsistenteIA({
       {/* Balance de carga por picker */}
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
         <h4 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
-          <Users className="h-4 w-4 text-emerald-400" />
+          <Users className="h-4 w-4 text-slate-300" />
           Carga de pickers ({cargaTotal} uds activas)
         </h4>
         {pickerMetricas.length === 0 ? (
@@ -1197,7 +1197,7 @@ function AsistenteIA({
                 const pct = cargaMax > 0 ? (carga / cargaMax) * 100 : 0;
                 const factor = p.productividadFactor ?? 1;
                 const eficiencia = factor < 0.85 ? 'rápido' : factor > 1.15 ? 'lento' : 'normal';
-                const eficColor = factor < 0.85 ? 'text-emerald-400' : factor > 1.15 ? 'text-amber-400' : 'text-slate-400';
+                const eficColor = factor < 0.85 ? 'text-slate-300' : factor > 1.15 ? 'text-slate-300' : 'text-slate-400';
                 return (
                   <div key={p.email}>
                     <div className="flex items-center justify-between text-sm mb-1">
@@ -1228,7 +1228,7 @@ function AsistenteIA({
       {ordenesSinAsignar.length > 0 && pickerMetricas.length > 0 && (
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <h4 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
-            <Target className="h-4 w-4 text-blue-400" />
+            <Target className="h-4 w-4 text-slate-300" />
             Órdenes sin picker asignado ({ordenesSinAsignar.length})
           </h4>
           <div className="space-y-2">
@@ -1242,7 +1242,7 @@ function AsistenteIA({
                 </div>
                 <button
                   onClick={() => onAsignarMejorPicker(o)}
-                  className="px-2.5 py-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-xs font-medium rounded-lg"
+                  className="px-2.5 py-1 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 text-xs font-medium rounded-lg"
                 >
                   Asignar mejor picker
                 </button>
@@ -1255,7 +1255,7 @@ function AsistenteIA({
       {/* Anomalías */}
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
         <h4 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-orange-400" />
+          <AlertTriangle className="h-4 w-4 text-slate-300" />
           Anomalías detectadas ({anomalias.length})
         </h4>
         {anomalias.length === 0 ? (
@@ -1268,15 +1268,15 @@ function AsistenteIA({
               <div
                 key={idx}
                 className={`p-3 rounded-lg border flex items-start gap-3 ${
-                  a.severidad === 'error' ? 'bg-red-500/10 border-red-500/30' :
-                  a.severidad === 'warning' ? 'bg-amber-500/10 border-amber-500/30' :
-                  'bg-blue-500/10 border-blue-500/30'
+                  a.severidad === 'error' ? 'bg-slate-800/40 border-slate-700/40' :
+                  a.severidad === 'warning' ? 'bg-slate-800/40 border-slate-700/40' :
+                  'bg-slate-800/40 border-slate-700/40'
                 }`}
               >
                 <AlertCircle className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
-                  a.severidad === 'error' ? 'text-red-300' :
-                  a.severidad === 'warning' ? 'text-amber-300' :
-                  'text-blue-300'
+                  a.severidad === 'error' ? 'text-slate-300' :
+                  a.severidad === 'warning' ? 'text-slate-300' :
+                  'text-slate-300'
                 }`} />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-slate-100">{a.titulo}</div>
@@ -1346,8 +1346,8 @@ function PickingActivo({ orden, lineaActual, cantidadPickeada, setCantidadPickea
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="flex items-center gap-3">
-            <span className="font-mono text-lg text-purple-400">{orden.numero}</span>
-            <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs">
+            <span className="font-mono text-lg text-slate-300">{orden.numero}</span>
+            <span className="px-2 py-1 bg-slate-800/40 text-slate-300 rounded-full text-xs">
               Picking Activo
             </span>
           </div>
@@ -1389,30 +1389,30 @@ function PickingActivo({ orden, lineaActual, cantidadPickeada, setCantidadPickea
       {scannerMode && (
         <div className="grid grid-cols-2 gap-3">
           <div className={`rounded-xl p-3 border-2 transition-all ${
-            escaneado.ubicacion ? 'bg-emerald-500/15 border-emerald-500/50' : 'bg-slate-900/50 border-amber-500/40'
+            escaneado.ubicacion ? 'bg-slate-800/40 border-slate-700/40' : 'bg-slate-900/50 border-slate-700/40'
           }`}>
             <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">1. Escanear ubicación</div>
             <div className="text-lg font-bold flex items-center gap-2">
               {escaneado.ubicacion ? (
                 <>
-                  <Check className="h-5 w-5 text-emerald-400" />
-                  <span className="text-emerald-300">{linea.ubicacion_codigo}</span>
+                  <Check className="h-5 w-5 text-slate-300" />
+                  <span className="text-slate-300">{linea.ubicacion_codigo}</span>
                 </>
               ) : (
-                <span className="text-amber-300">Esperando {linea.ubicacion_codigo}</span>
+                <span className="text-slate-300">Esperando {linea.ubicacion_codigo}</span>
               )}
             </div>
           </div>
           <div className={`rounded-xl p-3 border-2 transition-all ${
-            escaneado.producto ? 'bg-emerald-500/15 border-emerald-500/50' :
-            escaneado.ubicacion ? 'bg-slate-900/50 border-amber-500/40' : 'bg-slate-900/30 border-slate-700/50 opacity-60'
+            escaneado.producto ? 'bg-slate-800/40 border-slate-700/40' :
+            escaneado.ubicacion ? 'bg-slate-900/50 border-slate-700/40' : 'bg-slate-900/30 border-slate-700/50 opacity-60'
           }`}>
             <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">2. Escanear producto</div>
             <div className="text-lg font-bold flex items-center gap-2">
               {escaneado.producto ? (
                 <>
-                  <Check className="h-5 w-5 text-emerald-400" />
-                  <span className="text-emerald-300">{linea.producto_codigo}</span>
+                  <Check className="h-5 w-5 text-slate-300" />
+                  <span className="text-slate-300">{linea.producto_codigo}</span>
                 </>
               ) : (
                 <span className="text-slate-300">Esperando {linea.producto_codigo}</span>
@@ -1434,11 +1434,11 @@ function PickingActivo({ orden, lineaActual, cantidadPickeada, setCantidadPickea
       </div>
 
       {/* Línea actual */}
-      <div className="bg-purple-500/10 border-2 border-purple-500/50 rounded-xl p-6">
+      <div className="bg-slate-800/40 border-2 border-slate-700/40 rounded-xl p-6">
         <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 rounded-full mb-4">
-            <MapPin className="h-5 w-5 text-purple-400" />
-            <span className="text-2xl font-bold text-purple-400">{linea.ubicacion_codigo}</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/40 rounded-full mb-4">
+            <MapPin className="h-5 w-5 text-slate-300" />
+            <span className="text-2xl font-bold text-slate-300">{linea.ubicacion_codigo}</span>
           </div>
           
           <div className="text-lg text-slate-200 mb-1">{linea.producto_nombre}</div>
@@ -1472,7 +1472,7 @@ function PickingActivo({ orden, lineaActual, cantidadPickeada, setCantidadPickea
       <div className="flex gap-3">
         <button
           onClick={onShortPick}
-          className="flex-1 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl font-medium flex items-center justify-center gap-2"
+          className="flex-1 px-4 py-3 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded-xl font-medium flex items-center justify-center gap-2"
         >
           <AlertTriangle className="h-5 w-5" />
           Short Pick
@@ -1499,9 +1499,9 @@ function PickingActivo({ orden, lineaActual, cantidadPickeada, setCantidadPickea
               <div 
                 key={l.id} 
                 className={`flex items-center gap-3 p-2 rounded-lg ${
-                  esCurrent ? 'bg-purple-500/20 border border-purple-500/50' : 
-                  l.estado === 'completada' ? 'bg-emerald-500/10' :
-                  l.estado === 'short_pick' ? 'bg-red-500/10' : 'bg-slate-800/30'
+                  esCurrent ? 'bg-slate-800/40 border border-slate-700/40' : 
+                  l.estado === 'completada' ? 'bg-slate-800/40' :
+                  l.estado === 'short_pick' ? 'bg-slate-800/40' : 'bg-slate-800/30'
                 }`}
               >
                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -1545,7 +1545,7 @@ function OrdenDetalleView({ orden, onVolver, onIniciarPicking }: OrdenDetalleVie
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-lg text-purple-400">{orden.numero}</span>
+              <span className="font-mono text-lg text-slate-300">{orden.numero}</span>
               <span className={`px-2 py-1 rounded-full text-xs ${estadoConfig.bg} ${estadoConfig.color}`}>
                 {estadoConfig.label}
               </span>
@@ -1577,8 +1577,8 @@ function OrdenDetalleView({ orden, onVolver, onIniciarPicking }: OrdenDetalleVie
                   </span>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm text-blue-400">{linea.producto_codigo}</span>
-                      <span className="font-mono text-xs text-emerald-400">@ {linea.ubicacion_codigo}</span>
+                      <span className="font-mono text-sm text-slate-300">{linea.producto_codigo}</span>
+                      <span className="font-mono text-xs text-slate-300">@ {linea.ubicacion_codigo}</span>
                     </div>
                     <div className="text-sm text-slate-300">{linea.producto_nombre}</div>
                   </div>
@@ -1618,7 +1618,7 @@ function WaveDetalleView({ wave, ordenes, onVolver, onLiberar }: WaveDetalleView
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-lg text-purple-400">{wave.numero}</span>
+              <span className="font-mono text-lg text-slate-300">{wave.numero}</span>
               <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${estadoConfig.bg} ${estadoConfig.color}`}>
                 <EstadoIcon className="h-3 w-3" />
                 {estadoConfig.label}
@@ -1668,7 +1668,7 @@ function WaveDetalleView({ wave, ordenes, onVolver, onLiberar }: WaveDetalleView
               <div key={orden.id} className="p-4 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm text-purple-400">{orden.numero}</span>
+                    <span className="font-mono text-sm text-slate-300">{orden.numero}</span>
                     <span className={`px-2 py-0.5 rounded-full text-xs ${estadoOrden.bg} ${estadoOrden.color}`}>
                       {estadoOrden.label}
                     </span>
