@@ -545,6 +545,66 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
             });
           }
         }
+
+        // Auto-crear cuenta por cobrar (antes era manual → se escapaban
+        // cobranzas). Idempotente: no duplica si ya existe una con este número.
+        const numeroCxc = `CXC-${orden.numero}`;
+        const { data: cxcExistente } = await supabase
+          .from('cuentas_por_cobrar')
+          .select('id')
+          .eq('numero', numeroCxc)
+          .maybeSingle();
+
+        if (!cxcExistente) {
+          const { error: errCxc } = await supabase.from('cuentas_por_cobrar').insert({
+            numero: numeroCxc,
+            cliente_id: orden.clienteId,
+            tipo: 'factura',
+            fecha_emision: new Date().toISOString().split('T')[0],
+            fecha_vencimiento: orden.fechaEntregaEsperada || new Date().toISOString().split('T')[0],
+            moneda: 'UYU',
+            subtotal: orden.subtotal,
+            impuestos: orden.impuestos,
+            total: orden.total,
+            monto_pagado: 0,
+            saldo: orden.total,
+            estado: 'pendiente',
+            notas: `Auto-generada desde venta ${orden.numero}`,
+          });
+          if (errCxc) console.warn('No se pudo crear la cuenta por cobrar:', errCxc.message);
+        }
+      }
+
+      // Si se cancela una orden que YA había descontado stock (confirmada o
+      // posterior), devolvemos el stock (entrada de reversa). Sin esto, el
+      // stock quedaba mal contado al cancelar.
+      const estadosConStockDescontado = ['confirmada', 'en_proceso', 'enviada'];
+      if (nuevoEstado === 'cancelada' && estadosConStockDescontado.includes(orden.estado)) {
+        for (const item of orden.items) {
+          const { data: prod } = await supabase
+            .from('productos')
+            .select('id, stock')
+            .eq('codigo', item.productoCodigo)
+            .single();
+          if (prod) {
+            await supabase.from('productos')
+              .update({ stock: prod.stock + item.cantidad })
+              .eq('codigo', item.productoCodigo);
+            await supabase.from('movimientos').insert({
+              producto_id: prod.id,
+              codigo: item.productoCodigo,
+              tipo: 'entrada',
+              cantidad: item.cantidad,
+              notas: `Reversa por cancelación venta ${orden.numero}`,
+              usuario_email: userEmail,
+            });
+          }
+        }
+        // Anular la cuenta por cobrar asociada si seguía pendiente.
+        await supabase.from('cuentas_por_cobrar')
+          .update({ estado: 'anulada' })
+          .eq('numero', `CXC-${orden.numero}`)
+          .eq('estado', 'pendiente');
       }
 
       await supabase.from('ordenes_venta').update(updateData).eq('id', orden.id);

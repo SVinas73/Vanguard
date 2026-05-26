@@ -59,7 +59,7 @@ export function ReplenishmentDashboard() {
     const hace365 = new Date();
     hace365.setFullYear(hace365.getFullYear() - 1);
 
-    const [resProd, resMovs] = await Promise.all([
+    const [resProd, resMovs, resOcAbiertas] = await Promise.all([
       supabase
         .from('productos')
         .select('codigo, descripcion, stock, costo_promedio, precio, categoria')
@@ -71,13 +71,40 @@ export function ReplenishmentDashboard() {
         .gte('fecha', hace365.toISOString())
         .in('tipo', ['salida', 'venta'])
         .limit(20000),
+      // Órdenes de compra abiertas (enviadas/parciales) → su stock está
+      // "en tránsito" hasta que se reciba.
+      supabase
+        .from('ordenes_compra')
+        .select('id, estado')
+        .in('estado', ['enviada', 'parcial']),
     ]);
+
+    // Stock en tránsito por producto = Σ (cantidad_ordenada - cantidad_recibida)
+    // de los items de órdenes de compra abiertas.
+    const enTransitoPorCodigo = new Map<string, number>();
+    const ocIds = (resOcAbiertas.data || []).map((o: any) => o.id);
+    if (ocIds.length > 0) {
+      const { data: itemsOc } = await supabase
+        .from('ordenes_compra_items')
+        .select('producto_codigo, cantidad_ordenada, cantidad_recibida, orden_id')
+        .in('orden_id', ocIds)
+        .limit(20000);
+      for (const it of itemsOc || []) {
+        const pendiente = (Number(it.cantidad_ordenada) || 0) - (Number(it.cantidad_recibida) || 0);
+        if (pendiente > 0 && it.producto_codigo) {
+          enTransitoPorCodigo.set(
+            it.producto_codigo,
+            (enTransitoPorCodigo.get(it.producto_codigo) || 0) + pendiente,
+          );
+        }
+      }
+    }
 
     const productos: ProductoStock[] = (resProd.data || []).map((p: any) => ({
       codigo: p.codigo,
       nombre: p.descripcion || p.codigo,
       stock_actual: Number(p.stock) || 0,
-      stock_en_transito: 0, // TODO: leer de órdenes de compra abiertas
+      stock_en_transito: enTransitoPorCodigo.get(p.codigo) || 0,
       costo_promedio: Number(p.costo_promedio) || 0,
       precio_venta: Number(p.precio) || 0,
       categoria: p.categoria,
