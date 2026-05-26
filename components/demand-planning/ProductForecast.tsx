@@ -231,7 +231,7 @@ export default function ProductForecast() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-emerald-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -301,9 +301,9 @@ export default function ProductForecast() {
                 onClick={() => loadProductoDetalle(producto.codigo)}
                 className={`w-full text-left bg-slate-900/50 border rounded-xl p-4 transition-all ${
                   isSelected 
-                    ? 'border-emerald-500/50 bg-emerald-500/5' 
-                    : urgencia === 'critica' ? 'border-red-500/30' 
-                    : urgencia === 'alta' ? 'border-amber-500/30'
+                    ? 'border-slate-700/40 bg-slate-800/40' 
+                    : urgencia === 'critica' ? 'border-slate-700/40' 
+                    : urgencia === 'alta' ? 'border-slate-700/40'
                     : 'border-slate-800/50 hover:border-slate-700'
                 }`}
               >
@@ -328,7 +328,7 @@ export default function ProductForecast() {
                     <div className="text-right">
                       <div className="text-sm text-slate-400">Stock</div>
                       <div className={`font-bold ${
-                        producto.stock <= producto.stockMinimo ? 'text-red-400' : 'text-slate-200'
+                        producto.stock <= producto.stockMinimo ? 'text-slate-300' : 'text-slate-200'
                       }`}>
                         {producto.stock}
                       </div>
@@ -337,9 +337,9 @@ export default function ProductForecast() {
                     <div className="text-right min-w-[80px]">
                       <div className="text-sm text-slate-400">Días</div>
                       <div className={`font-bold ${
-                        urgencia === 'critica' ? 'text-red-400' :
-                        urgencia === 'alta' ? 'text-amber-400' :
-                        urgencia === 'media' ? 'text-yellow-400' : 'text-emerald-400'
+                        urgencia === 'critica' ? 'text-slate-300' :
+                        urgencia === 'alta' ? 'text-slate-300' :
+                        urgencia === 'media' ? 'text-slate-300' : 'text-slate-300'
                       }`}>
                         {dias !== null && dias !== undefined ? dias.toFixed(0) : '∞'}
                       </div>
@@ -348,7 +348,7 @@ export default function ProductForecast() {
                     {forecastData?.demandaSemanal !== undefined && (
                       <div className="text-right min-w-[80px]">
                         <div className="text-sm text-slate-400">Dem/sem</div>
-                        <div className="font-bold text-indigo-400">
+                        <div className="font-bold text-slate-300">
                           {forecastData.demandaSemanal.toFixed(0)}
                         </div>
                       </div>
@@ -387,7 +387,7 @@ export default function ProductForecast() {
               
               {loadingDetalle ? (
                 <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="h-6 w-6 animate-spin text-emerald-400" />
+                  <RefreshCw className="h-6 w-6 animate-spin text-slate-300" />
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -410,11 +410,11 @@ export default function ProductForecast() {
                   
                   {detalleProducto.forecast && (
                     <>
-                      <div className="bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 border border-emerald-500/30 rounded-xl p-4">
-                        <div className="text-xs text-emerald-400 mb-1">Días hasta agotamiento</div>
-                        <div className="text-3xl font-bold text-emerald-400">
+                      <div className="bg-gradient-to-r from-slate-800 to-slate-800 border border-slate-700/40 rounded-xl p-4">
+                        <div className="text-xs text-slate-300 mb-1">Días hasta agotamiento</div>
+                        <div className="text-3xl font-bold text-slate-300">
                           {detalleProducto.forecast.dias_hasta_agotamiento?.toFixed(0) ?? '∞'}
-                          <span className="text-sm font-normal text-emerald-400/70 ml-2">días</span>
+                          <span className="text-sm font-normal text-slate-300/70 ml-2">días</span>
                         </div>
                         {detalleProducto.forecast.fecha_estimada_agotamiento && (
                           <div className="text-xs text-slate-400 mt-1">
@@ -426,7 +426,7 @@ export default function ProductForecast() {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-slate-800/50 rounded-lg p-3">
                           <div className="text-xs text-slate-500">Consumo/día</div>
-                          <div className="text-lg font-bold text-indigo-400">
+                          <div className="text-lg font-bold text-slate-300">
                             {detalleProducto.forecast.consumo_diario_predicho?.toFixed(1) ?? '-'}
                           </div>
                         </div>
@@ -454,7 +454,7 @@ export default function ProductForecast() {
                               return (
                                 <div
                                   key={idx}
-                                  className="flex-1 bg-indigo-500/30 rounded-t"
+                                  className="flex-1 bg-slate-800/40 rounded-t"
                                   style={{ height: `${Math.max(pct, 5)}%` }}
                                   title={`Día ${idx + 1}: ${val.toFixed(1)}`}
                                 />

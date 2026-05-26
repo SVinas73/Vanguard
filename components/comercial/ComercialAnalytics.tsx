@@ -87,7 +87,7 @@ function KPICard({
   return (
     <div className={cn(
       'rounded-xl border p-5 bg-slate-900',
-      alert ? 'border-amber-500/40' : 'border-slate-800'
+      alert ? 'border-slate-700/40' : 'border-slate-800'
     )}>
       <div className="flex items-center justify-between mb-3">
         <div className={cn('p-2 rounded-xl', `bg-${color}-500/20`)}>
@@ -96,13 +96,13 @@ function KPICard({
         {trend && (
           <div className={cn(
             'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium',
-            trend.value >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+            trend.value >= 0 ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-800/40 text-slate-300'
           )}>
             {trend.value >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
             {Math.abs(trend.value).toFixed(1)}%
           </div>
         )}
-        {alert && <AlertCircle className="h-4 w-4 text-amber-400" />}
+        {alert && <AlertCircle className="h-4 w-4 text-slate-300" />}
       </div>
       <div className={cn('text-2xl font-bold mb-1', `text-${color}-400`)}>{value}</div>
       <div className="text-sm text-slate-400">{label}</div>
@@ -383,7 +383,7 @@ export default function ComercialAnalytics() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-16">
-        <RefreshCw className="h-8 w-8 animate-spin text-blue-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -398,7 +398,7 @@ export default function ComercialAnalytics() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-blue-400" />
+            <BarChart3 className="h-6 w-6 text-slate-300" />
             Inteligencia Comercial
           </h2>
         </div>
@@ -409,7 +409,7 @@ export default function ComercialAnalytics() {
               onClick={() => setPeriodo(p)}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                periodo === p ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                periodo === p ? 'bg-slate-800/40 text-slate-300' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               )}
             >
               {p}
@@ -493,7 +493,7 @@ export default function ComercialAnalytics() {
         {/* Tendencia de margen */}
         <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900 p-5">
           <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-emerald-400" />
+            <TrendingUp className="h-4 w-4 text-slate-300" />
             Ventas vs Compras — Tendencia
           </h3>
           {tendencia.length === 0 ? (
@@ -528,7 +528,7 @@ export default function ComercialAnalytics() {
         {/* Pipeline de cotizaciones */}
         <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
           <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-            <FileText className="h-4 w-4 text-violet-400" />
+            <FileText className="h-4 w-4 text-slate-300" />
             Pipeline de Cotizaciones
           </h3>
           {pipeline.every(p => p.cantidad === 0) ? (
@@ -569,7 +569,7 @@ export default function ComercialAnalytics() {
       {/* Margen % por mes */}
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
         <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-          <Percent className="h-4 w-4 text-amber-400" />
+          <Percent className="h-4 w-4 text-slate-300" />
           Evolución del Margen Bruto (%)
         </h3>
         {tendencia.length === 0 ? (
@@ -597,7 +597,7 @@ export default function ComercialAnalytics() {
       {/* Rentabilidad por Cliente */}
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
         <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-          <Users className="h-4 w-4 text-emerald-400" />
+          <Users className="h-4 w-4 text-slate-300" />
           Rentabilidad por Cliente (Top 10)
         </h3>
         {rentabilidad.length === 0 ? (
@@ -622,24 +622,24 @@ export default function ComercialAnalytics() {
                     <td className="py-2.5 pr-3">
                       <span className={cn(
                         'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold',
-                        i === 0 ? 'bg-amber-500/20 text-amber-400' :
+                        i === 0 ? 'bg-slate-800/40 text-slate-300' :
                         i === 1 ? 'bg-slate-500/20 text-slate-400' :
-                        i === 2 ? 'bg-orange-500/20 text-orange-400' :
+                        i === 2 ? 'bg-slate-800/40 text-slate-300' :
                         'bg-slate-800 text-slate-500'
                       )}>
                         {i + 1}
                       </span>
                     </td>
                     <td className="py-2.5 text-slate-200 font-medium">{r.nombre}</td>
-                    <td className="py-2.5 text-right text-emerald-400">{formatCurrency(r.ventas)}</td>
+                    <td className="py-2.5 text-right text-slate-300">{formatCurrency(r.ventas)}</td>
                     <td className="py-2.5 text-right text-slate-400">{formatCurrency(r.costo)}</td>
                     <td className="py-2.5 text-right font-semibold text-slate-200">{formatCurrency(r.margen)}</td>
                     <td className="py-2.5 text-right">
                       <span className={cn(
                         'px-2 py-0.5 rounded text-xs font-medium',
-                        r.margenPct >= 30 ? 'bg-emerald-500/20 text-emerald-400' :
-                        r.margenPct >= 15 ? 'bg-amber-500/20 text-amber-400' :
-                        'bg-red-500/20 text-red-400'
+                        r.margenPct >= 30 ? 'bg-slate-800/40 text-slate-300' :
+                        r.margenPct >= 15 ? 'bg-slate-800/40 text-slate-300' :
+                        'bg-slate-800/40 text-slate-300'
                       )}>
                         {r.margenPct.toFixed(1)}%
                       </span>
@@ -657,7 +657,7 @@ export default function ComercialAnalytics() {
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h3 className="font-semibold text-slate-200 flex items-center gap-2">
-            <ShoppingCart className="h-4 w-4 text-purple-400" />
+            <ShoppingCart className="h-4 w-4 text-slate-300" />
             Rentabilidad Producto × Cliente (Top 25)
           </h3>
           <div className="flex items-center gap-1">
@@ -673,7 +673,7 @@ export default function ComercialAnalytics() {
                 onClick={() => setPivotSort(opt.id)}
                 className={cn(
                   'px-2 py-1 rounded-lg text-xs font-medium transition-colors',
-                  pivotSort === opt.id ? 'bg-purple-500/20 text-purple-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
+                  pivotSort === opt.id ? 'bg-slate-800/40 text-slate-300' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
                 )}
               >
                 {opt.label}
@@ -709,16 +709,16 @@ export default function ComercialAnalytics() {
                       </td>
                       <td className="py-2.5 text-slate-300">{r.clienteNombre}</td>
                       <td className="py-2.5 text-right text-slate-400 font-mono">{r.cantidad}</td>
-                      <td className="py-2.5 text-right text-emerald-400 font-mono">{formatCurrency(r.ventas)}</td>
+                      <td className="py-2.5 text-right text-slate-300 font-mono">{formatCurrency(r.ventas)}</td>
                       <td className="py-2.5 text-right text-slate-400 font-mono">{formatCurrency(r.costo)}</td>
                       <td className="py-2.5 text-right font-semibold text-slate-200 font-mono">{formatCurrency(r.margen)}</td>
                       <td className="py-2.5 text-right">
                         <span className={cn(
                           'px-2 py-0.5 rounded text-xs font-medium',
-                          r.margenPct >= 30 ? 'bg-emerald-500/20 text-emerald-400' :
-                          r.margenPct >= 15 ? 'bg-amber-500/20 text-amber-400' :
-                          r.margenPct < 0 ? 'bg-red-500/30 text-red-400' :
-                          'bg-amber-500/10 text-amber-400'
+                          r.margenPct >= 30 ? 'bg-slate-800/40 text-slate-300' :
+                          r.margenPct >= 15 ? 'bg-slate-800/40 text-slate-300' :
+                          r.margenPct < 0 ? 'bg-slate-800/40 text-slate-300' :
+                          'bg-slate-800/40 text-slate-300'
                         )}>
                           {r.margenPct.toFixed(1)}%
                         </span>

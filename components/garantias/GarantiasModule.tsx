@@ -12,10 +12,10 @@ import { crearGarantia, type Garantia, type EstadoGarantia } from '@/lib/garanti
 import { useWmsToast } from '@/components/wms/useWmsToast';
 
 const ESTADO_CONFIG: Record<EstadoGarantia, { label: string; bg: string; color: string }> = {
-  activa:    { label: 'Activa',    bg: 'bg-emerald-500/15', color: 'text-emerald-300' },
+  activa:    { label: 'Activa',    bg: 'bg-slate-800/40', color: 'text-slate-300' },
   vencida:   { label: 'Vencida',   bg: 'bg-slate-500/15',   color: 'text-slate-400' },
-  reclamada: { label: 'Reclamada', bg: 'bg-amber-500/15',   color: 'text-amber-300' },
-  anulada:   { label: 'Anulada',   bg: 'bg-red-500/15',     color: 'text-red-300' },
+  reclamada: { label: 'Reclamada', bg: 'bg-slate-800/40',   color: 'text-slate-300' },
+  anulada:   { label: 'Anulada',   bg: 'bg-slate-800/40',     color: 'text-slate-300' },
 };
 
 export default function GarantiasModule() {
@@ -141,7 +141,7 @@ export default function GarantiasModule() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-emerald-400" /></div>;
+    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-slate-300" /></div>;
   }
 
   // ========== DETALLE ==========
@@ -154,7 +154,7 @@ export default function GarantiasModule() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <ShieldCheck className="h-6 w-6 text-emerald-400" />
+              <ShieldCheck className="h-6 w-6 text-slate-300" />
               {selected.numero}
             </h3>
             <span className={cn('inline-flex mt-2 px-2 py-0.5 rounded text-xs font-medium', cfg.bg, cfg.color)}>
@@ -185,7 +185,7 @@ export default function GarantiasModule() {
             <Row label="Vencimiento" value={`${selected.fecha_vencimiento} (${selected.duracion_meses} meses)`} bold />
             {selected.estado === 'activa' && (
               <Row label="Días restantes" value={`${dias} día(s)`}
-                highlight={dias <= 7 ? 'text-red-300' : dias <= 30 ? 'text-amber-300' : 'text-slate-200'} />
+                highlight={dias <= 7 ? 'text-slate-300' : dias <= 30 ? 'text-slate-300' : 'text-slate-200'} />
             )}
           </div>
 
@@ -208,8 +208,8 @@ export default function GarantiasModule() {
               </>
             )}
             {selected.estado === 'reclamada' && (
-              <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs">
-                <div className="font-semibold text-amber-300 mb-1">Reclamada</div>
+              <div className="mt-4 p-3 bg-slate-800/40 border border-slate-700/40 rounded-lg text-xs">
+                <div className="font-semibold text-slate-300 mb-1">Reclamada</div>
                 <div className="text-slate-300">{selected.motivo_reclamo || '—'}</div>
                 {selected.fecha_reclamo && (
                   <div className="text-slate-500 mt-1">
@@ -231,7 +231,7 @@ export default function GarantiasModule() {
         <toast.Toast />
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Plus className="h-6 w-6 text-emerald-400" />
+            <Plus className="h-6 w-6 text-slate-300" />
             Nueva garantía
           </h3>
           <button onClick={() => setVista('lista')} className="p-2 hover:bg-slate-800 rounded-lg">
@@ -279,7 +279,7 @@ export default function GarantiasModule() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-emerald-400" />
+            <ShieldCheck className="h-6 w-6 text-slate-300" />
             Garantías
           </h3>
         </div>
@@ -295,9 +295,9 @@ export default function GarantiasModule() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi icon={CheckCircle} label="Activas" value={stats.activas} color="text-emerald-300" />
-        <Kpi icon={Clock} label="Próx. a vencer (30d)" value={stats.proximasVencer} color="text-amber-300" />
-        <Kpi icon={AlertTriangle} label="Reclamadas" value={stats.reclamadas} color="text-amber-300" />
+        <Kpi icon={CheckCircle} label="Activas" value={stats.activas} color="text-slate-300" />
+        <Kpi icon={Clock} label="Próx. a vencer (30d)" value={stats.proximasVencer} color="text-slate-300" />
+        <Kpi icon={AlertTriangle} label="Reclamadas" value={stats.reclamadas} color="text-slate-300" />
         <Kpi icon={Calendar} label="Vencidas" value={stats.vencidas} color="text-slate-400" />
       </div>
 
@@ -351,8 +351,8 @@ export default function GarantiasModule() {
                       <div className="text-xs text-slate-300">{g.fecha_vencimiento}</div>
                       {g.estado === 'activa' && (
                         <div className={cn('text-[10px]',
-                          dias <= 7 ? 'text-red-400' :
-                          dias <= 30 ? 'text-amber-400' : 'text-slate-500')}>
+                          dias <= 7 ? 'text-slate-300' :
+                          dias <= 30 ? 'text-slate-300' : 'text-slate-500')}>
                           {dias > 0 ? `${dias}d restantes` : 'vencida'}
                         </div>
                       )}
@@ -361,7 +361,7 @@ export default function GarantiasModule() {
                       <span className={cn('inline-flex px-2 py-0.5 rounded text-xs font-medium', cfg.bg, cfg.color)}>{cfg.label}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-emerald-400">
+                      <button className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-300">
                         <Eye className="h-3.5 w-3.5" />
                       </button>
                     </td>

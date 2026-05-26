@@ -120,9 +120,9 @@ function useToast() {
       {toasts.map(t => (
         <div key={t.id} className={cn(
           'px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3',
-          t.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
-          t.type === 'error' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
-          'bg-amber-500/20 border-amber-500/30 text-amber-400'
+          t.type === 'success' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          t.type === 'error' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          'bg-slate-800/40 border-slate-700/40 text-slate-300'
         )}>
           {t.type === 'success' ? <CheckCircle className="h-5 w-5" /> :
            t.type === 'error' ? <XCircle className="h-5 w-5" /> :
@@ -150,14 +150,14 @@ function useToast() {
 
 const getEstadoConfig = (estado: EstadoRMA) => {
   const configs: Record<EstadoRMA, { color: string; bg: string; icon: React.ReactNode; label: string }> = {
-    solicitada: { color: 'text-yellow-400', bg: 'bg-yellow-500/20 border-yellow-500/30', icon: <Clock className="h-4 w-4" />, label: 'Solicitada' },
-    aprobada: { color: 'text-blue-400', bg: 'bg-blue-500/20 border-blue-500/30', icon: <CheckCircle className="h-4 w-4" />, label: 'Aprobada' },
-    rechazada: { color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/30', icon: <XCircle className="h-4 w-4" />, label: 'Rechazada' },
-    en_transito: { color: 'text-purple-400', bg: 'bg-purple-500/20 border-purple-500/30', icon: <Truck className="h-4 w-4" />, label: 'En Tránsito' },
-    recibida: { color: 'text-cyan-400', bg: 'bg-cyan-500/20 border-cyan-500/30', icon: <Package className="h-4 w-4" />, label: 'Recibida' },
-    inspeccionada: { color: 'text-indigo-400', bg: 'bg-indigo-500/20 border-indigo-500/30', icon: <ClipboardCheck className="h-4 w-4" />, label: 'Inspeccionada' },
-    procesada: { color: 'text-teal-400', bg: 'bg-teal-500/20 border-teal-500/30', icon: <RefreshCw className="h-4 w-4" />, label: 'Procesada' },
-    completada: { color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30', icon: <CheckCircle className="h-4 w-4" />, label: 'Completada' },
+    solicitada: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <Clock className="h-4 w-4" />, label: 'Solicitada' },
+    aprobada: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <CheckCircle className="h-4 w-4" />, label: 'Aprobada' },
+    rechazada: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <XCircle className="h-4 w-4" />, label: 'Rechazada' },
+    en_transito: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <Truck className="h-4 w-4" />, label: 'En Tránsito' },
+    recibida: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <Package className="h-4 w-4" />, label: 'Recibida' },
+    inspeccionada: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <ClipboardCheck className="h-4 w-4" />, label: 'Inspeccionada' },
+    procesada: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <RefreshCw className="h-4 w-4" />, label: 'Procesada' },
+    completada: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <CheckCircle className="h-4 w-4" />, label: 'Completada' },
     cancelada: { color: 'text-slate-400', bg: 'bg-slate-500/20 border-slate-500/30', icon: <XCircle className="h-4 w-4" />, label: 'Cancelada' },
   };
   return configs[estado];
@@ -165,11 +165,11 @@ const getEstadoConfig = (estado: EstadoRMA) => {
 
 const getTipoConfig = (tipo: TipoRMA) => {
   const configs: Record<TipoRMA, { label: string; color: string }> = {
-    garantia: { label: 'Garantía', color: 'text-blue-400' },
-    defecto: { label: 'Defecto', color: 'text-red-400' },
-    error_envio: { label: 'Error Envío', color: 'text-amber-400' },
-    no_conforme: { label: 'No Conforme', color: 'text-purple-400' },
-    cambio: { label: 'Cambio', color: 'text-cyan-400' },
+    garantia: { label: 'Garantía', color: 'text-slate-300' },
+    defecto: { label: 'Defecto', color: 'text-slate-300' },
+    error_envio: { label: 'Error Envío', color: 'text-slate-300' },
+    no_conforme: { label: 'No Conforme', color: 'text-slate-300' },
+    cambio: { label: 'Cambio', color: 'text-slate-300' },
     otro: { label: 'Otro', color: 'text-slate-400' },
   };
   return configs[tipo] || configs.otro;
@@ -177,11 +177,11 @@ const getTipoConfig = (tipo: TipoRMA) => {
 
 const getResolucionConfig = (resolucion: ResolucionRMA) => {
   const configs: Record<ResolucionRMA, { label: string; color: string; icon: React.ReactNode }> = {
-    reembolso: { label: 'Reembolso', color: 'text-emerald-400', icon: <DollarSign className="h-4 w-4" /> },
-    reemplazo: { label: 'Reemplazo', color: 'text-blue-400', icon: <RotateCcw className="h-4 w-4" /> },
-    credito: { label: 'Nota Crédito', color: 'text-purple-400', icon: <CreditCard className="h-4 w-4" /> },
-    reparacion: { label: 'Reparación', color: 'text-amber-400', icon: <Package className="h-4 w-4" /> },
-    rechazo: { label: 'Rechazo', color: 'text-red-400', icon: <XCircle className="h-4 w-4" /> },
+    reembolso: { label: 'Reembolso', color: 'text-slate-300', icon: <DollarSign className="h-4 w-4" /> },
+    reemplazo: { label: 'Reemplazo', color: 'text-slate-300', icon: <RotateCcw className="h-4 w-4" /> },
+    credito: { label: 'Nota Crédito', color: 'text-slate-300', icon: <CreditCard className="h-4 w-4" /> },
+    reparacion: { label: 'Reparación', color: 'text-slate-300', icon: <Package className="h-4 w-4" /> },
+    rechazo: { label: 'Rechazo', color: 'text-slate-300', icon: <XCircle className="h-4 w-4" /> },
   };
   return configs[resolucion] || configs.rechazo;
 };
@@ -834,7 +834,7 @@ export default function RMAEnterprise() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-emerald-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -847,7 +847,7 @@ export default function RMAEnterprise() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-            <RotateCcw className="h-7 w-7 text-amber-400" />
+            <RotateCcw className="h-7 w-7 text-slate-300" />
             Gestión de Devoluciones (RMA)
           </h2>
           <p className="text-slate-400 text-sm mt-1">Return Merchandise Authorization - Control completo</p>
@@ -882,45 +882,45 @@ export default function RMAEnterprise() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Package className="h-4 w-4 text-blue-400" />
+            <Package className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">Total</span>
           </div>
-          <div className="text-2xl font-bold text-blue-400">{stats.total}</div>
+          <div className="text-2xl font-bold text-slate-300">{stats.total}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="h-4 w-4 text-yellow-400" />
+            <Clock className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">Pendientes</span>
           </div>
-          <div className="text-2xl font-bold text-yellow-400">{stats.pendientes}</div>
+          <div className="text-2xl font-bold text-slate-300">{stats.pendientes}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <RefreshCw className="h-4 w-4 text-purple-400" />
+            <RefreshCw className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">En Proceso</span>
           </div>
-          <div className="text-2xl font-bold text-purple-400">{stats.enProceso}</div>
+          <div className="text-2xl font-bold text-slate-300">{stats.enProceso}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="h-4 w-4 text-emerald-400" />
+            <CheckCircle className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">Completadas</span>
           </div>
-          <div className="text-2xl font-bold text-emerald-400">{stats.completadas}</div>
+          <div className="text-2xl font-bold text-slate-300">{stats.completadas}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="h-4 w-4 text-cyan-400" />
+            <DollarSign className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">Valor Total</span>
           </div>
-          <div className="text-2xl font-bold text-cyan-400">{formatCurrency(stats.valorTotal)}</div>
+          <div className="text-2xl font-bold text-slate-300">{formatCurrency(stats.valorTotal)}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="h-4 w-4 text-amber-400" />
+            <TrendingUp className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">Tiempo Prom.</span>
           </div>
-          <div className="text-2xl font-bold text-amber-400">{stats.tiempoPromedio.toFixed(1)}d</div>
+          <div className="text-2xl font-bold text-slate-300">{stats.tiempoPromedio.toFixed(1)}d</div>
         </div>
       </div>
 
@@ -930,7 +930,7 @@ export default function RMAEnterprise() {
           {/* Por tipo */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-cyan-400" />
+              <BarChart3 className="h-5 w-5 text-slate-300" />
               Devoluciones por Tipo
             </h3>
             <div className="space-y-3">
@@ -958,21 +958,21 @@ export default function RMAEnterprise() {
           {/* Resumen financiero */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-emerald-400" />
+              <DollarSign className="h-5 w-5 text-slate-300" />
               Resumen Financiero
             </h3>
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-xl">
                 <span className="text-slate-400">Valor productos devueltos</span>
-                <span className="text-xl font-bold text-cyan-400">{formatCurrency(stats.valorTotal)}</span>
+                <span className="text-xl font-bold text-slate-300">{formatCurrency(stats.valorTotal)}</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-xl">
                 <span className="text-slate-400">Total reembolsado</span>
-                <span className="text-xl font-bold text-emerald-400">{formatCurrency(stats.valorReembolsado)}</span>
+                <span className="text-xl font-bold text-slate-300">{formatCurrency(stats.valorReembolsado)}</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-xl">
                 <span className="text-slate-400">Tasa de reembolso</span>
-                <span className="text-xl font-bold text-amber-400">
+                <span className="text-xl font-bold text-slate-300">
                   {stats.valorTotal > 0 ? ((stats.valorReembolsado / stats.valorTotal) * 100).toFixed(1) : 0}%
                 </span>
               </div>
@@ -982,7 +982,7 @@ export default function RMAEnterprise() {
           {/* Flujo de estados */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 md:col-span-2">
             <h3 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-              <ArrowRight className="h-5 w-5 text-purple-400" />
+              <ArrowRight className="h-5 w-5 text-slate-300" />
               Flujo de Proceso
             </h3>
             <div className="flex items-center justify-between overflow-x-auto pb-2">
@@ -1117,9 +1117,9 @@ export default function RMAEnterprise() {
                               <span className="text-slate-300">{rma.items.length}</span>
                             </td>
                             <td className="px-4 py-4">
-                              <div className="text-amber-400 font-medium">{formatCurrency(rma.valorProductos)}</div>
+                              <div className="text-slate-300 font-medium">{formatCurrency(rma.valorProductos)}</div>
                               {rma.valorReembolso && rma.valorReembolso > 0 && (
-                                <div className="text-xs text-emerald-400">Reemb: {formatCurrency(rma.valorReembolso)}</div>
+                                <div className="text-xs text-slate-300">Reemb: {formatCurrency(rma.valorReembolso)}</div>
                               )}
                             </td>
                             <td className="px-4 py-4">
@@ -1128,43 +1128,43 @@ export default function RMAEnterprise() {
                             <td className="px-4 py-4">
                               <div className="flex items-center gap-1">
                                 <button onClick={() => verDetalles(rma)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Ver detalles">
-                                  <Eye className="h-4 w-4 text-blue-400" />
+                                  <Eye className="h-4 w-4 text-slate-300" />
                                 </button>
                                 
                                 {/* Acciones según estado */}
                                 {rma.estado === 'solicitada' && (
                                   <>
                                     <button onClick={() => cambiarEstado(rma, 'aprobada')} disabled={procesando === rma.id} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Aprobar">
-                                      <CheckCircle className="h-4 w-4 text-emerald-400" />
+                                      <CheckCircle className="h-4 w-4 text-slate-300" />
                                     </button>
                                     <button onClick={() => cambiarEstado(rma, 'rechazada')} disabled={procesando === rma.id} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Rechazar">
-                                      <XCircle className="h-4 w-4 text-red-400" />
+                                      <XCircle className="h-4 w-4 text-slate-300" />
                                     </button>
                                   </>
                                 )}
                                 {rma.estado === 'aprobada' && (
                                   <button onClick={() => cambiarEstado(rma, 'en_transito')} disabled={procesando === rma.id} className="p-1.5 hover:bg-slate-700 rounded-lg" title="En tránsito">
-                                    <Truck className="h-4 w-4 text-purple-400" />
+                                    <Truck className="h-4 w-4 text-slate-300" />
                                   </button>
                                 )}
                                 {rma.estado === 'en_transito' && (
                                   <button onClick={() => cambiarEstado(rma, 'recibida')} disabled={procesando === rma.id} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Recibida">
-                                    <PackageCheck className="h-4 w-4 text-cyan-400" />
+                                    <PackageCheck className="h-4 w-4 text-slate-300" />
                                   </button>
                                 )}
                                 {rma.estado === 'recibida' && (
                                   <button onClick={() => abrirInspeccion(rma)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Inspeccionar">
-                                    <ClipboardCheck className="h-4 w-4 text-indigo-400" />
+                                    <ClipboardCheck className="h-4 w-4 text-slate-300" />
                                   </button>
                                 )}
                                 {rma.estado === 'inspeccionada' && (
                                   <button onClick={() => abrirResolucion(rma)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Procesar">
-                                    <DollarSign className="h-4 w-4 text-emerald-400" />
+                                    <DollarSign className="h-4 w-4 text-slate-300" />
                                   </button>
                                 )}
                                 {rma.estado === 'procesada' && (
                                   <button onClick={() => completarRMA(rma)} disabled={procesando === rma.id} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Completar">
-                                    <CheckCircle className="h-4 w-4 text-emerald-400" />
+                                    <CheckCircle className="h-4 w-4 text-slate-300" />
                                   </button>
                                 )}
                               </div>
@@ -1183,22 +1183,22 @@ export default function RMAEnterprise() {
                                         <div className="flex-1">
                                           <span className="font-mono text-xs text-slate-500">{item.productoCodigo}</span>
                                           <span className="ml-2 text-sm text-slate-200">{item.productoDescripcion}</span>
-                                          {item.serialNumber && <span className="ml-2 text-xs text-cyan-400">SN: {item.serialNumber}</span>}
-                                          {item.loteCodigo && <span className="ml-2 text-xs text-purple-400">Lote: {item.loteCodigo}</span>}
+                                          {item.serialNumber && <span className="ml-2 text-xs text-slate-300">SN: {item.serialNumber}</span>}
+                                          {item.loteCodigo && <span className="ml-2 text-xs text-slate-300">Lote: {item.loteCodigo}</span>}
                                         </div>
                                         <div className="flex items-center gap-4 text-sm">
                                           <span className="text-slate-400">Cant: {item.cantidad}</span>
                                           {item.cantidadAprobada !== undefined && (
-                                            <span className="text-emerald-400">Aprob: {item.cantidadAprobada}</span>
+                                            <span className="text-slate-300">Aprob: {item.cantidadAprobada}</span>
                                           )}
                                           {item.cantidadRechazada !== undefined && item.cantidadRechazada > 0 && (
-                                            <span className="text-red-400">Rech: {item.cantidadRechazada}</span>
+                                            <span className="text-slate-300">Rech: {item.cantidadRechazada}</span>
                                           )}
-                                          <span className="text-amber-400">{formatCurrency(item.subtotal)}</span>
+                                          <span className="text-slate-300">{formatCurrency(item.subtotal)}</span>
                                           {item.estadoInspeccion && item.estadoInspeccion !== 'pendiente' && (
                                             <span className={cn(
                                               'px-2 py-0.5 rounded text-xs',
-                                              item.estadoInspeccion === 'aprobado' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                                              item.estadoInspeccion === 'aprobado' ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-800/40 text-slate-300'
                                             )}>
                                               {item.estadoInspeccion}
                                             </span>
@@ -1235,7 +1235,7 @@ export default function RMAEnterprise() {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <Plus className="h-5 w-5 text-amber-400" />
+                <Plus className="h-5 w-5 text-slate-300" />
                 Nueva Devolución (RMA)
               </h3>
               <button onClick={() => { setModalType(null); resetRmaForm(); }} className="p-2 hover:bg-slate-800 rounded-lg">
@@ -1317,7 +1317,7 @@ export default function RMAEnterprise() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm text-slate-400">Productos a devolver *</label>
-                  <button onClick={addItem} className="text-sm text-amber-400 hover:text-amber-300">+ Agregar producto</button>
+                  <button onClick={addItem} className="text-sm text-slate-300 hover:text-slate-300">+ Agregar producto</button>
                 </div>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {rmaForm.items.map((item, idx) => (
@@ -1347,7 +1347,7 @@ export default function RMAEnterprise() {
                           step="0.01"
                           placeholder="Precio"
                         />
-                        <button onClick={() => removeItem(idx)} className="p-1 text-red-400 hover:text-red-300">
+                        <button onClick={() => removeItem(idx)} className="p-1 text-slate-300 hover:text-slate-300">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -1383,9 +1383,9 @@ export default function RMAEnterprise() {
                   )}
                 </div>
                 {rmaForm.items.length > 0 && (
-                  <div className="mt-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex justify-between">
+                  <div className="mt-2 p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl flex justify-between">
                     <span className="text-sm text-slate-400">Valor total:</span>
-                    <span className="font-bold text-amber-400">
+                    <span className="font-bold text-slate-300">
                       ${rmaForm.items.reduce((sum, i) => sum + (i.cantidad * i.precioUnitario), 0).toLocaleString()}
                     </span>
                   </div>
@@ -1428,7 +1428,7 @@ export default function RMAEnterprise() {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <ClipboardCheck className="h-5 w-5 text-indigo-400" />
+                <ClipboardCheck className="h-5 w-5 text-slate-300" />
                 Inspección de Calidad
               </h3>
               <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg">
@@ -1474,7 +1474,7 @@ export default function RMAEnterprise() {
                           }}
                           min="0"
                           max={item.cantidad}
-                          className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-emerald-400"
+                          className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-300"
                         />
                       </div>
                       <div>
@@ -1495,7 +1495,7 @@ export default function RMAEnterprise() {
                           }}
                           min="0"
                           max={item.cantidad}
-                          className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-red-400"
+                          className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-300"
                         />
                       </div>
                       <div>
@@ -1564,7 +1564,7 @@ export default function RMAEnterprise() {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-emerald-400" />
+                <DollarSign className="h-5 w-5 text-slate-300" />
                 Procesar Resolución
               </h3>
               <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg">
@@ -1580,7 +1580,7 @@ export default function RMAEnterprise() {
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-slate-400">Valor</div>
-                  <div className="text-lg font-bold text-amber-400">${selectedRMA.valorProductos.toLocaleString()}</div>
+                  <div className="text-lg font-bold text-slate-300">${selectedRMA.valorProductos.toLocaleString()}</div>
                 </div>
               </div>
             </div>
@@ -1717,7 +1717,7 @@ export default function RMAEnterprise() {
               </div>
               <div className="bg-slate-800/50 rounded-xl p-3">
                 <div className="text-xs text-slate-500">Valor</div>
-                <div className="text-amber-400 font-semibold">${selectedRMA.valorProductos.toLocaleString()}</div>
+                <div className="text-slate-300 font-semibold">${selectedRMA.valorProductos.toLocaleString()}</div>
               </div>
             </div>
 
@@ -1749,15 +1749,15 @@ export default function RMAEnterprise() {
 
             {/* Resolución */}
             {selectedRMA.resolucionFinal && (
-              <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl mb-6">
-                <h4 className="text-sm font-semibold text-emerald-400 mb-2">Resolución</h4>
+              <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl mb-6">
+                <h4 className="text-sm font-semibold text-slate-300 mb-2">Resolución</h4>
                 <div className="flex items-center gap-2">
                   {getResolucionConfig(selectedRMA.resolucionFinal).icon}
                   <span className={getResolucionConfig(selectedRMA.resolucionFinal).color}>
                     {getResolucionConfig(selectedRMA.resolucionFinal).label}
                   </span>
                   {selectedRMA.valorReembolso && selectedRMA.valorReembolso > 0 && (
-                    <span className="text-emerald-400 ml-2">
+                    <span className="text-slate-300 ml-2">
                       ${selectedRMA.valorReembolso.toLocaleString()}
                     </span>
                   )}
@@ -1786,12 +1786,12 @@ export default function RMAEnterprise() {
                       <span className="text-slate-400">Cant: {item.cantidad}</span>
                       {item.estadoInspeccion && item.estadoInspeccion !== 'pendiente' && (
                         <span className={`px-2 py-0.5 rounded text-xs ${
-                          item.estadoInspeccion === 'aprobado' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                          item.estadoInspeccion === 'aprobado' ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-800/40 text-slate-300'
                         }`}>
                           {item.estadoInspeccion}
                         </span>
                       )}
-                      <span className="text-amber-400">${item.subtotal.toLocaleString()}</span>
+                      <span className="text-slate-300">${item.subtotal.toLocaleString()}</span>
                     </div>
                   </div>
                 ))}

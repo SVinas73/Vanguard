@@ -349,7 +349,7 @@ function Toggle({ label, value, onChange }: {
       <span className="text-sm text-slate-300 flex-1">{label}</span>
       <div className={cn(
         'w-10 h-5 rounded-full transition-colors flex-shrink-0',
-        value ? 'bg-emerald-500' : 'bg-slate-700'
+        value ? 'bg-blue-500' : 'bg-slate-700'
       )}>
         <div className={cn(
           'w-4 h-4 rounded-full bg-white shadow-sm transition-transform mt-0.5',

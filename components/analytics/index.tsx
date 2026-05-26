@@ -42,7 +42,7 @@ export function ConfidenceBar({ confidence, label }: ConfidenceBarProps) {
       </div>
       <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-500"
+          className="h-full bg-gradient-to-r from-slate-800 to-slate-800 transition-all duration-500"
           style={{ width: `${percentage}%` }}
         />
       </div>
@@ -65,9 +65,9 @@ export function PredictionCard({ product, prediction }: PredictionCardProps) {
   const getTrendConfig = () => {
     switch (prediction.trend) {
       case 'acelerando':
-        return { icon: <TrendingUp size={16} />, color: 'text-red-400', label: t('trends.increasing') };
+        return { icon: <TrendingUp size={16} />, color: 'text-slate-300', label: t('trends.increasing') };
       case 'desacelerando':
-        return { icon: <TrendingDown size={16} />, color: 'text-emerald-400', label: t('trends.decreasing') };
+        return { icon: <TrendingDown size={16} />, color: 'text-slate-300', label: t('trends.decreasing') };
       default:
         return { icon: <Minus size={16} />, color: 'text-slate-400', label: t('trends.stable') };
     }
@@ -75,9 +75,9 @@ export function PredictionCard({ product, prediction }: PredictionCardProps) {
 
   const getDaysColor = () => {
     if (prediction.days === null) return 'text-slate-400';
-    if (prediction.days < 7) return 'text-red-400';
-    if (prediction.days < 14) return 'text-amber-400';
-    return 'text-emerald-400';
+    if (prediction.days < 7) return 'text-slate-300';
+    if (prediction.days < 14) return 'text-slate-300';
+    return 'text-slate-300';
   };
 
   const trend = getTrendConfig();
@@ -95,7 +95,7 @@ export function PredictionCard({ product, prediction }: PredictionCardProps) {
       <div className="grid grid-cols-4 gap-4 text-center mb-3">
         <div className="p-2 rounded-lg bg-slate-900/50">
           <div className="text-xs text-slate-500 mb-1">{t('analytics.currentStock')}</div>
-          <div className="font-mono font-semibold text-emerald-400">
+          <div className="font-mono font-semibold text-slate-300">
             {product.stock}
           </div>
         </div>
@@ -107,7 +107,7 @@ export function PredictionCard({ product, prediction }: PredictionCardProps) {
         </div>
         <div className="p-2 rounded-lg bg-slate-900/50">
           <div className="text-xs text-slate-500 mb-1">{t('analytics.dailyConsumption')}</div>
-          <div className="font-mono font-semibold text-cyan-400">
+          <div className="font-mono font-semibold text-slate-300">
             {prediction.dailyRate || '—'}
           </div>
         </div>
@@ -141,11 +141,11 @@ interface StatsGridProps {
 
 export function StatsGrid({ stats }: StatsGridProps) {
   const colorClasses: Record<string, string> = {
-    emerald: 'text-emerald-400',
-    cyan: 'text-cyan-400',
-    amber: 'text-amber-400',
-    purple: 'text-purple-400',
-    red: 'text-red-400',
+    emerald: 'text-slate-300',
+    cyan: 'text-slate-300',
+    amber: 'text-slate-300',
+    purple: 'text-slate-300',
+    red: 'text-slate-300',
     slate: 'text-slate-400',
   };
 
@@ -244,11 +244,11 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
   const getUrgencyConfig = (urgency: 'critica' | 'media' | 'baja') => {
     switch (urgency) {
       case 'critica':
-        return { color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30', label: t('alerts.critical') };
+        return { color: 'text-slate-300', bg: 'bg-slate-800/40', border: 'border-slate-700/40', label: t('alerts.critical') };
       case 'media':
-        return { color: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30', label: t('alerts.medium') };
+        return { color: 'text-slate-300', bg: 'bg-slate-800/40', border: 'border-slate-700/40', label: t('alerts.medium') };
       case 'baja':
-        return { color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', label: t('alerts.low') };
+        return { color: 'text-slate-300', bg: 'bg-slate-800/40', border: 'border-slate-700/40', label: t('alerts.low') };
     }
   };
 
@@ -281,8 +281,8 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
           className={cn(
             'px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
             urgencyFilter === 'critica'
-              ? 'bg-red-500/30 text-red-300'
-              : 'bg-slate-800/50 text-slate-400 hover:bg-red-500/20'
+              ? 'bg-slate-800/40 text-slate-300'
+              : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800/40'
           )}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
@@ -293,8 +293,8 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
           className={cn(
             'px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
             urgencyFilter === 'media'
-              ? 'bg-amber-500/30 text-amber-300'
-              : 'bg-slate-800/50 text-slate-400 hover:bg-amber-500/20'
+              ? 'bg-slate-800/40 text-slate-300'
+              : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800/40'
           )}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
@@ -305,8 +305,8 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
           className={cn(
             'px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
             urgencyFilter === 'baja'
-              ? 'bg-yellow-500/30 text-yellow-300'
-              : 'bg-slate-800/50 text-slate-400 hover:bg-yellow-500/20'
+              ? 'bg-slate-800/40 text-slate-300'
+              : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800/40'
           )}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
@@ -618,7 +618,7 @@ export function ConsumptionChart({ movements, products, fixedPeriod }: Consumpti
                       {delta !== null && Number.isFinite(delta) ? (
                         <span className={cn(
                           'inline-flex items-center gap-1 text-sm font-semibold',
-                          isUp ? 'text-emerald-400' : 'text-red-400',
+                          isUp ? 'text-slate-300' : 'text-slate-300',
                         )}>
                           {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                           {Math.abs(delta).toFixed(0)}%
@@ -690,7 +690,7 @@ export function ConsumptionChart({ movements, products, fixedPeriod }: Consumpti
                   <BarChart3 size={12} className="text-slate-500" />
                   <span className="text-xs text-slate-500">{t('analytics.consumption', 'Consumo')}</span>
                 </div>
-                <div className="text-xl font-bold font-mono text-cyan-400">
+                <div className="text-xl font-bold font-mono text-slate-300">
                   {selectedProduct.consumoTotal}
                 </div>
                 <div className="text-xs text-slate-600">{selectedProduct.consumoDiario}/{t('analytics.dayAvg', 'día prom.')}</div>
@@ -720,7 +720,7 @@ export function ConsumptionChart({ movements, products, fixedPeriod }: Consumpti
                   <DollarSign size={12} className="text-slate-500" />
                   <span className="text-xs text-slate-500">{t('stock.salePrice', 'Precio')}</span>
                 </div>
-                <div className="text-xl font-bold font-mono text-violet-400">
+                <div className="text-xl font-bold font-mono text-slate-300">
                   ${selectedProduct.precio.toLocaleString('es-UY')}
                 </div>
                 <div className="text-xs text-slate-600">{t('common.perUnit', 'por unidad')}</div>

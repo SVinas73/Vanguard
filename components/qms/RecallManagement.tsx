@@ -192,24 +192,24 @@ const CLASE_CONFIG: Record<ClaseRecall, {
 }> = {
   I: { 
     label: 'Clase I', 
-    color: 'text-red-500', 
-    bg: 'bg-red-500/20', 
+    color: 'text-slate-300', 
+    bg: 'bg-slate-800/40', 
     descripcion: 'Riesgo serio de salud o muerte',
     prioridad: 1,
     tiempoRespuesta: '24-48 horas'
   },
   II: { 
     label: 'Clase II', 
-    color: 'text-orange-400', 
-    bg: 'bg-orange-500/20', 
+    color: 'text-slate-300', 
+    bg: 'bg-slate-800/40', 
     descripcion: 'Riesgo temporal o reversible',
     prioridad: 2,
     tiempoRespuesta: '72 horas'
   },
   III: { 
     label: 'Clase III', 
-    color: 'text-amber-400', 
-    bg: 'bg-amber-500/20', 
+    color: 'text-slate-300', 
+    bg: 'bg-slate-800/40', 
     descripcion: 'Improbable causa de problemas de salud',
     prioridad: 3,
     tiempoRespuesta: '7 días'
@@ -217,10 +217,10 @@ const CLASE_CONFIG: Record<ClaseRecall, {
 };
 
 const ESTADO_CONFIG: Record<EstadoRecall, { label: string; color: string; bg: string }> = {
-  iniciado: { label: 'Iniciado', color: 'text-red-400', bg: 'bg-red-500/20' },
-  notificando: { label: 'Notificando', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  en_proceso: { label: 'En Proceso', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  completado: { label: 'Completado', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+  iniciado: { label: 'Iniciado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  notificando: { label: 'Notificando', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_proceso: { label: 'En Proceso', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  completado: { label: 'Completado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
   cerrado: { label: 'Cerrado', color: 'text-slate-400', bg: 'bg-slate-500/20' },
 };
 
@@ -239,11 +239,11 @@ const ALCANCE_CONFIG: Record<AlcanceRecall, { label: string; descripcion: string
 
 const ESTADO_SEGUIMIENTO_CONFIG: Record<EstadoSeguimiento, { label: string; color: string; bg: string }> = {
   pendiente: { label: 'Pendiente', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  notificado: { label: 'Notificado', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  confirmado: { label: 'Confirmado', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  en_proceso: { label: 'En Proceso', color: 'text-purple-400', bg: 'bg-purple-500/20' },
-  recuperado: { label: 'Recuperado', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  no_recuperable: { label: 'No Recuperable', color: 'text-red-400', bg: 'bg-red-500/20' },
+  notificado: { label: 'Notificado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  confirmado: { label: 'Confirmado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_proceso: { label: 'En Proceso', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  recuperado: { label: 'Recuperado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  no_recuperable: { label: 'No Recuperable', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 const DISPOSICION_CONFIG: Record<DisposicionRecall, { label: string; descripcion: string }> = {
@@ -703,7 +703,7 @@ export default function RecallManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-red-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -715,13 +715,13 @@ export default function RecallManagement() {
         <>
           {/* Header con alerta si hay Clase I */}
           {stats.claseI > 0 && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-4">
-              <div className="p-3 bg-red-500/20 rounded-xl">
-                <AlertOctagon className="h-8 w-8 text-red-500" />
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 flex items-center gap-4">
+              <div className="p-3 bg-slate-800/40 rounded-xl">
+                <AlertOctagon className="h-8 w-8 text-slate-300" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-red-400">⚠️ RECALL CLASE I ACTIVO</h3>
-                <p className="text-sm text-red-300/80">
+                <h3 className="font-bold text-slate-300">⚠️ RECALL CLASE I ACTIVO</h3>
+                <p className="text-sm text-slate-300/80">
                   Hay {stats.claseI} recall(s) de Clase I que requieren atención inmediata (24-48 horas)
                 </p>
               </div>
@@ -738,7 +738,7 @@ export default function RecallManagement() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <AlertOctagon className="h-6 w-6 text-red-400" />
+                <AlertOctagon className="h-6 w-6 text-slate-300" />
                 Gestión de Recalls
               </h3>
               <p className="text-slate-400 text-sm mt-1">
@@ -748,17 +748,17 @@ export default function RecallManagement() {
             
             {/* Stats */}
             <div className="flex gap-3">
-              <div className={`px-4 py-2 rounded-xl ${stats.claseI > 0 ? 'bg-red-500/20 border border-red-500/30' : 'bg-slate-800/50 border border-slate-700/50'}`}>
-                <div className="text-xs text-red-400">Clase I</div>
-                <div className={`text-xl font-bold ${stats.claseI > 0 ? 'text-red-400' : 'text-slate-500'}`}>{stats.claseI}</div>
+              <div className={`px-4 py-2 rounded-xl ${stats.claseI > 0 ? 'bg-slate-800/40 border border-slate-700/40' : 'bg-slate-800/50 border border-slate-700/50'}`}>
+                <div className="text-xs text-slate-300">Clase I</div>
+                <div className={`text-xl font-bold ${stats.claseI > 0 ? 'text-slate-300' : 'text-slate-500'}`}>{stats.claseI}</div>
               </div>
-              <div className="px-4 py-2 bg-orange-500/10 border border-orange-500/30 rounded-xl">
-                <div className="text-xs text-orange-400">Clase II</div>
-                <div className="text-xl font-bold text-orange-400">{stats.claseII}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Clase II</div>
+                <div className="text-xl font-bold text-slate-300">{stats.claseII}</div>
               </div>
-              <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-                <div className="text-xs text-amber-400">Clase III</div>
-                <div className="text-xl font-bold text-amber-400">{stats.claseIII}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Clase III</div>
+                <div className="text-xl font-bold text-slate-300">{stats.claseIII}</div>
               </div>
               <div className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl">
                 <div className="text-xs text-slate-400">Recuperación</div>
@@ -777,7 +777,7 @@ export default function RecallManagement() {
                   placeholder="Buscar por número, producto, motivo..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 />
               </div>
               
@@ -834,7 +834,7 @@ export default function RecallManagement() {
                 <div 
                   key={recall.id} 
                   className={`bg-slate-900/50 border rounded-xl p-4 hover:border-slate-600 transition-colors cursor-pointer ${
-                    recall.clase === 'I' ? 'border-red-500/50' : 'border-slate-800/50'
+                    recall.clase === 'I' ? 'border-slate-700/40' : 'border-slate-800/50'
                   }`}
                   onClick={() => handleVerDetalle(recall)}
                 >
@@ -842,7 +842,7 @@ export default function RecallManagement() {
                     <div className="flex-1 min-w-0">
                       {/* Header */}
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <span className="font-mono text-sm text-red-400">{recall.numero}</span>
+                        <span className="font-mono text-sm text-slate-300">{recall.numero}</span>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${claseConfig.bg} ${claseConfig.color}`}>
                           {claseConfig.label}
                         </span>
@@ -868,7 +868,7 @@ export default function RecallManagement() {
                       <div className="mb-2">
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-slate-400">Recuperación</span>
-                          <span className={porcentaje >= 90 ? 'text-emerald-400' : porcentaje >= 50 ? 'text-amber-400' : 'text-red-400'}>
+                          <span className={porcentaje >= 90 ? 'text-slate-300' : porcentaje >= 50 ? 'text-slate-300' : 'text-slate-300'}>
                             {porcentaje}% ({recall.unidades_recuperadas + recall.unidades_destruidas}/{recall.cantidad_total_afectada})
                           </span>
                         </div>
@@ -919,7 +919,7 @@ export default function RecallManagement() {
             
             {recallsFiltrados.length === 0 && (
               <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center">
-                <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
+                <CheckCircle className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                 <p className="text-slate-400">No hay recalls activos</p>
               </div>
             )}
@@ -991,7 +991,7 @@ function RecallForm({
         </button>
         <div>
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <AlertOctagon className="h-6 w-6 text-red-400" />
+            <AlertOctagon className="h-6 w-6 text-slate-300" />
             Iniciar Nuevo Recall
           </h3>
         </div>
@@ -1122,7 +1122,7 @@ function RecallForm({
                   {lote}
                   <button
                     onClick={() => onQuitarLote(lote)}
-                    className="ml-1 hover:text-red-400"
+                    className="ml-1 hover:text-slate-300"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -1313,10 +1313,10 @@ function RecallDetalle({
       </div>
 
       {/* Progreso general */}
-      <div className={`rounded-xl p-4 ${claseConfig.bg} border ${recall.clase === 'I' ? 'border-red-500/50' : 'border-slate-700/50'}`}>
+      <div className={`rounded-xl p-4 ${claseConfig.bg} border ${recall.clase === 'I' ? 'border-slate-700/40' : 'border-slate-700/50'}`}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-slate-300">Progreso de Recuperación</span>
-          <span className={`text-2xl font-bold ${porcentaje >= 90 ? 'text-emerald-400' : porcentaje >= 50 ? 'text-amber-400' : 'text-red-400'}`}>
+          <span className={`text-2xl font-bold ${porcentaje >= 90 ? 'text-slate-300' : porcentaje >= 50 ? 'text-slate-300' : 'text-slate-300'}`}>
             {porcentaje}%
           </span>
         </div>
@@ -1335,15 +1335,15 @@ function RecallDetalle({
           </div>
           <div>
             <div className="text-slate-400">Recuperadas</div>
-            <div className="text-lg font-bold text-emerald-400">{recall.unidades_recuperadas}</div>
+            <div className="text-lg font-bold text-slate-300">{recall.unidades_recuperadas}</div>
           </div>
           <div>
             <div className="text-slate-400">Destruidas</div>
-            <div className="text-lg font-bold text-amber-400">{recall.unidades_destruidas}</div>
+            <div className="text-lg font-bold text-slate-300">{recall.unidades_destruidas}</div>
           </div>
           <div>
             <div className="text-slate-400">Pendientes</div>
-            <div className="text-lg font-bold text-red-400">
+            <div className="text-lg font-bold text-slate-300">
               {recall.cantidad_total_afectada - recall.unidades_recuperadas - recall.unidades_destruidas}
             </div>
           </div>
@@ -1366,7 +1366,7 @@ function RecallDetalle({
                 onClick={() => setTabActivo(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                   tabActivo === tab.id
-                    ? 'border-red-500 text-red-400'
+                    ? 'border-red-500 text-slate-300'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -1394,8 +1394,8 @@ function RecallDetalle({
               <p className="text-sm text-slate-400">{recall.descripcion}</p>
               
               {recall.riesgo_salud && (
-                <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                  <h5 className="text-sm font-medium text-red-400 mb-1">Riesgo para la Salud</h5>
+                <div className="mt-4 p-3 bg-slate-800/40 border border-slate-700/40 rounded-lg">
+                  <h5 className="text-sm font-medium text-slate-300 mb-1">Riesgo para la Salud</h5>
                   <p className="text-sm text-slate-300">{recall.riesgo_salud}</p>
                 </div>
               )}
@@ -1497,11 +1497,11 @@ function RecallDetalle({
                           </div>
                           <div>
                             <div className="text-xs text-slate-500">Recuperadas</div>
-                            <div className="text-emerald-400 font-medium">{seg.cantidad_recuperada}</div>
+                            <div className="text-slate-300 font-medium">{seg.cantidad_recuperada}</div>
                           </div>
                           <div>
                             <div className="text-xs text-slate-500">Pendientes</div>
-                            <div className="text-amber-400">{seg.cantidad_enviada - seg.cantidad_recuperada}</div>
+                            <div className="text-slate-300">{seg.cantidad_enviada - seg.cantidad_recuperada}</div>
                           </div>
                         </div>
                         

@@ -709,7 +709,7 @@ export default function Slotting() {
             </div>
 
             {/* Oportunidades */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-800 border border-slate-700/40 rounded-xl p-4">
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h4 className="font-semibold text-slate-300 mb-4 flex items-center gap-2">
                 <Zap className="h-5 w-5" />
                 Oportunidades de Mejora

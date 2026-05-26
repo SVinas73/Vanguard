@@ -75,17 +75,17 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
   if (!toasts.length) return null;
   
   const icons = {
-    success: <CheckCircle className="h-5 w-5 text-emerald-400" />,
-    error: <X className="h-5 w-5 text-red-400" />,
-    warning: <AlertTriangle className="h-5 w-5 text-amber-400" />,
-    info: <Clock className="h-5 w-5 text-blue-400" />,
+    success: <CheckCircle className="h-5 w-5 text-slate-300" />,
+    error: <X className="h-5 w-5 text-slate-300" />,
+    warning: <AlertTriangle className="h-5 w-5 text-slate-300" />,
+    info: <Clock className="h-5 w-5 text-slate-300" />,
   };
   
   const colors = {
-    success: 'border-emerald-500/30 bg-emerald-500/10',
-    error: 'border-red-500/30 bg-red-500/10',
-    warning: 'border-amber-500/30 bg-amber-500/10',
-    info: 'border-blue-500/30 bg-blue-500/10',
+    success: 'border-slate-700/40 bg-slate-800/40',
+    error: 'border-slate-700/40 bg-slate-800/40',
+    warning: 'border-slate-700/40 bg-slate-800/40',
+    info: 'border-slate-700/40 bg-slate-800/40',
   };
 
   return (
@@ -661,18 +661,18 @@ export default function AssemblyDashboard() {
 
   const getEstadoConfig = (estado: EstadoEnsamblaje) => {
     const config: Record<EstadoEnsamblaje, { color: string; bg: string; icon: React.ReactNode; label: string }> = {
-      planificado: { color: 'text-yellow-400', bg: 'bg-yellow-500/20 border-yellow-500/30', icon: <Calendar className="h-4 w-4" />, label: 'Planificado' },
-      en_proceso: { color: 'text-blue-400', bg: 'bg-blue-500/20 border-blue-500/30', icon: <PlayCircle className="h-4 w-4 animate-pulse" />, label: 'En Proceso' },
-      pausado: { color: 'text-amber-400', bg: 'bg-amber-500/20 border-amber-500/30', icon: <PauseCircle className="h-4 w-4" />, label: 'Pausado' },
-      completado: { color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30', icon: <CheckCircle className="h-4 w-4" />, label: 'Completado' },
-      cancelado: { color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/30', icon: <StopCircle className="h-4 w-4" />, label: 'Cancelado' },
+      planificado: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <Calendar className="h-4 w-4" />, label: 'Planificado' },
+      en_proceso: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <PlayCircle className="h-4 w-4 animate-pulse" />, label: 'En Proceso' },
+      pausado: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <PauseCircle className="h-4 w-4" />, label: 'Pausado' },
+      completado: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <CheckCircle className="h-4 w-4" />, label: 'Completado' },
+      cancelado: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', icon: <StopCircle className="h-4 w-4" />, label: 'Cancelado' },
     };
     return config[estado];
   };
 
   const getVariacionIcon = (variacion: number) => {
-    if (variacion > 5) return <TrendingUp className="h-4 w-4 text-red-400" />;
-    if (variacion < -5) return <TrendingDown className="h-4 w-4 text-emerald-400" />;
+    if (variacion > 5) return <TrendingUp className="h-4 w-4 text-slate-300" />;
+    if (variacion < -5) return <TrendingDown className="h-4 w-4 text-slate-300" />;
     return <Minus className="h-4 w-4 text-slate-400" />;
   };
 
@@ -716,7 +716,7 @@ export default function AssemblyDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-emerald-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -729,7 +729,7 @@ export default function AssemblyDashboard() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-            <Wrench className="h-7 w-7 text-emerald-400" />
+            <Wrench className="h-7 w-7 text-slate-300" />
             Ensamblajes y Producción
           </h2>
           <p className="text-slate-400 text-sm mt-1">Control de procesos con trazabilidad completa</p>
@@ -776,16 +776,16 @@ export default function AssemblyDashboard() {
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-slate-400">Costo Real</span>
-            <DollarSign className="h-4 w-4 text-emerald-500" />
+            <DollarSign className="h-4 w-4 text-slate-300" />
           </div>
-          <div className="text-xl font-bold text-emerald-400">${stats.costoTotalReal.toLocaleString()}</div>
+          <div className="text-xl font-bold text-slate-300">${stats.costoTotalReal.toLocaleString()}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-slate-400">Variación</span>
             {getVariacionIcon(stats.variacionCosto)}
           </div>
-          <div className={`text-xl font-bold ${stats.variacionCosto > 5 ? 'text-red-400' : stats.variacionCosto < -5 ? 'text-emerald-400' : 'text-slate-300'}`}>
+          <div className={`text-xl font-bold ${stats.variacionCosto > 5 ? 'text-slate-300' : stats.variacionCosto < -5 ? 'text-slate-300' : 'text-slate-300'}`}>
             {stats.variacionCosto > 0 ? '+' : ''}{stats.variacionCosto.toFixed(1)}%
           </div>
         </div>
@@ -796,7 +796,7 @@ export default function AssemblyDashboard() {
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
-            <input type="text" placeholder="Buscar por número, producto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none" />
+            <input type="text" placeholder="Buscar por número, producto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 placeholder-slate-500 focus:border-slate-700/40 focus:outline-none" />
           </div>
           <select value={filterEstado} onChange={(e) => setFilterEstado(e.target.value as FilterEstado)} className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100">
             <option value="todos">Todos los estados</option>
@@ -858,7 +858,7 @@ export default function AssemblyDashboard() {
                           <span className="text-slate-300">{asm.cantidadProducida || 0} / {asm.cantidadPlanificada}</span>
                         </div>
                         {asm.cantidadAprobada !== undefined && asm.estado === 'completado' && (
-                          <div className="text-xs text-emerald-400 mt-1">✓ {asm.cantidadAprobada} aprobadas</div>
+                          <div className="text-xs text-slate-300 mt-1">✓ {asm.cantidadAprobada} aprobadas</div>
                         )}
                       </td>
                       <td className="px-4 py-4">
@@ -869,7 +869,7 @@ export default function AssemblyDashboard() {
                       <td className="px-4 py-4">
                         <div className="text-slate-300">${(asm.costoTotalReal || 0).toLocaleString()}</div>
                         {variacion !== 0 && (
-                          <div className={`text-xs flex items-center gap-1 ${variacion > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                          <div className={`text-xs flex items-center gap-1 ${variacion > 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                             {getVariacionIcon(variacion)}{variacion > 0 ? '+' : ''}{variacion.toFixed(1)}%
                           </div>
                         )}
@@ -882,31 +882,31 @@ export default function AssemblyDashboard() {
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-1">
                           <button onClick={() => abrirDetalles(asm)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Ver detalles">
-                            <Eye className="h-4 w-4 text-blue-400" />
+                            <Eye className="h-4 w-4 text-slate-300" />
                           </button>
                           {asm.estado === 'planificado' && (
                             <button onClick={() => iniciarEnsamblaje(asm)} disabled={procesando === asm.id} className="p-1.5 hover:bg-slate-700 rounded-lg disabled:opacity-50" title="Iniciar">
-                              {procesando === asm.id ? <RefreshCw className="h-4 w-4 text-emerald-400 animate-spin" /> : <Play className="h-4 w-4 text-emerald-400" />}
+                              {procesando === asm.id ? <RefreshCw className="h-4 w-4 text-slate-300 animate-spin" /> : <Play className="h-4 w-4 text-slate-300" />}
                             </button>
                           )}
                           {asm.estado === 'en_proceso' && (
                             <button onClick={() => { setSelectedEnsamblaje(asm); setModalType('pause'); }} disabled={procesando === asm.id} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Pausar">
-                              <Pause className="h-4 w-4 text-amber-400" />
+                              <Pause className="h-4 w-4 text-slate-300" />
                             </button>
                           )}
                           {asm.estado === 'pausado' && (
                             <button onClick={() => reanudarEnsamblaje(asm)} disabled={procesando === asm.id} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Reanudar">
-                              <Play className="h-4 w-4 text-emerald-400" />
+                              <Play className="h-4 w-4 text-slate-300" />
                             </button>
                           )}
                           {(asm.estado === 'en_proceso' || asm.estado === 'pausado') && (
                             <button onClick={() => completarEnsamblaje(asm)} disabled={procesando === asm.id} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Completar">
-                              <CheckCircle className="h-4 w-4 text-emerald-400" />
+                              <CheckCircle className="h-4 w-4 text-slate-300" />
                             </button>
                           )}
                           {asm.estado === 'completado' && (
                             <button onClick={() => abrirQC(asm)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Control de calidad">
-                              <ClipboardCheck className="h-4 w-4 text-purple-400" />
+                              <ClipboardCheck className="h-4 w-4 text-slate-300" />
                             </button>
                           )}
                         </div>
@@ -938,7 +938,7 @@ export default function AssemblyDashboard() {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2"><Plus className="h-5 w-5 text-emerald-400" />Nuevo Ensamblaje</h3>
+              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2"><Plus className="h-5 w-5 text-slate-300" />Nuevo Ensamblaje</h3>
               <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
             <div className="space-y-4">
@@ -969,9 +969,9 @@ export default function AssemblyDashboard() {
                 <label htmlFor="genSeriales" className="text-sm text-slate-300">Generar seriales automáticamente</label>
               </div>
               {newAssembly.bomId && (
-                <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                  <h4 className="text-sm font-semibold text-emerald-400 mb-2">Costo Estimado</h4>
-                  <div className="text-2xl font-bold text-emerald-300">
+                <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                  <h4 className="text-sm font-semibold text-slate-300 mb-2">Costo Estimado</h4>
+                  <div className="text-2xl font-bold text-slate-300">
                     ${((boms.find(b => b.id === newAssembly.bomId)?.costoTotal || 0) * newAssembly.cantidadPlanificada).toLocaleString()}
                   </div>
                 </div>
@@ -992,7 +992,7 @@ export default function AssemblyDashboard() {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2"><PauseCircle className="h-5 w-5 text-amber-400" />Pausar Ensamblaje</h3>
+              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2"><PauseCircle className="h-5 w-5 text-slate-300" />Pausar Ensamblaje</h3>
               <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
             <div className="space-y-4">
@@ -1031,7 +1031,7 @@ export default function AssemblyDashboard() {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-purple-400" />Control de Calidad</h3>
+              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-slate-300" />Control de Calidad</h3>
               <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
             <div className="space-y-4">
@@ -1055,11 +1055,11 @@ export default function AssemblyDashboard() {
                 </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Aprobadas</label>
-                  <input type="number" min="0" value={qcForm.cantidadAprobada} onChange={(e) => { const a = parseInt(e.target.value) || 0; setQcForm({ ...qcForm, cantidadAprobada: a, cantidadRechazada: qcForm.cantidadInspeccionada - a }); }} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-emerald-400" />
+                  <input type="number" min="0" value={qcForm.cantidadAprobada} onChange={(e) => { const a = parseInt(e.target.value) || 0; setQcForm({ ...qcForm, cantidadAprobada: a, cantidadRechazada: qcForm.cantidadInspeccionada - a }); }} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-300" />
                 </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Rechazadas</label>
-                  <input type="number" min="0" value={qcForm.cantidadRechazada} onChange={(e) => setQcForm({ ...qcForm, cantidadRechazada: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-red-400" />
+                  <input type="number" min="0" value={qcForm.cantidadRechazada} onChange={(e) => setQcForm({ ...qcForm, cantidadRechazada: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-300" />
                 </div>
               </div>
               <div>
@@ -1092,7 +1092,7 @@ export default function AssemblyDashboard() {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2"><Eye className="h-5 w-5 text-blue-400" />Detalle del Ensamblaje</h3>
+                <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2"><Eye className="h-5 w-5 text-slate-300" />Detalle del Ensamblaje</h3>
                 <p className="text-sm text-slate-400 font-mono mt-1">{selectedEnsamblaje.numero}</p>
               </div>
               <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
@@ -1120,7 +1120,7 @@ export default function AssemblyDashboard() {
             </div>
 
             <div className="bg-slate-800/30 rounded-xl p-4 mb-6">
-              <h4 className="font-semibold text-slate-300 mb-3 flex items-center gap-2"><DollarSign className="h-4 w-4 text-emerald-400" />Comparación de Costos</h4>
+              <h4 className="font-semibold text-slate-300 mb-3 flex items-center gap-2"><DollarSign className="h-4 w-4 text-slate-300" />Comparación de Costos</h4>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <div className="text-xs text-slate-500">Planificado</div>
@@ -1128,14 +1128,14 @@ export default function AssemblyDashboard() {
                 </div>
                 <div>
                   <div className="text-xs text-slate-500">Real</div>
-                  <div className="text-lg font-semibold text-emerald-400">${(selectedEnsamblaje.costoTotalReal || 0).toLocaleString()}</div>
+                  <div className="text-lg font-semibold text-slate-300">${(selectedEnsamblaje.costoTotalReal || 0).toLocaleString()}</div>
                 </div>
                 <div>
                   <div className="text-xs text-slate-500">Variación</div>
                   {(() => {
                     const v = selectedEnsamblaje.costoTotalPlanificado && selectedEnsamblaje.costoTotalPlanificado > 0
                       ? ((selectedEnsamblaje.costoTotalReal || 0) - selectedEnsamblaje.costoTotalPlanificado) / selectedEnsamblaje.costoTotalPlanificado * 100 : 0;
-                    return <div className={`text-lg font-semibold flex items-center gap-1 ${v > 0 ? 'text-red-400' : v < 0 ? 'text-emerald-400' : 'text-slate-400'}`}>{getVariacionIcon(v)}{v > 0 ? '+' : ''}{v.toFixed(1)}%</div>;
+                    return <div className={`text-lg font-semibold flex items-center gap-1 ${v > 0 ? 'text-slate-300' : v < 0 ? 'text-slate-300' : 'text-slate-400'}`}>{getVariacionIcon(v)}{v > 0 ? '+' : ''}{v.toFixed(1)}%</div>;
                   })()}
                 </div>
               </div>
@@ -1143,7 +1143,7 @@ export default function AssemblyDashboard() {
 
             {selectedEnsamblaje.operaciones && selectedEnsamblaje.operaciones.length > 0 && (
               <div className="mb-6">
-                <h4 className="font-semibold text-slate-300 mb-3 flex items-center gap-2"><History className="h-4 w-4 text-blue-400" />Historial de Operaciones</h4>
+                <h4 className="font-semibold text-slate-300 mb-3 flex items-center gap-2"><History className="h-4 w-4 text-slate-300" />Historial de Operaciones</h4>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {selectedEnsamblaje.operaciones.map((op: any, idx: number) => (
                     <div key={op.id || idx} className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg">
@@ -1193,12 +1193,12 @@ function TimelineInline({ ensamblajeId }: { ensamblajeId: string }) {
 
   const getIcon = (tipo: string) => {
     const icons: Record<string, React.ReactNode> = {
-      inicio: <PlayCircle className="h-3 w-3 text-emerald-400" />,
-      pausa: <PauseCircle className="h-3 w-3 text-amber-400" />,
-      reanudacion: <PlayCircle className="h-3 w-3 text-blue-400" />,
-      completado: <CheckCircle className="h-3 w-3 text-emerald-400" />,
-      qc_aprobado: <CheckCircle className="h-3 w-3 text-emerald-400" />,
-      qc_rechazado: <X className="h-3 w-3 text-red-400" />,
+      inicio: <PlayCircle className="h-3 w-3 text-slate-300" />,
+      pausa: <PauseCircle className="h-3 w-3 text-slate-300" />,
+      reanudacion: <PlayCircle className="h-3 w-3 text-slate-300" />,
+      completado: <CheckCircle className="h-3 w-3 text-slate-300" />,
+      qc_aprobado: <CheckCircle className="h-3 w-3 text-slate-300" />,
+      qc_rechazado: <X className="h-3 w-3 text-slate-300" />,
     };
     return icons[tipo] || <Clock className="h-3 w-3 text-slate-400" />;
   };
