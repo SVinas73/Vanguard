@@ -2393,12 +2393,12 @@ export default function ReportsEnterprise() {
                     <button
                       onClick={() => toggleCategoria(cat)}
                       className={`w-full flex items-center justify-between p-2 rounded-lg transition-colors ${
-                        isExpanded ? `${colorClass.bg} ${colorClass.border} border` : 'hover:bg-slate-800/50'
+                        isExpanded ? 'bg-blue-500/10 border border-blue-500/20' : 'hover:bg-slate-800/50'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className={colorClass.text}>{catConfig.icono}</span>
-                        <span className={`text-sm font-medium ${isExpanded ? colorClass.text : 'text-slate-300'}`}>
+                        <span className={isExpanded ? 'text-blue-400' : 'text-slate-400'}>{catConfig.icono}</span>
+                        <span className={`text-sm font-medium ${isExpanded ? 'text-blue-300' : 'text-slate-300'}`}>
                           {catConfig.nombre}
                         </span>
                         <span className="text-xs text-slate-600">({reportesCat.length})</span>
@@ -2421,7 +2421,7 @@ export default function ReportsEnterprise() {
                             }}
                             className={`w-full flex items-center gap-2 p-2 rounded-lg text-left transition-colors ${
                               reporteSeleccionado === rep.id
-                                ? 'bg-slate-800 text-slate-100'
+                                ? 'bg-blue-500/10 border border-blue-500/20 text-blue-300'
                                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
                             }`}
                           >
@@ -2454,7 +2454,7 @@ export default function ReportsEnterprise() {
               <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-xl ${getColorClass(CATEGORIAS_CONFIG[configReporte.categoria].color).bg}`}>
+                    <div className="p-3 text-slate-300">
                       {configReporte.icono}
                     </div>
                     <div>
