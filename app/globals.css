@@ -901,7 +901,15 @@ tr:hover td {
 button.bg-indigo-600, button.bg-indigo-500,
 button.bg-blue-600,  button.bg-blue-700,
 button.bg-emerald-600, button.bg-emerald-500,
-button.bg-cyan-600, button.bg-cyan-500 {
+button.bg-cyan-600, button.bg-cyan-500,
+button.bg-amber-600, button.bg-amber-500,
+button.bg-purple-600, button.bg-purple-500,
+button.bg-violet-600, button.bg-violet-500,
+button.bg-orange-600, button.bg-orange-500,
+button.bg-teal-600, button.bg-teal-500,
+button.bg-green-600, button.bg-green-500,
+button.bg-sky-600, button.bg-sky-500,
+button.bg-pink-600, button.bg-fuchsia-600, button.bg-rose-600 {
   background-color: #3b82f6 !important;
   color: #ffffff !important;
 }
@@ -909,15 +917,26 @@ button.bg-indigo-600:hover, button.bg-indigo-500:hover,
 button.bg-blue-600:hover,  button.bg-blue-700:hover,
 button.bg-emerald-600:hover, button.bg-emerald-500:hover,
 button.bg-cyan-600:hover, button.bg-cyan-500:hover,
+button.bg-amber-600:hover, button.bg-amber-500:hover,
+button.bg-purple-600:hover, button.bg-purple-500:hover,
+button.bg-violet-600:hover, button.bg-orange-600:hover,
+button.bg-teal-600:hover, button.bg-green-600:hover, button.bg-sky-600:hover,
 button.hover\:bg-indigo-500:hover, button.hover\:bg-indigo-400:hover,
 button.hover\:bg-blue-500:hover, button.hover\:bg-blue-400:hover,
-button.hover\:bg-emerald-500:hover, button.hover\:bg-emerald-400:hover {
+button.hover\:bg-emerald-500:hover, button.hover\:bg-emerald-400:hover,
+button.hover\:bg-amber-500:hover, button.hover\:bg-purple-500:hover,
+button.hover\:bg-violet-500:hover, button.hover\:bg-orange-500:hover,
+button.hover\:bg-teal-500:hover, button.hover\:bg-green-500:hover {
   background-color: #60a5fa !important;
 }
 /* En light mode el azul se mantiene (no se oscurece como otros bg). */
 .light-mode button.bg-indigo-600, .light-mode button.bg-indigo-500,
 .light-mode button.bg-blue-600, .light-mode button.bg-emerald-600,
-.light-mode button.bg-emerald-500, .light-mode button.bg-cyan-600 {
+.light-mode button.bg-emerald-500, .light-mode button.bg-cyan-600,
+.light-mode button.bg-amber-600, .light-mode button.bg-purple-600,
+.light-mode button.bg-violet-600, .light-mode button.bg-orange-600,
+.light-mode button.bg-teal-600, .light-mode button.bg-green-600,
+.light-mode button.bg-sky-600 {
   background-color: #3b82f6 !important;
   color: #ffffff !important;
 }
