@@ -269,7 +269,7 @@ export default function TrendAnalysis() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-purple-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -282,17 +282,17 @@ export default function TrendAnalysis() {
           <div className="text-2xl font-bold text-slate-200">{statsResumen.total}</div>
           <div className="text-xs text-slate-400">Productos analizados</div>
         </div>
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-emerald-400">{statsResumen.creciendo}</div>
-          <div className="text-xs text-emerald-400">En crecimiento</div>
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 text-center">
+          <div className="text-2xl font-bold text-slate-300">{statsResumen.creciendo}</div>
+          <div className="text-xs text-slate-300">En crecimiento</div>
         </div>
         <div className="bg-slate-500/10 border border-slate-500/30 rounded-xl p-4 text-center">
           <div className="text-2xl font-bold text-slate-400">{statsResumen.estables}</div>
           <div className="text-xs text-slate-400">Estables</div>
         </div>
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-red-400">{statsResumen.decreciendo}</div>
-          <div className="text-xs text-red-400">En declive</div>
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 text-center">
+          <div className="text-2xl font-bold text-slate-300">{statsResumen.decreciendo}</div>
+          <div className="text-xs text-slate-300">En declive</div>
         </div>
       </div>
 
@@ -302,7 +302,7 @@ export default function TrendAnalysis() {
           onClick={() => setVista('productos')}
           className={`px-4 py-2 rounded-lg text-sm ${
             vista === 'productos' 
-              ? 'bg-purple-500/20 text-purple-400' 
+              ? 'bg-slate-800/40 text-slate-300' 
               : 'text-slate-400 hover:bg-slate-800'
           }`}
         >
@@ -312,7 +312,7 @@ export default function TrendAnalysis() {
           onClick={() => setVista('categorias')}
           className={`px-4 py-2 rounded-lg text-sm ${
             vista === 'categorias' 
-              ? 'bg-purple-500/20 text-purple-400' 
+              ? 'bg-slate-800/40 text-slate-300' 
               : 'text-slate-400 hover:bg-slate-800'
           }`}
         >
@@ -372,13 +372,13 @@ export default function TrendAnalysis() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className={`p-2 rounded-xl ${
-                        t.tendencia === 'creciendo' ? 'bg-emerald-500/20' :
-                        t.tendencia === 'decreciendo' ? 'bg-red-500/20' :
+                        t.tendencia === 'creciendo' ? 'bg-slate-800/40' :
+                        t.tendencia === 'decreciendo' ? 'bg-slate-800/40' :
                         'bg-slate-500/20'
                       }`}>
                         <TrendIcon className={`h-5 w-5 ${
-                          t.tendencia === 'creciendo' ? 'text-emerald-400' :
-                          t.tendencia === 'decreciendo' ? 'text-red-400' :
+                          t.tendencia === 'creciendo' ? 'text-slate-300' :
+                          t.tendencia === 'decreciendo' ? 'text-slate-300' :
                           'text-slate-400'
                         }`} />
                       </div>
@@ -403,8 +403,8 @@ export default function TrendAnalysis() {
                       </div>
                       
                       <div className={`min-w-[80px] text-right font-bold ${
-                        t.variacion_7d_vs_30d > 0 ? 'text-emerald-400' :
-                        t.variacion_7d_vs_30d < 0 ? 'text-red-400' :
+                        t.variacion_7d_vs_30d > 0 ? 'text-slate-300' :
+                        t.variacion_7d_vs_30d < 0 ? 'text-slate-300' :
                         'text-slate-400'
                       }`}>
                         {t.variacion_7d_vs_30d > 0 ? '+' : ''}{t.variacion_7d_vs_30d.toFixed(1)}%
@@ -429,14 +429,14 @@ export default function TrendAnalysis() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-xl ${
-                    cat.tendencia === 'creciendo' ? 'bg-emerald-500/20' :
-                    cat.tendencia === 'decreciendo' ? 'bg-red-500/20' :
+                    cat.tendencia === 'creciendo' ? 'bg-slate-800/40' :
+                    cat.tendencia === 'decreciendo' ? 'bg-slate-800/40' :
                     'bg-slate-500/20'
                   }`}>
                     {cat.tendencia === 'creciendo' ? (
-                      <TrendingUp className="h-5 w-5 text-emerald-400" />
+                      <TrendingUp className="h-5 w-5 text-slate-300" />
                     ) : cat.tendencia === 'decreciendo' ? (
-                      <TrendingDown className="h-5 w-5 text-red-400" />
+                      <TrendingDown className="h-5 w-5 text-slate-300" />
                     ) : (
                       <Minus className="h-5 w-5 text-slate-400" />
                     )}
@@ -448,8 +448,8 @@ export default function TrendAnalysis() {
                 </div>
                 
                 <div className={`text-xl font-bold ${
-                  cat.variacion > 0 ? 'text-emerald-400' :
-                  cat.variacion < 0 ? 'text-red-400' :
+                  cat.variacion > 0 ? 'text-slate-300' :
+                  cat.variacion < 0 ? 'text-slate-300' :
                   'text-slate-400'
                 }`}>
                   {cat.variacion > 0 ? '+' : ''}{cat.variacion.toFixed(1)}%
@@ -457,17 +457,17 @@ export default function TrendAnalysis() {
               </div>
               
               <div className="grid grid-cols-3 gap-3 text-center text-sm">
-                <div className="p-2 bg-emerald-500/10 rounded-lg">
-                  <div className="font-bold text-emerald-400">{cat.productos_creciendo}</div>
-                  <div className="text-xs text-emerald-400/70">Creciendo</div>
+                <div className="p-2 bg-slate-800/40 rounded-lg">
+                  <div className="font-bold text-slate-300">{cat.productos_creciendo}</div>
+                  <div className="text-xs text-slate-300/70">Creciendo</div>
                 </div>
                 <div className="p-2 bg-slate-500/10 rounded-lg">
                   <div className="font-bold text-slate-400">{cat.productos_estables}</div>
                   <div className="text-xs text-slate-400/70">Estables</div>
                 </div>
-                <div className="p-2 bg-red-500/10 rounded-lg">
-                  <div className="font-bold text-red-400">{cat.productos_decreciendo}</div>
-                  <div className="text-xs text-red-400/70">Decreciendo</div>
+                <div className="p-2 bg-slate-800/40 rounded-lg">
+                  <div className="font-bold text-slate-300">{cat.productos_decreciendo}</div>
+                  <div className="text-xs text-slate-300/70">Decreciendo</div>
                 </div>
               </div>
             </div>

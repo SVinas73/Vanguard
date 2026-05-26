@@ -16,9 +16,9 @@ import { useWmsToast } from '@/components/wms/useWmsToast';
 
 const PRIORIDAD_CONFIG: Record<Prioridad, { label: string; bg: string; color: string }> = {
   baja:    { label: 'Baja',    bg: 'bg-slate-500/15',  color: 'text-slate-300' },
-  normal:  { label: 'Normal',  bg: 'bg-blue-500/15',   color: 'text-blue-300' },
-  alta:    { label: 'Alta',    bg: 'bg-amber-500/15',  color: 'text-amber-300' },
-  critica: { label: 'Crítica', bg: 'bg-red-500/15',    color: 'text-red-300' },
+  normal:  { label: 'Normal',  bg: 'bg-slate-800/40',   color: 'text-slate-300' },
+  alta:    { label: 'Alta',    bg: 'bg-slate-800/40',  color: 'text-slate-300' },
+  critica: { label: 'Crítica', bg: 'bg-slate-800/40',    color: 'text-slate-300' },
 };
 
 const ORIGEN_LABEL: Record<string, string> = {
@@ -141,7 +141,7 @@ export default function ApprovalsInbox() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-violet-400" /></div>;
+    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-slate-300" /></div>;
   }
 
   // ========== CONFIG ==========
@@ -151,7 +151,7 @@ export default function ApprovalsInbox() {
         <toast.Toast />
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Settings className="h-6 w-6 text-violet-400" />
+            <Settings className="h-6 w-6 text-slate-300" />
             Umbrales de aprobación
           </h3>
           <button onClick={() => setVistaConfig(false)} className="px-3 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm">
@@ -176,7 +176,7 @@ export default function ApprovalsInbox() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <ShieldCheck className="h-6 w-6 text-violet-400" />
+              <ShieldCheck className="h-6 w-6 text-slate-300" />
               {selected.numero}
             </h3>
             <p className="text-sm text-slate-400 mt-0.5">{selected.titulo}</p>
@@ -231,8 +231,8 @@ export default function ApprovalsInbox() {
             </div>
 
             {selected.estado === 'pendiente' && (
-              <div className="bg-slate-900/50 border border-violet-500/30 rounded-xl p-4 space-y-3">
-                <h4 className="text-sm font-semibold text-violet-300">Resolver</h4>
+              <div className="bg-slate-900/50 border border-slate-700/40 rounded-xl p-4 space-y-3">
+                <h4 className="text-sm font-semibold text-slate-300">Resolver</h4>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Comentario *</label>
                   <textarea rows={4} value={comentario} onChange={e => setComentario(e.target.value)}
@@ -266,7 +266,7 @@ export default function ApprovalsInbox() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-violet-400" />
+            <ShieldCheck className="h-6 w-6 text-slate-300" />
             Inbox de Aprobaciones
           </h3>
         </div>
@@ -282,9 +282,9 @@ export default function ApprovalsInbox() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi icon={Clock} label="Pendientes" value={stats.pendientes} color="text-amber-300" />
-        <Kpi icon={AlertCircle} label="Críticas" value={stats.criticas} color="text-red-300" />
-        <Kpi icon={CheckCircle} label="Aprobadas (7d)" value={stats.aprobadas7d} color="text-emerald-300" />
+        <Kpi icon={Clock} label="Pendientes" value={stats.pendientes} color="text-slate-300" />
+        <Kpi icon={AlertCircle} label="Críticas" value={stats.criticas} color="text-slate-300" />
+        <Kpi icon={CheckCircle} label="Aprobadas (7d)" value={stats.aprobadas7d} color="text-slate-300" />
         <Kpi icon={XCircle} label="Rechazadas (7d)" value={stats.rechazadas7d} color="text-slate-300" />
       </div>
 
@@ -339,7 +339,7 @@ export default function ApprovalsInbox() {
                     </td>
                     <td className="px-4 py-3"><EstadoBadge estado={a.estado} /></td>
                     <td className="px-4 py-3 text-right">
-                      <button className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-violet-400">
+                      <button className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-300">
                         <Eye className="h-3.5 w-3.5" />
                       </button>
                     </td>
@@ -421,9 +421,9 @@ function Field({ label, value, multiline, mono }: { label: string; value: string
 
 function EstadoBadge({ estado }: { estado: EstadoAprobacion }) {
   const cfg = {
-    pendiente:  { label: 'Pendiente', bg: 'bg-amber-500/15',   color: 'text-amber-300',   icon: Clock },
-    aprobada:   { label: 'Aprobada',  bg: 'bg-emerald-500/15', color: 'text-emerald-300', icon: CheckCircle },
-    rechazada:  { label: 'Rechazada', bg: 'bg-red-500/15',     color: 'text-red-300',     icon: XCircle },
+    pendiente:  { label: 'Pendiente', bg: 'bg-slate-800/40',   color: 'text-slate-300',   icon: Clock },
+    aprobada:   { label: 'Aprobada',  bg: 'bg-slate-800/40', color: 'text-slate-300', icon: CheckCircle },
+    rechazada:  { label: 'Rechazada', bg: 'bg-slate-800/40',     color: 'text-slate-300',     icon: XCircle },
     cancelada:  { label: 'Cancelada', bg: 'bg-slate-500/15',   color: 'text-slate-300',   icon: X },
   }[estado];
   const Icon = cfg.icon;

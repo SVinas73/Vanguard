@@ -154,28 +154,28 @@ type VistaActiva = 'lista' | 'nuevo' | 'detalle' | 'editar' | 'calibrar';
 // ============================================
 
 const ESTADO_CONFIG: Record<EstadoInstrumento, { label: string; color: string; bg: string }> = {
-  activo: { label: 'Activo', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  en_calibracion: { label: 'En Calibración', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  fuera_servicio: { label: 'Fuera de Servicio', color: 'text-red-400', bg: 'bg-red-500/20' },
+  activo: { label: 'Activo', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_calibracion: { label: 'En Calibración', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  fuera_servicio: { label: 'Fuera de Servicio', color: 'text-slate-300', bg: 'bg-slate-800/40' },
   dado_baja: { label: 'Dado de Baja', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  prestado: { label: 'Prestado', color: 'text-purple-400', bg: 'bg-purple-500/20' },
+  prestado: { label: 'Prestado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 const TIPO_CONFIG: Record<TipoInstrumento, { label: string; icon: React.ElementType; color: string }> = {
-  dimensional: { label: 'Dimensional', icon: Wrench, color: 'text-blue-400' },
-  temperatura: { label: 'Temperatura', icon: Thermometer, color: 'text-orange-400' },
-  presion: { label: 'Presión', icon: Activity, color: 'text-purple-400' },
-  peso: { label: 'Peso/Masa', icon: BarChart3, color: 'text-emerald-400' },
-  electrico: { label: 'Eléctrico', icon: Activity, color: 'text-yellow-400' },
-  quimico: { label: 'Químico', icon: Activity, color: 'text-cyan-400' },
+  dimensional: { label: 'Dimensional', icon: Wrench, color: 'text-slate-300' },
+  temperatura: { label: 'Temperatura', icon: Thermometer, color: 'text-slate-300' },
+  presion: { label: 'Presión', icon: Activity, color: 'text-slate-300' },
+  peso: { label: 'Peso/Masa', icon: BarChart3, color: 'text-slate-300' },
+  electrico: { label: 'Eléctrico', icon: Activity, color: 'text-slate-300' },
+  quimico: { label: 'Químico', icon: Activity, color: 'text-slate-300' },
   otro: { label: 'Otro', icon: Settings, color: 'text-slate-400' },
 };
 
 const RESULTADO_CALIBRACION_CONFIG: Record<ResultadoCalibracion, { label: string; color: string; bg: string }> = {
-  aprobado: { label: 'Aprobado', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  ajustado: { label: 'Ajustado', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  rechazado: { label: 'Rechazado', color: 'text-red-400', bg: 'bg-red-500/20' },
-  fuera_tolerancia: { label: 'Fuera de Tolerancia', color: 'text-orange-400', bg: 'bg-orange-500/20' },
+  aprobado: { label: 'Aprobado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  ajustado: { label: 'Ajustado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  rechazado: { label: 'Rechazado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  fuera_tolerancia: { label: 'Fuera de Tolerancia', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 // ============================================
@@ -200,11 +200,11 @@ const getDiasParaCalibracion = (proxima: string | null | undefined): number | nu
 
 const getColorPorDias = (dias: number | null): { color: string; bg: string } => {
   if (dias === null) return { color: 'text-slate-400', bg: 'bg-slate-500/20' };
-  if (dias < 0) return { color: 'text-red-500', bg: 'bg-red-500/20' };
-  if (dias <= 7) return { color: 'text-red-400', bg: 'bg-red-500/10' };
-  if (dias <= 30) return { color: 'text-amber-400', bg: 'bg-amber-500/10' };
-  if (dias <= 60) return { color: 'text-yellow-400', bg: 'bg-yellow-500/10' };
-  return { color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
+  if (dias < 0) return { color: 'text-slate-300', bg: 'bg-slate-800/40' };
+  if (dias <= 7) return { color: 'text-slate-300', bg: 'bg-slate-800/40' };
+  if (dias <= 30) return { color: 'text-slate-300', bg: 'bg-slate-800/40' };
+  if (dias <= 60) return { color: 'text-slate-300', bg: 'bg-slate-800/40' };
+  return { color: 'text-slate-300', bg: 'bg-slate-800/40' };
 };
 
 const formatearCodigoInstrumento = (tipo: TipoInstrumento, secuencia: number): string => {
@@ -567,7 +567,7 @@ export default function Instrumentos() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-amber-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -579,15 +579,15 @@ export default function Instrumentos() {
         <>
           {/* Alertas */}
           {stats.vencidos > 0 && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-4">
-              <div className="p-3 bg-red-500/20 rounded-xl">
-                <AlertTriangle className="h-6 w-6 text-red-400" />
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 flex items-center gap-4">
+              <div className="p-3 bg-slate-800/40 rounded-xl">
+                <AlertTriangle className="h-6 w-6 text-slate-300" />
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-red-400">
+                <h4 className="font-semibold text-slate-300">
                   {stats.vencidos} instrumento(s) con calibración vencida
                 </h4>
-                <p className="text-sm text-red-300/70">
+                <p className="text-sm text-slate-300/70">
                   Estos instrumentos no deben usarse hasta ser recalibrados
                 </p>
               </div>
@@ -604,7 +604,7 @@ export default function Instrumentos() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <Thermometer className="h-6 w-6 text-amber-400" />
+                <Thermometer className="h-6 w-6 text-slate-300" />
                 Control de Instrumentos
               </h3>
               <p className="text-slate-400 text-sm mt-1">
@@ -614,21 +614,21 @@ export default function Instrumentos() {
             
             {/* Stats */}
             <div className="flex gap-3">
-              <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                <div className="text-xs text-emerald-400">Activos</div>
-                <div className="text-xl font-bold text-emerald-400">{stats.activos}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Activos</div>
+                <div className="text-xl font-bold text-slate-300">{stats.activos}</div>
               </div>
-              <div className={`px-4 py-2 rounded-xl ${stats.vencidos > 0 ? 'bg-red-500/20 border border-red-500/30' : 'bg-slate-800/50 border border-slate-700/50'}`}>
-                <div className="text-xs text-red-400">Vencidos</div>
-                <div className={`text-xl font-bold ${stats.vencidos > 0 ? 'text-red-400' : 'text-slate-500'}`}>{stats.vencidos}</div>
+              <div className={`px-4 py-2 rounded-xl ${stats.vencidos > 0 ? 'bg-slate-800/40 border border-slate-700/40' : 'bg-slate-800/50 border border-slate-700/50'}`}>
+                <div className="text-xs text-slate-300">Vencidos</div>
+                <div className={`text-xl font-bold ${stats.vencidos > 0 ? 'text-slate-300' : 'text-slate-500'}`}>{stats.vencidos}</div>
               </div>
-              <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-                <div className="text-xs text-amber-400">Próx. 30 días</div>
-                <div className="text-xl font-bold text-amber-400">{stats.proximos30}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Próx. 30 días</div>
+                <div className="text-xl font-bold text-slate-300">{stats.proximos30}</div>
               </div>
-              <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-                <div className="text-xs text-blue-400">En Calibración</div>
-                <div className="text-xl font-bold text-blue-400">{stats.enCalibracion}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">En Calibración</div>
+                <div className="text-xl font-bold text-slate-300">{stats.enCalibracion}</div>
               </div>
             </div>
           </div>
@@ -643,7 +643,7 @@ export default function Instrumentos() {
                   placeholder="Buscar por código, nombre, marca..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 />
               </div>
               
@@ -723,7 +723,7 @@ export default function Instrumentos() {
                     return (
                       <tr key={inst.id} className="hover:bg-slate-800/30">
                         <td className="px-4 py-3">
-                          <span className="font-mono text-sm text-amber-400">{inst.codigo}</span>
+                          <span className="font-mono text-sm text-slate-300">{inst.codigo}</span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="text-sm text-slate-200 font-medium">{inst.nombre}</div>
@@ -775,7 +775,7 @@ export default function Instrumentos() {
                             {inst.estado === 'activo' && inst.requiere_calibracion && (
                               <button
                                 onClick={() => handleIniciarCalibracion(inst)}
-                                className="p-1.5 hover:bg-amber-500/20 rounded-lg text-amber-400 hover:text-amber-300"
+                                className="p-1.5 hover:bg-slate-800/40 rounded-lg text-slate-300 hover:text-slate-300"
                                 title="Registrar calibración"
                               >
                                 <Award className="h-4 w-4" />
@@ -1042,7 +1042,7 @@ function InstrumentoForm({ formData, setFormData, onGuardar, onCancelar, saving,
               type="checkbox"
               checked={formData.requiere_calibracion}
               onChange={(e) => setFormData(prev => ({ ...prev, requiere_calibracion: e.target.checked }))}
-              className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-500"
+              className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-slate-300 focus:ring-amber-500"
             />
             <span className="text-sm text-slate-300">Requiere calibración periódica</span>
           </label>
@@ -1153,7 +1153,7 @@ function InstrumentoDetalle({ inst, tabActivo, setTabActivo, onVolver, onEditar,
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-lg text-amber-400">{inst.codigo}</span>
+              <span className="font-mono text-lg text-slate-300">{inst.codigo}</span>
               <span className={`px-2 py-1 rounded-full text-xs ${estadoConfig.bg} ${estadoConfig.color}`}>
                 {estadoConfig.label}
               </span>
@@ -1235,7 +1235,7 @@ function InstrumentoDetalle({ inst, tabActivo, setTabActivo, onVolver, onEditar,
                 onClick={() => setTabActivo(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                   tabActivo === tab.id
-                    ? 'border-amber-500 text-amber-400'
+                    ? 'border-amber-500 text-slate-300'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -1363,7 +1363,7 @@ function InstrumentoDetalle({ inst, tabActivo, setTabActivo, onVolver, onEditar,
               {inst.estado !== 'en_calibracion' && (
                 <button
                   onClick={() => onCambiarEstado(inst.id, 'en_calibracion')}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-sm"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded-lg text-sm"
                 >
                   Enviar a Calibración
                 </button>
@@ -1372,7 +1372,7 @@ function InstrumentoDetalle({ inst, tabActivo, setTabActivo, onVolver, onEditar,
               {inst.estado === 'en_calibracion' && (
                 <button
                   onClick={() => onCambiarEstado(inst.id, 'activo')}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-sm"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded-lg text-sm"
                 >
                   Marcar Activo
                 </button>
@@ -1381,7 +1381,7 @@ function InstrumentoDetalle({ inst, tabActivo, setTabActivo, onVolver, onEditar,
               {inst.estado !== 'fuera_servicio' && (
                 <button
                   onClick={() => onCambiarEstado(inst.id, 'fuera_servicio')}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded-lg text-sm"
                 >
                   Fuera de Servicio
                 </button>
@@ -1488,7 +1488,7 @@ function CalibracionForm({ inst, formData, setFormData, onGuardar, onCancelar, s
         </button>
         <div>
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Award className="h-6 w-6 text-amber-400" />
+            <Award className="h-6 w-6 text-slate-300" />
             Registrar Calibración
           </h3>
           <p className="text-sm text-slate-400">
@@ -1608,8 +1608,8 @@ function CalibracionForm({ inst, formData, setFormData, onGuardar, onCancelar, s
       </div>
 
       {/* Info */}
-      <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-        <p className="text-sm text-amber-300">
+      <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+        <p className="text-sm text-slate-300">
           <strong>Próxima calibración:</strong> Se calculará automáticamente sumando {inst.frecuencia_calibracion_dias} días a la fecha de calibración.
         </p>
       </div>

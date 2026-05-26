@@ -128,7 +128,7 @@ export default function CriticalAlerts() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-red-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -141,24 +141,24 @@ export default function CriticalAlerts() {
           onClick={() => setFiltro(filtro === 'critica' ? 'todas' : 'critica')}
           className={`p-4 rounded-xl border text-center transition-all ${
             filtro === 'critica' 
-              ? 'bg-red-500/20 border-red-500/50' 
-              : 'bg-red-500/10 border-red-500/30 hover:border-red-500/50'
+              ? 'bg-slate-800/40 border-slate-700/40' 
+              : 'bg-slate-800/40 border-slate-700/40 hover:border-slate-700/40'
           }`}
         >
-          <div className="text-3xl font-bold text-red-400">{countPorUrgencia.critica}</div>
-          <div className="text-xs text-red-400">Críticas</div>
+          <div className="text-3xl font-bold text-slate-300">{countPorUrgencia.critica}</div>
+          <div className="text-xs text-slate-300">Críticas</div>
         </button>
         
         <button
           onClick={() => setFiltro(filtro === 'media' ? 'todas' : 'media')}
           className={`p-4 rounded-xl border text-center transition-all ${
             filtro === 'media' 
-              ? 'bg-amber-500/20 border-amber-500/50' 
-              : 'bg-amber-500/10 border-amber-500/30 hover:border-amber-500/50'
+              ? 'bg-slate-800/40 border-slate-700/40' 
+              : 'bg-slate-800/40 border-slate-700/40 hover:border-slate-700/40'
           }`}
         >
-          <div className="text-3xl font-bold text-amber-400">{countPorUrgencia.media}</div>
-          <div className="text-xs text-amber-400">Urgencia Media</div>
+          <div className="text-3xl font-bold text-slate-300">{countPorUrgencia.media}</div>
+          <div className="text-xs text-slate-300">Urgencia Media</div>
         </button>
         
         <button
@@ -221,25 +221,25 @@ export default function CriticalAlerts() {
             key={alerta.codigo}
             className={`bg-slate-900/50 border rounded-xl p-4 transition-all ${
               alerta.leida ? 'opacity-60 border-slate-800/50' :
-              alerta.urgencia === 'critica' ? 'border-red-500/50 bg-red-500/5' :
-              alerta.urgencia === 'media' ? 'border-amber-500/30' :
+              alerta.urgencia === 'critica' ? 'border-slate-700/40 bg-slate-800/40' :
+              alerta.urgencia === 'media' ? 'border-slate-700/40' :
               'border-slate-800/50'
             }`}
           >
             <div className="flex items-start gap-4">
               <div className={`p-2 rounded-xl ${
-                alerta.urgencia === 'critica' ? 'bg-red-500/20' :
-                alerta.urgencia === 'media' ? 'bg-amber-500/20' :
+                alerta.urgencia === 'critica' ? 'bg-slate-800/40' :
+                alerta.urgencia === 'media' ? 'bg-slate-800/40' :
                 'bg-slate-500/20'
               }`}>
                 {alerta.tipo_alerta === 'agotamiento' ? (
                   <XCircle className={`h-5 w-5 ${
-                    alerta.urgencia === 'critica' ? 'text-red-400' : 'text-amber-400'
+                    alerta.urgencia === 'critica' ? 'text-slate-300' : 'text-slate-300'
                   }`} />
                 ) : alerta.tipo_alerta === 'bajo_minimo' ? (
-                  <TrendingDown className="h-5 w-5 text-amber-400" />
+                  <TrendingDown className="h-5 w-5 text-slate-300" />
                 ) : (
-                  <AlertTriangle className="h-5 w-5 text-yellow-400" />
+                  <AlertTriangle className="h-5 w-5 text-slate-300" />
                 )}
               </div>
               
@@ -247,8 +247,8 @@ export default function CriticalAlerts() {
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium text-slate-200">{alerta.descripcion}</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs ${
-                    alerta.urgencia === 'critica' ? 'bg-red-500/20 text-red-400' :
-                    alerta.urgencia === 'media' ? 'bg-amber-500/20 text-amber-400' :
+                    alerta.urgencia === 'critica' ? 'bg-slate-800/40 text-slate-300' :
+                    alerta.urgencia === 'media' ? 'bg-slate-800/40 text-slate-300' :
                     'bg-slate-500/20 text-slate-400'
                   }`}>
                     {alerta.urgencia === 'critica' ? 'CRÍTICA' : 
@@ -261,9 +261,9 @@ export default function CriticalAlerts() {
                 
                 <div className="text-sm text-slate-400 mb-2">
                   {alerta.tipo_alerta === 'agotamiento' && alerta.stock_actual === 0 ? (
-                    <span className="text-red-400 font-medium">⚠️ Stock agotado</span>
+                    <span className="text-slate-300 font-medium">⚠️ Stock agotado</span>
                   ) : alerta.tipo_alerta === 'agotamiento' ? (
-                    <span>Se agota en <strong className="text-red-400">{alerta.dias_restantes.toFixed(0)} días</strong></span>
+                    <span>Se agota en <strong className="text-slate-300">{alerta.dias_restantes.toFixed(0)} días</strong></span>
                   ) : alerta.tipo_alerta === 'bajo_minimo' ? (
                     <span>Stock bajo mínimo: {alerta.stock_actual} / {alerta.stock_minimo}</span>
                   ) : (
@@ -308,8 +308,8 @@ export default function CriticalAlerts() {
         
         {alertasFiltradas.length === 0 && (
           <div className="text-center py-12">
-            <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
-            <p className="text-emerald-400 font-medium">¡Sin alertas pendientes!</p>
+            <CheckCircle className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+            <p className="text-slate-300 font-medium">¡Sin alertas pendientes!</p>
           </div>
         )}
       </div>

@@ -30,9 +30,9 @@ const TIPO_CFE_LABEL: Record<number, string> = {
 
 const ESTADO_CONFIG: Record<EstadoCFE, { label: string; bg: string; color: string; icon: React.ElementType }> = {
   borrador:       { label: 'Borrador',       bg: 'bg-slate-500/15',   color: 'text-slate-300',   icon: Clock },
-  firmado:        { label: 'Firmado',        bg: 'bg-blue-500/15',    color: 'text-blue-300',    icon: Send },
-  aceptado_dgi:   { label: 'Aceptado DGI',   bg: 'bg-emerald-500/15', color: 'text-emerald-300', icon: CheckCircle },
-  rechazado_dgi:  { label: 'Rechazado DGI',  bg: 'bg-red-500/15',     color: 'text-red-300',     icon: XCircle },
+  firmado:        { label: 'Firmado',        bg: 'bg-slate-800/40',    color: 'text-slate-300',    icon: Send },
+  aceptado_dgi:   { label: 'Aceptado DGI',   bg: 'bg-slate-800/40', color: 'text-slate-300', icon: CheckCircle },
+  rechazado_dgi:  { label: 'Rechazado DGI',  bg: 'bg-slate-800/40',     color: 'text-slate-300',     icon: XCircle },
   anulado:        { label: 'Anulado',        bg: 'bg-slate-500/15',   color: 'text-slate-400',   icon: X },
 };
 
@@ -213,7 +213,7 @@ export default function FacturasElectronicas() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-blue-400" /></div>;
+    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-slate-300" /></div>;
   }
 
   // ========== CONFIG EMISOR ==========
@@ -231,7 +231,7 @@ export default function FacturasElectronicas() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <Receipt className="h-6 w-6 text-blue-400" />
+              <Receipt className="h-6 w-6 text-slate-300" />
               {TIPO_CFE_LABEL[selected.tipo_cfe]} {selected.serie}-{selected.numero}
             </h3>
             <span className={cn('inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded text-xs font-medium', cfg.bg, cfg.color)}>
@@ -261,8 +261,8 @@ export default function FacturasElectronicas() {
               </div>
             )}
             {selected.rechazo_motivo && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded p-2 mt-2">
-                <div className="text-xs text-red-300 font-semibold mb-1">Motivo de rechazo</div>
+              <div className="bg-slate-800/40 border border-slate-700/40 rounded p-2 mt-2">
+                <div className="text-xs text-slate-300 font-semibold mb-1">Motivo de rechazo</div>
                 <div className="text-sm text-red-200">{selected.rechazo_motivo}</div>
               </div>
             )}
@@ -318,7 +318,7 @@ export default function FacturasElectronicas() {
         <toast.Toast />
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Plus className="h-6 w-6 text-blue-400" />
+            <Plus className="h-6 w-6 text-slate-300" />
             Nuevo CFE
           </h3>
           <button onClick={() => setVista('lista')} className="p-2 hover:bg-slate-800 rounded-lg">
@@ -371,7 +371,7 @@ export default function FacturasElectronicas() {
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-semibold text-slate-200">Líneas</h4>
               <button onClick={() => setForm(p => ({ ...p, lineas: [...p.lineas, { descripcion: '', cantidad: 1, precioUnitario: 0, ivaTasa: 22 }] }))}
-                className="text-xs text-blue-400 flex items-center gap-1">
+                className="text-xs text-slate-300 flex items-center gap-1">
                 <Plus className="h-3 w-3" /> Agregar línea
               </button>
             </div>
@@ -395,7 +395,7 @@ export default function FacturasElectronicas() {
                   </select>
                   {form.lineas.length > 1 && (
                     <button onClick={() => setForm(p => ({ ...p, lineas: p.lineas.filter((_, i) => i !== idx) }))}
-                      className="col-span-1 hover:bg-red-500/20 rounded text-red-400 flex items-center justify-center">
+                      className="col-span-1 hover:bg-slate-800/40 rounded text-slate-300 flex items-center justify-center">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -432,7 +432,7 @@ export default function FacturasElectronicas() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Receipt className="h-6 w-6 text-blue-400" />
+            <Receipt className="h-6 w-6 text-slate-300" />
             Facturación electrónica (DGI Uruguay)
           </h3>
         </div>
@@ -453,10 +453,10 @@ export default function FacturasElectronicas() {
       </div>
 
       {!emisor && (
-        <div className="bg-amber-500/5 border border-amber-500/30 rounded-xl p-3 flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-300 flex-shrink-0 mt-0.5" />
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-slate-300 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <h4 className="text-sm font-semibold text-amber-300">Falta configurar el emisor</h4>
+            <h4 className="text-sm font-semibold text-slate-300">Falta configurar el emisor</h4>
             <p className="text-xs text-slate-400 mt-1">
               Antes de emitir el primer CFE configurá los datos fiscales de la empresa (RUT, razón social, serie autorizada).
               Hacé click en <strong>Datos del emisor</strong>.
@@ -467,10 +467,10 @@ export default function FacturasElectronicas() {
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Kpi label="Borradores" value={stats.borradores} color="text-slate-300" />
-        <Kpi label="Firmados" value={stats.firmados} color="text-blue-300" />
-        <Kpi label="Aceptados DGI" value={stats.aceptados} color="text-emerald-300" />
-        <Kpi label="Rechazados" value={stats.rechazados} color="text-red-300" />
-        <Kpi label="Facturado mes" value={formatCurrency(stats.totalMes)} color="text-amber-300" />
+        <Kpi label="Firmados" value={stats.firmados} color="text-slate-300" />
+        <Kpi label="Aceptados DGI" value={stats.aceptados} color="text-slate-300" />
+        <Kpi label="Rechazados" value={stats.rechazados} color="text-slate-300" />
+        <Kpi label="Facturado mes" value={formatCurrency(stats.totalMes)} color="text-slate-300" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -532,7 +532,7 @@ export default function FacturasElectronicas() {
                       {c.fecha_emision ? new Date(c.fecha_emision).toLocaleDateString('es-UY') : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-blue-400">
+                      <button className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-300">
                         <Eye className="h-3.5 w-3.5" />
                       </button>
                     </td>
@@ -595,7 +595,7 @@ function EmisorConfigPanel({ emisor, onSaved, onCancel }: { emisor: any; onSaved
       <toast.Toast />
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-          <Settings className="h-6 w-6 text-blue-400" />
+          <Settings className="h-6 w-6 text-slate-300" />
           Datos del emisor (DGI)
         </h3>
         <button onClick={onCancel} className="p-2 hover:bg-slate-800 rounded-lg">

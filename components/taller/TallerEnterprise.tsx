@@ -247,64 +247,64 @@ const ESTADO_CONFIG: Record<EstadoOrden, {
   },
   diagnostico: {
     label: 'Diagnóstico',
-    color: 'text-blue-400',
-    bg: 'bg-blue-500/20 border-blue-500/30',
+    color: 'text-slate-300',
+    bg: 'bg-slate-800/40 border-slate-700/40',
     icon: <Search className="h-4 w-4" />,
     siguientes: ['cotizacion', 'en_reparacion', 'cancelado'], // en_reparacion si es garantía
   },
   cotizacion: {
     label: 'Cotización',
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/20 border-amber-500/30',
+    color: 'text-slate-300',
+    bg: 'bg-slate-800/40 border-slate-700/40',
     icon: <Receipt className="h-4 w-4" />,
     siguientes: ['aprobado', 'rechazado'],
   },
   aprobado: {
     label: 'Aprobado',
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/20 border-emerald-500/30',
+    color: 'text-slate-300',
+    bg: 'bg-slate-800/40 border-slate-700/40',
     icon: <CheckCircle className="h-4 w-4" />,
     siguientes: ['en_reparacion'],
   },
   rechazado: {
     label: 'Rechazado',
-    color: 'text-red-400',
-    bg: 'bg-red-500/20 border-red-500/30',
+    color: 'text-slate-300',
+    bg: 'bg-slate-800/40 border-slate-700/40',
     icon: <XCircle className="h-4 w-4" />,
     siguientes: ['listo_entrega', 'cancelado'],
   },
   en_reparacion: {
     label: 'En Reparación',
-    color: 'text-purple-400',
-    bg: 'bg-purple-500/20 border-purple-500/30',
+    color: 'text-slate-300',
+    bg: 'bg-slate-800/40 border-slate-700/40',
     icon: <Wrench className="h-4 w-4" />,
     siguientes: ['reparado'],
   },
   reparado: {
     label: 'Reparado',
-    color: 'text-cyan-400',
-    bg: 'bg-cyan-500/20 border-cyan-500/30',
+    color: 'text-slate-300',
+    bg: 'bg-slate-800/40 border-slate-700/40',
     icon: <BadgeCheck className="h-4 w-4" />,
     siguientes: ['facturado', 'listo_entrega'], // listo_entrega si es garantía
   },
   facturado: {
     label: 'Facturado',
-    color: 'text-green-400',
-    bg: 'bg-green-500/20 border-green-500/30',
+    color: 'text-slate-300',
+    bg: 'bg-slate-800/40 border-slate-700/40',
     icon: <FileCheck className="h-4 w-4" />,
     siguientes: ['listo_entrega'],
   },
   listo_entrega: {
     label: 'Listo Entrega',
-    color: 'text-orange-400',
-    bg: 'bg-orange-500/20 border-orange-500/30',
+    color: 'text-slate-300',
+    bg: 'bg-slate-800/40 border-slate-700/40',
     icon: <PackageCheck className="h-4 w-4" />,
     siguientes: ['entregado'],
   },
   entregado: {
     label: 'Entregado',
-    color: 'text-teal-400',
-    bg: 'bg-teal-500/20 border-teal-500/30',
+    color: 'text-slate-300',
+    bg: 'bg-slate-800/40 border-slate-700/40',
     icon: <TruckIcon className="h-4 w-4" />,
     siguientes: [],
   },
@@ -327,16 +327,16 @@ const TIPO_EQUIPO_CONFIG: Record<TipoEquipo, { label: string; icon: React.ReactN
 };
 
 const TIPO_ORDEN_CONFIG: Record<TipoOrden, { label: string; color: string; icon: React.ReactNode }> = {
-  garantia: { label: 'Garantía', color: 'text-emerald-400', icon: <Shield className="h-4 w-4" /> },
-  presupuesto: { label: 'Presupuesto', color: 'text-amber-400', icon: <Receipt className="h-4 w-4" /> },
-  mantenimiento: { label: 'Mantenimiento', color: 'text-blue-400', icon: <Settings className="h-4 w-4" /> },
+  garantia: { label: 'Garantía', color: 'text-slate-300', icon: <Shield className="h-4 w-4" /> },
+  presupuesto: { label: 'Presupuesto', color: 'text-slate-300', icon: <Receipt className="h-4 w-4" /> },
+  mantenimiento: { label: 'Mantenimiento', color: 'text-slate-300', icon: <Settings className="h-4 w-4" /> },
 };
 
 const PRIORIDAD_CONFIG: Record<Prioridad, { label: string; color: string; bg: string }> = {
   baja: { label: 'Baja', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  normal: { label: 'Normal', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  alta: { label: 'Alta', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  urgente: { label: 'Urgente', color: 'text-red-400', bg: 'bg-red-500/20' },
+  normal: { label: 'Normal', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  alta: { label: 'Alta', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  urgente: { label: 'Urgente', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 // Estados para vista Kanban por rol
@@ -395,9 +395,9 @@ function useToast() {
     <div className="fixed bottom-4 right-4 z-50 space-y-2">
       {toasts.map(t => (
         <div key={t.id} className={`px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3 ${
-          t.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
-          t.type === 'error' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
-          'bg-amber-500/20 border-amber-500/30 text-amber-400'
+          t.type === 'success' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          t.type === 'error' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          'bg-slate-800/40 border-slate-700/40 text-slate-300'
         }`}>
           {t.type === 'success' ? <CheckCircle className="h-5 w-5" /> :
            t.type === 'error' ? <XCircle className="h-5 w-5" /> :
@@ -1544,7 +1544,7 @@ export default function TallerEnterprise() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-orange-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -1557,7 +1557,7 @@ export default function TallerEnterprise() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-            <Wrench className="h-7 w-7 text-orange-400" />
+            <Wrench className="h-7 w-7 text-slate-300" />
             Taller / Servicio Técnico
           </h2>
           <p className="text-slate-400 text-sm mt-1">Gestión de órdenes de trabajo y reparaciones</p>
@@ -1587,31 +1587,31 @@ export default function TallerEnterprise() {
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Search className="h-5 w-5 text-blue-400" />
+            <Search className="h-5 w-5 text-slate-300" />
             <span className="text-sm text-slate-400">En Diagnóstico</span>
           </div>
-          <div className="text-2xl font-bold text-blue-400">{metricas.enDiagnostico}</div>
+          <div className="text-2xl font-bold text-slate-300">{metricas.enDiagnostico}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Wrench className="h-5 w-5 text-purple-400" />
+            <Wrench className="h-5 w-5 text-slate-300" />
             <span className="text-sm text-slate-400">En Reparación</span>
           </div>
-          <div className="text-2xl font-bold text-purple-400">{metricas.enReparacion}</div>
+          <div className="text-2xl font-bold text-slate-300">{metricas.enReparacion}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <PackageCheck className="h-5 w-5 text-orange-400" />
+            <PackageCheck className="h-5 w-5 text-slate-300" />
             <span className="text-sm text-slate-400">Listos Entrega</span>
           </div>
-          <div className="text-2xl font-bold text-orange-400">{metricas.listosEntrega}</div>
+          <div className="text-2xl font-bold text-slate-300">{metricas.listosEntrega}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Bell className="h-5 w-5 text-amber-400" />
+            <Bell className="h-5 w-5 text-slate-300" />
             <span className="text-sm text-slate-400">Sin Notificar</span>
           </div>
-          <div className="text-2xl font-bold text-amber-400">{metricas.pendientesNotificar}</div>
+          <div className="text-2xl font-bold text-slate-300">{metricas.pendientesNotificar}</div>
         </div>
       </div>
 
@@ -1841,7 +1841,7 @@ export default function TallerEnterprise() {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-6 my-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-orange-400" />
+                <ClipboardList className="h-5 w-5 text-slate-300" />
                 Nueva Orden de Trabajo
               </h3>
               <button onClick={() => { setModalType(null); resetIngresoForm(); }} className="p-2 hover:bg-slate-800 rounded-lg">
@@ -1890,10 +1890,10 @@ export default function TallerEnterprise() {
                 </div>
 
                 {ingresoForm.esGarantia && (
-                  <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-3">
+                  <div className="mt-4 p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm text-emerald-400 mb-1">Nº Factura de Compra</label>
+                        <label className="block text-sm text-slate-300 mb-1">Nº Factura de Compra</label>
                         <input
                           type="text"
                           value={ingresoForm.facturaGarantia}
@@ -1902,16 +1902,16 @@ export default function TallerEnterprise() {
                             setGarantiaLookup(null);
                           }}
                           placeholder="FAC-123456"
-                          className="w-full px-3 py-2 bg-slate-800 border border-emerald-500/30 rounded-xl text-slate-100"
+                          className="w-full px-3 py-2 bg-slate-800 border border-slate-700/40 rounded-xl text-slate-100"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-emerald-400 mb-1">Fecha de Compra</label>
+                        <label className="block text-sm text-slate-300 mb-1">Fecha de Compra</label>
                         <input
                           type="date"
                           value={ingresoForm.fechaCompra}
                           onChange={(e) => setIngresoForm({ ...ingresoForm, fechaCompra: e.target.value })}
-                          className="w-full px-3 py-2 bg-slate-800 border border-emerald-500/30 rounded-xl text-slate-100"
+                          className="w-full px-3 py-2 bg-slate-800 border border-slate-700/40 rounded-xl text-slate-100"
                         />
                       </div>
                     </div>
@@ -1936,7 +1936,7 @@ export default function TallerEnterprise() {
                           </>
                         )}
                       </button>
-                      <span className="text-xs text-emerald-400/60">
+                      <span className="text-xs text-slate-300/60">
                         Busca por factura o número de serie ({ingresoForm.serie || '—'})
                       </span>
                     </div>
@@ -1944,17 +1944,17 @@ export default function TallerEnterprise() {
                     {/* Resultado del lookup */}
                     {garantiaLookup && (
                       garantiaLookup.ok ? (
-                        <div className="p-3 rounded-lg bg-emerald-500/15 border border-emerald-500/40">
+                        <div className="p-3 rounded-lg bg-slate-800/40 border border-slate-700/40">
                           <div className="flex items-center gap-2 mb-2">
-                            <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                            <ShieldCheck className="h-4 w-4 text-slate-300" />
                             <span className="text-sm font-semibold text-emerald-200">
                               Garantía válida — {garantiaLookup.garantia.numero}
                             </span>
-                            <span className="ml-auto text-xs px-2 py-0.5 rounded bg-emerald-500/30 text-emerald-100 font-bold">
+                            <span className="ml-auto text-xs px-2 py-0.5 rounded bg-slate-800/40 text-emerald-100 font-bold">
                               {garantiaLookup.diasRestantes} días restantes
                             </span>
                           </div>
-                          <div className="text-xs text-emerald-300/80 space-y-0.5">
+                          <div className="text-xs text-slate-300/80 space-y-0.5">
                             <div>Producto: <span className="text-emerald-100">{garantiaLookup.garantia.producto_codigo} — {garantiaLookup.garantia.producto_nombre || ''}</span></div>
                             {garantiaLookup.garantia.serial_numero && <div>Serial: <span className="font-mono text-emerald-100">{garantiaLookup.garantia.serial_numero}</span></div>}
                             <div>Vence: <span className="text-emerald-100">{new Date(garantiaLookup.garantia.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-UY')}</span></div>
@@ -1962,9 +1962,9 @@ export default function TallerEnterprise() {
                           </div>
                         </div>
                       ) : (
-                        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                        <div className="p-3 rounded-lg bg-slate-800/40 border border-slate-700/40">
                           <div className="flex items-center gap-2 mb-1">
-                            <AlertTriangle className="h-4 w-4 text-red-300" />
+                            <AlertTriangle className="h-4 w-4 text-slate-300" />
                             <span className="text-sm font-semibold text-red-200">
                               {garantiaLookup.razon === 'no_encontrada' && 'No se encontró garantía'}
                               {garantiaLookup.razon === 'vencida' && 'Garantía vencida'}
@@ -1972,7 +1972,7 @@ export default function TallerEnterprise() {
                               {garantiaLookup.razon === 'anulada' && 'Garantía anulada'}
                             </span>
                           </div>
-                          <p className="text-xs text-red-300/80">
+                          <p className="text-xs text-slate-300/80">
                             {garantiaLookup.razon === 'no_encontrada'
                               ? 'No hay garantía registrada con esa factura o serial. Verificá los datos o creala desde el módulo de Garantías.'
                               : 'No se puede usar esta garantía para una orden de taller. Si el cliente reclama igual, asegurate de cobrar la reparación.'}
@@ -2224,8 +2224,8 @@ export default function TallerEnterprise() {
                       )}
                     </div>
                     {ordenSeleccionada.estadoIngreso && (
-                      <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                        <span className="text-xs text-amber-400">Estado de ingreso:</span>
+                      <div className="mt-2 p-2 bg-slate-800/40 border border-slate-700/40 rounded-lg">
+                        <span className="text-xs text-slate-300">Estado de ingreso:</span>
                         <p className="text-sm text-slate-300">{ordenSeleccionada.estadoIngreso}</p>
                       </div>
                     )}
@@ -2240,8 +2240,8 @@ export default function TallerEnterprise() {
 
                 {/* Diagnóstico */}
                 {ordenSeleccionada.diagnostico ? (
-                  <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-                    <h4 className="text-sm font-semibold text-blue-400 mb-2 flex items-center gap-2">
+                  <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                    <h4 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
                       <Search className="h-4 w-4" />
                       Diagnóstico
                     </h4>
@@ -2251,8 +2251,8 @@ export default function TallerEnterprise() {
                     </p>
                   </div>
                 ) : ordenSeleccionada.estado === 'diagnostico' && (
-                  <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-                    <h4 className="text-sm font-semibold text-blue-400 mb-3">Registrar Diagnóstico</h4>
+                  <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                    <h4 className="text-sm font-semibold text-slate-300 mb-3">Registrar Diagnóstico</h4>
                     <textarea
                       value={diagnosticoForm.diagnostico}
                       onChange={(e) => setDiagnosticoForm({ ...diagnosticoForm, diagnostico: e.target.value })}
@@ -2272,8 +2272,8 @@ export default function TallerEnterprise() {
 
                 {/* Aviso para crear cotización */}
                 {ordenSeleccionada.estado === 'cotizacion' && !ordenSeleccionada.cotizacion && (
-                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-                    <h4 className="text-sm font-semibold text-amber-400 mb-2 flex items-center gap-2">
+                  <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                    <h4 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
                       <Receipt className="h-4 w-4" />
                       Pendiente crear cotización
                     </h4>
@@ -2289,8 +2289,8 @@ export default function TallerEnterprise() {
 
                 {/* Cotización */}
                 {ordenSeleccionada.cotizacion && (
-                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-                    <h4 className="text-sm font-semibold text-amber-400 mb-3 flex items-center gap-2">
+                  <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                    <h4 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
                       <Receipt className="h-4 w-4" />
                       Cotización {ordenSeleccionada.cotizacion.numero}
                     </h4>
@@ -2309,7 +2309,7 @@ export default function TallerEnterprise() {
                         {ordenSeleccionada.cotizacion.descuento > 0 && (
                           <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Descuento:</span>
-                            <span className="text-emerald-400">-{formatCurrency(ordenSeleccionada.cotizacion.descuento)}</span>
+                            <span className="text-slate-300">-{formatCurrency(ordenSeleccionada.cotizacion.descuento)}</span>
                           </div>
                         )}
                         <div className="flex justify-between text-sm">
@@ -2318,7 +2318,7 @@ export default function TallerEnterprise() {
                         </div>
                         <div className="flex justify-between font-bold mt-2">
                           <span className="text-slate-200">TOTAL:</span>
-                          <span className="text-amber-400">{formatCurrency(ordenSeleccionada.cotizacion.total)}</span>
+                          <span className="text-slate-300">{formatCurrency(ordenSeleccionada.cotizacion.total)}</span>
                         </div>
                       </div>
                     </div>
@@ -2348,8 +2348,8 @@ export default function TallerEnterprise() {
 
                 {/* Trabajo realizado */}
                 {ordenSeleccionada.trabajoRealizado && (
-                  <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
-                    <h4 className="text-sm font-semibold text-purple-400 mb-2 flex items-center gap-2">
+                  <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                    <h4 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
                       <Wrench className="h-4 w-4" />
                       Trabajo Realizado
                     </h4>
@@ -2384,12 +2384,12 @@ export default function TallerEnterprise() {
                         <div>Factura: {ordenSeleccionada.facturaGarantia}</div>
                       )}
                       {ordenSeleccionada.garantiaId ? (
-                        <div className="flex items-center gap-1 text-emerald-300">
+                        <div className="flex items-center gap-1 text-slate-300">
                           <ShieldCheck className="h-3 w-3" />
                           Garantía validada
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1 text-amber-300">
+                        <div className="flex items-center gap-1 text-slate-300">
                           <AlertTriangle className="h-3 w-3" />
                           Garantía sin validar
                         </div>
@@ -2420,17 +2420,17 @@ export default function TallerEnterprise() {
                 </div>
 
                 {/* Estado de notificación */}
-                <div className={`p-3 rounded-xl ${ordenSeleccionada.clienteNotificado ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-amber-500/10 border border-amber-500/30'}`}>
+                <div className={`p-3 rounded-xl ${ordenSeleccionada.clienteNotificado ? 'bg-slate-800/40 border border-slate-700/40' : 'bg-slate-800/40 border border-slate-700/40'}`}>
                   <div className="flex items-center gap-2">
                     {ordenSeleccionada.clienteNotificado ? (
                       <>
-                        <CheckCircle className="h-4 w-4 text-emerald-400" />
-                        <span className="text-emerald-400 text-sm">Cliente notificado</span>
+                        <CheckCircle className="h-4 w-4 text-slate-300" />
+                        <span className="text-slate-300 text-sm">Cliente notificado</span>
                       </>
                     ) : (
                       <>
-                        <Bell className="h-4 w-4 text-amber-400" />
-                        <span className="text-amber-400 text-sm">Sin notificar</span>
+                        <Bell className="h-4 w-4 text-slate-300" />
+                        <span className="text-slate-300 text-sm">Sin notificar</span>
                       </>
                     )}
                   </div>
@@ -2583,7 +2583,7 @@ export default function TallerEnterprise() {
                         }],
                       });
                     }}
-                    className="text-sm text-orange-400 hover:text-orange-300"
+                    className="text-sm text-slate-300 hover:text-slate-300"
                   >
                     + Agregar item
                   </button>
@@ -2678,7 +2678,7 @@ export default function TallerEnterprise() {
                               const items = cotizacionForm.items.filter((_, i) => i !== idx);
                               setCotizacionForm({ ...cotizacionForm, items });
                             }}
-                            className="p-1 hover:bg-slate-700 rounded text-red-400"
+                            className="p-1 hover:bg-slate-700 rounded text-slate-300"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -2690,7 +2690,7 @@ export default function TallerEnterprise() {
               </div>
 
               {/* Totales */}
-              <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+              <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-slate-400">Subtotal:</span>
                   <span className="text-slate-200">{formatCurrency(cotizacionForm.items.reduce((s, i) => s + i.total, 0))}</span>
@@ -2711,9 +2711,9 @@ export default function TallerEnterprise() {
                     {formatCurrency((cotizacionForm.items.reduce((s, i) => s + i.total, 0) - cotizacionForm.descuento) * 0.22)}
                   </span>
                 </div>
-                <div className="flex justify-between font-bold text-lg pt-2 border-t border-amber-500/30">
+                <div className="flex justify-between font-bold text-lg pt-2 border-t border-slate-700/40">
                   <span className="text-slate-200">TOTAL:</span>
-                  <span className="text-amber-400">
+                  <span className="text-slate-300">
                     {formatCurrency(
                       (cotizacionForm.items.reduce((s, i) => s + i.total, 0) - cotizacionForm.descuento) * 1.22
                     )}
@@ -2805,7 +2805,7 @@ export default function TallerEnterprise() {
                         }],
                       });
                     }}
-                    className="text-sm text-orange-400 hover:text-orange-300"
+                    className="text-sm text-slate-300 hover:text-slate-300"
                   >
                     + Agregar repuesto
                   </button>
@@ -2849,7 +2849,7 @@ export default function TallerEnterprise() {
                           const repuestos = reparacionForm.repuestosUsados.filter((_, i) => i !== idx);
                           setReparacionForm({ ...reparacionForm, repuestosUsados: repuestos });
                         }}
-                        className="p-1.5 hover:bg-slate-700 rounded text-red-400"
+                        className="p-1.5 hover:bg-slate-700 rounded text-slate-300"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -2973,10 +2973,10 @@ function KanbanCard({ orden, onClick }: { orden: OrdenTrabajo; onClick: () => vo
       <div className="flex items-start justify-between mb-2">
         <span className="font-mono text-xs text-slate-400">{orden.numero}</span>
         <div className="flex items-center gap-1">
-          {orden.esGarantia && <Shield className="h-3 w-3 text-emerald-400" />}
-          {orden.prioridad === 'urgente' && <Flag className="h-3 w-3 text-red-400" />}
+          {orden.esGarantia && <Shield className="h-3 w-3 text-slate-300" />}
+          {orden.prioridad === 'urgente' && <Flag className="h-3 w-3 text-slate-300" />}
           {!orden.clienteNotificado && ['reparado', 'listo_entrega'].includes(orden.estado) && (
-            <Bell className="h-3 w-3 text-amber-400" />
+            <Bell className="h-3 w-3 text-slate-300" />
           )}
         </div>
       </div>

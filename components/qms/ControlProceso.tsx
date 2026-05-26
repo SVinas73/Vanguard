@@ -172,27 +172,27 @@ type VistaActiva = 'monitoreo' | 'puntos_control' | 'nuevo_punto' | 'detalle_pun
 // ============================================
 
 const TIPO_CONTROL_CONFIG: Record<TipoPuntoControl, { label: string; icon: React.ElementType; color: string; unidadDefault: string }> = {
-  dimensional: { label: 'Dimensional', icon: Gauge, color: 'text-blue-400', unidadDefault: 'mm' },
-  visual: { label: 'Visual', icon: Eye, color: 'text-purple-400', unidadDefault: '' },
-  peso: { label: 'Peso', icon: Package, color: 'text-emerald-400', unidadDefault: 'kg' },
-  temperatura: { label: 'Temperatura', icon: Thermometer, color: 'text-orange-400', unidadDefault: '°C' },
-  presion: { label: 'Presión', icon: Gauge, color: 'text-cyan-400', unidadDefault: 'bar' },
-  ph: { label: 'pH', icon: FlaskConical, color: 'text-lime-400', unidadDefault: 'pH' },
-  humedad: { label: 'Humedad', icon: Activity, color: 'text-sky-400', unidadDefault: '%' },
-  densidad: { label: 'Densidad', icon: Layers, color: 'text-amber-400', unidadDefault: 'g/cm³' },
+  dimensional: { label: 'Dimensional', icon: Gauge, color: 'text-slate-300', unidadDefault: 'mm' },
+  visual: { label: 'Visual', icon: Eye, color: 'text-slate-300', unidadDefault: '' },
+  peso: { label: 'Peso', icon: Package, color: 'text-slate-300', unidadDefault: 'kg' },
+  temperatura: { label: 'Temperatura', icon: Thermometer, color: 'text-slate-300', unidadDefault: '°C' },
+  presion: { label: 'Presión', icon: Gauge, color: 'text-slate-300', unidadDefault: 'bar' },
+  ph: { label: 'pH', icon: FlaskConical, color: 'text-slate-300', unidadDefault: 'pH' },
+  humedad: { label: 'Humedad', icon: Activity, color: 'text-slate-300', unidadDefault: '%' },
+  densidad: { label: 'Densidad', icon: Layers, color: 'text-slate-300', unidadDefault: 'g/cm³' },
   otro: { label: 'Otro', icon: Target, color: 'text-slate-400', unidadDefault: '' },
 };
 
 const ESTADO_PUNTO_CONFIG: Record<EstadoPuntoControl, { label: string; color: string; bg: string }> = {
-  activo: { label: 'Activo', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+  activo: { label: 'Activo', color: 'text-slate-300', bg: 'bg-slate-800/40' },
   inactivo: { label: 'Inactivo', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  en_revision: { label: 'En Revisión', color: 'text-amber-400', bg: 'bg-amber-500/20' },
+  en_revision: { label: 'En Revisión', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 const RESULTADO_CONFIG: Record<ResultadoMedicion, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  conforme: { label: 'Conforme', color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle },
-  no_conforme: { label: 'No Conforme', color: 'text-red-400', bg: 'bg-red-500/20', icon: XCircle },
-  alerta: { label: 'Alerta', color: 'text-amber-400', bg: 'bg-amber-500/20', icon: AlertTriangle },
+  conforme: { label: 'Conforme', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: CheckCircle },
+  no_conforme: { label: 'No Conforme', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: XCircle },
+  alerta: { label: 'Alerta', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: AlertTriangle },
 };
 
 const TIPO_GRAFICO_CONFIG: Record<TipoGraficoSPC, { label: string; descripcion: string }> = {
@@ -206,10 +206,10 @@ const TIPO_GRAFICO_CONFIG: Record<TipoGraficoSPC, { label: string; descripcion: 
 };
 
 const TENDENCIA_CONFIG = {
-  estable: { label: 'Estable', color: 'text-emerald-400', icon: Minus },
-  ascendente: { label: 'Ascendente', color: 'text-amber-400', icon: ArrowUp },
-  descendente: { label: 'Descendente', color: 'text-amber-400', icon: ArrowDown },
-  fuera_control: { label: 'Fuera de Control', color: 'text-red-400', icon: AlertTriangle },
+  estable: { label: 'Estable', color: 'text-slate-300', icon: Minus },
+  ascendente: { label: 'Ascendente', color: 'text-slate-300', icon: ArrowUp },
+  descendente: { label: 'Descendente', color: 'text-slate-300', icon: ArrowDown },
+  fuera_control: { label: 'Fuera de Control', color: 'text-slate-300', icon: AlertTriangle },
 };
 
 // ============================================
@@ -697,7 +697,7 @@ export default function ControlProceso() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-teal-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -718,7 +718,7 @@ export default function ControlProceso() {
               onClick={() => setVistaActiva(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 vistaActiva === tab.id
-                  ? 'bg-teal-500/20 text-teal-400'
+                  ? 'bg-slate-800/40 text-slate-300'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
@@ -734,15 +734,15 @@ export default function ControlProceso() {
         <>
           {/* Alertas */}
           {stats.noConformes > 0 && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-4">
-              <div className="p-3 bg-red-500/20 rounded-xl">
-                <AlertTriangle className="h-6 w-6 text-red-400" />
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 flex items-center gap-4">
+              <div className="p-3 bg-slate-800/40 rounded-xl">
+                <AlertTriangle className="h-6 w-6 text-slate-300" />
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-red-400">
+                <h4 className="font-semibold text-slate-300">
                   {stats.noConformes} medición(es) no conforme(s) hoy
                 </h4>
-                <p className="text-sm text-red-300/70">
+                <p className="text-sm text-slate-300/70">
                   Revise los puntos de control afectados y tome acciones correctivas
                 </p>
               </div>
@@ -759,21 +759,21 @@ export default function ControlProceso() {
               <div className="text-xs text-slate-400 mb-1">Mediciones Hoy</div>
               <div className="text-2xl font-bold text-slate-200">{stats.medicionesHoy}</div>
             </div>
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
-              <div className="text-xs text-emerald-400 mb-1">Conformes</div>
-              <div className="text-2xl font-bold text-emerald-400">{stats.conformes}</div>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
+              <div className="text-xs text-slate-300 mb-1">Conformes</div>
+              <div className="text-2xl font-bold text-slate-300">{stats.conformes}</div>
             </div>
-            <div className={`rounded-xl p-4 ${stats.noConformes > 0 ? 'bg-red-500/20 border border-red-500/30' : 'bg-slate-900/50 border border-slate-800/50'}`}>
-              <div className="text-xs text-red-400 mb-1">No Conformes</div>
-              <div className={`text-2xl font-bold ${stats.noConformes > 0 ? 'text-red-400' : 'text-slate-500'}`}>{stats.noConformes}</div>
+            <div className={`rounded-xl p-4 ${stats.noConformes > 0 ? 'bg-slate-800/40 border border-slate-700/40' : 'bg-slate-900/50 border border-slate-800/50'}`}>
+              <div className="text-xs text-slate-300 mb-1">No Conformes</div>
+              <div className={`text-2xl font-bold ${stats.noConformes > 0 ? 'text-slate-300' : 'text-slate-500'}`}>{stats.noConformes}</div>
             </div>
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-              <div className="text-xs text-amber-400 mb-1">Alertas</div>
-              <div className="text-2xl font-bold text-amber-400">{stats.alertas}</div>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
+              <div className="text-xs text-slate-300 mb-1">Alertas</div>
+              <div className="text-2xl font-bold text-slate-300">{stats.alertas}</div>
             </div>
-            <div className={`rounded-xl p-4 ${stats.porcentajeCalidad >= 95 ? 'bg-emerald-500/10 border border-emerald-500/30' : stats.porcentajeCalidad >= 90 ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
+            <div className={`rounded-xl p-4 ${stats.porcentajeCalidad >= 95 ? 'bg-slate-800/40 border border-slate-700/40' : stats.porcentajeCalidad >= 90 ? 'bg-slate-800/40 border border-slate-700/40' : 'bg-slate-800/40 border border-slate-700/40'}`}>
               <div className="text-xs text-slate-400 mb-1">% Calidad</div>
-              <div className={`text-2xl font-bold ${stats.porcentajeCalidad >= 95 ? 'text-emerald-400' : stats.porcentajeCalidad >= 90 ? 'text-amber-400' : 'text-red-400'}`}>
+              <div className={`text-2xl font-bold ${stats.porcentajeCalidad >= 95 ? 'text-slate-300' : stats.porcentajeCalidad >= 90 ? 'text-slate-300' : 'text-slate-300'}`}>
                 {stats.porcentajeCalidad}%
               </div>
             </div>
@@ -783,7 +783,7 @@ export default function ControlProceso() {
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl">
             <div className="p-4 border-b border-slate-800/50 flex items-center justify-between">
               <h4 className="font-semibold text-slate-200 flex items-center gap-2">
-                <Activity className="h-5 w-5 text-teal-400" />
+                <Activity className="h-5 w-5 text-slate-300" />
                 Puntos de Control en Monitoreo
               </h4>
               <button
@@ -807,9 +807,9 @@ export default function ControlProceso() {
                     key={punto.id}
                     className={`bg-slate-800/30 border rounded-xl p-4 cursor-pointer hover:bg-slate-800/50 transition-colors ${
                       ultimaMedicion?.resultado === 'no_conforme' 
-                        ? 'border-red-500/50' 
+                        ? 'border-slate-700/40' 
                         : ultimaMedicion?.resultado === 'alerta'
-                          ? 'border-amber-500/50'
+                          ? 'border-slate-700/40'
                           : 'border-slate-700/50'
                     }`}
                     onClick={() => handleVerDetalle(punto)}
@@ -820,7 +820,7 @@ export default function ControlProceso() {
                           <TipoIcon className={`h-4 w-4 ${tipoConfig.color}`} />
                         </div>
                         <div>
-                          <div className="font-mono text-xs text-teal-400">{punto.codigo}</div>
+                          <div className="font-mono text-xs text-slate-300">{punto.codigo}</div>
                           <div className="text-sm text-slate-200 font-medium">{punto.nombre}</div>
                         </div>
                       </div>
@@ -852,7 +852,7 @@ export default function ControlProceso() {
                         {/* Mini barra de tolerancia */}
                         {punto.limite_especificacion_inferior !== undefined && punto.limite_especificacion_superior !== undefined && (
                           <div className="relative h-2 bg-slate-700 rounded-full overflow-hidden">
-                            <div className="absolute inset-y-0 bg-emerald-500/30" style={{
+                            <div className="absolute inset-y-0 bg-slate-800/40" style={{
                               left: '20%',
                               right: '20%'
                             }} />
@@ -925,7 +925,7 @@ export default function ControlProceso() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-teal-400">{punto?.codigo}</span>
+                        <span className="font-mono text-xs text-slate-300">{punto?.codigo}</span>
                         <span className="text-sm text-slate-300">{punto?.nombre}</span>
                       </div>
                       <div className="text-xs text-slate-500">
@@ -1028,7 +1028,7 @@ export default function ControlProceso() {
                   return (
                     <tr key={punto.id} className="hover:bg-slate-800/30">
                       <td className="px-4 py-3">
-                        <span className="font-mono text-sm text-teal-400">{punto.codigo}</span>
+                        <span className="font-mono text-sm text-slate-300">{punto.codigo}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-sm text-slate-200">{punto.nombre}</div>
@@ -1074,7 +1074,7 @@ export default function ControlProceso() {
                           {punto.estado === 'activo' && (
                             <button
                               onClick={() => handleRegistrarMedicion(punto)}
-                              className="p-1.5 hover:bg-teal-500/20 rounded-lg text-teal-400"
+                              className="p-1.5 hover:bg-slate-800/40 rounded-lg text-slate-300"
                             >
                               <Plus className="h-4 w-4" />
                             </button>
@@ -1150,7 +1150,7 @@ export default function ControlProceso() {
                         {formatDateTime(med.created_at)}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs text-teal-400">{punto?.codigo}</span>
+                        <span className="font-mono text-xs text-slate-300">{punto?.codigo}</span>
                         <div className="text-sm text-slate-300">{punto?.nombre}</div>
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-400">
@@ -1505,7 +1505,7 @@ function PuntoControlForm({ formData, setFormData, onGuardar, onCancelar, saving
               type="checkbox"
               checked={formData.usar_spc}
               onChange={(e) => setFormData(prev => ({ ...prev, usar_spc: e.target.checked }))}
-              className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+              className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-slate-300 focus:ring-teal-500"
             />
             <span className="text-sm text-slate-300">Usar gráficos de control SPC</span>
           </label>
@@ -1600,7 +1600,7 @@ function PuntoControlDetalle({
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-lg text-teal-400">{punto.codigo}</span>
+              <span className="font-mono text-lg text-slate-300">{punto.codigo}</span>
               <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${tipoConfig.color} bg-slate-800`}>
                 <TipoIcon className="h-3 w-3" />
                 {tipoConfig.label}
@@ -1639,7 +1639,7 @@ function PuntoControlDetalle({
                 onClick={() => setTabActivo(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                   tabActivo === tab.id
-                    ? 'border-teal-500 text-teal-400'
+                    ? 'border-teal-500 text-slate-300'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -1683,7 +1683,7 @@ function PuntoControlDetalle({
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div className="p-3 bg-slate-800/50 rounded-lg">
                   <div className="text-xs text-slate-500">LSL</div>
-                  <div className="text-lg font-bold text-red-400">
+                  <div className="text-lg font-bold text-slate-300">
                     {punto.limite_especificacion_inferior ?? '-'}
                   </div>
                 </div>
@@ -1696,7 +1696,7 @@ function PuntoControlDetalle({
                 </div>
                 <div className="p-3 bg-slate-800/50 rounded-lg">
                   <div className="text-xs text-slate-500">USL</div>
-                  <div className="text-lg font-bold text-red-400">
+                  <div className="text-lg font-bold text-slate-300">
                     {punto.limite_especificacion_superior ?? '-'}
                   </div>
                 </div>
@@ -1731,7 +1731,7 @@ function PuntoControlDetalle({
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div className="p-3 bg-slate-800/50 rounded-lg">
                     <div className="text-xs text-slate-500">LCL</div>
-                    <div className="text-lg font-bold text-amber-400">
+                    <div className="text-lg font-bold text-slate-300">
                       {punto.limite_control_inferior?.toFixed(2) ?? '-'}
                     </div>
                   </div>
@@ -1743,7 +1743,7 @@ function PuntoControlDetalle({
                   </div>
                   <div className="p-3 bg-slate-800/50 rounded-lg">
                     <div className="text-xs text-slate-500">UCL</div>
-                    <div className="text-lg font-bold text-amber-400">
+                    <div className="text-lg font-bold text-slate-300">
                       {punto.limite_control_superior?.toFixed(2) ?? '-'}
                     </div>
                   </div>

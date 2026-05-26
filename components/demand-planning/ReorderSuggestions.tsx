@@ -237,7 +237,7 @@ export default function ReorderSuggestions() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-amber-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -250,17 +250,17 @@ export default function ReorderSuggestions() {
           <div className="text-xs text-slate-500 mb-1">Productos a reponer</div>
           <div className="text-2xl font-bold text-slate-200">{sugerencias.length}</div>
         </div>
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-          <div className="text-xs text-amber-400 mb-1">Seleccionados</div>
-          <div className="text-2xl font-bold text-amber-400">{totales.cantidad}</div>
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
+          <div className="text-xs text-slate-300 mb-1">Seleccionados</div>
+          <div className="text-2xl font-bold text-slate-300">{totales.cantidad}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="text-xs text-slate-500 mb-1">Unidades totales</div>
           <div className="text-2xl font-bold text-slate-200">{totales.unidadesTotales.toLocaleString()}</div>
         </div>
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
-          <div className="text-xs text-emerald-400 mb-1">Costo total</div>
-          <div className="text-2xl font-bold text-emerald-400">${totales.costoTotal.toLocaleString()}</div>
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
+          <div className="text-xs text-slate-300 mb-1">Costo total</div>
+          <div className="text-2xl font-bold text-slate-300">${totales.costoTotal.toLocaleString()}</div>
         </div>
       </div>
 
@@ -368,8 +368,8 @@ export default function ReorderSuggestions() {
             key={sug.producto_codigo}
             className={`bg-slate-900/50 border rounded-xl p-4 transition-all cursor-pointer ${
               sug.seleccionada 
-                ? 'border-amber-500/50 bg-amber-500/5' 
-                : sug.urgencia === 'critica' ? 'border-red-500/30'
+                ? 'border-slate-700/40 bg-slate-800/40' 
+                : sug.urgencia === 'critica' ? 'border-slate-700/40'
                 : 'border-slate-800/50 hover:border-slate-700'
             }`}
             onClick={() => toggleSeleccion(sug.producto_codigo)}
@@ -389,9 +389,9 @@ export default function ReorderSuggestions() {
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium text-slate-200 truncate">{sug.producto_nombre}</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs ${
-                    sug.urgencia === 'critica' ? 'bg-red-500/20 text-red-400' :
-                    sug.urgencia === 'alta' ? 'bg-amber-500/20 text-amber-400' :
-                    sug.urgencia === 'media' ? 'bg-yellow-500/20 text-yellow-400' :
+                    sug.urgencia === 'critica' ? 'bg-slate-800/40 text-slate-300' :
+                    sug.urgencia === 'alta' ? 'bg-slate-800/40 text-slate-300' :
+                    sug.urgencia === 'media' ? 'bg-slate-800/40 text-slate-300' :
                     'bg-slate-500/20 text-slate-400'
                   }`}>
                     {sug.urgencia}
@@ -407,7 +407,7 @@ export default function ReorderSuggestions() {
               {/* Cantidad sugerida */}
               <div className="text-center min-w-[100px]">
                 <div className="text-xs text-slate-500">Cantidad</div>
-                <div className="text-xl font-bold text-amber-400">{sug.cantidad_sugerida}</div>
+                <div className="text-xl font-bold text-slate-300">{sug.cantidad_sugerida}</div>
               </div>
               
               {/* Costo */}
@@ -420,7 +420,7 @@ export default function ReorderSuggestions() {
               {/* Cobertura post */}
               <div className="text-center min-w-[80px]">
                 <div className="text-xs text-slate-500">Post-repo</div>
-                <div className="text-lg font-bold text-emerald-400">
+                <div className="text-lg font-bold text-slate-300">
                   {sug.dias_cobertura_post_reposicion < 999 ? `${sug.dias_cobertura_post_reposicion}d` : '∞'}
                 </div>
               </div>

@@ -606,7 +606,7 @@ export default function InspeccionRecepcion() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-emerald-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -620,7 +620,7 @@ export default function InspeccionRecepcion() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <ClipboardCheck className="h-6 w-6 text-emerald-400" />
+                <ClipboardCheck className="h-6 w-6 text-slate-300" />
                 Inspección de Recepción
               </h3>
               <p className="text-slate-400 text-sm mt-1">
@@ -630,17 +630,17 @@ export default function InspeccionRecepcion() {
             
             {/* Stats rápidos */}
             <div className="flex gap-3">
-              <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-                <div className="text-xs text-amber-400">Pendientes</div>
-                <div className="text-xl font-bold text-amber-400">{stats.pendientes}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Pendientes</div>
+                <div className="text-xl font-bold text-slate-300">{stats.pendientes}</div>
               </div>
-              <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-                <div className="text-xs text-blue-400">En Proceso</div>
-                <div className="text-xl font-bold text-blue-400">{stats.enProceso}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">En Proceso</div>
+                <div className="text-xl font-bold text-slate-300">{stats.enProceso}</div>
               </div>
-              <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                <div className="text-xs text-emerald-400">Tasa Aprob.</div>
-                <div className="text-xl font-bold text-emerald-400">{stats.tasaAprobacion.toFixed(1)}%</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Tasa Aprob.</div>
+                <div className="text-xl font-bold text-slate-300">{stats.tasaAprobacion.toFixed(1)}%</div>
               </div>
             </div>
           </div>
@@ -655,7 +655,7 @@ export default function InspeccionRecepcion() {
                   placeholder="Buscar por número, producto, proveedor, OC..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 />
               </div>
               
@@ -771,7 +771,7 @@ export default function InspeccionRecepcion() {
                     return (
                       <tr key={insp.id} className="hover:bg-slate-800/30 transition-colors">
                         <td className="px-4 py-3">
-                          <span className="font-mono text-sm text-emerald-400">{insp.numero}</span>
+                          <span className="font-mono text-sm text-slate-300">{insp.numero}</span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="text-sm text-slate-200 font-medium">{insp.producto_codigo}</div>
@@ -812,7 +812,7 @@ export default function InspeccionRecepcion() {
                             {insp.estado === 'pendiente' && (
                               <button
                                 onClick={() => handleEjecutarInspeccion(insp)}
-                                className="p-1.5 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-colors"
+                                className="p-1.5 hover:bg-slate-800/40 rounded-lg text-slate-300 transition-colors"
                                 title="Ejecutar inspección"
                               >
                                 <Play className="h-4 w-4" />
@@ -821,7 +821,7 @@ export default function InspeccionRecepcion() {
                             {insp.estado === 'en_proceso' && (
                               <button
                                 onClick={() => handleVerDetalle(insp)}
-                                className="p-1.5 hover:bg-blue-500/20 rounded-lg text-blue-400 transition-colors"
+                                className="p-1.5 hover:bg-slate-800/40 rounded-lg text-slate-300 transition-colors"
                                 title="Continuar"
                               >
                                 <ArrowRight className="h-4 w-4" />
@@ -994,7 +994,7 @@ function NuevaInspeccionForm({
                   isActive 
                     ? 'bg-emerald-600 text-white' 
                     : isCompleted 
-                      ? 'bg-emerald-500/20 text-emerald-400 cursor-pointer hover:bg-emerald-500/30'
+                      ? 'bg-slate-800/40 text-slate-300 cursor-pointer hover:bg-slate-800/40'
                       : 'bg-slate-800 text-slate-500'
                 }`}
               >
@@ -1006,7 +1006,7 @@ function NuevaInspeccionForm({
                 <span className="hidden sm:inline">{paso.label}</span>
               </button>
               {index < pasos.length - 1 && (
-                <ChevronRight className={`h-4 w-4 ${isCompleted ? 'text-emerald-400' : 'text-slate-600'}`} />
+                <ChevronRight className={`h-4 w-4 ${isCompleted ? 'text-slate-300' : 'text-slate-600'}`} />
               )}
             </React.Fragment>
           );
@@ -1027,7 +1027,7 @@ function NuevaInspeccionForm({
                 <select
                   value={formData.plan_id}
                   onChange={(e) => onPlanChange(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 >
                   <option value="">Sin plan específico</option>
                   {planes.map(plan => (
@@ -1054,7 +1054,7 @@ function NuevaInspeccionForm({
                     const oc = ordenesCompra.find(o => o.id === e.target.value);
                     if (oc) onOrdenCompraSelect(oc);
                   }}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 >
                   <option value="">Sin orden de compra</option>
                   {ordenesCompra.map(oc => (
@@ -1085,7 +1085,7 @@ function NuevaInspeccionForm({
                   }}
                   onFocus={() => setShowProductoDropdown(true)}
                   placeholder="Buscar producto por código o descripción..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 />
                 
                 {showProductoDropdown && productosFiltrados.length > 0 && (
@@ -1100,7 +1100,7 @@ function NuevaInspeccionForm({
                         }}
                         className="w-full px-4 py-2 text-left hover:bg-slate-700 transition-colors first:rounded-t-xl last:rounded-b-xl"
                       >
-                        <div className="font-mono text-sm text-emerald-400">{producto.codigo}</div>
+                        <div className="font-mono text-sm text-slate-300">{producto.codigo}</div>
                         <div className="text-sm text-slate-300 truncate">{producto.descripcion}</div>
                       </button>
                     ))}
@@ -1120,7 +1120,7 @@ function NuevaInspeccionForm({
                   value={formData.cantidad_recibida || ''}
                   onChange={(e) => onCantidadChange(parseInt(e.target.value) || 0)}
                   min="1"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                   placeholder="Ej: 1000"
                 />
               </div>
@@ -1136,7 +1136,7 @@ function NuevaInspeccionForm({
                     value={formData.cantidad_muestra || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, cantidad_muestra: parseInt(e.target.value) || 0 }))}
                     min="1"
-                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                   />
                   <div className="text-xs text-slate-500 whitespace-nowrap">
                     {formData.cantidad_recibida > 0 && (
@@ -1155,7 +1155,7 @@ function NuevaInspeccionForm({
                   type="text"
                   value={formData.lote_numero || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, lote_numero: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                   placeholder="Ej: LOT-2024-001"
                 />
               </div>
@@ -1177,7 +1177,7 @@ function NuevaInspeccionForm({
                       proveedor_nombre: prov?.nombre,
                     }));
                   }}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 >
                   <option value="">Seleccionar proveedor</option>
                   {proveedores.map(prov => (
@@ -1195,7 +1195,7 @@ function NuevaInspeccionForm({
                   type="text"
                   value={formData.inspector}
                   onChange={(e) => setFormData(prev => ({ ...prev, inspector: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                   placeholder="Nombre del inspector"
                 />
               </div>
@@ -1210,7 +1210,7 @@ function NuevaInspeccionForm({
                 value={formData.observaciones || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, observaciones: e.target.value }))}
                 rows={3}
-                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none"
+                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-700/40 resize-none"
                 placeholder="Notas adicionales sobre la recepción..."
               />
             </div>
@@ -1223,7 +1223,7 @@ function NuevaInspeccionForm({
             {/* Resumen */}
             <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
               <div className="flex items-center gap-4">
-                <Package className="h-8 w-8 text-emerald-400" />
+                <Package className="h-8 w-8 text-slate-300" />
                 <div>
                   <div className="font-medium text-slate-200">{formData.producto_codigo}</div>
                   <div className="text-sm text-slate-400">{formData.producto_descripcion}</div>
@@ -1236,7 +1236,7 @@ function NuevaInspeccionForm({
                 </div>
                 <div className="text-center">
                   <div className="text-slate-400">Muestra</div>
-                  <div className="font-bold text-emerald-400">{formData.cantidad_muestra}</div>
+                  <div className="font-bold text-slate-300">{formData.cantidad_muestra}</div>
                 </div>
               </div>
             </div>
@@ -1245,13 +1245,13 @@ function NuevaInspeccionForm({
             <div className="flex items-center gap-4">
               <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-300"
+                  className="h-full bg-gradient-to-r from-slate-800 to-slate-800 transition-all duration-300"
                   style={{ width: `${((resultados.length - totalPendientes) / resultados.length) * 100}%` }}
                 />
               </div>
               <div className="flex gap-3 text-sm">
-                <span className="text-emerald-400">{totalConformes} ✓</span>
-                <span className="text-red-400">{totalNoConformes} ✗</span>
+                <span className="text-slate-300">{totalConformes} ✓</span>
+                <span className="text-slate-300">{totalNoConformes} ✗</span>
                 <span className="text-slate-400">{totalPendientes} pendientes</span>
               </div>
             </div>
@@ -1283,15 +1283,15 @@ function NuevaInspeccionForm({
           <div className="space-y-6">
             {/* Resumen de resultados */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center">
-                <CheckCircle className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-emerald-400">{totalConformes}</div>
-                <div className="text-sm text-emerald-400/70">Conformes</div>
+              <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl text-center">
+                <CheckCircle className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-slate-300">{totalConformes}</div>
+                <div className="text-sm text-slate-300/70">Conformes</div>
               </div>
-              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center">
-                <XCircle className="h-8 w-8 text-red-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-red-400">{totalNoConformes}</div>
-                <div className="text-sm text-red-400/70">No Conformes</div>
+              <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl text-center">
+                <XCircle className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-slate-300">{totalNoConformes}</div>
+                <div className="text-sm text-slate-300/70">No Conformes</div>
               </div>
               <div className="p-4 bg-slate-500/10 border border-slate-500/30 rounded-xl text-center">
                 <Target className="h-8 w-8 text-slate-400 mx-auto mb-2" />
@@ -1304,8 +1304,8 @@ function NuevaInspeccionForm({
 
             {/* Defectos encontrados */}
             {totalNoConformes > 0 && (
-              <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-xl">
-                <h4 className="font-medium text-red-400 mb-3 flex items-center gap-2">
+              <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <h4 className="font-medium text-slate-300 mb-3 flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4" />
                   Defectos Encontrados
                 </h4>
@@ -1320,9 +1320,9 @@ function NuevaInspeccionForm({
                       </div>
                       {r.tipo_defecto && (
                         <span className={`text-xs px-2 py-0.5 rounded ${
-                          r.tipo_defecto === 'critico' ? 'bg-red-500/20 text-red-400' :
-                          r.tipo_defecto === 'mayor' ? 'bg-orange-500/20 text-orange-400' :
-                          'bg-amber-500/20 text-amber-400'
+                          r.tipo_defecto === 'critico' ? 'bg-slate-800/40 text-slate-300' :
+                          r.tipo_defecto === 'mayor' ? 'bg-slate-800/40 text-slate-300' :
+                          'bg-slate-800/40 text-slate-300'
                         }`}>
                           {r.tipo_defecto}
                         </span>
@@ -1336,15 +1336,15 @@ function NuevaInspeccionForm({
             {/* Recomendación automática */}
             <div className={`p-4 rounded-xl border ${
               totalNoConformes === 0 
-                ? 'bg-emerald-500/10 border-emerald-500/30' 
+                ? 'bg-slate-800/40 border-slate-700/40' 
                 : resultados.some(r => r.tipo_defecto === 'critico')
-                  ? 'bg-red-500/10 border-red-500/30'
-                  : 'bg-amber-500/10 border-amber-500/30'
+                  ? 'bg-slate-800/40 border-slate-700/40'
+                  : 'bg-slate-800/40 border-slate-700/40'
             }`}>
               <div className="flex items-center gap-3">
                 <Zap className={`h-5 w-5 ${
-                  totalNoConformes === 0 ? 'text-emerald-400' : 
-                  resultados.some(r => r.tipo_defecto === 'critico') ? 'text-red-400' : 'text-amber-400'
+                  totalNoConformes === 0 ? 'text-slate-300' : 
+                  resultados.some(r => r.tipo_defecto === 'critico') ? 'text-slate-300' : 'text-slate-300'
                 }`} />
                 <div>
                   <div className="font-medium text-slate-200">Recomendación del Sistema</div>
@@ -1468,16 +1468,16 @@ function CaracteristicaInspeccion({ resultado, index, onChange }: Caracteristica
 
   return (
     <div className={`border rounded-xl transition-colors ${
-      resultado.conforme === true ? 'border-emerald-500/30 bg-emerald-500/5' :
-      resultado.conforme === false ? 'border-red-500/30 bg-red-500/5' :
+      resultado.conforme === true ? 'border-slate-700/40 bg-slate-800/40' :
+      resultado.conforme === false ? 'border-slate-700/40 bg-slate-800/40' :
       'border-slate-700/50 bg-slate-800/30'
     }`}>
       <div className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">
             <div className={`p-2 rounded-lg ${
-              car.critico ? 'bg-red-500/20 text-red-400' :
-              car.mayor ? 'bg-orange-500/20 text-orange-400' :
+              car.critico ? 'bg-slate-800/40 text-slate-300' :
+              car.mayor ? 'bg-slate-800/40 text-slate-300' :
               'bg-slate-700/50 text-slate-400'
             }`}>
               {getIconoTipo()}
@@ -1486,10 +1486,10 @@ function CaracteristicaInspeccion({ resultado, index, onChange }: Caracteristica
               <div className="flex items-center gap-2">
                 <span className="font-medium text-slate-200">{car.nombre}</span>
                 {car.critico && (
-                  <span className="text-xs px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded">CTQ</span>
+                  <span className="text-xs px-1.5 py-0.5 bg-slate-800/40 text-slate-300 rounded">CTQ</span>
                 )}
                 {car.mayor && !car.critico && (
-                  <span className="text-xs px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded">Mayor</span>
+                  <span className="text-xs px-1.5 py-0.5 bg-slate-800/40 text-slate-300 rounded">Mayor</span>
                 )}
               </div>
               {car.descripcion && (
@@ -1533,7 +1533,7 @@ function CaracteristicaInspeccion({ resultado, index, onChange }: Caracteristica
                   value={resultado.valor_medido ?? ''}
                   onChange={(e) => onChange(index, 'valor_medido', parseFloat(e.target.value) || undefined)}
                   placeholder="Valor"
-                  className="w-24 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 text-center focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-24 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 text-center focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 />
                 {car.unidad_medida && (
                   <span className="text-sm text-slate-500">{car.unidad_medida}</span>
@@ -1546,7 +1546,7 @@ function CaracteristicaInspeccion({ resultado, index, onChange }: Caracteristica
                   onChange(index, 'valor_texto', e.target.value);
                   onChange(index, 'conforme', car.valores_aceptables?.includes(e.target.value));
                 }}
-                className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
               >
                 <option value="">Seleccionar...</option>
                 {car.valores_aceptables.map(v => (
@@ -1562,7 +1562,7 @@ function CaracteristicaInspeccion({ resultado, index, onChange }: Caracteristica
                 className={`p-2 rounded-lg transition-colors ${
                   resultado.conforme === true
                     ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-700 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400'
+                    : 'bg-slate-700 text-slate-400 hover:bg-slate-800/40 hover:text-slate-300'
                 }`}
               >
                 <CheckCircle className="h-5 w-5" />
@@ -1575,7 +1575,7 @@ function CaracteristicaInspeccion({ resultado, index, onChange }: Caracteristica
                 className={`p-2 rounded-lg transition-colors ${
                   resultado.conforme === false
                     ? 'bg-red-500 text-white'
-                    : 'bg-slate-700 text-slate-400 hover:bg-red-500/20 hover:text-red-400'
+                    : 'bg-slate-700 text-slate-400 hover:bg-slate-800/40 hover:text-slate-300'
                 }`}
               >
                 <XCircle className="h-5 w-5" />
@@ -1688,7 +1688,7 @@ function DetalleInspeccion({ inspeccion, onVolver, onTomarDecision, saving }: De
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-3">
-            <Package className="h-5 w-5 text-emerald-400" />
+            <Package className="h-5 w-5 text-slate-300" />
             <span className="text-sm text-slate-400">Producto</span>
           </div>
           <div className="font-mono text-lg text-slate-200">{inspeccion.producto_codigo}</div>
@@ -1697,7 +1697,7 @@ function DetalleInspeccion({ inspeccion, onVolver, onTomarDecision, saving }: De
         
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-3">
-            <Building2 className="h-5 w-5 text-blue-400" />
+            <Building2 className="h-5 w-5 text-slate-300" />
             <span className="text-sm text-slate-400">Proveedor</span>
           </div>
           <div className="text-lg text-slate-200">{inspeccion.proveedor_nombre || '-'}</div>
@@ -1708,7 +1708,7 @@ function DetalleInspeccion({ inspeccion, onVolver, onTomarDecision, saving }: De
         
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-3">
-            <Scale className="h-5 w-5 text-amber-400" />
+            <Scale className="h-5 w-5 text-slate-300" />
             <span className="text-sm text-slate-400">Cantidades</span>
           </div>
           <div className="flex gap-4">
@@ -1717,15 +1717,15 @@ function DetalleInspeccion({ inspeccion, onVolver, onTomarDecision, saving }: De
               <div className="text-xs text-slate-500">Recibido</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-emerald-400">{inspeccion.cantidad_muestra}</div>
+              <div className="text-lg font-bold text-slate-300">{inspeccion.cantidad_muestra}</div>
               <div className="text-xs text-slate-500">Muestra</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-emerald-400">{inspeccion.cantidad_aceptada}</div>
+              <div className="text-lg font-bold text-slate-300">{inspeccion.cantidad_aceptada}</div>
               <div className="text-xs text-slate-500">Aceptado</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-red-400">{inspeccion.cantidad_rechazada}</div>
+              <div className="text-lg font-bold text-slate-300">{inspeccion.cantidad_rechazada}</div>
               <div className="text-xs text-slate-500">Rechazado</div>
             </div>
           </div>
@@ -1737,7 +1737,7 @@ function DetalleInspeccion({ inspeccion, onVolver, onTomarDecision, saving }: De
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl">
           <div className="p-4 border-b border-slate-800">
             <h4 className="font-semibold text-slate-200 flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-emerald-400" />
+              <ClipboardList className="h-5 w-5 text-slate-300" />
               Resultados de Inspección
             </h4>
           </div>
@@ -1746,9 +1746,9 @@ function DetalleInspeccion({ inspeccion, onVolver, onTomarDecision, saving }: De
               <div key={res.id} className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {res.conforme ? (
-                    <CheckCircle className="h-5 w-5 text-emerald-400" />
+                    <CheckCircle className="h-5 w-5 text-slate-300" />
                   ) : (
-                    <XCircle className="h-5 w-5 text-red-400" />
+                    <XCircle className="h-5 w-5 text-slate-300" />
                   )}
                   <div>
                     <div className="text-slate-200">{res.caracteristica?.nombre || 'Característica'}</div>
@@ -1758,15 +1758,15 @@ function DetalleInspeccion({ inspeccion, onVolver, onTomarDecision, saving }: De
                       </div>
                     )}
                     {res.descripcion_defecto && (
-                      <div className="text-sm text-red-400">{res.descripcion_defecto}</div>
+                      <div className="text-sm text-slate-300">{res.descripcion_defecto}</div>
                     )}
                   </div>
                 </div>
                 {res.tipo_defecto && (
                   <span className={`text-xs px-2 py-1 rounded ${
-                    res.tipo_defecto === 'critico' ? 'bg-red-500/20 text-red-400' :
-                    res.tipo_defecto === 'mayor' ? 'bg-orange-500/20 text-orange-400' :
-                    'bg-amber-500/20 text-amber-400'
+                    res.tipo_defecto === 'critico' ? 'bg-slate-800/40 text-slate-300' :
+                    res.tipo_defecto === 'mayor' ? 'bg-slate-800/40 text-slate-300' :
+                    'bg-slate-800/40 text-slate-300'
                   }`}>
                     {res.tipo_defecto}
                   </span>

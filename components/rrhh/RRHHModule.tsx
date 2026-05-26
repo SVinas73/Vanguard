@@ -20,9 +20,9 @@ import {
 } from '@/lib/rrhh';
 
 const ESTADO_STYLE: Record<EstadoEmpleado, { bg: string; color: string }> = {
-  activo:     { bg: 'bg-emerald-500/15', color: 'text-emerald-300' },
-  licencia:   { bg: 'bg-amber-500/15',   color: 'text-amber-300' },
-  suspendido: { bg: 'bg-orange-500/15',  color: 'text-orange-300' },
+  activo:     { bg: 'bg-slate-800/40', color: 'text-slate-300' },
+  licencia:   { bg: 'bg-slate-800/40',   color: 'text-slate-300' },
+  suspendido: { bg: 'bg-slate-800/40',  color: 'text-slate-300' },
   baja:       { bg: 'bg-slate-500/15',   color: 'text-slate-400' },
 };
 
@@ -262,8 +262,8 @@ export default function RRHHModule() {
       <div className="border-b border-slate-800 bg-slate-900/40 backdrop-blur sticky top-0 z-10">
         <div className="px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-violet-500/15">
-              <Users className="h-5 w-5 text-violet-300" />
+            <div className="p-2 rounded-lg bg-slate-800/40">
+              <Users className="h-5 w-5 text-slate-300" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-100">{t('rrhh.title')}</h1>
@@ -289,11 +289,11 @@ export default function RRHHModule() {
               <button key={tab.id} onClick={() => setVista(tab.id)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
-                  active ? 'border-violet-500 text-violet-300' : 'border-transparent text-slate-400 hover:text-slate-200',
+                  active ? 'border-violet-500 text-slate-300' : 'border-transparent text-slate-400 hover:text-slate-200',
                 )}>
                 <Ic className="h-4 w-4" />{tab.label}
                 {tab.id === 'solicitudes' && (metricas?.solicitudesPendientes ?? 0) > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">
+                  <span className="ml-1 px-1.5 py-0.5 rounded-full bg-slate-800/40 text-slate-300 text-[10px] font-bold">
                     {metricas?.solicitudesPendientes}
                   </span>
                 )}
@@ -318,7 +318,7 @@ export default function RRHHModule() {
               {/* Cumpleaños del mes */}
               <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <Cake className="h-4 w-4 text-pink-300" />
+                  <Cake className="h-4 w-4 text-slate-300" />
                   <h3 className="text-sm font-semibold text-slate-100">{t('rrhh.birthdaysThisMonth')}</h3>
                   <span className="ml-auto text-xs text-slate-500">{metricas.cumpleanieros.length}</span>
                 </div>
@@ -328,7 +328,7 @@ export default function RRHHModule() {
                   <ul className="space-y-2">
                     {metricas.cumpleanieros.map(e => (
                       <li key={e.id} className="flex items-center gap-3 text-sm">
-                        <div className="w-8 h-8 rounded-full bg-pink-500/15 flex items-center justify-center text-pink-300 font-semibold">
+                        <div className="w-8 h-8 rounded-full bg-slate-800/40 flex items-center justify-center text-slate-300 font-semibold">
                           {e.nombre[0]}{e.apellido[0]}
                         </div>
                         <div className="flex-1">
@@ -344,7 +344,7 @@ export default function RRHHModule() {
               {/* Por área */}
               <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <Briefcase className="h-4 w-4 text-blue-300" />
+                  <Briefcase className="h-4 w-4 text-slate-300" />
                   <h3 className="text-sm font-semibold text-slate-100">{t('rrhh.teamByArea')}</h3>
                 </div>
                 {Object.keys(metricas.porArea).length === 0 ? (
@@ -405,7 +405,7 @@ export default function RRHHModule() {
                 return (
                   <div key={e.id} className="p-4 rounded-xl border border-slate-800 bg-slate-900/40 hover:border-slate-700 transition-colors">
                     <div className="flex items-start gap-3">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-violet-500/40 to-blue-500/40 flex items-center justify-center text-slate-100 font-bold">
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-800/40 to-slate-800/40 flex items-center justify-center text-slate-100 font-bold">
                         {e.nombre[0]}{e.apellido[0]}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -421,17 +421,17 @@ export default function RRHHModule() {
                       {e.telefono && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{e.telefono}</span>}
                       {e.email_personal && <span className="flex items-center gap-1 truncate"><Mail className="h-3 w-3" />{e.email_personal}</span>}
                       {(e.solicitudes_pendientes ?? 0) > 0 && (
-                        <span className="ml-auto px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-medium">{e.solicitudes_pendientes} {t('rrhh.statusPending').toLowerCase()}.</span>
+                        <span className="ml-auto px-1.5 py-0.5 rounded bg-slate-800/40 text-slate-300 font-medium">{e.solicitudes_pendientes} {t('rrhh.statusPending').toLowerCase()}.</span>
                       )}
                     </div>
                     <div className="mt-2 flex gap-2">
-                      <button onClick={() => onFichar(e.id, 'entrada')} className="flex-1 px-2 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 rounded text-xs font-medium">{t('rrhh.clockIn')}</button>
-                      <button onClick={() => onFichar(e.id, 'salida')}  className="flex-1 px-2 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 rounded text-xs font-medium">{t('rrhh.clockOut')}</button>
-                      <button onClick={() => onEditar(e)} className="px-2 py-1.5 bg-slate-800 hover:bg-indigo-600/20 text-slate-400 hover:text-indigo-300 rounded text-xs" title="Editar empleado">
+                      <button onClick={() => onFichar(e.id, 'entrada')} className="flex-1 px-2 py-1.5 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded text-xs font-medium">{t('rrhh.clockIn')}</button>
+                      <button onClick={() => onFichar(e.id, 'salida')}  className="flex-1 px-2 py-1.5 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded text-xs font-medium">{t('rrhh.clockOut')}</button>
+                      <button onClick={() => onEditar(e)} className="px-2 py-1.5 bg-slate-800 hover:bg-slate-800/40 text-slate-400 hover:text-slate-300 rounded text-xs" title="Editar empleado">
                         <Edit className="h-3 w-3" />
                       </button>
                       {e.estado !== 'baja' && (
-                        <button onClick={() => onDarBaja(e)} className="px-2 py-1.5 bg-slate-800 hover:bg-red-600/20 text-slate-400 hover:text-red-300 rounded text-xs">{t('rrhh.terminate')}</button>
+                        <button onClick={() => onDarBaja(e)} className="px-2 py-1.5 bg-slate-800 hover:bg-slate-800/40 text-slate-400 hover:text-slate-300 rounded text-xs">{t('rrhh.terminate')}</button>
                       )}
                     </div>
                   </div>
@@ -499,10 +499,10 @@ export default function RRHHModule() {
               {solicitudes.map(s => {
                 const emp = s.empleado;
                 const statusColor =
-                  s.estado === 'aprobada'  ? 'bg-emerald-500/15 text-emerald-300' :
-                  s.estado === 'rechazada' ? 'bg-red-500/15 text-red-300' :
+                  s.estado === 'aprobada'  ? 'bg-slate-800/40 text-slate-300' :
+                  s.estado === 'rechazada' ? 'bg-slate-800/40 text-slate-300' :
                   s.estado === 'cancelada' ? 'bg-slate-500/15 text-slate-400' :
-                                             'bg-amber-500/15 text-amber-300';
+                                             'bg-slate-800/40 text-slate-300';
                 const estadoKey =
                   s.estado === 'aprobada'  ? 'rrhh.statusApproved' :
                   s.estado === 'rechazada' ? 'rrhh.statusRejected' :
@@ -516,7 +516,7 @@ export default function RRHHModule() {
                           <span className="text-sm font-semibold text-slate-100">{emp ? `${emp.nombre} ${emp.apellido}` : t('rrhh.employee')}</span>
                           <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', statusColor)}>{t(estadoKey)}</span>
                           <span className="text-xs text-slate-500">·</span>
-                          <span className="text-xs text-violet-300">{t(TIPO_SOLICITUD_KEY[s.tipo])}</span>
+                          <span className="text-xs text-slate-300">{t(TIPO_SOLICITUD_KEY[s.tipo])}</span>
                         </div>
                         <p className="text-xs text-slate-400 mt-1">
                           {new Date(s.fecha_inicio).toLocaleDateString('es-UY')} → {new Date(s.fecha_fin).toLocaleDateString('es-UY')}
@@ -529,8 +529,8 @@ export default function RRHHModule() {
                       </div>
                       {s.estado === 'pendiente' && (
                         <div className="flex gap-1.5">
-                          <button onClick={() => onAprobar(s)} className="px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 rounded text-xs font-medium">{t('rrhh.approve')}</button>
-                          <button onClick={() => onRechazar(s)} className="px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-300 rounded text-xs font-medium">{t('rrhh.reject')}</button>
+                          <button onClick={() => onAprobar(s)} className="px-2 py-1 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded text-xs font-medium">{t('rrhh.approve')}</button>
+                          <button onClick={() => onRechazar(s)} className="px-2 py-1 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded text-xs font-medium">{t('rrhh.reject')}</button>
                         </div>
                       )}
                     </div>
@@ -625,11 +625,11 @@ function KPI({ icon: Icon, label, value, accent }: {
   accent: 'violet' | 'emerald' | 'amber' | 'slate' | 'cyan';
 }) {
   const colors: Record<string, string> = {
-    violet: 'text-violet-300 bg-violet-500/10',
-    emerald: 'text-emerald-300 bg-emerald-500/10',
-    amber: 'text-amber-300 bg-amber-500/10',
+    violet: 'text-slate-300 bg-slate-800/40',
+    emerald: 'text-slate-300 bg-slate-800/40',
+    amber: 'text-slate-300 bg-slate-800/40',
     slate: 'text-slate-300 bg-slate-500/10',
-    cyan: 'text-cyan-300 bg-cyan-500/10',
+    cyan: 'text-slate-300 bg-slate-800/40',
   };
   return (
     <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/40 flex items-center gap-3">

@@ -266,24 +266,24 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
   // Iconos y colores por estado
   const getEstadoIcon = (estado: EstadoSerial) => {
     const icons: Record<string, React.ReactNode> = {
-      disponible: <CheckCircle className="h-4 w-4 text-emerald-400" />,
-      vendido: <DollarSign className="h-4 w-4 text-blue-400" />,
-      defectuoso: <XCircle className="h-4 w-4 text-red-400" />,
-      en_reparacion: <AlertCircle className="h-4 w-4 text-yellow-400" />,
-      en_transito: <TrendingUp className="h-4 w-4 text-purple-400" />,
-      reservado: <Clock className="h-4 w-4 text-orange-400" />,
+      disponible: <CheckCircle className="h-4 w-4 text-slate-300" />,
+      vendido: <DollarSign className="h-4 w-4 text-slate-300" />,
+      defectuoso: <XCircle className="h-4 w-4 text-slate-300" />,
+      en_reparacion: <AlertCircle className="h-4 w-4 text-slate-300" />,
+      en_transito: <TrendingUp className="h-4 w-4 text-slate-300" />,
+      reservado: <Clock className="h-4 w-4 text-slate-300" />,
     };
     return icons[estado] || <Package className="h-4 w-4 text-slate-400" />;
   };
 
   const getEstadoColor = (estado: EstadoSerial) => {
     const colors: Record<string, string> = {
-      disponible: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-      vendido: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      defectuoso: 'bg-red-500/20 text-red-400 border-red-500/30',
-      en_reparacion: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      en_transito: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-      reservado: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+      disponible: 'bg-slate-800/40 text-slate-300 border-slate-700/40',
+      vendido: 'bg-slate-800/40 text-slate-300 border-slate-700/40',
+      defectuoso: 'bg-slate-800/40 text-slate-300 border-slate-700/40',
+      en_reparacion: 'bg-slate-800/40 text-slate-300 border-slate-700/40',
+      en_transito: 'bg-slate-800/40 text-slate-300 border-slate-700/40',
+      reservado: 'bg-slate-800/40 text-slate-300 border-slate-700/40',
     };
     return colors[estado] || 'bg-slate-500/20 text-slate-400 border-slate-500/30';
   };
@@ -291,7 +291,7 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-emerald-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -302,7 +302,7 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-            <QrCode className="h-7 w-7 text-emerald-400" />
+            <QrCode className="h-7 w-7 text-slate-300" />
             Gestión de Seriales
           </h2>
           <p className="text-slate-400 text-sm mt-1">
@@ -360,13 +360,13 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
               placeholder="Buscar por serial o producto..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none"
+              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 placeholder-slate-500 focus:border-slate-700/40 focus:outline-none"
             />
           </div>
           <select
             value={selectedEstado}
             onChange={(e) => setSelectedEstado(e.target.value as EstadoSerial | 'todos')}
-            className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 focus:border-emerald-500/50 focus:outline-none"
+            className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 focus:border-slate-700/40 focus:outline-none"
           >
             <option value="todos">Todos los estados</option>
             <option value="disponible">Disponible</option>
@@ -379,7 +379,7 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
           <select
             value={selectedAlmacen}
             onChange={(e) => setSelectedAlmacen(e.target.value)}
-            className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 focus:border-emerald-500/50 focus:outline-none"
+            className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 focus:border-slate-700/40 focus:outline-none"
           >
             <option value="todos">Todos los almacenes</option>
             {almacenes.map((a) => (
@@ -437,8 +437,8 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
                     <td className="px-6 py-4">
                       {serial.fechaGarantiaFin ? (
                         <div className="flex items-center gap-1">
-                          <Shield className={`h-4 w-4 ${garantiaVigente ? 'text-emerald-400' : 'text-slate-500'}`} />
-                          <span className={`text-sm ${garantiaVigente ? 'text-emerald-400' : 'text-slate-500'}`}>
+                          <Shield className={`h-4 w-4 ${garantiaVigente ? 'text-slate-300' : 'text-slate-500'}`} />
+                          <span className={`text-sm ${garantiaVigente ? 'text-slate-300' : 'text-slate-500'}`}>
                             {garantiaVigente ? 'Vigente' : 'Vencida'}
                           </span>
                         </div>
@@ -456,14 +456,14 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
                           className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
                           title="Ver detalles"
                         >
-                          <Eye className="h-4 w-4 text-blue-400" />
+                          <Eye className="h-4 w-4 text-slate-300" />
                         </button>
                         <button
                           onClick={() => eliminarSerial(serial.id)}
                           className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
                           title="Eliminar"
                         >
-                          <Trash2 className="h-4 w-4 text-red-400" />
+                          <Trash2 className="h-4 w-4 text-slate-300" />
                         </button>
                       </div>
                     </td>

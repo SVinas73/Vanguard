@@ -25,28 +25,28 @@ interface AuditLog {
 const PAGE_SIZE = 50;
 
 const TABLA_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  productos: { label: 'Productos', icon: <Package size={14} />, color: 'text-blue-400' },
-  movimientos: { label: 'Movimientos', icon: <ArrowLeftRight size={14} />, color: 'text-cyan-400' },
-  transferencias: { label: 'Transferencias', icon: <Truck size={14} />, color: 'text-purple-400' },
-  ordenes_compra: { label: 'Compras', icon: <ShoppingCart size={14} />, color: 'text-blue-400' },
-  ordenes_venta: { label: 'Ventas', icon: <ShoppingBag size={14} />, color: 'text-emerald-400' },
-  rma: { label: 'RMA', icon: <RotateCcw size={14} />, color: 'text-amber-400' },
+  productos: { label: 'Productos', icon: <Package size={14} />, color: 'text-slate-300' },
+  movimientos: { label: 'Movimientos', icon: <ArrowLeftRight size={14} />, color: 'text-slate-300' },
+  transferencias: { label: 'Transferencias', icon: <Truck size={14} />, color: 'text-slate-300' },
+  ordenes_compra: { label: 'Compras', icon: <ShoppingCart size={14} />, color: 'text-slate-300' },
+  ordenes_venta: { label: 'Ventas', icon: <ShoppingBag size={14} />, color: 'text-slate-300' },
+  rma: { label: 'RMA', icon: <RotateCcw size={14} />, color: 'text-slate-300' },
   ordenes_taller: { label: 'Taller', icon: <Wrench size={14} />, color: 'text-slate-400' },
-  proyecto_tareas: { label: 'Proyectos', icon: <FolderKanban size={14} />, color: 'text-purple-400' },
-  almacenes: { label: 'Almacenes', icon: <Package size={14} />, color: 'text-amber-400' },
+  proyecto_tareas: { label: 'Proyectos', icon: <FolderKanban size={14} />, color: 'text-slate-300' },
+  almacenes: { label: 'Almacenes', icon: <Package size={14} />, color: 'text-slate-300' },
   lotes: { label: 'Lotes', icon: <FileText size={14} />, color: 'text-slate-400' },
-  usuarios: { label: 'Usuarios', icon: <User size={14} />, color: 'text-pink-400' },
+  usuarios: { label: 'Usuarios', icon: <User size={14} />, color: 'text-slate-300' },
 };
 
 const ACCION_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
-  CREAR: { label: 'Crear', icon: <Plus size={12} />, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  ACTUALIZAR: { label: 'Actualizar', icon: <Edit size={12} />, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
-  ELIMINAR: { label: 'Eliminar', icon: <Trash2 size={12} />, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
-  ENTRADA: { label: 'Entrada', icon: <Plus size={12} />, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  SALIDA: { label: 'Salida', icon: <Minus size={12} />, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
-  ESTADO_PENDIENTE: { label: 'Pendiente', icon: <Clock size={12} />, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
-  ESTADO_EN_TRANSITO: { label: 'En Tránsito', icon: <Truck size={12} />, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-  ESTADO_COMPLETADA: { label: 'Completada', icon: <ChevronRight size={12} />, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+  CREAR: { label: 'Crear', icon: <Plus size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
+  ACTUALIZAR: { label: 'Actualizar', icon: <Edit size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
+  ELIMINAR: { label: 'Eliminar', icon: <Trash2 size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
+  ENTRADA: { label: 'Entrada', icon: <Plus size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
+  SALIDA: { label: 'Salida', icon: <Minus size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
+  ESTADO_PENDIENTE: { label: 'Pendiente', icon: <Clock size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
+  ESTADO_EN_TRANSITO: { label: 'En Tránsito', icon: <Truck size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
+  ESTADO_COMPLETADA: { label: 'Completada', icon: <ChevronRight size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
   ESTADO_CANCELADA: { label: 'Cancelada', icon: <Trash2 size={12} />, color: 'text-slate-400', bg: 'bg-slate-500/10 border-slate-500/20' },
 };
 
@@ -240,7 +240,7 @@ export function AuditLogPanel() {
           <div key={key} className="flex items-start gap-2 text-xs">
             <span className="font-mono text-slate-500 min-w-[120px] flex-shrink-0">{key}:</span>
             {antes?.[key] !== undefined && (
-              <span className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 line-through font-mono">
+              <span className="px-1.5 py-0.5 rounded bg-slate-800/40 text-slate-300 line-through font-mono">
                 {typeof antes[key] === 'object' ? JSON.stringify(antes[key]) : String(antes[key])}
               </span>
             )}
@@ -248,19 +248,19 @@ export function AuditLogPanel() {
               <span className="text-slate-600">→</span>
             )}
             {despues?.[key] !== undefined && (
-              <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono">
+              <span className="px-1.5 py-0.5 rounded bg-slate-800/40 text-slate-300 font-mono">
                 {typeof despues[key] === 'object' ? JSON.stringify(despues[key]) : String(despues[key])}
               </span>
             )}
           </div>
         ))}
         {!antes && despues && (
-          <pre className="text-emerald-400/70 text-xs font-mono bg-emerald-500/5 p-2 rounded-lg overflow-x-auto">
+          <pre className="text-slate-300/70 text-xs font-mono bg-slate-800/40 p-2 rounded-lg overflow-x-auto">
             {JSON.stringify(despues, null, 2)}
           </pre>
         )}
         {antes && !despues && (
-          <pre className="text-red-400/70 text-xs font-mono bg-red-500/5 p-2 rounded-lg overflow-x-auto">
+          <pre className="text-slate-300/70 text-xs font-mono bg-slate-800/40 p-2 rounded-lg overflow-x-auto">
             {JSON.stringify(antes, null, 2)}
           </pre>
         )}
@@ -283,8 +283,8 @@ export function AuditLogPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
-            <Shield size={22} className="text-purple-400" />
+          <div className="p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/40">
+            <Shield size={22} className="text-slate-300" />
           </div>
           <div>
             <h2 className="text-xl font-bold">Auditoría del Sistema</h2>
@@ -318,7 +318,7 @@ export function AuditLogPanel() {
             className={cn(
               'px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors',
               filtroTabla === 'todas'
-                ? 'bg-purple-500/10 border-purple-500/30 text-purple-400'
+                ? 'bg-slate-800/40 border-slate-700/40 text-slate-300'
                 : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700'
             )}
           >
@@ -334,7 +334,7 @@ export function AuditLogPanel() {
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors',
                   isActive
-                    ? 'bg-purple-500/10 border-purple-500/30 text-purple-400'
+                    ? 'bg-slate-800/40 border-slate-700/40 text-slate-300'
                     : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700'
                 )}
               >
@@ -399,12 +399,12 @@ export function AuditLogPanel() {
       {/* Results */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <RefreshCw size={24} className="animate-spin text-purple-400" />
+          <RefreshCw size={24} className="animate-spin text-slate-300" />
         </div>
       ) : error ? (
-        <div className="p-8 text-center rounded-xl border border-red-500/20 bg-red-500/5">
-          <AlertTriangle size={24} className="mx-auto mb-2 text-red-400" />
-          <p className="text-red-400 text-sm mb-3">{error}</p>
+        <div className="p-8 text-center rounded-xl border border-slate-700/40 bg-slate-800/40">
+          <AlertTriangle size={24} className="mx-auto mb-2 text-slate-300" />
+          <p className="text-slate-300 text-sm mb-3">{error}</p>
           <button onClick={fetchLogs} className="px-4 py-2 rounded-lg bg-slate-800 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
             Reintentar
           </button>
@@ -476,7 +476,7 @@ export function AuditLogPanel() {
 
                       {/* Expand indicator */}
                       {(log.datos_anteriores || log.datos_nuevos) && (
-                        <div className={cn('p-1 rounded transition-colors flex-shrink-0', isExpanded ? 'text-purple-400' : 'text-slate-600')}>
+                        <div className={cn('p-1 rounded transition-colors flex-shrink-0', isExpanded ? 'text-slate-300' : 'text-slate-600')}>
                           {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </div>
                       )}

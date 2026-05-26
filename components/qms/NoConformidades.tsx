@@ -126,18 +126,18 @@ type VistaActiva = 'lista' | 'nueva' | 'detalle' | 'editar';
 // ============================================
 
 const SEVERIDAD_CONFIG: Record<SeveridadNCR, { label: string; color: string; bg: string; prioridad: number }> = {
-  critica: { label: 'Crítica', color: 'text-red-500', bg: 'bg-red-500/20', prioridad: 1 },
-  mayor: { label: 'Mayor', color: 'text-orange-400', bg: 'bg-orange-500/20', prioridad: 2 },
-  menor: { label: 'Menor', color: 'text-amber-400', bg: 'bg-amber-500/20', prioridad: 3 },
+  critica: { label: 'Crítica', color: 'text-slate-300', bg: 'bg-slate-800/40', prioridad: 1 },
+  mayor: { label: 'Mayor', color: 'text-slate-300', bg: 'bg-slate-800/40', prioridad: 2 },
+  menor: { label: 'Menor', color: 'text-slate-300', bg: 'bg-slate-800/40', prioridad: 3 },
   observacion: { label: 'Observación', color: 'text-slate-400', bg: 'bg-slate-500/20', prioridad: 4 },
 };
 
 const ESTADO_CONFIG: Record<EstadoNCR, { label: string; color: string; bg: string }> = {
-  abierta: { label: 'Abierta', color: 'text-red-400', bg: 'bg-red-500/20' },
-  en_analisis: { label: 'En Análisis', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  en_implementacion: { label: 'Implementación', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  verificacion: { label: 'Verificación', color: 'text-purple-400', bg: 'bg-purple-500/20' },
-  cerrada: { label: 'Cerrada', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+  abierta: { label: 'Abierta', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_analisis: { label: 'En Análisis', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_implementacion: { label: 'Implementación', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  verificacion: { label: 'Verificación', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  cerrada: { label: 'Cerrada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
   cancelada: { label: 'Cancelada', color: 'text-slate-400', bg: 'bg-slate-500/20' },
 };
 
@@ -636,7 +636,7 @@ export default function NoConformidades() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-orange-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -650,7 +650,7 @@ export default function NoConformidades() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <AlertTriangle className="h-6 w-6 text-orange-400" />
+                <AlertTriangle className="h-6 w-6 text-slate-300" />
                 No Conformidades (NCR)
               </h3>
               <p className="text-slate-400 text-sm mt-1">
@@ -660,17 +660,17 @@ export default function NoConformidades() {
             
             {/* Stats rápidos */}
             <div className="flex gap-3">
-              <div className={`px-4 py-2 rounded-xl ${stats.criticas > 0 ? 'bg-red-500/20 border border-red-500/30' : 'bg-slate-800/50 border border-slate-700/50'}`}>
-                <div className="text-xs text-red-400">Críticas</div>
-                <div className={`text-xl font-bold ${stats.criticas > 0 ? 'text-red-400' : 'text-slate-500'}`}>{stats.criticas}</div>
+              <div className={`px-4 py-2 rounded-xl ${stats.criticas > 0 ? 'bg-slate-800/40 border border-slate-700/40' : 'bg-slate-800/50 border border-slate-700/50'}`}>
+                <div className="text-xs text-slate-300">Críticas</div>
+                <div className={`text-xl font-bold ${stats.criticas > 0 ? 'text-slate-300' : 'text-slate-500'}`}>{stats.criticas}</div>
               </div>
-              <div className="px-4 py-2 bg-orange-500/10 border border-orange-500/30 rounded-xl">
-                <div className="text-xs text-orange-400">Abiertas</div>
-                <div className="text-xl font-bold text-orange-400">{stats.total}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Abiertas</div>
+                <div className="text-xl font-bold text-slate-300">{stats.total}</div>
               </div>
-              <div className={`px-4 py-2 rounded-xl ${stats.vencidas > 0 ? 'bg-red-500/10 border border-red-500/30' : 'bg-slate-800/50 border border-slate-700/50'}`}>
+              <div className={`px-4 py-2 rounded-xl ${stats.vencidas > 0 ? 'bg-slate-800/40 border border-slate-700/40' : 'bg-slate-800/50 border border-slate-700/50'}`}>
                 <div className="text-xs text-slate-400">Vencidas</div>
-                <div className={`text-xl font-bold ${stats.vencidas > 0 ? 'text-red-400' : 'text-slate-500'}`}>{stats.vencidas}</div>
+                <div className={`text-xl font-bold ${stats.vencidas > 0 ? 'text-slate-300' : 'text-slate-500'}`}>{stats.vencidas}</div>
               </div>
               <div className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl">
                 <div className="text-xs text-slate-400">Costo Est.</div>
@@ -689,7 +689,7 @@ export default function NoConformidades() {
                   placeholder="Buscar por número, título, producto..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 />
               </div>
               
@@ -812,7 +812,7 @@ export default function NoConformidades() {
                 <div 
                   key={ncr.id} 
                   className={`bg-slate-900/50 border rounded-xl p-4 hover:border-slate-600 transition-colors cursor-pointer ${
-                    ncr.severidad === 'critica' ? 'border-red-500/30' : 'border-slate-800/50'
+                    ncr.severidad === 'critica' ? 'border-slate-700/40' : 'border-slate-800/50'
                   }`}
                   onClick={() => handleVerDetalle(ncr)}
                 >
@@ -820,7 +820,7 @@ export default function NoConformidades() {
                     <div className="flex-1 min-w-0">
                       {/* Header */}
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <span className="font-mono text-sm text-orange-400">{ncr.numero}</span>
+                        <span className="font-mono text-sm text-slate-300">{ncr.numero}</span>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${severidadConfig.bg} ${severidadConfig.color}`}>
                           {severidadConfig.label}
                         </span>
@@ -865,9 +865,9 @@ export default function NoConformidades() {
                         </span>
                         {diasRestantes !== null && (
                           <span className={`flex items-center gap-1 font-medium ${
-                            diasRestantes < 0 ? 'text-red-400' : 
-                            diasRestantes <= 3 ? 'text-amber-400' : 
-                            diasRestantes <= 7 ? 'text-yellow-400' : ''
+                            diasRestantes < 0 ? 'text-slate-300' : 
+                            diasRestantes <= 3 ? 'text-slate-300' : 
+                            diasRestantes <= 7 ? 'text-slate-300' : ''
                           }`}>
                             <Clock className="h-3 w-3" />
                             {diasRestantes < 0 
@@ -904,7 +904,7 @@ export default function NoConformidades() {
                       {!ncr.capas?.length && ncr.estado !== 'cerrada' && (
                         <button
                           onClick={() => handleCrearCAPA(ncr)}
-                          className="p-1.5 hover:bg-purple-500/20 rounded-lg text-purple-400 transition-colors"
+                          className="p-1.5 hover:bg-slate-800/40 rounded-lg text-slate-300 transition-colors"
                           title="Crear CAPA"
                         >
                           <Target className="h-4 w-4" />
@@ -920,7 +920,7 @@ export default function NoConformidades() {
               <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center">
                 {filtroEstado === 'activas' && ncrs.filter(n => !['cerrada', 'cancelada'].includes(n.estado)).length === 0 ? (
                   <>
-                    <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
+                    <CheckCircle className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                     <p className="text-slate-400">No hay NCRs activas</p>
                   </>
                 ) : (
@@ -1318,15 +1318,15 @@ function NCRDetalle({
 
           {/* Disposición */}
           {ncr.estado !== 'cerrada' && ncr.estado !== 'cancelada' && !ncr.disposicion && (
-            <div className="bg-slate-900/50 border border-amber-500/30 rounded-xl p-4">
+            <div className="bg-slate-900/50 border border-slate-700/40 rounded-xl p-4">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-semibold text-slate-200 flex items-center gap-2">
-                  <Flag className="h-5 w-5 text-amber-400" />
+                  <Flag className="h-5 w-5 text-slate-300" />
                   Definir Disposición
                 </h4>
                 <button
                   onClick={() => setShowDisposicion(!showDisposicion)}
-                  className="text-sm text-amber-400 hover:text-amber-300"
+                  className="text-sm text-slate-300 hover:text-slate-300"
                 >
                   {showDisposicion ? 'Cancelar' : 'Seleccionar'}
                 </button>
@@ -1341,7 +1341,7 @@ function NCRDetalle({
                         onClick={() => setDisposicionSeleccionada(key as DisposicionNCR)}
                         className={`p-3 rounded-lg border text-left transition-colors ${
                           disposicionSeleccionada === key
-                            ? 'border-amber-500 bg-amber-500/10'
+                            ? 'border-amber-500 bg-slate-800/40'
                             : 'border-slate-700 hover:border-slate-600'
                         }`}
                       >
@@ -1384,11 +1384,11 @@ function NCRDetalle({
           {ncr.disposicion && (
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h4 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
-                <Flag className="h-5 w-5 text-emerald-400" />
+                <Flag className="h-5 w-5 text-slate-300" />
                 Disposición Aplicada
               </h4>
               <div className="flex items-center gap-3 mb-2">
-                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg font-medium">
+                <span className="px-3 py-1 bg-slate-800/40 text-slate-300 rounded-lg font-medium">
                   {DISPOSICION_CONFIG[ncr.disposicion]?.label}
                 </span>
                 <span className="text-sm text-slate-500">
@@ -1405,7 +1405,7 @@ function NCRDetalle({
           {ncr.causa_raiz && (
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h4 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
-                <Zap className="h-5 w-5 text-purple-400" />
+                <Zap className="h-5 w-5 text-slate-300" />
                 Análisis de Causa Raíz
               </h4>
               <p className="text-slate-400">{ncr.causa_raiz}</p>
@@ -1418,7 +1418,7 @@ function NCRDetalle({
           {/* Comentarios */}
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
             <h4 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-blue-400" />
+              <MessageSquare className="h-5 w-5 text-slate-300" />
               Comentarios ({ncr.comentarios?.length || 0})
             </h4>
             
@@ -1516,8 +1516,8 @@ function NCRDetalle({
               <div>
                 <label className="text-xs text-slate-500">Fecha Objetivo</label>
                 <div className={`font-medium ${
-                  diasRestantes !== null && diasRestantes < 0 ? 'text-red-400' :
-                  diasRestantes !== null && diasRestantes <= 7 ? 'text-amber-400' : 'text-slate-200'
+                  diasRestantes !== null && diasRestantes < 0 ? 'text-slate-300' :
+                  diasRestantes !== null && diasRestantes <= 7 ? 'text-slate-300' : 'text-slate-200'
                 }`}>
                   {formatDate(ncr.fecha_objetivo)}
                   {diasRestantes !== null && (
@@ -1573,13 +1573,13 @@ function NCRDetalle({
           {ncr.capas && ncr.capas.length > 0 && (
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h4 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
-                <Target className="h-4 w-4 text-purple-400" />
+                <Target className="h-4 w-4 text-slate-300" />
                 CAPAs Vinculadas
               </h4>
               <div className="space-y-2">
                 {ncr.capas.map(capa => (
                   <div key={capa.id} className="p-2 bg-slate-800/50 rounded-lg">
-                    <div className="font-mono text-sm text-purple-400">{capa.numero}</div>
+                    <div className="font-mono text-sm text-slate-300">{capa.numero}</div>
                     <div className="text-xs text-slate-500 capitalize">{capa.tipo} - {capa.estado}</div>
                   </div>
                 ))}
