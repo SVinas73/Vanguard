@@ -454,18 +454,15 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
           <div className="absolute inset-0" />
           <div className="relative">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-xl bg-emerald-500/20">
-                <TrendingUp className="h-5 w-5 text-emerald-400" />
+              <div className="p-2 rounded-xl bg-slate-800">
+                <TrendingUp className="h-5 w-5 text-slate-300" />
               </div>
-              <div className={cn(
-                'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium',
-                tendenciaVentas.direccion === 'up' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
-              )}>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-300">
                 {tendenciaVentas.direccion === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                 {tendenciaVentas.valor}%
               </div>
             </div>
-            <div className="text-2xl font-bold text-emerald-400 mb-1">
+            <div className="text-2xl font-medium text-white mb-1 tabular-nums">
               {formatCurrency(stats?.ventasMes || 0)}
             </div>
             <div className="text-sm text-slate-400">{t('comercial.monthlySales', 'Ventas del mes')}</div>
@@ -477,18 +474,15 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
           <div className="absolute inset-0" />
           <div className="relative">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-xl bg-cyan-500/20">
-                <ShoppingCart className="h-5 w-5 text-cyan-400" />
+              <div className="p-2 rounded-xl bg-slate-800">
+                <ShoppingCart className="h-5 w-5 text-slate-300" />
               </div>
-              <div className={cn(
-                'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium',
-                tendenciaCompras.direccion === 'up' ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'
-              )}>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-300">
                 {tendenciaCompras.direccion === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                 {tendenciaCompras.valor}%
               </div>
             </div>
-            <div className="text-2xl font-bold text-cyan-400 mb-1">
+            <div className="text-2xl font-medium text-white mb-1 tabular-nums">
               {formatCurrency(stats?.comprasMes || 0)}
             </div>
             <div className="text-sm text-slate-400">{t('comercial.monthlyPurchases', 'Compras del mes')}</div>
@@ -500,20 +494,14 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
           <div className="absolute inset-0" />
           <div className="relative">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-xl bg-purple-500/20">
-                <DollarSign className="h-5 w-5 text-purple-400" />
+              <div className="p-2 rounded-xl bg-slate-800">
+                <DollarSign className="h-5 w-5 text-slate-300" />
               </div>
-              <span className={cn(
-                'px-2 py-1 rounded-lg text-xs font-medium',
-                (stats?.margenPorcentaje || 0) >= 20 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
-              )}>
+              <span className="px-2 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-300">
                 {(stats?.margenPorcentaje || 0).toFixed(1)}%
               </span>
             </div>
-            <div className={cn(
-              'text-2xl font-bold mb-1',
-              (stats?.margenBruto || 0) >= 0 ? 'text-purple-400' : 'text-red-400'
-            )}>
+            <div className="text-2xl font-medium text-white mb-1 tabular-nums">
               {formatCurrency(stats?.margenBruto || 0)}
             </div>
             <div className="text-sm text-slate-400">{t('comercial.grossMargin', 'Margen bruto')}</div>
@@ -525,11 +513,11 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
           <div className="absolute inset-0" />
           <div className="relative">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-xl bg-amber-500/20">
-                <CreditCard className="h-5 w-5 text-amber-400" />
+              <div className="p-2 rounded-xl bg-slate-800">
+                <CreditCard className="h-5 w-5 text-slate-300" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-amber-400 mb-1">
+            <div className="text-2xl font-medium text-white mb-1 tabular-nums">
               {formatCurrency(stats?.cuentasPorCobrar || 0)}
             </div>
             <div className="text-sm text-slate-400">{t('comercial.receivables', 'Por cobrar')}</div>
@@ -677,12 +665,7 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
               alertas.map((alerta, idx) => (
                 <div
                   key={idx}
-                  className={cn(
-                    'p-3 rounded-xl border',
-                    alerta.urgencia === 'alta' ? 'bg-red-500/10 border-red-500/30' :
-                    alerta.urgencia === 'media' ? 'bg-amber-500/10 border-amber-500/30' :
-                    'bg-slate-800/30 border-slate-700/30'
-                  )}
+                  className="p-3 rounded-xl border bg-slate-800/30 border-slate-700/30"
                 >
                   <div className="flex items-start gap-2">
                     {alerta.urgencia === 'alta' ? (
@@ -694,7 +677,7 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
                       <div className="text-sm text-slate-200">{alerta.mensaje}</div>
                       <div className="text-xs text-slate-500">{alerta.entidad}</div>
                       {alerta.monto && (
-                        <div className="text-xs text-emerald-400 mt-1">{formatCurrency(alerta.monto)}</div>
+                        <div className="text-xs text-slate-300 mt-1 tabular-nums">{formatCurrency(alerta.monto)}</div>
                       )}
                     </div>
                   </div>

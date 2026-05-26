@@ -654,18 +654,18 @@ export function InsightsPanel({
       {insights.length <= 3 && (
         <div className="mt-4 pt-4 border-t border-slate-800/60 grid grid-cols-3 gap-3">
           <div className="text-center">
-            <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Productos</div>
-            <div className="text-2xl font-bold text-slate-100 tabular-nums mt-1">{products.length}</div>
+            <div className="text-xs uppercase tracking-wider text-slate-400 font-medium">Productos</div>
+            <div className="text-xl font-medium text-slate-100 tabular-nums mt-1">{products.length}</div>
           </div>
           <div className="text-center">
-            <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Sin Stock</div>
-            <div className="text-2xl font-bold text-red-300 tabular-nums mt-1">
+            <div className="text-xs uppercase tracking-wider text-slate-400 font-medium">Sin Stock</div>
+            <div className="text-xl font-medium text-slate-100 tabular-nums mt-1">
               {products.filter((p: Product) => p.stock === 0).length}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Críticos</div>
-            <div className="text-2xl font-bold text-amber-300 tabular-nums mt-1">
+            <div className="text-xs uppercase tracking-wider text-slate-400 font-medium">Críticos</div>
+            <div className="text-xl font-medium text-slate-100 tabular-nums mt-1">
               {products.filter((p: Product) => p.stock > 0 && p.stock <= p.stockMinimo).length}
             </div>
           </div>
@@ -876,7 +876,7 @@ export function StatCard({ label, value, icon, color, trend, subtitle }: StatCar
         <div className="p-1.5 rounded-lg inline-block mb-3 bg-slate-800">
           <span style={{ color: c.text }}>{icon}</span>
         </div>
-        <div className="text-3xl font-bold tracking-tight text-white mb-1">
+        <div className="text-2xl font-medium tracking-tight text-white mb-1 tabular-nums">
           {value}
         </div>
         <div className="text-sm text-slate-500">

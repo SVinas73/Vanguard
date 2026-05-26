@@ -364,9 +364,9 @@ function InventoryValuePanel({ data, periodLabel = '30 días' }: InventoryValueP
       {/* Hero: valor BIG + donut grande */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-6 items-center mb-6">
         <div>
-          <div className="text-sm uppercase tracking-[0.08em] text-slate-400 mb-2 font-bold">Total en stock</div>
-          {/* Valor 6xl — el protagonista del card */}
-          <div className="text-6xl font-bold text-slate-50 tabular-nums tracking-tight leading-none">
+          <div className="text-xs uppercase tracking-[0.08em] text-slate-400 mb-2 font-medium">Total en stock</div>
+          {/* Resultado final → se mantiene en semibold pero más compacto */}
+          <div className="text-4xl font-semibold text-slate-50 tabular-nums tracking-tight leading-none">
             {fmtMoneyFull(data.total)}
           </div>
           <div className="text-base text-slate-400 mt-3 tabular-nums">

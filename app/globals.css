@@ -889,3 +889,35 @@ tr:hover td {
 .light-mode .border-gray-800, .light-mode .border-zinc-800, .light-mode .border-neutral-800 { border-color: #d8dce5 !important; }
 .light-mode .text-gray-100, .light-mode .text-zinc-100, .light-mode .text-neutral-100,
 .light-mode .text-gray-50,  .light-mode .text-zinc-50,  .light-mode .text-neutral-50 { color: #1e2638 !important; }
+
+/* =====================================================
+   BOTONES — azul unificado en todo el sistema
+   =====================================================
+   Pedido: todos los botones de acción azules (no tan oscuro).
+   Scoped a <button> para no afectar badges/pills/chips que usen
+   los mismos colores. Danger (rojo) y secundarios (slate) intactos.
+   Azul base #3b82f6 (blue-500), hover #60a5fa (blue-400).
+   ===================================================== */
+button.bg-indigo-600, button.bg-indigo-500,
+button.bg-blue-600,  button.bg-blue-700,
+button.bg-emerald-600, button.bg-emerald-500,
+button.bg-cyan-600, button.bg-cyan-500 {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+button.bg-indigo-600:hover, button.bg-indigo-500:hover,
+button.bg-blue-600:hover,  button.bg-blue-700:hover,
+button.bg-emerald-600:hover, button.bg-emerald-500:hover,
+button.bg-cyan-600:hover, button.bg-cyan-500:hover,
+button.hover\:bg-indigo-500:hover, button.hover\:bg-indigo-400:hover,
+button.hover\:bg-blue-500:hover, button.hover\:bg-blue-400:hover,
+button.hover\:bg-emerald-500:hover, button.hover\:bg-emerald-400:hover {
+  background-color: #60a5fa !important;
+}
+/* En light mode el azul se mantiene (no se oscurece como otros bg). */
+.light-mode button.bg-indigo-600, .light-mode button.bg-indigo-500,
+.light-mode button.bg-blue-600, .light-mode button.bg-emerald-600,
+.light-mode button.bg-emerald-500, .light-mode button.bg-cyan-600 {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
