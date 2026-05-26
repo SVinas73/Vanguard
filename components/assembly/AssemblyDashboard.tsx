@@ -756,10 +756,10 @@ export default function AssemblyDashboard() {
         ].map((stat, i) => (
           <div key={i} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
-              <stat.icon className={`h-4 w-4 text-${stat.color}-400`} />
+              <stat.icon className={`h-4 w-4 text-slate-200`} />
               <span className="text-xs text-slate-500">{stat.label}</span>
             </div>
-            <div className={`text-2xl font-bold text-${stat.color}-400`}>{stat.value}</div>
+            <div className={`text-2xl font-bold text-slate-200`}>{stat.value}</div>
           </div>
         ))}
       </div>
