@@ -124,7 +124,7 @@ export function ReplenishmentDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-slate-100 tracking-tight flex items-center gap-2">
-            <Sparkles size={16} className="text-amber-400" />
+            <Sparkles size={16} className="text-slate-300" />
             {t('replenishment.title') || 'Reabastecimiento IA'}
           </h2>
           <p className="text-sm text-slate-500 mt-0.5">{t('replenishment.subtitle') || 'EOQ + punto de reorden conservador · optimiza capital, evita sobre-stock'}</p>
@@ -150,15 +150,15 @@ export function ReplenishmentDashboard() {
           </div>
           <p className="text-[11px] text-slate-500 mt-2">{t('replenishment.capitalTiedHint') || 'Plata atrapada en stock hoy'}</p>
         </div>
-        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5">
-          <div className="text-[11px] uppercase tracking-[0.08em] text-emerald-400 mb-2 flex items-center gap-1">
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5">
+          <div className="text-[11px] uppercase tracking-[0.08em] text-slate-300 mb-2 flex items-center gap-1">
             <TrendingDown size={11} />
             {t('replenishment.capitalRecoverable') || 'Capital recuperable'}
           </div>
-          <div className="text-3xl font-semibold text-emerald-300 tabular-nums tracking-tight">
+          <div className="text-3xl font-semibold text-slate-300 tabular-nums tracking-tight">
             {loading ? '…' : fmtMoney(resumen.capitalLiberable, true)}
           </div>
-          <p className="text-[11px] text-emerald-400/70 mt-2">{t('replenishment.capitalRecoverableHint') || 'Liberable si bajás sobre-stock'}</p>
+          <p className="text-[11px] text-slate-300/70 mt-2">{t('replenishment.capitalRecoverableHint') || 'Liberable si bajás sobre-stock'}</p>
         </div>
         <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-5">
           <div className="text-[11px] uppercase tracking-[0.08em] text-slate-500 mb-2 flex items-center gap-1">
@@ -170,15 +170,15 @@ export function ReplenishmentDashboard() {
           </div>
           <p className="text-[11px] text-slate-500 mt-2">{t('replenishment.investmentNeededHint') || 'Solo lo estrictamente necesario'}</p>
         </div>
-        <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-5">
-          <div className="text-[11px] uppercase tracking-[0.08em] text-red-400 mb-2 flex items-center gap-1">
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5">
+          <div className="text-[11px] uppercase tracking-[0.08em] text-slate-300 mb-2 flex items-center gap-1">
             <AlertTriangle size={11} />
             {t('replenishment.critical') || 'Críticas'}
           </div>
-          <div className="text-3xl font-semibold text-red-300 tabular-nums tracking-tight">
+          <div className="text-3xl font-semibold text-slate-300 tabular-nums tracking-tight">
             {loading ? '…' : resumen.criticas}
           </div>
-          <p className="text-[11px] text-red-400/70 mt-2">{t('replenishment.criticalHint') || 'Necesitan compra YA'}</p>
+          <p className="text-[11px] text-slate-300/70 mt-2">{t('replenishment.criticalHint') || 'Necesitan compra YA'}</p>
         </div>
       </div>
 
@@ -261,14 +261,14 @@ export function ReplenishmentDashboard() {
                       {r.cantidad_sugerida === 0 ? (
                         <span className="text-slate-500">—</span>
                       ) : r.cantidad_sugerida > 0 ? (
-                        <span className="text-emerald-300 font-semibold tabular-nums">+{r.cantidad_sugerida}</span>
+                        <span className="text-slate-300 font-semibold tabular-nums">+{r.cantidad_sugerida}</span>
                       ) : (
-                        <span className="text-amber-300 font-semibold tabular-nums">{r.cantidad_sugerida}</span>
+                        <span className="text-slate-300 font-semibold tabular-nums">{r.cantidad_sugerida}</span>
                       )}
                     </td>
                     <td className="text-right tabular-nums px-2">
                       <span className={cn(
-                        r.tipo === 'reducir' ? 'text-emerald-300' : 'text-slate-300'
+                        r.tipo === 'reducir' ? 'text-slate-300' : 'text-slate-300'
                       )}>
                         {r.tipo === 'reducir' ? `+${fmtMoney(r.capital_liberable, true)}` : fmtMoney(r.costo_accion, true)}
                       </span>
@@ -309,15 +309,15 @@ export function ReplenishmentDashboard() {
 }
 
 function TipoIcon({ tipo }: { tipo: 'comprar' | 'reducir' | 'mantener' }) {
-  if (tipo === 'comprar') return <ShoppingCart size={13} className="text-emerald-400 shrink-0" />;
-  if (tipo === 'reducir') return <TrendingDown size={13} className="text-amber-400 shrink-0" />;
+  if (tipo === 'comprar') return <ShoppingCart size={13} className="text-slate-300 shrink-0" />;
+  if (tipo === 'reducir') return <TrendingDown size={13} className="text-slate-300 shrink-0" />;
   return <Package size={13} className="text-slate-500 shrink-0" />;
 }
 
 function UrgenciaBadge({ u }: { u: 'critica' | 'alta' | 'media' | 'baja' }) {
   const colors = {
-    critica: 'bg-red-500/10 text-red-300 border-red-500/20',
-    alta: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
+    critica: 'bg-slate-800/40 text-slate-300 border-slate-700/40',
+    alta: 'bg-slate-800/40 text-slate-300 border-slate-700/40',
     media: 'bg-slate-700/30 text-slate-300 border-slate-700',
     baja: 'bg-slate-800/30 text-slate-500 border-slate-800',
   };
@@ -345,8 +345,8 @@ function DetalleSugerencia({ s, onClose }: { s: Sugerencia; onClose: () => void 
           {/* Resumen acción */}
           <div className={cn(
             'border rounded-md p-4',
-            s.tipo === 'comprar' && 'bg-emerald-500/5 border-emerald-500/20',
-            s.tipo === 'reducir' && 'bg-amber-500/5 border-amber-500/20',
+            s.tipo === 'comprar' && 'bg-slate-800/40 border-slate-700/40',
+            s.tipo === 'reducir' && 'bg-slate-800/40 border-slate-700/40',
             s.tipo === 'mantener' && 'bg-slate-900/50 border-slate-800'
           )}>
             <div className="flex items-center justify-between mb-2">
@@ -383,9 +383,9 @@ function DetalleSugerencia({ s, onClose }: { s: Sugerencia; onClose: () => void 
               <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Capital óptimo</p>
               <p className="text-[14px] font-semibold tabular-nums text-slate-200">{fmtMoney(s.capital_inmovilizado_optimo)}</p>
             </div>
-            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-md p-2.5">
-              <p className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Liberable</p>
-              <p className="text-[14px] font-semibold tabular-nums text-emerald-300">{fmtMoney(s.capital_liberable)}</p>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-md p-2.5">
+              <p className="text-[10px] uppercase tracking-wider text-slate-300 mb-1">Liberable</p>
+              <p className="text-[14px] font-semibold tabular-nums text-slate-300">{fmtMoney(s.capital_liberable)}</p>
             </div>
           </div>
 

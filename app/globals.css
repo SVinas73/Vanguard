@@ -921,3 +921,17 @@ button.hover\:bg-emerald-500:hover, button.hover\:bg-emerald-400:hover {
   background-color: #3b82f6 !important;
   color: #ffffff !important;
 }
+
+/* =====================================================
+   CARDS con hex hardcodeado (componente Card y botones
+   secundarios usan bg-[#1A1A1A]). El light-mode solo cubría
+   slate-*, por eso quedaban oscuras en modo claro (ej: Proyectos).
+   ===================================================== */
+.light-mode .bg-\[\#1A1A1A\], .light-mode .bg-\[\#1a1a1a\],
+.light-mode .bg-\[\#171717\], .light-mode .bg-\[\#1c1f26\] { background-color: #ffffff !important; }
+.light-mode .bg-\[\#222222\], .light-mode .bg-\[\#242830\] { background-color: #f0f2f6 !important; }
+.light-mode .border-\[\#2E2E2E\], .light-mode .border-\[\#2e2e2e\],
+.light-mode .border-\[\#2e323d\] { border-color: #d8dce5 !important; }
+.light-mode .hover\:bg-\[\#222222\]:hover, .light-mode .hover\:bg-\[\#242830\]:hover { background-color: #e9edf3 !important; }
+.light-mode .hover\:border-\[\#4A4A4A\]:hover, .light-mode .hover\:border-\[\#475569\]:hover { border-color: #b0b8c4 !important; }
+.light-mode .text-\[\#f8fafc\], .light-mode .text-\[\#F1F1F1\], .light-mode .text-\[\#f1f1f1\] { color: #1a2030 !important; }

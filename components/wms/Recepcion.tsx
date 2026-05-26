@@ -103,25 +103,25 @@ type VistaActiva = 'lista' | 'nueva' | 'detalle' | 'recibir' | 'putaway';
 
 const ESTADO_RECEPCION_CONFIG: Record<EstadoRecepcion, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   pendiente: { label: 'Pendiente', color: 'text-slate-400', bg: 'bg-slate-500/20', icon: Clock },
-  en_proceso: { label: 'En Proceso', color: 'text-blue-400', bg: 'bg-blue-500/20', icon: Play },
-  parcial: { label: 'Parcial', color: 'text-amber-400', bg: 'bg-amber-500/20', icon: AlertCircle },
-  completada: { label: 'Completada', color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle },
-  con_diferencias: { label: 'Con Diferencias', color: 'text-red-400', bg: 'bg-red-500/20', icon: AlertTriangle },
+  en_proceso: { label: 'En Proceso', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: Play },
+  parcial: { label: 'Parcial', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: AlertCircle },
+  completada: { label: 'Completada', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: CheckCircle },
+  con_diferencias: { label: 'Con Diferencias', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: AlertTriangle },
 };
 
 const ESTADO_PUTAWAY_CONFIG: Record<EstadoPutaway, { label: string; color: string; bg: string }> = {
   pendiente: { label: 'Pendiente', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  asignado: { label: 'Asignado', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  en_proceso: { label: 'En Proceso', color: 'text-purple-400', bg: 'bg-purple-500/20' },
-  completado: { label: 'Completado', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  cancelado: { label: 'Cancelado', color: 'text-red-400', bg: 'bg-red-500/20' },
+  asignado: { label: 'Asignado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_proceso: { label: 'En Proceso', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  completado: { label: 'Completado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  cancelado: { label: 'Cancelado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 const TIPO_ORIGEN_CONFIG: Record<TipoOrigen, { label: string; color: string }> = {
-  compra: { label: 'Orden de Compra', color: 'text-blue-400' },
-  transferencia: { label: 'Transferencia', color: 'text-purple-400' },
-  devolucion: { label: 'Devolución', color: 'text-orange-400' },
-  produccion: { label: 'Producción', color: 'text-emerald-400' },
+  compra: { label: 'Orden de Compra', color: 'text-slate-300' },
+  transferencia: { label: 'Transferencia', color: 'text-slate-300' },
+  devolucion: { label: 'Devolución', color: 'text-slate-300' },
+  produccion: { label: 'Producción', color: 'text-slate-300' },
 };
 
 // ============================================
@@ -668,7 +668,7 @@ export default function Recepcion() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-amber-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -681,15 +681,15 @@ export default function Recepcion() {
         <>
           {/* Alerta de tareas pendientes */}
           {stats.tareasPendientes > 0 && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-4">
-              <div className="p-3 bg-amber-500/20 rounded-xl">
-                <MapPin className="h-6 w-6 text-amber-400" />
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 flex items-center gap-4">
+              <div className="p-3 bg-slate-800/40 rounded-xl">
+                <MapPin className="h-6 w-6 text-slate-300" />
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-amber-400">
+                <h4 className="font-semibold text-slate-300">
                   {stats.tareasPendientes} tarea(s) de Put-away pendiente(s)
                 </h4>
-                <p className="text-sm text-amber-300/70">
+                <p className="text-sm text-slate-300/70">
                   Productos esperando ser ubicados en el almacén
                 </p>
               </div>
@@ -706,7 +706,7 @@ export default function Recepcion() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <Truck className="h-6 w-6 text-amber-400" />
+                <Truck className="h-6 w-6 text-slate-300" />
                 Recepción de Mercadería
               </h3>
               <p className="text-slate-400 text-sm mt-1">
@@ -719,13 +719,13 @@ export default function Recepcion() {
                 <div className="text-xs text-slate-400">Pendientes</div>
                 <div className="text-xl font-bold text-slate-200">{stats.pendientes}</div>
               </div>
-              <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-xl text-center">
-                <div className="text-xs text-blue-400">En Proceso</div>
-                <div className="text-xl font-bold text-blue-400">{stats.enProceso}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl text-center">
+                <div className="text-xs text-slate-300">En Proceso</div>
+                <div className="text-xl font-bold text-slate-300">{stats.enProceso}</div>
               </div>
-              <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center">
-                <div className="text-xs text-emerald-400">Recibidas Hoy</div>
-                <div className="text-xl font-bold text-emerald-400">{stats.recibidasHoy}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl text-center">
+                <div className="text-xs text-slate-300">Recibidas Hoy</div>
+                <div className="text-xl font-bold text-slate-300">{stats.recibidasHoy}</div>
               </div>
             </div>
           </div>
@@ -799,13 +799,13 @@ export default function Recepcion() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <span className="font-mono text-sm text-amber-400">{orden.numero}</span>
+                        <span className="font-mono text-sm text-slate-300">{orden.numero}</span>
                         <span className={`px-2 py-0.5 rounded-full text-xs ${estadoConfig.bg} ${estadoConfig.color}`}>
                           {estadoConfig.label}
                         </span>
                         <span className={`text-xs ${tipoConfig.color}`}>{tipoConfig.label}</span>
                         {orden.requiere_inspeccion && (
-                          <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-xs">
+                          <span className="px-2 py-0.5 bg-slate-800/40 text-slate-300 rounded-full text-xs">
                             Req. Inspección
                           </span>
                         )}
@@ -960,7 +960,7 @@ export default function Recepcion() {
                 type="checkbox"
                 checked={formData.requiere_inspeccion}
                 onChange={(e) => setFormData(p => ({ ...p, requiere_inspeccion: e.target.checked }))}
-                className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-amber-500"
+                className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-slate-300"
               />
               <span className="text-sm text-slate-300">Requiere inspección de calidad (QC)</span>
             </label>
@@ -1090,7 +1090,7 @@ function RecepcionDetalle({ orden, tareasPutaway, tabActivo, setTabActivo, onVol
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-lg text-amber-400">{orden.numero}</span>
+              <span className="font-mono text-lg text-slate-300">{orden.numero}</span>
               <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${estadoConfig.bg} ${estadoConfig.color}`}>
                 <EstadoIcon className="h-3 w-3" />
                 {estadoConfig.label}
@@ -1123,7 +1123,7 @@ function RecepcionDetalle({ orden, tareasPutaway, tabActivo, setTabActivo, onVol
                 onClick={() => setTabActivo(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                   tabActivo === tab.id
-                    ? 'border-amber-500 text-amber-400'
+                    ? 'border-amber-500 text-slate-300'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -1151,14 +1151,14 @@ function RecepcionDetalle({ orden, tareasPutaway, tabActivo, setTabActivo, onVol
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="font-mono text-sm text-blue-400">{linea.producto_codigo}</span>
+                      <span className="font-mono text-sm text-slate-300">{linea.producto_codigo}</span>
                       {linea.lote_numero && (
                         <span className="px-2 py-0.5 bg-slate-800 rounded text-xs text-slate-400">
                           Lote: {linea.lote_numero}
                         </span>
                       )}
                       {linea.putaway_completado && (
-                        <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded text-xs">
+                        <span className="px-2 py-0.5 bg-slate-800/40 text-slate-300 rounded text-xs">
                           Ubicado ✓
                         </span>
                       )}
@@ -1195,9 +1195,9 @@ function RecepcionDetalle({ orden, tareasPutaway, tabActivo, setTabActivo, onVol
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="font-mono text-sm text-blue-400">{tarea.producto_codigo}</span>
+                      <span className="font-mono text-sm text-slate-300">{tarea.producto_codigo}</span>
                       <ArrowRight className="h-4 w-4 text-slate-600" />
-                      <span className="font-mono text-sm text-emerald-400">{tarea.ubicacion_destino_codigo}</span>
+                      <span className="font-mono text-sm text-slate-300">{tarea.ubicacion_destino_codigo}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs ${estadoPutaway.bg} ${estadoPutaway.color}`}>
                         {estadoPutaway.label}
                       </span>
@@ -1205,7 +1205,7 @@ function RecepcionDetalle({ orden, tareasPutaway, tabActivo, setTabActivo, onVol
                     <p className="text-sm text-slate-400">{tarea.producto_nombre} • {tarea.cantidad} {tarea.unidad_medida}</p>
                     {tarea.razon_sugerencia && (
                       <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                        <Zap className="h-3 w-3 text-amber-400" />
+                        <Zap className="h-3 w-3 text-slate-300" />
                         {tarea.razon_sugerencia}
                       </p>
                     )}
@@ -1272,7 +1272,7 @@ function RecibirMercaderia({ orden, lineasRecibiendo, setLineasRecibiendo, onVol
             <div key={linea.id} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <div className="font-mono text-sm text-blue-400">{linea.producto_codigo}</div>
+                  <div className="font-mono text-sm text-slate-300">{linea.producto_codigo}</div>
                   <div className="text-slate-200">{linea.producto_nombre}</div>
                   <div className="text-xs text-slate-500 mt-1">
                     Esperado: {linea.cantidad_esperada} | Pendiente: {pendiente} {linea.unidad_medida}
@@ -1361,7 +1361,7 @@ function PutawayList({ tareas, onVolver, onCompletar }: PutawayListProps) {
           </button>
           <div>
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <MapPin className="h-6 w-6 text-amber-400" />
+              <MapPin className="h-6 w-6 text-slate-300" />
               Tareas de Put-away
             </h3>
             <p className="text-sm text-slate-400">{pendientes.length} pendientes</p>
@@ -1374,19 +1374,19 @@ function PutawayList({ tareas, onVolver, onCompletar }: PutawayListProps) {
           <div key={tarea.id} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-amber-500/20 rounded-xl">
-                  <Package className="h-6 w-6 text-amber-400" />
+                <div className="p-3 bg-slate-800/40 rounded-xl">
+                  <Package className="h-6 w-6 text-slate-300" />
                 </div>
                 <div>
                   <div className="flex items-center gap-3 mb-1">
-                    <span className="font-mono text-sm text-blue-400">{tarea.producto_codigo}</span>
+                    <span className="font-mono text-sm text-slate-300">{tarea.producto_codigo}</span>
                     <ArrowRight className="h-4 w-4 text-slate-600" />
-                    <span className="font-mono text-sm text-emerald-400 font-bold">{tarea.ubicacion_destino_codigo}</span>
+                    <span className="font-mono text-sm text-slate-300 font-bold">{tarea.ubicacion_destino_codigo}</span>
                   </div>
                   <p className="text-slate-200">{tarea.producto_nombre}</p>
                   <p className="text-sm text-slate-400">{tarea.cantidad} {tarea.unidad_medida} {tarea.lote_numero && `• Lote: ${tarea.lote_numero}`}</p>
                   {tarea.razon_sugerencia && (
-                    <p className="text-xs text-amber-400 mt-1 flex items-center gap-1">
+                    <p className="text-xs text-slate-300 mt-1 flex items-center gap-1">
                       <Zap className="h-3 w-3" />
                       {tarea.razon_sugerencia}
                     </p>
@@ -1407,7 +1407,7 @@ function PutawayList({ tareas, onVolver, onCompletar }: PutawayListProps) {
         
         {pendientes.length === 0 && (
           <div className="text-center py-12 text-slate-500">
-            <CheckCircle className="h-16 w-16 mx-auto mb-4 text-emerald-400" />
+            <CheckCircle className="h-16 w-16 mx-auto mb-4 text-slate-300" />
             <p className="text-lg text-slate-300">¡Todas las tareas completadas!</p>
             <p className="text-sm">No hay productos pendientes de ubicar</p>
           </div>

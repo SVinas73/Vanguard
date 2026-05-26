@@ -45,11 +45,11 @@ interface OrdenListaParaPack {
 }
 
 const ESTADO_CONFIG: Record<EstadoPaquete, { label: string; color: string; bg: string }> = {
-  en_armado:  { label: 'En armado',   color: 'text-amber-300',   bg: 'bg-amber-500/15' },
-  cerrado:    { label: 'Cerrado',     color: 'text-blue-300',    bg: 'bg-blue-500/15' },
-  despachado: { label: 'Despachado',  color: 'text-purple-300',  bg: 'bg-purple-500/15' },
-  entregado:  { label: 'Entregado',   color: 'text-emerald-300', bg: 'bg-emerald-500/15' },
-  devuelto:   { label: 'Devuelto',    color: 'text-red-300',     bg: 'bg-red-500/15' },
+  en_armado:  { label: 'En armado',   color: 'text-slate-300',   bg: 'bg-slate-800/40' },
+  cerrado:    { label: 'Cerrado',     color: 'text-slate-300',    bg: 'bg-slate-800/40' },
+  despachado: { label: 'Despachado',  color: 'text-slate-300',  bg: 'bg-slate-800/40' },
+  entregado:  { label: 'Entregado',   color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  devuelto:   { label: 'Devuelto',    color: 'text-slate-300',     bg: 'bg-slate-800/40' },
 };
 
 export default function Packing() {
@@ -251,7 +251,7 @@ export default function Packing() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-blue-400" /></div>;
+    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-slate-300" /></div>;
   }
 
   // ========== LISTA ==========
@@ -262,7 +262,7 @@ export default function Packing() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <Package className="h-6 w-6 text-blue-400" />
+              <Package className="h-6 w-6 text-slate-300" />
               Packing & Despacho
             </h3>
           </div>
@@ -273,8 +273,8 @@ export default function Packing() {
 
         {/* Órdenes listas para empaquetar */}
         {ordenesListas.filter(o => !o.paquete_id).length > 0 && (
-          <div className="bg-amber-500/5 border border-amber-500/30 rounded-xl p-4">
-            <h4 className="text-sm font-semibold text-amber-300 mb-2 flex items-center gap-2">
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
+            <h4 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
               <ClipboardCheck className="h-4 w-4" />
               Picking completado, listo para empaquetar
             </h4>
@@ -287,7 +287,7 @@ export default function Packing() {
                   </div>
                   <button
                     onClick={() => abrirNuevo(o)}
-                    className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-xs font-medium rounded-lg"
+                    className="px-3 py-1.5 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 text-xs font-medium rounded-lg"
                   >
                     Empaquetar
                   </button>
@@ -367,7 +367,7 @@ export default function Packing() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => imprimirEtiqueta(p)}
-                            className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-blue-400"
+                            className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-300"
                             title="Imprimir etiqueta"
                           >
                             <Printer className="h-3.5 w-3.5" />
@@ -375,7 +375,7 @@ export default function Packing() {
                           {p.estado === 'en_armado' && (
                             <button
                               onClick={() => cambiarEstado(p, 'cerrado')}
-                              className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-blue-400"
+                              className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-300"
                               title="Cerrar"
                             >
                               <Box className="h-3.5 w-3.5" />
@@ -384,7 +384,7 @@ export default function Packing() {
                           {p.estado === 'cerrado' && (
                             <button
                               onClick={() => cambiarEstado(p, 'despachado')}
-                              className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-purple-400"
+                              className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-300"
                               title="Despachar"
                             >
                               <Send className="h-3.5 w-3.5" />
@@ -393,7 +393,7 @@ export default function Packing() {
                           {p.estado === 'despachado' && (
                             <button
                               onClick={() => cambiarEstado(p, 'entregado')}
-                              className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-emerald-400"
+                              className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-300"
                               title="Marcar entregado"
                             >
                               <CheckCircle className="h-3.5 w-3.5" />
@@ -418,7 +418,7 @@ export default function Packing() {
       <toast.Toast />
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-          <Package className="h-6 w-6 text-blue-400" />
+          <Package className="h-6 w-6 text-slate-300" />
           Nuevo paquete
         </h3>
         <button onClick={() => setVista('lista')} className="p-2 hover:bg-slate-800 rounded-lg">

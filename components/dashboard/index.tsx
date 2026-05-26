@@ -876,7 +876,7 @@ export function StatCard({ label, value, icon, color, trend, subtitle }: StatCar
         <div className="p-1.5 rounded-lg inline-block mb-3 bg-slate-800">
           <span style={{ color: c.text }}>{icon}</span>
         </div>
-        <div className="text-2xl font-medium tracking-tight text-white mb-1 tabular-nums">
+        <div className="text-4xl font-semibold tracking-tight text-white mb-1 tabular-nums leading-none">
           {value}
         </div>
         <div className="text-sm text-slate-500">

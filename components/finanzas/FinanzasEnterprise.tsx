@@ -361,29 +361,29 @@ const METODOS_PAGO_CONFIG: Record<MetodoPago, { nombre: string; icono: React.Rea
 };
 
 const ESTADO_DOCUMENTO_CONFIG: Record<EstadoDocumento, { color: string; bg: string; label: string }> = {
-  pendiente: { color: 'text-amber-400', bg: 'bg-amber-500/20 border-amber-500/30', label: 'Pendiente' },
-  parcial: { color: 'text-blue-400', bg: 'bg-blue-500/20 border-blue-500/30', label: 'Parcial' },
-  pagado: { color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30', label: 'Pagado' },
-  vencido: { color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/30', label: 'Vencido' },
+  pendiente: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Pendiente' },
+  parcial: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Parcial' },
+  pagado: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Pagado' },
+  vencido: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Vencido' },
   anulado: { color: 'text-slate-400', bg: 'bg-slate-500/20 border-slate-500/30', label: 'Anulado' },
 };
 
 const ESTADO_CHEQUE_CONFIG: Record<EstadoCheque, { color: string; bg: string; label: string }> = {
-  cartera: { color: 'text-amber-400', bg: 'bg-amber-500/20 border-amber-500/30', label: 'En Cartera' },
-  depositado: { color: 'text-blue-400', bg: 'bg-blue-500/20 border-blue-500/30', label: 'Depositado' },
-  cobrado: { color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30', label: 'Cobrado' },
-  rechazado: { color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/30', label: 'Rechazado' },
-  entregado: { color: 'text-purple-400', bg: 'bg-purple-500/20 border-purple-500/30', label: 'Entregado' },
+  cartera: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'En Cartera' },
+  depositado: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Depositado' },
+  cobrado: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Cobrado' },
+  rechazado: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Rechazado' },
+  entregado: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Entregado' },
 };
 
 const ESTADO_COBRANZA_CONFIG: Record<EstadoCobranza, { color: string; bg: string; label: string }> = {
   pendiente: { color: 'text-slate-400', bg: 'bg-slate-500/20 border-slate-500/30', label: 'Pendiente' },
-  contactado: { color: 'text-blue-400', bg: 'bg-blue-500/20 border-blue-500/30', label: 'Contactado' },
-  promesa_pago: { color: 'text-cyan-400', bg: 'bg-cyan-500/20 border-cyan-500/30', label: 'Promesa de Pago' },
-  en_gestion: { color: 'text-amber-400', bg: 'bg-amber-500/20 border-amber-500/30', label: 'En Gestión' },
-  legal: { color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/30', label: 'Gestión Legal' },
-  incobrable: { color: 'text-red-600', bg: 'bg-red-600/20 border-red-600/30', label: 'Incobrable' },
-  cobrado: { color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30', label: 'Cobrado' },
+  contactado: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Contactado' },
+  promesa_pago: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Promesa de Pago' },
+  en_gestion: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'En Gestión' },
+  legal: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Gestión Legal' },
+  incobrable: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Incobrable' },
+  cobrado: { color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40', label: 'Cobrado' },
 };
 
 const TIPO_CONTACTO_CONFIG: Record<TipoContactoCobranza, { icono: React.ReactNode; label: string }> = {
@@ -397,9 +397,9 @@ const TIPO_CONTACTO_CONFIG: Record<TipoContactoCobranza, { icono: React.ReactNod
 
 const PRIORIDAD_CONFIG = {
   baja: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Baja' },
-  media: { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Media' },
-  alta: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'Alta' },
-  urgente: { color: 'text-red-400', bg: 'bg-red-500/20', label: 'Urgente' },
+  media: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Media' },
+  alta: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Alta' },
+  urgente: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Urgente' },
 };
 
 const CATEGORIAS_GASTO = [
@@ -520,9 +520,9 @@ function useToast() {
     <div className="fixed bottom-4 right-4 z-50 space-y-2">
       {toasts.map(t => (
         <div key={t.id} className={`px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3 ${
-          t.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
-          t.type === 'error' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
-          'bg-amber-500/20 border-amber-500/30 text-amber-400'
+          t.type === 'success' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          t.type === 'error' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          'bg-slate-800/40 border-slate-700/40 text-slate-300'
         }`}>
           {t.type === 'success' ? <CheckCircle className="h-5 w-5" /> :
            t.type === 'error' ? <XCircle className="h-5 w-5" /> :
@@ -2505,7 +2505,7 @@ export default function FinanzasEnterprise() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-emerald-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -2518,7 +2518,7 @@ export default function FinanzasEnterprise() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-            <CircleDollarSign className="h-7 w-7 text-emerald-400" />
+            <CircleDollarSign className="h-7 w-7 text-slate-300" />
             Finanzas
           </h2>
           <p className="text-slate-400 text-sm mt-1">Gestión financiera integral</p>
@@ -2578,10 +2578,10 @@ export default function FinanzasEnterprise() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Wallet className="h-5 w-5 text-emerald-400" />
+                <Wallet className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">Saldo Disponible</span>
               </div>
-              <div className="text-2xl font-bold text-emerald-400">
+              <div className="text-2xl font-bold text-slate-300">
                 {formatCurrency(metricas.saldosPorMoneda[monedaActiva], monedaActiva)}
               </div>
               <div className="text-xs text-slate-500 mt-1">
@@ -2590,38 +2590,38 @@ export default function FinanzasEnterprise() {
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <ArrowUpRight className="h-5 w-5 text-cyan-400" />
+                <ArrowUpRight className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">Por Cobrar</span>
               </div>
-              <div className="text-2xl font-bold text-cyan-400">
+              <div className="text-2xl font-bold text-slate-300">
                 {formatCurrency(metricas.totalCxC, monedaActiva)}
               </div>
               {metricas.cxcVencidas > 0 && (
-                <div className="text-xs text-red-400 mt-1">
+                <div className="text-xs text-slate-300 mt-1">
                   {metricas.cxcVencidas} vencidas ({formatCurrency(metricas.totalCxCVencido, monedaActiva)})
                 </div>
               )}
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <ArrowDownRight className="h-5 w-5 text-amber-400" />
+                <ArrowDownRight className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">Por Pagar</span>
               </div>
-              <div className="text-2xl font-bold text-amber-400">
+              <div className="text-2xl font-bold text-slate-300">
                 {formatCurrency(metricas.totalCxP, monedaActiva)}
               </div>
               {metricas.cxpVencidas > 0 && (
-                <div className="text-xs text-red-400 mt-1">
+                <div className="text-xs text-slate-300 mt-1">
                   {metricas.cxpVencidas} vencidas ({formatCurrency(metricas.totalCxPVencido, monedaActiva)})
                 </div>
               )}
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-purple-400" />
+                <TrendingUp className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">Flujo del Mes</span>
               </div>
-              <div className={`text-2xl font-bold ${metricas.flujoNetoMes >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              <div className={`text-2xl font-bold ${metricas.flujoNetoMes >= 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                 {metricas.flujoNetoMes >= 0 ? '+' : ''}{formatCurrency(metricas.flujoNetoMes, monedaActiva)}
               </div>
               <div className="text-xs text-slate-500 mt-1">
@@ -2634,34 +2634,34 @@ export default function FinanzasEnterprise() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <FileCheck className="h-5 w-5 text-blue-400" />
+                <FileCheck className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">Cheques Cartera</span>
               </div>
-              <div className="text-xl font-bold text-blue-400">{formatCurrency(metricas.totalChequesCartera, monedaActiva)}</div>
+              <div className="text-xl font-bold text-slate-300">{formatCurrency(metricas.totalChequesCartera, monedaActiva)}</div>
               <div className="text-xs text-slate-500">{metricas.chequesCartera} cheques</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Phone className="h-5 w-5 text-orange-400" />
+                <Phone className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">En Cobranza</span>
               </div>
-              <div className="text-xl font-bold text-orange-400">{formatCurrency(metricas.montoEnGestion, monedaActiva)}</div>
+              <div className="text-xl font-bold text-slate-300">{formatCurrency(metricas.montoEnGestion, monedaActiva)}</div>
               <div className="text-xs text-slate-500">{metricas.gestionesPendientes} gestiones</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <CalendarClock className="h-5 w-5 text-pink-400" />
+                <CalendarClock className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">Pagos Próximos (7d)</span>
               </div>
-              <div className="text-xl font-bold text-pink-400">{formatCurrency(metricas.montoPagosProximos, monedaActiva)}</div>
+              <div className="text-xl font-bold text-slate-300">{formatCurrency(metricas.montoPagosProximos, monedaActiva)}</div>
               <div className="text-xs text-slate-500">{metricas.pagosProximos7Dias} pagos</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Receipt className="h-5 w-5 text-teal-400" />
+                <Receipt className="h-5 w-5 text-slate-300" />
                 <span className="text-sm text-slate-400">NC Pendientes</span>
               </div>
-              <div className="text-xl font-bold text-teal-400">{formatCurrency(metricas.totalNotasCredito, monedaActiva)}</div>
+              <div className="text-xl font-bold text-slate-300">{formatCurrency(metricas.totalNotasCredito, monedaActiva)}</div>
               <div className="text-xs text-slate-500">{metricas.notasCreditoPendientes} notas</div>
             </div>
           </div>
@@ -2729,7 +2729,7 @@ export default function FinanzasEnterprise() {
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-400">Cuentas</h3>
-              <button onClick={() => setModalType('cuenta')} className="text-sm text-emerald-400 hover:text-emerald-300">
+              <button onClick={() => setModalType('cuenta')} className="text-sm text-slate-300 hover:text-slate-300">
                 + Nueva cuenta
               </button>
             </div>
@@ -2741,7 +2741,7 @@ export default function FinanzasEnterprise() {
                     <span className="text-sm font-medium text-slate-200">{cuenta.nombre}</span>
                   </div>
                   {cuenta.banco && <div className="text-xs text-slate-500 mb-1">{cuenta.banco}</div>}
-                  <div className="text-lg font-bold text-emerald-400">{formatCurrency(cuenta.saldoActual, cuenta.moneda)}</div>
+                  <div className="text-lg font-bold text-slate-300">{formatCurrency(cuenta.saldoActual, cuenta.moneda)}</div>
                 </div>
               ))}
             </div>
@@ -2815,13 +2815,13 @@ export default function FinanzasEnterprise() {
                         </td>
                         <td className="px-4 py-3 text-slate-300">{doc.cliente?.nombre || '-'}</td>
                         <td className="px-4 py-3">
-                          <div className={`text-sm ${estaVencido ? 'text-red-400' : 'text-slate-400'}`}>
+                          <div className={`text-sm ${estaVencido ? 'text-slate-300' : 'text-slate-400'}`}>
                             {formatDate(doc.fechaVencimiento)}
                           </div>
-                          {estaVencido && <div className="text-xs text-red-400">{Math.abs(diasVenc)}d vencido</div>}
+                          {estaVencido && <div className="text-xs text-slate-300">{Math.abs(diasVenc)}d vencido</div>}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-slate-300">{formatCurrency(doc.total, doc.moneda)}</td>
-                        <td className="px-4 py-3 text-right font-mono font-bold text-cyan-400">{formatCurrency(doc.saldo, doc.moneda)}</td>
+                        <td className="px-4 py-3 text-right font-mono font-bold text-slate-300">{formatCurrency(doc.saldo, doc.moneda)}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs border ${estadoConfig.bg} ${estadoConfig.color}`}>
                             {estadoConfig.label}
@@ -2830,7 +2830,7 @@ export default function FinanzasEnterprise() {
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
                             <button onClick={() => generarEstadoCuentaCliente(doc.clienteId)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Estado de cuenta">
-                              <FileDown className="h-4 w-4 text-purple-400" />
+                              <FileDown className="h-4 w-4 text-slate-300" />
                             </button>
                             {doc.saldo > 0 && (
                               <>
@@ -2843,7 +2843,7 @@ export default function FinanzasEnterprise() {
                                   className="p-1.5 hover:bg-slate-700 rounded-lg"
                                   title="Registrar cobro"
                                 >
-                                  <DollarSign className="h-4 w-4 text-emerald-400" />
+                                  <DollarSign className="h-4 w-4 text-slate-300" />
                                 </button>
                                 {!gestionesCobranza.find(g => g.documentoId === doc.id) && diasVenc < 0 && (
                                   <button
@@ -2851,7 +2851,7 @@ export default function FinanzasEnterprise() {
                                     className="p-1.5 hover:bg-slate-700 rounded-lg"
                                     title="Iniciar cobranza"
                                   >
-                                    <Phone className="h-4 w-4 text-orange-400" />
+                                    <Phone className="h-4 w-4 text-slate-300" />
                                   </button>
                                 )}
                               </>
@@ -2929,13 +2929,13 @@ export default function FinanzasEnterprise() {
                         </td>
                         <td className="px-4 py-3 text-slate-300">{doc.proveedor?.nombre || '-'}</td>
                         <td className="px-4 py-3">
-                          <div className={`text-sm ${estaVencido ? 'text-red-400' : 'text-slate-400'}`}>
+                          <div className={`text-sm ${estaVencido ? 'text-slate-300' : 'text-slate-400'}`}>
                             {formatDate(doc.fechaVencimiento)}
                           </div>
-                          {estaVencido && <div className="text-xs text-red-400">{Math.abs(diasVenc)}d vencido</div>}
+                          {estaVencido && <div className="text-xs text-slate-300">{Math.abs(diasVenc)}d vencido</div>}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-slate-300">{formatCurrency(doc.total, doc.moneda)}</td>
-                        <td className="px-4 py-3 text-right font-mono font-bold text-amber-400">{formatCurrency(doc.saldo, doc.moneda)}</td>
+                        <td className="px-4 py-3 text-right font-mono font-bold text-slate-300">{formatCurrency(doc.saldo, doc.moneda)}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs border ${estadoConfig.bg} ${estadoConfig.color}`}>
                             {estadoConfig.label}
@@ -2944,7 +2944,7 @@ export default function FinanzasEnterprise() {
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
                             <button onClick={() => generarEstadoCuentaProveedor(doc.proveedorId)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Estado de cuenta">
-                              <FileDown className="h-4 w-4 text-purple-400" />
+                              <FileDown className="h-4 w-4 text-slate-300" />
                             </button>
                             {doc.saldo > 0 && (
                               <button
@@ -2956,7 +2956,7 @@ export default function FinanzasEnterprise() {
                                 className="p-1.5 hover:bg-slate-700 rounded-lg"
                                 title="Registrar pago"
                               >
-                                <DollarSign className="h-4 w-4 text-emerald-400" />
+                                <DollarSign className="h-4 w-4 text-slate-300" />
                               </button>
                             )}
                           </div>
@@ -3046,7 +3046,7 @@ export default function FinanzasEnterprise() {
                     </div>
                     <div>
                       <span className="text-slate-500">Pendiente:</span>
-                      <span className="ml-2 text-amber-400 font-bold">{formatCurrency(gestion.montoPendiente, monedaActiva)}</span>
+                      <span className="ml-2 text-slate-300 font-bold">{formatCurrency(gestion.montoPendiente, monedaActiva)}</span>
                     </div>
                     <div>
                       <span className="text-slate-500">Último contacto:</span>
@@ -3059,8 +3059,8 @@ export default function FinanzasEnterprise() {
                   </div>
 
                   {gestion.promesaPagoFecha && (
-                    <div className="p-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg mb-3 text-sm">
-                      <span className="text-cyan-400">Promesa de pago:</span>
+                    <div className="p-2 bg-slate-800/40 border border-slate-700/40 rounded-lg mb-3 text-sm">
+                      <span className="text-slate-300">Promesa de pago:</span>
                       <span className="ml-2 text-slate-300">{formatDate(gestion.promesaPagoFecha)}</span>
                       <span className="ml-4 text-slate-300">{formatCurrency(gestion.promesaPagoMonto || 0, monedaActiva)}</span>
                     </div>
@@ -3109,19 +3109,19 @@ export default function FinanzasEnterprise() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="text-sm text-slate-400 mb-1">Saldo Actual</div>
-              <div className="text-2xl font-bold text-emerald-400">{formatCurrency(metricas.saldosPorMoneda[monedaActiva], monedaActiva)}</div>
+              <div className="text-2xl font-bold text-slate-300">{formatCurrency(metricas.saldosPorMoneda[monedaActiva], monedaActiva)}</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="text-sm text-slate-400 mb-1">Ingresos Esperados (30d)</div>
-              <div className="text-2xl font-bold text-cyan-400">{formatCurrency(proyeccionFlujo.reduce((s, p) => s + p.ingresos, 0), monedaActiva)}</div>
+              <div className="text-2xl font-bold text-slate-300">{formatCurrency(proyeccionFlujo.reduce((s, p) => s + p.ingresos, 0), monedaActiva)}</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="text-sm text-slate-400 mb-1">Egresos Esperados (30d)</div>
-              <div className="text-2xl font-bold text-amber-400">{formatCurrency(proyeccionFlujo.reduce((s, p) => s + p.egresos, 0), monedaActiva)}</div>
+              <div className="text-2xl font-bold text-slate-300">{formatCurrency(proyeccionFlujo.reduce((s, p) => s + p.egresos, 0), monedaActiva)}</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="text-sm text-slate-400 mb-1">Saldo Proyectado</div>
-              <div className={`text-2xl font-bold ${proyeccionFlujo[29]?.saldoProyectado >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              <div className={`text-2xl font-bold ${proyeccionFlujo[29]?.saldoProyectado >= 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                 {formatCurrency(proyeccionFlujo[29]?.saldoProyectado || 0, monedaActiva)}
               </div>
             </div>
@@ -3172,18 +3172,18 @@ export default function FinanzasEnterprise() {
                       <tr key={dia.fecha} className={tieneMov ? 'bg-slate-800/20' : ''}>
                         <td className="px-4 py-2 text-sm text-slate-300">
                           {formatDate(dia.fecha)}
-                          {idx === 0 && <span className="ml-2 text-xs text-emerald-400">Hoy</span>}
+                          {idx === 0 && <span className="ml-2 text-xs text-slate-300">Hoy</span>}
                         </td>
-                        <td className="px-4 py-2 text-right font-mono text-sm text-cyan-400">
+                        <td className="px-4 py-2 text-right font-mono text-sm text-slate-300">
                           {dia.ingresos > 0 ? formatCurrency(dia.ingresos, monedaActiva) : '-'}
                         </td>
-                        <td className="px-4 py-2 text-right font-mono text-sm text-amber-400">
+                        <td className="px-4 py-2 text-right font-mono text-sm text-slate-300">
                           {dia.egresos > 0 ? formatCurrency(dia.egresos, monedaActiva) : '-'}
                         </td>
-                        <td className={`px-4 py-2 text-right font-mono text-sm ${neto >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <td className={`px-4 py-2 text-right font-mono text-sm ${neto >= 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                           {tieneMov ? (neto >= 0 ? '+' : '') + formatCurrency(neto, monedaActiva) : '-'}
                         </td>
-                        <td className={`px-4 py-2 text-right font-mono text-sm font-bold ${dia.saldoProyectado >= 0 ? 'text-slate-200' : 'text-red-400'}`}>
+                        <td className={`px-4 py-2 text-right font-mono text-sm font-bold ${dia.saldoProyectado >= 0 ? 'text-slate-200' : 'text-slate-300'}`}>
                           {formatCurrency(dia.saldoProyectado, monedaActiva)}
                         </td>
                       </tr>
@@ -3239,12 +3239,12 @@ export default function FinanzasEnterprise() {
                         {trans.referencia && <div className="text-xs text-slate-500">Ref: {trans.referencia}</div>}
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-400">{trans.categoria || '-'}</td>
-                      <td className={`px-4 py-3 text-right font-mono font-bold ${trans.tipo === 'ingreso' ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <td className={`px-4 py-3 text-right font-mono font-bold ${trans.tipo === 'ingreso' ? 'text-slate-300' : 'text-slate-300'}`}>
                         {trans.tipo === 'ingreso' ? '+' : '-'}{formatCurrency(trans.monto, trans.moneda)}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {trans.conciliado ? (
-                          <CheckCircle className="h-4 w-4 text-emerald-400 mx-auto" />
+                          <CheckCircle className="h-4 w-4 text-slate-300 mx-auto" />
                         ) : (
                           <div className="h-4 w-4 border border-slate-600 rounded mx-auto" />
                         )}
@@ -3284,7 +3284,7 @@ export default function FinanzasEnterprise() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <FileCheck className={`h-4 w-4 ${cheque.tipo === 'recibido' ? 'text-cyan-400' : 'text-orange-400'}`} />
+                        <FileCheck className={`h-4 w-4 ${cheque.tipo === 'recibido' ? 'text-slate-300' : 'text-slate-300'}`} />
                         <span className="text-xs text-slate-500 uppercase">{cheque.tipo}</span>
                       </div>
                       <div className="font-mono text-lg text-slate-200 mt-1">#{cheque.numero}</div>
@@ -3299,11 +3299,11 @@ export default function FinanzasEnterprise() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500">Monto</span>
-                      <span className="font-bold text-emerald-400">{formatCurrency(cheque.monto, cheque.moneda)}</span>
+                      <span className="font-bold text-slate-300">{formatCurrency(cheque.monto, cheque.moneda)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500">Vencimiento</span>
-                      <span className={diasVenc < 0 ? 'text-red-400' : diasVenc <= 7 ? 'text-amber-400' : 'text-slate-300'}>
+                      <span className={diasVenc < 0 ? 'text-slate-300' : diasVenc <= 7 ? 'text-slate-300' : 'text-slate-300'}>
                         {formatDate(cheque.fechaVencimiento)}
                       </span>
                     </div>
@@ -3371,8 +3371,8 @@ export default function FinanzasEnterprise() {
             </div>
 
             {matchesConciliacion.size > 0 && (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl mb-4 flex items-center justify-between">
-                <span className="text-emerald-400">{matchesConciliacion.size} coincidencias encontradas</span>
+              <div className="p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl mb-4 flex items-center justify-between">
+                <span className="text-slate-300">{matchesConciliacion.size} coincidencias encontradas</span>
                 <button
                   onClick={aplicarMatchesConciliacion}
                   disabled={procesando === 'conciliar'}
@@ -3393,17 +3393,17 @@ export default function FinanzasEnterprise() {
                   {movimientosParaConciliar.map(mov => {
                     const matched = matchesConciliacion.has(mov.id);
                     return (
-                      <div key={mov.id} className={`p-3 rounded-xl border ${matched ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-800/30 border-slate-700/30'}`}>
+                      <div key={mov.id} className={`p-3 rounded-xl border ${matched ? 'bg-slate-800/40 border-slate-700/40' : 'bg-slate-800/30 border-slate-700/30'}`}>
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="text-sm text-slate-300">{mov.descripcion}</div>
                             <div className="text-xs text-slate-500">{formatDate(mov.fecha)} {mov.referencia && `• ${mov.referencia}`}</div>
                           </div>
-                          <div className={`font-mono font-bold ${mov.tipo === 'credito' ? 'text-emerald-400' : 'text-red-400'}`}>
+                          <div className={`font-mono font-bold ${mov.tipo === 'credito' ? 'text-slate-300' : 'text-slate-300'}`}>
                             {mov.tipo === 'credito' ? '+' : '-'}{formatCurrency(mov.monto, monedaActiva)}
                           </div>
                         </div>
-                        {matched && <div className="text-xs text-emerald-400 mt-1">✓ Match encontrado</div>}
+                        {matched && <div className="text-xs text-slate-300 mt-1">✓ Match encontrado</div>}
                       </div>
                     );
                   })}
@@ -3420,17 +3420,17 @@ export default function FinanzasEnterprise() {
                   {transaccionesParaConciliar.map(trans => {
                     const matched = Array.from(matchesConciliacion.values()).includes(trans.id);
                     return (
-                      <div key={trans.id} className={`p-3 rounded-xl border ${matched ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-800/30 border-slate-700/30'}`}>
+                      <div key={trans.id} className={`p-3 rounded-xl border ${matched ? 'bg-slate-800/40 border-slate-700/40' : 'bg-slate-800/30 border-slate-700/30'}`}>
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="text-sm text-slate-300">{trans.concepto}</div>
                             <div className="text-xs text-slate-500">{formatDate(trans.fecha)} {trans.referencia && `• ${trans.referencia}`}</div>
                           </div>
-                          <div className={`font-mono font-bold ${trans.tipo === 'ingreso' ? 'text-emerald-400' : 'text-red-400'}`}>
+                          <div className={`font-mono font-bold ${trans.tipo === 'ingreso' ? 'text-slate-300' : 'text-slate-300'}`}>
                             {trans.tipo === 'ingreso' ? '+' : '-'}{formatCurrency(trans.monto, trans.moneda)}
                           </div>
                         </div>
-                        {matched && <div className="text-xs text-emerald-400 mt-1">✓ Match encontrado</div>}
+                        {matched && <div className="text-xs text-slate-300 mt-1">✓ Match encontrado</div>}
                       </div>
                     );
                   })}
@@ -3483,7 +3483,7 @@ export default function FinanzasEnterprise() {
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-slate-500">Real</div>
-                  <div className="text-lg font-bold text-emerald-400">{formatCurrency(resumenPresupuesto.totalRealIngresos, monedaActiva)}</div>
+                  <div className="text-lg font-bold text-slate-300">{formatCurrency(resumenPresupuesto.totalRealIngresos, monedaActiva)}</div>
                 </div>
               </div>
             </div>
@@ -3496,7 +3496,7 @@ export default function FinanzasEnterprise() {
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-slate-500">Real</div>
-                  <div className="text-lg font-bold text-red-400">{formatCurrency(resumenPresupuesto.totalRealEgresos, monedaActiva)}</div>
+                  <div className="text-lg font-bold text-slate-300">{formatCurrency(resumenPresupuesto.totalRealEgresos, monedaActiva)}</div>
                 </div>
               </div>
             </div>
@@ -3505,13 +3505,13 @@ export default function FinanzasEnterprise() {
               <div className="flex justify-between items-end">
                 <div>
                   <div className="text-xs text-slate-500">Presupuestado</div>
-                  <div className={`text-lg font-bold ${resumenPresupuesto.balancePresupuestado >= 0 ? 'text-slate-300' : 'text-red-400'}`}>
+                  <div className={`text-lg font-bold ${resumenPresupuesto.balancePresupuestado >= 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                     {formatCurrency(resumenPresupuesto.balancePresupuestado, monedaActiva)}
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-slate-500">Real</div>
-                  <div className={`text-lg font-bold ${resumenPresupuesto.balanceReal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <div className={`text-lg font-bold ${resumenPresupuesto.balanceReal >= 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                     {formatCurrency(resumenPresupuesto.balanceReal, monedaActiva)}
                   </div>
                 </div>
@@ -3538,16 +3538,16 @@ export default function FinanzasEnterprise() {
                     <tr key={p.id} className="hover:bg-slate-800/30">
                       <td className="px-4 py-3 text-slate-300">{p.categoria}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-xs ${p.tipo === 'ingreso' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                        <span className={`px-2 py-1 rounded text-xs ${p.tipo === 'ingreso' ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-800/40 text-slate-300'}`}>
                           {p.tipo === 'ingreso' ? 'Ingreso' : 'Egreso'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right font-mono text-slate-300">{formatCurrency(p.montoPresupuestado, monedaActiva)}</td>
                       <td className="px-4 py-3 text-right font-mono text-slate-300">{formatCurrency(p.montoReal, monedaActiva)}</td>
-                      <td className={`px-4 py-3 text-right font-mono ${p.variacion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <td className={`px-4 py-3 text-right font-mono ${p.variacion >= 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                         {p.variacion >= 0 ? '+' : ''}{formatCurrency(p.variacion, monedaActiva)}
                       </td>
-                      <td className={`px-4 py-3 text-right font-mono ${p.variacionPct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <td className={`px-4 py-3 text-right font-mono ${p.variacionPct >= 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                         {p.variacionPct >= 0 ? '+' : ''}{formatPercent(p.variacionPct)}
                       </td>
                     </tr>
@@ -3566,40 +3566,40 @@ export default function FinanzasEnterprise() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Receipt className="h-4 w-4 text-emerald-400" />
+                <Receipt className="h-4 w-4 text-slate-300" />
                 <span className="text-xs text-slate-400">NC a favor de Cliente</span>
               </div>
-              <div className="text-xl font-bold text-emerald-400">
+              <div className="text-xl font-bold text-slate-300">
                 {formatCurrency(metricasNotas.totalNCCliente, monedaActiva)}
               </div>
               <div className="text-xs text-slate-500">{metricasNotas.cantNCCliente} notas</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Receipt className="h-4 w-4 text-cyan-400" />
+                <Receipt className="h-4 w-4 text-slate-300" />
                 <span className="text-xs text-slate-400">NC a favor nuestro (Proveedor)</span>
               </div>
-              <div className="text-xl font-bold text-cyan-400">
+              <div className="text-xl font-bold text-slate-300">
                 {formatCurrency(metricasNotas.totalNCProveedor, monedaActiva)}
               </div>
               <div className="text-xs text-slate-500">{metricasNotas.cantNCProveedor} notas</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Receipt className="h-4 w-4 text-amber-400" />
+                <Receipt className="h-4 w-4 text-slate-300" />
                 <span className="text-xs text-slate-400">ND contra Cliente</span>
               </div>
-              <div className="text-xl font-bold text-amber-400">
+              <div className="text-xl font-bold text-slate-300">
                 {formatCurrency(metricasNotas.totalNDCliente, monedaActiva)}
               </div>
               <div className="text-xs text-slate-500">{metricasNotas.cantNDCliente} notas</div>
             </div>
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Receipt className="h-4 w-4 text-red-400" />
+                <Receipt className="h-4 w-4 text-slate-300" />
                 <span className="text-xs text-slate-400">ND contra nosotros (Proveedor)</span>
               </div>
-              <div className="text-xl font-bold text-red-400">
+              <div className="text-xl font-bold text-slate-300">
                 {formatCurrency(metricasNotas.totalNDProveedor, monedaActiva)}
               </div>
               <div className="text-xs text-slate-500">{metricasNotas.cantNDProveedor} notas</div>
@@ -3674,9 +3674,9 @@ export default function FinanzasEnterprise() {
                     </tr>
                   ) : notasFiltradas.map(nota => {
                     const estadoCfg = {
-                      pendiente: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'Pendiente' },
-                      parcial: { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Parcial' },
-                      aplicada: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: 'Aplicada' },
+                      pendiente: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Pendiente' },
+                      parcial: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Parcial' },
+                      aplicada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Aplicada' },
                       anulada: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Anulada' },
                     }[nota.estado];
 
@@ -3685,7 +3685,7 @@ export default function FinanzasEnterprise() {
                         <td className="px-4 py-3 font-mono text-sm text-slate-200">{nota.numero}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-lg text-xs ${
-                            nota.tipo === 'credito' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                            nota.tipo === 'credito' ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-800/40 text-slate-300'
                           }`}>
                             {nota.tipo === 'credito' ? 'NC' : 'ND'}
                           </span>
@@ -3705,7 +3705,7 @@ export default function FinanzasEnterprise() {
                         <td className="px-4 py-3 text-sm text-slate-400">{formatDate(nota.fecha)}</td>
                         <td className="px-4 py-3 text-right font-mono text-sm text-slate-300">{formatCurrency(nota.monto, nota.moneda as Moneda)}</td>
                         <td className="px-4 py-3 text-right font-mono text-sm text-slate-400">{formatCurrency(nota.montoAplicado, nota.moneda as Moneda)}</td>
-                        <td className="px-4 py-3 text-right font-mono text-sm font-bold text-teal-400">{formatCurrency(nota.saldo, nota.moneda as Moneda)}</td>
+                        <td className="px-4 py-3 text-right font-mono text-sm font-bold text-slate-300">{formatCurrency(nota.saldo, nota.moneda as Moneda)}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs ${estadoCfg.bg} ${estadoCfg.color}`}>
                             {estadoCfg.label}
@@ -3793,12 +3793,12 @@ export default function FinanzasEnterprise() {
               <h3 className="text-xl font-bold text-slate-100">Registrar Cobro</h3>
               <button onClick={() => { setModalType(null); resetPagoForm(); }} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
-            <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl mb-4">
+            <div className="p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl mb-4">
               <div className="font-mono text-lg text-slate-200">{selectedItem.numero}</div>
               <div className="text-sm text-slate-400">{selectedItem.cliente?.nombre}</div>
               <div className="flex justify-between mt-2">
                 <span className="text-slate-500">Saldo:</span>
-                <span className="font-bold text-cyan-400">{formatCurrency(selectedItem.saldo, selectedItem.moneda)}</span>
+                <span className="font-bold text-slate-300">{formatCurrency(selectedItem.saldo, selectedItem.moneda)}</span>
               </div>
             </div>
             <div className="space-y-4">
@@ -3848,12 +3848,12 @@ export default function FinanzasEnterprise() {
               <h3 className="text-xl font-bold text-slate-100">Registrar Pago</h3>
               <button onClick={() => { setModalType(null); resetPagoForm(); }} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
-            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl mb-4">
+            <div className="p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl mb-4">
               <div className="font-mono text-lg text-slate-200">{selectedItem.numero}</div>
               <div className="text-sm text-slate-400">{selectedItem.proveedor?.nombre}</div>
               <div className="flex justify-between mt-2">
                 <span className="text-slate-500">Saldo:</span>
-                <span className="font-bold text-amber-400">{formatCurrency(selectedItem.saldo, selectedItem.moneda)}</span>
+                <span className="font-bold text-slate-300">{formatCurrency(selectedItem.saldo, selectedItem.moneda)}</span>
               </div>
             </div>
             <div className="space-y-4">
@@ -3888,7 +3888,7 @@ export default function FinanzasEnterprise() {
                 </div>
                 <div className="flex justify-between mt-2 text-sm">
                   <span className="text-slate-500">Total aplicado:</span>
-                  <span className="text-emerald-400 font-bold">{formatCurrency(pagoForm.monto + pagoForm.retencionIVA + pagoForm.retencionRenta, selectedItem.moneda)}</span>
+                  <span className="text-slate-300 font-bold">{formatCurrency(pagoForm.monto + pagoForm.retencionIVA + pagoForm.retencionRenta, selectedItem.moneda)}</span>
                 </div>
               </div>
             </div>
@@ -4024,7 +4024,7 @@ export default function FinanzasEnterprise() {
               <h3 className="text-xl font-bold text-slate-100">Registrar Contacto</h3>
               <button onClick={() => { setModalType(null); resetContactoForm(); }} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
-            <div className="p-3 bg-orange-500/10 border border-orange-500/30 rounded-xl mb-4">
+            <div className="p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl mb-4">
               <div className="font-medium text-slate-200">{selectedItem.clienteNombre}</div>
               <div className="text-sm text-slate-400">Pendiente: {formatCurrency(selectedItem.montoPendiente, monedaActiva)}</div>
             </div>
@@ -4089,8 +4089,8 @@ export default function FinanzasEnterprise() {
               <h3 className="text-xl font-bold text-slate-100">Agregar Presupuesto</h3>
               <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg"><X className="h-5 w-5 text-slate-400" /></button>
             </div>
-            <div className="p-3 bg-violet-500/10 border border-violet-500/30 rounded-xl mb-4">
-              <span className="text-violet-400">{getMesNombre(mesPresupuesto)} {añoPresupuesto}</span>
+            <div className="p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl mb-4">
+              <span className="text-slate-300">{getMesNombre(mesPresupuesto)} {añoPresupuesto}</span>
             </div>
             <div className="space-y-4">
               <div>
@@ -4310,10 +4310,10 @@ export default function FinanzasEnterprise() {
                   <input type="number" value={cxcForm.impuestos} onChange={(e) => setCxcForm({ ...cxcForm, impuestos: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
                 </div>
               </div>
-              <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl">
+              <div className="p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl">
                 <div className="flex justify-between">
                   <span className="text-slate-400">Total:</span>
-                  <span className="text-xl font-bold text-cyan-400">{formatCurrency(cxcForm.subtotal + cxcForm.impuestos, monedaActiva)}</span>
+                  <span className="text-xl font-bold text-slate-300">{formatCurrency(cxcForm.subtotal + cxcForm.impuestos, monedaActiva)}</span>
                 </div>
               </div>
               <div>
@@ -4382,10 +4382,10 @@ export default function FinanzasEnterprise() {
                   <input type="number" value={cxpForm.impuestos} onChange={(e) => setCxpForm({ ...cxpForm, impuestos: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" step="0.01" />
                 </div>
               </div>
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+              <div className="p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl">
                 <div className="flex justify-between">
                   <span className="text-slate-400">Total:</span>
-                  <span className="text-xl font-bold text-amber-400">{formatCurrency(cxpForm.subtotal + cxpForm.impuestos, monedaActiva)}</span>
+                  <span className="text-xl font-bold text-slate-300">{formatCurrency(cxpForm.subtotal + cxpForm.impuestos, monedaActiva)}</span>
                 </div>
               </div>
               <div>
@@ -4409,7 +4409,7 @@ export default function FinanzasEnterprise() {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <Link2 className="h-5 w-5 text-teal-400" />
+                <Link2 className="h-5 w-5 text-slate-300" />
                 Aplicar Nota a Documento
               </h3>
               <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg">
@@ -4417,11 +4417,11 @@ export default function FinanzasEnterprise() {
               </button>
             </div>
 
-            <div className="p-3 bg-teal-500/10 border border-teal-500/30 rounded-xl mb-4">
+            <div className="p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl mb-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-lg text-slate-200">{selectedItem.numero}</span>
                 <span className={`px-2 py-1 rounded-lg text-xs ${
-                  selectedItem.tipo === 'credito' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                  selectedItem.tipo === 'credito' ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-800/40 text-slate-300'
                 }`}>
                   {selectedItem.tipo === 'credito' ? 'Crédito' : 'Débito'}
                 </span>
@@ -4429,10 +4429,10 @@ export default function FinanzasEnterprise() {
               <div className="text-sm text-slate-400 mb-1">{selectedItem.entidadNombre}</div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Saldo disponible:</span>
-                <span className="font-bold text-teal-400">{formatCurrency(selectedItem.saldo, selectedItem.moneda as Moneda)}</span>
+                <span className="font-bold text-slate-300">{formatCurrency(selectedItem.saldo, selectedItem.moneda as Moneda)}</span>
               </div>
               {selectedItem.motivo && (
-                <div className="mt-2 pt-2 border-t border-teal-500/20 text-xs text-slate-400">
+                <div className="mt-2 pt-2 border-t border-slate-700/40 text-xs text-slate-400">
                   {selectedItem.motivo}
                 </div>
               )}

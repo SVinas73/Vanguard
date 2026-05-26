@@ -44,10 +44,10 @@ interface RecepcionItem {
 }
 
 const SEV_CONFIG: Record<Severidad, { label: string; bg: string; color: string }> = {
-  baja:    { label: 'Baja',    bg: 'bg-blue-500/15',    color: 'text-blue-300' },
-  media:   { label: 'Media',   bg: 'bg-amber-500/15',   color: 'text-amber-300' },
-  alta:    { label: 'Alta',    bg: 'bg-orange-500/15',  color: 'text-orange-300' },
-  critica: { label: 'Crítica', bg: 'bg-red-500/15',     color: 'text-red-300' },
+  baja:    { label: 'Baja',    bg: 'bg-slate-800/40',    color: 'text-slate-300' },
+  media:   { label: 'Media',   bg: 'bg-slate-800/40',   color: 'text-slate-300' },
+  alta:    { label: 'Alta',    bg: 'bg-slate-800/40',  color: 'text-slate-300' },
+  critica: { label: 'Crítica', bg: 'bg-slate-800/40',     color: 'text-slate-300' },
 };
 
 const TIPO_OPTIONS = [
@@ -193,7 +193,7 @@ export default function ControlCalidad() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-orange-400" /></div>;
+    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-slate-300" /></div>;
   }
 
   // ========== DETALLE ==========
@@ -205,7 +205,7 @@ export default function ControlCalidad() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <ShieldCheck className="h-6 w-6 text-orange-400" />
+              <ShieldCheck className="h-6 w-6 text-slate-300" />
               {selected.numero}
             </h3>
             <span className={cn('inline-flex mt-2 px-2 py-0.5 rounded text-xs font-medium', cfgSev.bg, cfgSev.color)}>
@@ -236,8 +236,8 @@ export default function ControlCalidad() {
         </div>
 
         {selected.estado !== 'cerrada' && (
-          <div className="bg-slate-900/50 border border-amber-500/30 rounded-xl p-4 space-y-3 max-w-2xl">
-            <h4 className="text-sm font-semibold text-amber-300">Cerrar con acción</h4>
+          <div className="bg-slate-900/50 border border-slate-700/40 rounded-xl p-4 space-y-3 max-w-2xl">
+            <h4 className="text-sm font-semibold text-slate-300">Cerrar con acción</h4>
             <div>
               <label className="block text-xs text-slate-400 mb-1">Acción a tomar</label>
               <select
@@ -278,7 +278,7 @@ export default function ControlCalidad() {
         <toast.Toast />
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <AlertTriangle className="h-6 w-6 text-orange-400" />
+            <AlertTriangle className="h-6 w-6 text-slate-300" />
             Reportar no conformidad
           </h3>
           <button onClick={() => setVista('lista')} className="p-2 hover:bg-slate-800 rounded-lg">
@@ -362,7 +362,7 @@ export default function ControlCalidad() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-orange-400" />
+            <ShieldCheck className="h-6 w-6 text-slate-300" />
             Control de Calidad
           </h3>
         </div>
@@ -379,9 +379,9 @@ export default function ControlCalidad() {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <KpiCard label="Abiertas" value={stats.abiertas} color="text-amber-300" />
-        <KpiCard label="En revisión" value={stats.enRevision} color="text-blue-300" />
-        <KpiCard label="Críticas activas" value={stats.criticas} color="text-red-300" />
+        <KpiCard label="Abiertas" value={stats.abiertas} color="text-slate-300" />
+        <KpiCard label="En revisión" value={stats.enRevision} color="text-slate-300" />
+        <KpiCard label="Críticas activas" value={stats.criticas} color="text-slate-300" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -432,9 +432,9 @@ export default function ControlCalidad() {
                     </td>
                     <td className="px-4 py-3">
                       <span className={cn('inline-flex px-2 py-0.5 rounded text-xs',
-                        n.estado === 'cerrada' ? 'bg-emerald-500/15 text-emerald-300' :
-                        n.estado === 'en_revision' ? 'bg-blue-500/15 text-blue-300' :
-                        'bg-amber-500/15 text-amber-300'
+                        n.estado === 'cerrada' ? 'bg-slate-800/40 text-slate-300' :
+                        n.estado === 'en_revision' ? 'bg-slate-800/40 text-slate-300' :
+                        'bg-slate-800/40 text-slate-300'
                       )}>
                         {n.estado}
                       </span>
@@ -444,7 +444,7 @@ export default function ControlCalidad() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button onClick={() => { setSelected(n); setVista('detalle'); }}
-                        className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-orange-400">
+                        className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-300">
                         <Eye className="h-3.5 w-3.5" />
                       </button>
                     </td>

@@ -111,9 +111,9 @@ function useToast() {
       {toasts.map(t => (
         <div key={t.id} className={cn(
           'px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3',
-          t.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
-          t.type === 'error' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
-          'bg-amber-500/20 border-amber-500/30 text-amber-400'
+          t.type === 'success' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          t.type === 'error' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          'bg-slate-800/40 border-slate-700/40 text-slate-300'
         )}>
           {t.type === 'success' ? <CheckCircle className="h-5 w-5" /> :
            t.type === 'error' ? <XCircle className="h-5 w-5" /> :
@@ -142,21 +142,21 @@ function useToast() {
 const getEstadoOrdenConfig = (estado: OrdenVenta['estado']) => {
   const configs = {
     borrador: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Borrador' },
-    confirmada: { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Confirmada' },
-    en_proceso: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'En Proceso' },
-    enviada: { color: 'text-purple-400', bg: 'bg-purple-500/20', label: 'Enviada' },
-    entregada: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: 'Entregada' },
-    cancelada: { color: 'text-red-400', bg: 'bg-red-500/20', label: 'Cancelada' },
+    confirmada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Confirmada' },
+    en_proceso: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'En Proceso' },
+    enviada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Enviada' },
+    entregada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Entregada' },
+    cancelada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Cancelada' },
   };
   return configs[estado];
 };
 
 const getEstadoPagoConfig = (estado: OrdenVenta['estadoPago']) => {
   const configs = {
-    pendiente: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'Pendiente' },
-    parcial: { color: 'text-cyan-400', bg: 'bg-cyan-500/20', label: 'Parcial' },
-    pagado: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: 'Pagado' },
-    vencido: { color: 'text-red-400', bg: 'bg-red-500/20', label: 'Vencido' },
+    pendiente: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Pendiente' },
+    parcial: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Parcial' },
+    pagado: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Pagado' },
+    vencido: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Vencido' },
   };
   return configs[estado];
 };
@@ -164,11 +164,11 @@ const getEstadoPagoConfig = (estado: OrdenVenta['estadoPago']) => {
 const getEstadoCotizacionConfig = (estado: Cotizacion['estado']) => {
   const configs = {
     borrador: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Borrador' },
-    enviada: { color: 'text-cyan-400', bg: 'bg-cyan-500/20', label: 'Enviada' },
-    aceptada: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: 'Aceptada' },
-    rechazada: { color: 'text-red-400', bg: 'bg-red-500/20', label: 'Rechazada' },
+    enviada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Enviada' },
+    aceptada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Aceptada' },
+    rechazada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Rechazada' },
     expirada: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Expirada' },
-    convertida: { color: 'text-purple-400', bg: 'bg-purple-500/20', label: 'Convertida' },
+    convertida: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Convertida' },
   };
   return configs[estado];
 };
@@ -870,7 +870,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-violet-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -883,7 +883,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-            <ShoppingCart className="h-7 w-7 text-violet-400" />
+            <ShoppingCart className="h-7 w-7 text-slate-300" />
             Ventas
           </h2>
           <p className="text-slate-400 text-sm mt-1">Órdenes, cotizaciones y clientes</p>
@@ -921,31 +921,31 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <ShoppingCart className="h-4 w-4 text-violet-400" />
+            <ShoppingCart className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">Órdenes Activas</span>
           </div>
-          <div className="text-2xl font-bold text-violet-400">{stats.ordenesActivas}</div>
+          <div className="text-2xl font-bold text-slate-300">{stats.ordenesActivas}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <CreditCard className="h-4 w-4 text-amber-400" />
+            <CreditCard className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">Por Cobrar</span>
           </div>
-          <div className="text-2xl font-bold text-amber-400">{formatCurrency(stats.totalPorCobrar)}</div>
+          <div className="text-2xl font-bold text-slate-300">{formatCurrency(stats.totalPorCobrar)}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <FileText className="h-4 w-4 text-cyan-400" />
+            <FileText className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">Cotizaciones</span>
           </div>
-          <div className="text-2xl font-bold text-cyan-400">{stats.cotizacionesActivas}</div>
+          <div className="text-2xl font-bold text-slate-300">{stats.cotizacionesActivas}</div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="h-4 w-4 text-emerald-400" />
+            <DollarSign className="h-4 w-4 text-slate-300" />
             <span className="text-xs text-slate-500">Pipeline</span>
           </div>
-          <div className="text-2xl font-bold text-emerald-400">{formatCurrency(stats.valorCotizaciones)}</div>
+          <div className="text-2xl font-bold text-slate-300">{formatCurrency(stats.valorCotizaciones)}</div>
         </div>
       </div>
 
@@ -955,7 +955,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
           onClick={() => { setTabActiva('ordenes'); setFilterEstado('todos'); }}
           className={cn(
             'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
-            tabActiva === 'ordenes' ? 'bg-slate-800 text-violet-400' : 'text-slate-400 hover:text-slate-200'
+            tabActiva === 'ordenes' ? 'bg-slate-800 text-slate-300' : 'text-slate-400 hover:text-slate-200'
           )}
         >
           <ShoppingCart className="h-4 w-4" />
@@ -965,7 +965,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
           onClick={() => { setTabActiva('cotizaciones'); setFilterEstado('todos'); }}
           className={cn(
             'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
-            tabActiva === 'cotizaciones' ? 'bg-slate-800 text-cyan-400' : 'text-slate-400 hover:text-slate-200'
+            tabActiva === 'cotizaciones' ? 'bg-slate-800 text-slate-300' : 'text-slate-400 hover:text-slate-200'
           )}
         >
           <FileText className="h-4 w-4" />
@@ -1073,9 +1073,9 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                             )}
                           </td>
                           <td className="px-4 py-4">
-                            <div className="text-violet-400 font-medium">{formatCurrency(orden.total)}</div>
+                            <div className="text-slate-300 font-medium">{formatCurrency(orden.total)}</div>
                             {orden.saldoPendiente > 0 && orden.estadoPago !== 'pagado' && (
-                              <div className="text-xs text-amber-400">Debe: {formatCurrency(orden.saldoPendiente)}</div>
+                              <div className="text-xs text-slate-300">Debe: {formatCurrency(orden.saldoPendiente)}</div>
                             )}
                           </td>
                           <td className="px-4 py-4">
@@ -1083,35 +1083,35 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                               {orden.estado === 'borrador' && (
                                 <>
                                   <button onClick={() => cambiarEstadoOrden(orden, 'confirmada')} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Confirmar">
-                                    <CheckCircle className="h-4 w-4 text-emerald-400" />
+                                    <CheckCircle className="h-4 w-4 text-slate-300" />
                                   </button>
                                   <button onClick={() => cambiarEstadoOrden(orden, 'cancelada')} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Cancelar">
-                                    <XCircle className="h-4 w-4 text-red-400" />
+                                    <XCircle className="h-4 w-4 text-slate-300" />
                                   </button>
                                 </>
                               )}
                               {orden.estado === 'confirmada' && (
                                 <button onClick={() => cambiarEstadoOrden(orden, 'en_proceso')} className="p-1.5 hover:bg-slate-700 rounded-lg" title="En proceso">
-                                  <Package className="h-4 w-4 text-amber-400" />
+                                  <Package className="h-4 w-4 text-slate-300" />
                                 </button>
                               )}
                               {orden.estado === 'en_proceso' && (
                                 <button onClick={() => cambiarEstadoOrden(orden, 'enviada')} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Enviar">
-                                  <Send className="h-4 w-4 text-purple-400" />
+                                  <Send className="h-4 w-4 text-slate-300" />
                                 </button>
                               )}
                               {orden.estado === 'enviada' && (
                                 <button onClick={() => cambiarEstadoOrden(orden, 'entregada')} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Entregar">
-                                  <CheckCircle className="h-4 w-4 text-emerald-400" />
+                                  <CheckCircle className="h-4 w-4 text-slate-300" />
                                 </button>
                               )}
                               {orden.estadoPago !== 'pagado' && orden.estado !== 'cancelada' && (
                                 <button onClick={() => { setSelectedOrden(orden); setPagoForm({ monto: orden.saldoPendiente, metodoPago: 'efectivo', referencia: '', notas: '' }); setModalType('pago'); }} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Pago">
-                                  <CreditCard className="h-4 w-4 text-cyan-400" />
+                                  <CreditCard className="h-4 w-4 text-slate-300" />
                                 </button>
                               )}
                               <button onClick={() => { setSelectedOrden(orden); setModalType('ver-orden'); }} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Ver">
-                                <Eye className="h-4 w-4 text-blue-400" />
+                                <Eye className="h-4 w-4 text-slate-300" />
                               </button>
                             </div>
                           </td>
@@ -1127,7 +1127,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                                       <span className="text-sm text-slate-200">{prod?.descripcion || item.productoCodigo}</span>
                                       <div className="flex gap-4 text-sm">
                                         <span className="text-slate-400">{item.cantidad} x {formatCurrency(item.precioUnitario)}</span>
-                                        <span className="text-violet-400">{formatCurrency(item.subtotal)}</span>
+                                        <span className="text-slate-300">{formatCurrency(item.subtotal)}</span>
                                       </div>
                                     </div>
                                   );
@@ -1175,12 +1175,12 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                     const vencida = cot.fechaValidez && new Date(cot.fechaValidez) < new Date() && cot.estado === 'enviada';
 
                     return (
-                      <tr key={cot.id} className={cn('hover:bg-slate-800/30', vencida && 'bg-red-500/5')}>
+                      <tr key={cot.id} className={cn('hover:bg-slate-800/30', vencida && 'bg-slate-800/40')}>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-sm text-slate-200">{cot.numero}</span>
                             {cot.version > 1 && (
-                              <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[10px] font-bold tracking-wide" title={`Versión ${cot.version}`}>
+                              <span className="px-1.5 py-0.5 rounded bg-slate-800/40 text-slate-300 text-[10px] font-bold tracking-wide" title={`Versión ${cot.version}`}>
                                 v{cot.version}
                               </span>
                             )}
@@ -1204,44 +1204,44 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                         </td>
                         <td className="px-4 py-4">
                           {cot.fechaValidez ? (
-                            <div className={cn('flex items-center gap-1', vencida && 'text-red-400')}>
+                            <div className={cn('flex items-center gap-1', vencida && 'text-slate-300')}>
                               {vencida && <AlertTriangle className="h-4 w-4" />}
                               <span>{new Date(cot.fechaValidez).toLocaleDateString('es-UY')}</span>
                             </div>
                           ) : '-'}
                         </td>
                         <td className="px-4 py-4">
-                          <div className="text-cyan-400 font-medium">{formatCurrency(cot.total)}</div>
+                          <div className="text-slate-300 font-medium">{formatCurrency(cot.total)}</div>
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-1">
                             {cot.estado === 'borrador' && (
                               <button onClick={() => cambiarEstadoCotizacion(cot, 'enviada')} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Enviar">
-                                <Send className="h-4 w-4 text-cyan-400" />
+                                <Send className="h-4 w-4 text-slate-300" />
                               </button>
                             )}
                             {cot.estado === 'enviada' && (
                               <>
                                 <button onClick={() => cambiarEstadoCotizacion(cot, 'aceptada')} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Aceptar">
-                                  <CheckCircle className="h-4 w-4 text-emerald-400" />
+                                  <CheckCircle className="h-4 w-4 text-slate-300" />
                                 </button>
                                 <button onClick={() => cambiarEstadoCotizacion(cot, 'rechazada')} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Rechazar">
-                                  <XCircle className="h-4 w-4 text-red-400" />
+                                  <XCircle className="h-4 w-4 text-slate-300" />
                                 </button>
                               </>
                             )}
                             {(cot.estado === 'aceptada' || cot.estado === 'enviada') && (
                               <button onClick={() => convertirCotizacion(cot)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Convertir a orden">
-                                <ArrowRight className="h-4 w-4 text-purple-400" />
+                                <ArrowRight className="h-4 w-4 text-slate-300" />
                               </button>
                             )}
                             {cot.estado !== 'convertida' && (
                               <button onClick={() => nuevaVersionCotizacion(cot)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Nueva versión">
-                                <Copy className="h-4 w-4 text-amber-400" />
+                                <Copy className="h-4 w-4 text-slate-300" />
                               </button>
                             )}
                             <button onClick={() => { setSelectedCotizacion(cot); setModalType('ver-cotizacion'); }} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Ver">
-                              <Eye className="h-4 w-4 text-blue-400" />
+                              <Eye className="h-4 w-4 text-slate-300" />
                             </button>
                           </div>
                         </td>
@@ -1318,7 +1318,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
               <div>
                 <div className="flex justify-between mb-2">
                   <label className="text-sm text-slate-400">Productos *</label>
-                  <button onClick={addOrdenItem} className="text-sm text-violet-400">+ Agregar</button>
+                  <button onClick={addOrdenItem} className="text-sm text-slate-300">+ Agregar</button>
                 </div>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {ordenForm.items.map((item, idx) => (
@@ -1333,15 +1333,15 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                       </select>
                       <input type="number" value={item.cantidad} onChange={(e) => updateOrdenItem(idx, 'cantidad', parseInt(e.target.value) || 0)} className="w-16 px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm" min="1" />
                       <input type="number" value={item.precioUnitario} onChange={(e) => updateOrdenItem(idx, 'precioUnitario', parseFloat(e.target.value) || 0)} className="w-24 px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm" step="0.01" />
-                      <button onClick={() => removeOrdenItem(idx)} className="p-1 text-red-400"><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => removeOrdenItem(idx)} className="p-1 text-slate-300"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   ))}
                   {ordenForm.items.length === 0 && <div className="text-center py-4 text-slate-500 text-sm">Agregue productos</div>}
                 </div>
                 {ordenForm.items.length > 0 && (
-                  <div className="mt-2 p-2 bg-violet-500/10 border border-violet-500/20 rounded-xl flex justify-between">
+                  <div className="mt-2 p-2 bg-slate-800/40 border border-slate-700/40 rounded-xl flex justify-between">
                     <span className="text-sm text-slate-400">Total:</span>
-                    <span className="font-bold text-violet-400">{formatCurrency(ordenForm.items.reduce((s, i) => s + (i.cantidad * i.precioUnitario - (i.descuento || 0)), 0))}</span>
+                    <span className="font-bold text-slate-300">{formatCurrency(ordenForm.items.reduce((s, i) => s + (i.cantidad * i.precioUnitario - (i.descuento || 0)), 0))}</span>
                   </div>
                 )}
               </div>
@@ -1371,7 +1371,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
                 {versionandoDe ? (
                   <>
-                    <Copy className="h-5 w-5 text-amber-400" />
+                    <Copy className="h-5 w-5 text-slate-300" />
                     Nueva versión
                   </>
                 ) : 'Nueva Cotización'}
@@ -1382,14 +1382,14 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
             </div>
 
             {versionandoDe && (
-              <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+              <div className="mb-4 p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl">
                 <div className="flex items-center gap-2 text-sm">
-                  <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                  <AlertTriangle className="h-4 w-4 text-slate-300 flex-shrink-0" />
                   <div>
                     <span className="text-slate-300">Generando </span>
-                    <span className="font-mono text-amber-400">v{(versionandoDe.version || 1) + 1}</span>
+                    <span className="font-mono text-slate-300">v{(versionandoDe.version || 1) + 1}</span>
                     <span className="text-slate-300"> a partir de </span>
-                    <span className="font-mono text-amber-400">{versionandoDe.numero}</span>
+                    <span className="font-mono text-slate-300">{versionandoDe.numero}</span>
                     <span className="text-slate-500"> · La versión anterior pasará a "expirada".</span>
                   </div>
                 </div>
@@ -1415,7 +1415,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
               <div>
                 <div className="flex justify-between mb-2">
                   <label className="text-sm text-slate-400">Productos *</label>
-                  <button onClick={addCotItem} className="text-sm text-cyan-400">+ Agregar</button>
+                  <button onClick={addCotItem} className="text-sm text-slate-300">+ Agregar</button>
                 </div>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {cotizacionForm.items.map((item, idx) => (
@@ -1426,15 +1426,15 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                       </select>
                       <input type="number" value={item.cantidad} onChange={(e) => updateCotItem(idx, 'cantidad', parseInt(e.target.value) || 0)} className="w-16 px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm" min="1" />
                       <input type="number" value={item.precioUnitario} onChange={(e) => updateCotItem(idx, 'precioUnitario', parseFloat(e.target.value) || 0)} className="w-24 px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm" step="0.01" />
-                      <button onClick={() => removeCotItem(idx)} className="p-1 text-red-400"><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => removeCotItem(idx)} className="p-1 text-slate-300"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   ))}
                   {cotizacionForm.items.length === 0 && <div className="text-center py-4 text-slate-500 text-sm">Agregue productos</div>}
                 </div>
                 {cotizacionForm.items.length > 0 && (
-                  <div className="mt-2 p-2 bg-cyan-500/10 border border-cyan-500/20 rounded-xl flex justify-between">
+                  <div className="mt-2 p-2 bg-slate-800/40 border border-slate-700/40 rounded-xl flex justify-between">
                     <span className="text-sm text-slate-400">Total:</span>
-                    <span className="font-bold text-cyan-400">{formatCurrency(cotizacionForm.items.reduce((s, i) => s + (i.cantidad * i.precioUnitario - (i.descuento || 0)), 0))}</span>
+                    <span className="font-bold text-slate-300">{formatCurrency(cotizacionForm.items.reduce((s, i) => s + (i.cantidad * i.precioUnitario - (i.descuento || 0)), 0))}</span>
                   </div>
                 )}
               </div>
@@ -1462,7 +1462,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-cyan-400" />
+                <CreditCard className="h-5 w-5 text-slate-300" />
                 Registrar Pago
               </h3>
               <button onClick={() => setModalType(null)} className="p-2 hover:bg-slate-800 rounded-lg">
@@ -1476,7 +1476,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
               <div className="text-sm text-slate-500">{selectedOrden.cliente?.nombre}</div>
               <div className="mt-2 flex justify-between">
                 <span className="text-sm text-slate-400">Saldo pendiente:</span>
-                <span className="font-bold text-amber-400">{formatCurrency(selectedOrden.saldoPendiente)}</span>
+                <span className="font-bold text-slate-300">{formatCurrency(selectedOrden.saldoPendiente)}</span>
               </div>
             </div>
 
@@ -1571,7 +1571,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                   <div key={c.id} className="flex items-center justify-between p-2 bg-slate-800/30 rounded-lg">
                     <div>
                       <span className="text-sm text-slate-200">{c.codigo} - {c.nombre}</span>
-                      <span className={cn('ml-2 text-xs', c.tipo === 'empresa' ? 'text-cyan-400' : 'text-slate-500')}>{c.tipo}</span>
+                      <span className={cn('ml-2 text-xs', c.tipo === 'empresa' ? 'text-slate-300' : 'text-slate-500')}>{c.tipo}</span>
                     </div>
                     <button onClick={() => { setEditingCliente(c); setClienteForm({ codigo: c.codigo, tipo: c.tipo, nombre: c.nombre, rut: c.rut || '', email: c.email || '', telefono: c.telefono || '', direccion: c.direccion || '', limiteCredito: c.limiteCredito }); }} className="p-1 hover:bg-slate-700 rounded">
                       <Edit className="h-4 w-4 text-slate-400" />
@@ -1613,15 +1613,15 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
               </div>
               <div className="bg-slate-800/50 rounded-xl p-3">
                 <div className="text-xs text-slate-500">Total</div>
-                <div className="text-violet-400 font-semibold">{formatCurrency(selectedOrden.total)}</div>
+                <div className="text-slate-300 font-semibold">{formatCurrency(selectedOrden.total)}</div>
               </div>
             </div>
 
             {selectedOrden.estadoPago !== 'pagado' && (
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-6">
+              <div className="p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl mb-6">
                 <div className="flex justify-between">
-                  <span className="text-amber-400">Saldo pendiente:</span>
-                  <span className="font-bold text-amber-400">{formatCurrency(selectedOrden.saldoPendiente)}</span>
+                  <span className="text-slate-300">Saldo pendiente:</span>
+                  <span className="font-bold text-slate-300">{formatCurrency(selectedOrden.saldoPendiente)}</span>
                 </div>
               </div>
             )}
@@ -1635,7 +1635,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                     <span className="text-sm text-slate-200">{prod?.descripcion || item.productoCodigo}</span>
                     <div className="flex gap-4 text-sm">
                       <span className="text-slate-400">{item.cantidad} x {formatCurrency(item.precioUnitario)}</span>
-                      <span className="text-violet-400">{formatCurrency(item.subtotal)}</span>
+                      <span className="text-slate-300">{formatCurrency(item.subtotal)}</span>
                     </div>
                   </div>
                 );
@@ -1678,7 +1678,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
               </div>
               <div className="bg-slate-800/50 rounded-xl p-3">
                 <div className="text-xs text-slate-500">Total</div>
-                <div className="text-cyan-400 font-semibold">{formatCurrency(selectedCotizacion.total)}</div>
+                <div className="text-slate-300 font-semibold">{formatCurrency(selectedCotizacion.total)}</div>
               </div>
             </div>
 
@@ -1691,7 +1691,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                     <span className="text-sm text-slate-200">{prod?.descripcion || item.productoCodigo}</span>
                     <div className="flex gap-4 text-sm">
                       <span className="text-slate-400">{item.cantidad} x {formatCurrency(item.precioUnitario)}</span>
-                      <span className="text-cyan-400">{formatCurrency(item.subtotal)}</span>
+                      <span className="text-slate-300">{formatCurrency(item.subtotal)}</span>
                     </div>
                   </div>
                 );

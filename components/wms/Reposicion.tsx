@@ -119,7 +119,7 @@ export default function Reposicion() {
   }), [tareas]);
 
   if (loading) {
-    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-cyan-400" /></div>;
+    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-slate-300" /></div>;
   }
 
   return (
@@ -128,7 +128,7 @@ export default function Reposicion() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Repeat className="h-6 w-6 text-cyan-400" />
+            <Repeat className="h-6 w-6 text-slate-300" />
             Reposición automática
           </h3>
         </div>
@@ -148,9 +148,9 @@ export default function Reposicion() {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <Kpi label="Pendientes" value={stats.pendientes} color="text-amber-300" />
-        <Kpi label="En proceso" value={stats.enProceso} color="text-blue-300" />
-        <Kpi label="Sin origen (no hay bulk)" value={stats.sinOrigen} color="text-red-300" />
+        <Kpi label="Pendientes" value={stats.pendientes} color="text-slate-300" />
+        <Kpi label="En proceso" value={stats.enProceso} color="text-slate-300" />
+        <Kpi label="Sin origen (no hay bulk)" value={stats.sinOrigen} color="text-slate-300" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -196,17 +196,17 @@ export default function Reposicion() {
                   </td>
                   <td className="px-4 py-3 text-xs">
                     <div className="flex items-center gap-2">
-                      <span className={t.ubicacion_origen_codigo ? 'text-slate-300' : 'text-red-400 italic'}>
+                      <span className={t.ubicacion_origen_codigo ? 'text-slate-300' : 'text-slate-300 italic'}>
                         {t.ubicacion_origen_codigo || 'Sin bulk'}
                       </span>
                       <ArrowRight className="h-3 w-3 text-slate-500" />
-                      <span className="text-cyan-300 font-medium">{t.ubicacion_destino_codigo}</span>
+                      <span className="text-slate-300 font-medium">{t.ubicacion_destino_codigo}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-slate-200 font-medium">{t.cantidad_sugerida}</td>
                   <td className="px-4 py-3">
                     {t.estado === 'ejecutada' ? (
-                      <span className="text-emerald-300">{t.cantidad_ejecutada}</span>
+                      <span className="text-slate-300">{t.cantidad_ejecutada}</span>
                     ) : t.estado === 'pendiente' ? (
                       <input
                         type="number"
@@ -220,15 +220,15 @@ export default function Reposicion() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={cn('inline-flex px-2 py-0.5 rounded text-xs',
-                      t.estado === 'ejecutada' ? 'bg-emerald-500/15 text-emerald-300' :
+                      t.estado === 'ejecutada' ? 'bg-slate-800/40 text-slate-300' :
                       t.estado === 'cancelada' ? 'bg-slate-500/15 text-slate-400' :
-                      t.estado === 'pendiente' ? 'bg-amber-500/15 text-amber-300' :
-                      'bg-blue-500/15 text-blue-300'
+                      t.estado === 'pendiente' ? 'bg-slate-800/40 text-slate-300' :
+                      'bg-slate-800/40 text-slate-300'
                     )}>
                       {t.estado}
                     </span>
                     {t.motivo === 'bajo_minimo' && t.estado === 'pendiente' && (
-                      <div className="text-[10px] text-orange-400 mt-0.5 flex items-center gap-1">
+                      <div className="text-[10px] text-slate-300 mt-0.5 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" />
                         bajo mínimo
                       </div>
@@ -241,14 +241,14 @@ export default function Reposicion() {
                           disabled={ejecutando === t.id || !t.ubicacion_origen_id}
                           onClick={() => ejecutar(t)}
                           title={t.ubicacion_origen_id ? 'Ejecutar reposición' : 'No hay ubicación bulk con stock'}
-                          className="px-2.5 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 disabled:opacity-30 text-cyan-300 text-xs font-medium rounded-lg flex items-center gap-1"
+                          className="px-2.5 py-1 bg-slate-800/40 hover:bg-slate-800/40 disabled:opacity-30 text-slate-300 text-xs font-medium rounded-lg flex items-center gap-1"
                         >
                           {ejecutando === t.id ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
                           Ejecutar
                         </button>
                         <button
                           onClick={() => cancelar(t)}
-                          className="px-2 py-1 hover:bg-slate-700 text-slate-400 hover:text-red-400 text-xs rounded"
+                          className="px-2 py-1 hover:bg-slate-700 text-slate-400 hover:text-slate-300 text-xs rounded"
                         >
                           <X className="h-3 w-3" />
                         </button>

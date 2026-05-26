@@ -528,7 +528,7 @@ export default function Inventario() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-blue-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -551,7 +551,7 @@ export default function Inventario() {
               onClick={() => setVistaActiva(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 vistaActiva === tab.id
-                  ? 'bg-blue-500/20 text-blue-400'
+                  ? 'bg-slate-800/40 text-slate-300'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
@@ -578,14 +578,14 @@ export default function Inventario() {
               <div className="text-2xl font-bold text-slate-200">{stats.totalUbicaciones}</div>
               <div className="text-xs text-slate-400">{t('wmsModule.locations')}</div>
             </div>
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold text-blue-400">{stats.totalUnidades.toLocaleString()}</div>
-              <div className="text-xs text-blue-400">{t('wmsModule.units')}</div>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-slate-300">{stats.totalUnidades.toLocaleString()}</div>
+              <div className="text-xs text-slate-300">{t('wmsModule.units')}</div>
             </div>
             {stats.bajoStock > 0 && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold text-red-400">{stats.bajoStock}</div>
-                <div className="text-xs text-red-400">{t('wmsModule.lowStock')}</div>
+              <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold text-slate-300">{stats.bajoStock}</div>
+                <div className="text-xs text-slate-300">{t('wmsModule.lowStock')}</div>
               </div>
             )}
           </div>
@@ -666,7 +666,7 @@ export default function Inventario() {
                   {v.label}
                   {v.count !== undefined && v.count > 0 && (
                     <span className={`px-1.5 py-0.5 rounded text-xs ${
-                      v.id === 'alertas' ? 'bg-red-500/20 text-red-400' : 'bg-slate-600'
+                      v.id === 'alertas' ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-600'
                     }`}>{v.count}</span>
                   )}
                 </button>
@@ -706,7 +706,7 @@ export default function Inventario() {
                     {items.map(s => (
                       <div key={s.id} className="px-4 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <span className="font-mono text-sm text-emerald-400">{s.ubicacion_codigo}</span>
+                          <span className="font-mono text-sm text-slate-300">{s.ubicacion_codigo}</span>
                           <div>
                             <div className="text-sm text-slate-200">{s.producto?.descripcion || s.producto_codigo}</div>
                             <div className="text-xs text-slate-500">{s.producto_codigo}</div>
@@ -715,7 +715,7 @@ export default function Inventario() {
                         <div className="text-right">
                           <div className="font-bold text-slate-200">{s.cantidad}</div>
                           {s.cantidad_reservada > 0 && (
-                            <div className="text-xs text-amber-400">-{s.cantidad_reservada} reserv.</div>
+                            <div className="text-xs text-slate-300">-{s.cantidad_reservada} reserv.</div>
                           )}
                         </div>
                       </div>
@@ -732,18 +732,18 @@ export default function Inventario() {
                 <div 
                   key={idx}
                   className={`p-4 rounded-xl border flex items-center gap-4 ${
-                    alerta.tipo === 'bajo_stock' ? 'bg-red-500/10 border-red-500/30' :
-                    alerta.tipo === 'proximo_vencer' ? 'bg-amber-500/10 border-amber-500/30' :
+                    alerta.tipo === 'bajo_stock' ? 'bg-slate-800/40 border-slate-700/40' :
+                    alerta.tipo === 'proximo_vencer' ? 'bg-slate-800/40 border-slate-700/40' :
                     'bg-slate-800/50 border-slate-700/50'
                   }`}
                 >
                   <div className={`p-2 rounded-lg ${
-                    alerta.tipo === 'bajo_stock' ? 'bg-red-500/20' :
-                    alerta.tipo === 'proximo_vencer' ? 'bg-amber-500/20' :
+                    alerta.tipo === 'bajo_stock' ? 'bg-slate-800/40' :
+                    alerta.tipo === 'proximo_vencer' ? 'bg-slate-800/40' :
                     'bg-slate-700'
                   }`}>
-                    {alerta.tipo === 'bajo_stock' && <AlertTriangle className="h-5 w-5 text-red-400" />}
-                    {alerta.tipo === 'proximo_vencer' && <Calendar className="h-5 w-5 text-amber-400" />}
+                    {alerta.tipo === 'bajo_stock' && <AlertTriangle className="h-5 w-5 text-slate-300" />}
+                    {alerta.tipo === 'proximo_vencer' && <Calendar className="h-5 w-5 text-slate-300" />}
                     {alerta.tipo === 'sin_movimiento' && <Clock className="h-5 w-5 text-slate-400" />}
                   </div>
                   <div className="flex-1">
@@ -752,8 +752,8 @@ export default function Inventario() {
                   </div>
                   <div className="text-right">
                     <div className={`text-sm font-medium ${
-                      alerta.tipo === 'bajo_stock' ? 'text-red-400' :
-                      alerta.tipo === 'proximo_vencer' ? 'text-amber-400' :
+                      alerta.tipo === 'bajo_stock' ? 'text-slate-300' :
+                      alerta.tipo === 'proximo_vencer' ? 'text-slate-300' :
                       'text-slate-400'
                     }`}>{alerta.mensaje}</div>
                   </div>
@@ -761,8 +761,8 @@ export default function Inventario() {
               ))}
               {alertas.length === 0 && (
                 <div className="text-center py-12 text-slate-500">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
-                  <p className="text-emerald-400">Sin alertas pendientes</p>
+                  <CheckCircle className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+                  <p className="text-slate-300">Sin alertas pendientes</p>
                 </div>
               )}
             </div>
@@ -775,7 +775,7 @@ export default function Inventario() {
         <>
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <ClipboardList className="h-6 w-6 text-blue-400" />
+              <ClipboardList className="h-6 w-6 text-slate-300" />
               {t('wmsModule.cycleCounts')}
             </h3>
 
@@ -808,10 +808,10 @@ export default function Inventario() {
                 <div key={conteo.id} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <span className="font-mono text-sm text-blue-400">{conteo.numero}</span>
+                      <span className="font-mono text-sm text-slate-300">{conteo.numero}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs ${
-                        conteo.estado === 'completado' ? 'bg-emerald-500/20 text-emerald-400' :
-                        conteo.estado === 'en_proceso' ? 'bg-amber-500/20 text-amber-400' :
+                        conteo.estado === 'completado' ? 'bg-slate-800/40 text-slate-300' :
+                        conteo.estado === 'en_proceso' ? 'bg-slate-800/40 text-slate-300' :
                         'bg-slate-500/20 text-slate-400'
                       }`}>
                         {conteo.estado === 'completado' ? 'Completado' : 
@@ -841,7 +841,7 @@ export default function Inventario() {
                       {conteo.fecha_inicio && `Inicio: ${new Date(conteo.fecha_inicio).toLocaleDateString()}`}
                     </span>
                     {conteo.diferencias_encontradas > 0 && (
-                      <span className="text-amber-400">
+                      <span className="text-slate-300">
                         {conteo.diferencias_encontradas} diferencia(s)
                       </span>
                     )}
@@ -938,11 +938,11 @@ function CycleCountingPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-blue-500/5 border border-blue-500/30 rounded-xl p-4">
+      <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <Calendar className="h-5 w-5 text-blue-300 mt-0.5" />
+          <Calendar className="h-5 w-5 text-slate-300 mt-0.5" />
           <div>
-            <h4 className="text-sm font-semibold text-blue-300">Cycle counting con frecuencia ABC</h4>
+            <h4 className="text-sm font-semibold text-slate-300">Cycle counting con frecuencia ABC</h4>
             <p className="text-xs text-slate-400 mt-1">
               Las ubicaciones de clase A se cuentan más seguido (default: 10 días), B cada 30 días, C cada 180.
               Ajustá los días en <strong>Configuración WMS</strong>. Esta vista lista las que ya tocan revisar.
@@ -983,8 +983,8 @@ function CycleCountingPanel() {
                   <td className="px-4 py-2 text-slate-400 text-xs">{u.zona_nombre || '—'}</td>
                   <td className="px-4 py-2">
                     <span className={
-                      u.clase_abc === 'A' ? 'inline-flex px-2 py-0.5 rounded text-xs bg-amber-500/15 text-amber-300' :
-                      u.clase_abc === 'B' ? 'inline-flex px-2 py-0.5 rounded text-xs bg-blue-500/15 text-blue-300' :
+                      u.clase_abc === 'A' ? 'inline-flex px-2 py-0.5 rounded text-xs bg-slate-800/40 text-slate-300' :
+                      u.clase_abc === 'B' ? 'inline-flex px-2 py-0.5 rounded text-xs bg-slate-800/40 text-slate-300' :
                       u.clase_abc === 'C' ? 'inline-flex px-2 py-0.5 rounded text-xs bg-slate-500/15 text-slate-300' :
                       'inline-flex px-2 py-0.5 rounded text-xs bg-slate-500/15 text-slate-400'
                     }>
@@ -996,9 +996,9 @@ function CycleCountingPanel() {
                   </td>
                   <td className="px-4 py-2">
                     {u.dias_desde_ultima === null ? (
-                      <span className="text-red-400 text-xs">Nunca</span>
+                      <span className="text-slate-300 text-xs">Nunca</span>
                     ) : (
-                      <span className={u.dias_desde_ultima > 60 ? 'text-orange-400 text-xs' : 'text-slate-400 text-xs'}>
+                      <span className={u.dias_desde_ultima > 60 ? 'text-slate-300 text-xs' : 'text-slate-400 text-xs'}>
                         {u.dias_desde_ultima} días
                       </span>
                     )}
@@ -1007,7 +1007,7 @@ function CycleCountingPanel() {
                     <button
                       onClick={() => marcar(u.id, u.clase_abc)}
                       disabled={marcando === u.id}
-                      className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-medium rounded-lg disabled:opacity-50"
+                      className="px-2.5 py-1 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 text-xs font-medium rounded-lg disabled:opacity-50"
                     >
                       {marcando === u.id ? 'Marcando...' : 'Marcar contada'}
                     </button>
@@ -1028,7 +1028,7 @@ function ProductoStockCard({ producto, ubicaciones, totalStock }: ProductoStockC
   
   return (
     <div className={`bg-slate-900/50 border rounded-xl overflow-hidden ${
-      bajosStock ? 'border-red-500/30' : 'border-slate-800/50'
+      bajosStock ? 'border-slate-700/40' : 'border-slate-800/50'
     }`}>
       <button
         onClick={() => setExpandido(!expandido)}
@@ -1048,11 +1048,11 @@ function ProductoStockCard({ producto, ubicaciones, totalStock }: ProductoStockC
           </div>
         </div>
         <div className="text-right">
-          <div className={`text-xl font-bold ${bajosStock ? 'text-red-400' : 'text-slate-200'}`}>
+          <div className={`text-xl font-bold ${bajosStock ? 'text-slate-300' : 'text-slate-200'}`}>
             {totalStock}
           </div>
           {bajosStock && (
-            <div className="text-xs text-red-400">Mín: {producto.stockMinimo}</div>
+            <div className="text-xs text-slate-300">Mín: {producto.stockMinimo}</div>
           )}
         </div>
       </button>
@@ -1062,8 +1062,8 @@ function ProductoStockCard({ producto, ubicaciones, totalStock }: ProductoStockC
           {ubicaciones.map(s => (
             <div key={s.id} className="px-4 py-2 flex items-center justify-between bg-slate-800/20">
               <div className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-emerald-400" />
-                <span className="font-mono text-sm text-emerald-400">{s.ubicacion_codigo}</span>
+                <MapPin className="h-4 w-4 text-slate-300" />
+                <span className="font-mono text-sm text-slate-300">{s.ubicacion_codigo}</span>
                 {s.lote_numero && (
                   <span className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-400">
                     Lote: {s.lote_numero}
@@ -1073,7 +1073,7 @@ function ProductoStockCard({ producto, ubicaciones, totalStock }: ProductoStockC
               <div className="text-right">
                 <span className="font-bold text-slate-200">{s.cantidad}</span>
                 {s.cantidad_reservada > 0 && (
-                  <span className="text-xs text-amber-400 ml-2">(-{s.cantidad_reservada})</span>
+                  <span className="text-xs text-slate-300 ml-2">(-{s.cantidad_reservada})</span>
                 )}
               </div>
             </div>
@@ -1115,17 +1115,17 @@ function EjecutarConteo({
           </button>
         </div>
         
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-6 text-center">
-          <CheckCircle className="h-16 w-16 mx-auto mb-4 text-emerald-400" />
-          <h4 className="text-xl font-bold text-emerald-400 mb-2">{conteo.numero}</h4>
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6 text-center">
+          <CheckCircle className="h-16 w-16 mx-auto mb-4 text-slate-300" />
+          <h4 className="text-xl font-bold text-slate-300 mb-2">{conteo.numero}</h4>
           <p className="text-slate-300">
             {conteo.ubicaciones_contadas} ubicaciones contadas
           </p>
         </div>
         
         {diferencias.length > 0 && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-            <h4 className="font-semibold text-amber-400 mb-3">
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
+            <h4 className="font-semibold text-slate-300 mb-3">
               {diferencias.length} Diferencia(s) Encontrada(s)
             </h4>
             <div className="space-y-2 mb-4">
@@ -1135,7 +1135,7 @@ function EjecutarConteo({
                     <span className="text-slate-200">{l.producto_nombre || l.producto_codigo}</span>
                     <span className="text-slate-500 ml-2">@ {l.ubicacion_codigo}</span>
                   </div>
-                  <div className={`font-mono ${l.diferencia! > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <div className={`font-mono ${l.diferencia! > 0 ? 'text-slate-300' : 'text-slate-300'}`}>
                     {l.diferencia! > 0 ? '+' : ''}{l.diferencia}
                   </div>
                 </div>
@@ -1160,8 +1160,8 @@ function EjecutarConteo({
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <span className="font-mono text-lg text-blue-400">{conteo.numero}</span>
-            <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs">
+            <span className="font-mono text-lg text-slate-300">{conteo.numero}</span>
+            <span className="px-2 py-1 bg-slate-800/40 text-slate-300 rounded-full text-xs">
               En Proceso
             </span>
           </div>
@@ -1183,11 +1183,11 @@ function EjecutarConteo({
       </div>
 
       {/* Línea actual */}
-      <div className="bg-blue-500/10 border-2 border-blue-500/50 rounded-xl p-6">
+      <div className="bg-slate-800/40 border-2 border-slate-700/40 rounded-xl p-6">
         <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 rounded-full mb-4">
-            <MapPin className="h-5 w-5 text-blue-400" />
-            <span className="text-2xl font-bold text-blue-400">{linea.ubicacion_codigo}</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/40 rounded-full mb-4">
+            <MapPin className="h-5 w-5 text-slate-300" />
+            <span className="text-2xl font-bold text-slate-300">{linea.ubicacion_codigo}</span>
           </div>
           
           <div className="text-lg text-slate-200 mb-1">{linea.producto_nombre || linea.producto_codigo}</div>
