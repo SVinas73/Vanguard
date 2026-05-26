@@ -111,26 +111,26 @@ type PasoActual = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 // ============================================
 
 const TIPO_CONFIG: Record<TipoCAPA, { label: string; color: string; bg: string; descripcion: string }> = {
-  correctiva: { label: 'Correctiva', color: 'text-red-400', bg: 'bg-red-500/20', descripcion: 'Eliminar causa de NC existente' },
-  preventiva: { label: 'Preventiva', color: 'text-blue-400', bg: 'bg-blue-500/20', descripcion: 'Prevenir NC potencial' },
-  mejora: { label: 'Mejora', color: 'text-emerald-400', bg: 'bg-emerald-500/20', descripcion: 'Mejora continua del sistema' },
+  correctiva: { label: 'Correctiva', color: 'text-slate-300', bg: 'bg-slate-800/40', descripcion: 'Eliminar causa de NC existente' },
+  preventiva: { label: 'Preventiva', color: 'text-slate-300', bg: 'bg-slate-800/40', descripcion: 'Prevenir NC potencial' },
+  mejora: { label: 'Mejora', color: 'text-slate-300', bg: 'bg-slate-800/40', descripcion: 'Mejora continua del sistema' },
 };
 
 const ESTADO_CONFIG: Record<EstadoCAPA, { label: string; color: string; bg: string }> = {
-  abierta: { label: 'Abierta', color: 'text-red-400', bg: 'bg-red-500/20' },
-  en_analisis: { label: 'En Análisis', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  en_implementacion: { label: 'Implementación', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  verificacion: { label: 'Verificación', color: 'text-purple-400', bg: 'bg-purple-500/20' },
-  cerrada: { label: 'Cerrada', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+  abierta: { label: 'Abierta', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_analisis: { label: 'En Análisis', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_implementacion: { label: 'Implementación', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  verificacion: { label: 'Verificación', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  cerrada: { label: 'Cerrada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
   cancelada: { label: 'Cancelada', color: 'text-slate-400', bg: 'bg-slate-500/20' },
 };
 
 const ESTADO_ACCION_CONFIG: Record<EstadoAccion, { label: string; color: string; bg: string }> = {
   pendiente: { label: 'Pendiente', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  en_proceso: { label: 'En Proceso', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  completada: { label: 'Completada', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+  en_proceso: { label: 'En Proceso', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  completada: { label: 'Completada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
   cancelada: { label: 'Cancelada', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  vencida: { label: 'Vencida', color: 'text-red-400', bg: 'bg-red-500/20' },
+  vencida: { label: 'Vencida', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 const METODO_ANALISIS_CONFIG: Record<MetodoAnalisis, { label: string; descripcion: string }> = {
@@ -575,7 +575,7 @@ export default function AccionesCorrectivas() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-purple-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -589,7 +589,7 @@ export default function AccionesCorrectivas() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <Target className="h-6 w-6 text-purple-400" />
+                <Target className="h-6 w-6 text-slate-300" />
                 Acciones Correctivas y Preventivas (CAPA)
               </h3>
               <p className="text-slate-400 text-sm mt-1">
@@ -599,21 +599,21 @@ export default function AccionesCorrectivas() {
             
             {/* Stats */}
             <div className="flex gap-3">
-              <div className="px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-xl">
-                <div className="text-xs text-red-400">Correctivas</div>
-                <div className="text-xl font-bold text-red-400">{stats.correctivas}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Correctivas</div>
+                <div className="text-xl font-bold text-slate-300">{stats.correctivas}</div>
               </div>
-              <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-                <div className="text-xs text-blue-400">Preventivas</div>
-                <div className="text-xl font-bold text-blue-400">{stats.preventivas}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Preventivas</div>
+                <div className="text-xl font-bold text-slate-300">{stats.preventivas}</div>
               </div>
-              <div className="px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-xl">
-                <div className="text-xs text-purple-400">Verificación</div>
-                <div className="text-xl font-bold text-purple-400">{stats.enVerificacion}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Verificación</div>
+                <div className="text-xl font-bold text-slate-300">{stats.enVerificacion}</div>
               </div>
-              <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                <div className="text-xs text-emerald-400">Efectividad</div>
-                <div className="text-xl font-bold text-emerald-400">{stats.efectividad}%</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Efectividad</div>
+                <div className="text-xl font-bold text-slate-300">{stats.efectividad}%</div>
               </div>
             </div>
           </div>
@@ -628,7 +628,7 @@ export default function AccionesCorrectivas() {
                   placeholder="Buscar por número, título, NCR..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 />
               </div>
               
@@ -678,15 +678,15 @@ export default function AccionesCorrectivas() {
           {(stats.vencidas > 0 || stats.porVencer > 0) && (
             <div className="flex gap-3">
               {stats.vencidas > 0 && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-xl">
-                  <AlertCircle className="h-4 w-4 text-red-400" />
-                  <span className="text-sm text-red-400">{stats.vencidas} CAPA(s) vencida(s)</span>
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                  <AlertCircle className="h-4 w-4 text-slate-300" />
+                  <span className="text-sm text-slate-300">{stats.vencidas} CAPA(s) vencida(s)</span>
                 </div>
               )}
               {stats.porVencer > 0 && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-                  <Clock className="h-4 w-4 text-amber-400" />
-                  <span className="text-sm text-amber-400">{stats.porVencer} próxima(s) a vencer</span>
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                  <Clock className="h-4 w-4 text-slate-300" />
+                  <span className="text-sm text-slate-300">{stats.porVencer} próxima(s) a vencer</span>
                 </div>
               )}
             </div>
@@ -709,7 +709,7 @@ export default function AccionesCorrectivas() {
                     <div className="flex-1 min-w-0">
                       {/* Header */}
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <span className="font-mono text-sm text-purple-400">{capa.numero}</span>
+                        <span className="font-mono text-sm text-slate-300">{capa.numero}</span>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${tipoConfig.bg} ${tipoConfig.color}`}>
                           {tipoConfig.label}
                         </span>
@@ -717,7 +717,7 @@ export default function AccionesCorrectivas() {
                           {estadoConfig.label}
                         </span>
                         {capa.ncr_numero && (
-                          <span className="flex items-center gap-1 text-xs text-orange-400">
+                          <span className="flex items-center gap-1 text-xs text-slate-300">
                             <Link2 className="h-3 w-3" />
                             {capa.ncr_numero}
                           </span>
@@ -759,8 +759,8 @@ export default function AccionesCorrectivas() {
                         </span>
                         {diasRestantes !== null && (
                           <span className={`flex items-center gap-1 font-medium ${
-                            diasRestantes < 0 ? 'text-red-400' : 
-                            diasRestantes <= 7 ? 'text-amber-400' : ''
+                            diasRestantes < 0 ? 'text-slate-300' : 
+                            diasRestantes <= 7 ? 'text-slate-300' : ''
                           }`}>
                             <Clock className="h-3 w-3" />
                             {diasRestantes < 0 
@@ -969,7 +969,7 @@ function CAPAForm({ formData, setFormData, ncrsDisponibles, onGuardar, onCancela
                 type="checkbox"
                 checked={formData.verificacion_requerida}
                 onChange={(e) => setFormData(prev => ({ ...prev, verificacion_requerida: e.target.checked }))}
-                className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-slate-300 focus:ring-purple-500"
               />
               <span className="text-sm text-slate-300">Requiere verificación de efectividad</span>
             </label>
@@ -1111,7 +1111,7 @@ function CAPADetalle({
           <span>Inicio: {formatDate(capa.fecha_inicio)}</span>
           {capa.responsable && <span>Responsable: {capa.responsable}</span>}
           {diasRestantes !== null && (
-            <span className={diasRestantes < 0 ? 'text-red-400' : diasRestantes <= 7 ? 'text-amber-400' : ''}>
+            <span className={diasRestantes < 0 ? 'text-slate-300' : diasRestantes <= 7 ? 'text-slate-300' : ''}>
               {diasRestantes < 0 ? `Vencida hace ${Math.abs(diasRestantes)}d` : `${diasRestantes}d restantes`}
             </span>
           )}
@@ -1123,7 +1123,7 @@ function CAPADetalle({
         {/* Metodología 8D */}
         <div className="lg:col-span-2 space-y-4">
           <h4 className="font-semibold text-slate-200 flex items-center gap-2">
-            <Layers className="h-5 w-5 text-purple-400" />
+            <Layers className="h-5 w-5 text-slate-300" />
             Metodología 8D
           </h4>
           
@@ -1141,7 +1141,7 @@ function CAPADetalle({
                     pasoActivo === paso.num
                       ? 'bg-purple-600 text-white'
                       : completado
-                        ? 'bg-emerald-500/20 text-emerald-400'
+                        ? 'bg-slate-800/40 text-slate-300'
                         : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                   }`}
                 >
@@ -1248,7 +1248,7 @@ function CAPADetalle({
             {capa.ncr_numero && (
               <div>
                 <label className="text-xs text-slate-500">NCR Vinculada</label>
-                <div className="font-mono text-orange-400">{capa.ncr_numero}</div>
+                <div className="font-mono text-slate-300">{capa.ncr_numero}</div>
               </div>
             )}
             
@@ -1261,8 +1261,8 @@ function CAPADetalle({
               <div>
                 <label className="text-xs text-slate-500">Fecha Objetivo</label>
                 <div className={`font-medium ${
-                  diasRestantes !== null && diasRestantes < 0 ? 'text-red-400' :
-                  diasRestantes !== null && diasRestantes <= 7 ? 'text-amber-400' : 'text-slate-200'
+                  diasRestantes !== null && diasRestantes < 0 ? 'text-slate-300' :
+                  diasRestantes !== null && diasRestantes <= 7 ? 'text-slate-300' : 'text-slate-200'
                 }`}>
                   {formatDate(capa.fecha_objetivo)}
                 </div>
@@ -1286,7 +1286,7 @@ function CAPADetalle({
             {capa.verificacion_efectiva !== undefined && (
               <div>
                 <label className="text-xs text-slate-500">Resultado Verificación</label>
-                <div className={capa.verificacion_efectiva ? 'text-emerald-400' : 'text-red-400'}>
+                <div className={capa.verificacion_efectiva ? 'text-slate-300' : 'text-slate-300'}>
                   {capa.verificacion_efectiva ? 'Efectiva' : 'No Efectiva'}
                 </div>
               </div>
@@ -1342,7 +1342,7 @@ function CAPADetalle({
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
         <div className="flex items-center justify-between mb-4">
           <h4 className="font-semibold text-slate-200 flex items-center gap-2">
-            <ListChecks className="h-5 w-5 text-blue-400" />
+            <ListChecks className="h-5 w-5 text-slate-300" />
             Plan de Acciones ({capa.acciones?.length || 0})
           </h4>
           {capa.estado !== 'cerrada' && capa.estado !== 'cancelada' && (
@@ -1408,8 +1408,8 @@ function CAPADetalle({
               <div 
                 key={accion.id} 
                 className={`p-3 rounded-lg border ${
-                  accion.estado === 'completada' ? 'bg-emerald-500/5 border-emerald-500/20' :
-                  accion.estado === 'vencida' || (diasAccion !== null && diasAccion < 0) ? 'bg-red-500/5 border-red-500/20' :
+                  accion.estado === 'completada' ? 'bg-slate-800/40 border-slate-700/40' :
+                  accion.estado === 'vencida' || (diasAccion !== null && diasAccion < 0) ? 'bg-slate-800/40 border-slate-700/40' :
                   'bg-slate-800/30 border-slate-700/30'
                 }`}
               >
@@ -1424,7 +1424,7 @@ function CAPADetalle({
                       className="mt-0.5"
                     >
                       {accion.estado === 'completada' ? (
-                        <CheckSquare className="h-5 w-5 text-emerald-400" />
+                        <CheckSquare className="h-5 w-5 text-slate-300" />
                       ) : (
                         <Square className="h-5 w-5 text-slate-500 hover:text-slate-300" />
                       )}
@@ -1435,7 +1435,7 @@ function CAPADetalle({
                       </div>
                       <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
                         <span>{accion.responsable}</span>
-                        <span className={diasAccion !== null && diasAccion < 0 && accion.estado !== 'completada' ? 'text-red-400' : ''}>
+                        <span className={diasAccion !== null && diasAccion < 0 && accion.estado !== 'completada' ? 'text-slate-300' : ''}>
                           {formatDate(accion.fecha_objetivo)}
                         </span>
                       </div>

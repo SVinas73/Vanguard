@@ -34,8 +34,8 @@ type Filtro = 'todos' | 'critico' | 'alto' | 'medio';
 const fmtMoney = (v: number) => `$${v.toLocaleString('es-UY', { maximumFractionDigits: 0 })}`;
 
 const NIVEL_COLORS: Record<string, string> = {
-  critico: 'bg-red-500/10 text-red-300 border-red-500/20',
-  alto: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
+  critico: 'bg-slate-800/40 text-slate-300 border-slate-700/40',
+  alto: 'bg-slate-800/40 text-slate-300 border-slate-700/40',
   medio: 'bg-slate-700/30 text-slate-300 border-slate-700',
   bajo: 'bg-slate-800/30 text-slate-500 border-slate-800',
 };
@@ -118,7 +118,7 @@ export function CustomerRiskModule() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-slate-100 tracking-tight flex items-center gap-2">
-            <ShieldAlert size={16} className="text-red-400" />
+            <ShieldAlert size={16} className="text-slate-300" />
             {t('customerRisk.title') || 'Clientes en Riesgo'}
           </h2>
           <p className="text-sm text-slate-500 mt-0.5">
@@ -147,7 +147,7 @@ export function CustomerRiskModule() {
       </div>
 
       {errorMsg && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-md px-3 py-2 text-[12px] text-amber-200 flex items-start gap-2">
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-md px-3 py-2 text-[12px] text-amber-200 flex items-start gap-2">
           <Info size={13} className="mt-0.5 shrink-0" />
           <p>{errorMsg}</p>
         </div>
@@ -243,7 +243,7 @@ export function CustomerRiskModule() {
                       <td className="px-2 text-slate-300">{s.razon_principal}</td>
                       <td className="text-center px-2">
                         {ps ? (
-                          <span className="text-emerald-400" title={`${ps.total_analisis} análisis previos`}>
+                          <span className="text-slate-300" title={`${ps.total_analisis} análisis previos`}>
                             <MessageSquare size={11} />
                           </span>
                         ) : (
@@ -287,7 +287,7 @@ function BackendBadge({ label, ok }: { label: string; ok: boolean }) {
     <span className={cn(
       'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium border',
       ok
-        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+        ? 'bg-slate-800/40 text-slate-300 border-slate-700/40'
         : 'bg-slate-800/30 text-slate-500 border-slate-800'
     )}>
       <span className={cn('w-1.5 h-1.5 rounded-full', ok ? 'bg-emerald-400' : 'bg-slate-600')} />
@@ -307,9 +307,9 @@ function StatCard({ label, value, icon, accent }: {
       </div>
       <div className={cn(
         'text-3xl font-semibold tabular-nums tracking-tight',
-        accent === 'red' && 'text-red-300',
-        accent === 'amber' && 'text-amber-300',
-        accent === 'green' && 'text-emerald-300',
+        accent === 'red' && 'text-slate-300',
+        accent === 'amber' && 'text-slate-300',
+        accent === 'green' && 'text-slate-300',
         !accent && 'text-slate-50'
       )}>
         {value}
@@ -351,8 +351,8 @@ function DetalleCliente({
           {/* Score grande */}
           <div className={cn(
             'border rounded-md p-4',
-            score.nivel_riesgo === 'critico' && 'bg-red-500/5 border-red-500/20',
-            score.nivel_riesgo === 'alto' && 'bg-amber-500/5 border-amber-500/20',
+            score.nivel_riesgo === 'critico' && 'bg-slate-800/40 border-slate-700/40',
+            score.nivel_riesgo === 'alto' && 'bg-slate-800/40 border-slate-700/40',
             score.nivel_riesgo === 'medio' && 'bg-slate-900/50 border-slate-800',
             score.nivel_riesgo === 'bajo' && 'bg-slate-900/50 border-slate-800',
           )}>
@@ -396,7 +396,7 @@ function DetalleCliente({
                   {analisis.slice(0, 3).map(a => (
                     <li key={a.fecha_analisis} className="border-l-2 border-slate-700 pl-3 text-[12px]">
                       <p className="text-slate-200">{a.razon_principal}</p>
-                      <p className="text-emerald-300 text-[11px] mt-1">→ {a.accion_recomendada_para_el_gestor}</p>
+                      <p className="text-slate-300 text-[11px] mt-1">→ {a.accion_recomendada_para_el_gestor}</p>
                       <p className="text-[10px] text-slate-500 mt-1">
                         Confianza LLM: {a.score_confianza}% · {new Date(a.fecha_analisis).toLocaleDateString()}
                       </p>

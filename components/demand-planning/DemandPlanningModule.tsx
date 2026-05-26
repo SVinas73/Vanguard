@@ -43,7 +43,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'dashboard',
     label: 'Dashboard',
     icon: BarChart3,
-    color: 'text-indigo-400',
+    color: 'text-slate-300',
     descripcion: 'Vista general y KPIs',
     disponible: true,
   },
@@ -51,7 +51,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'forecast',
     label: 'Forecast',
     icon: TrendingUp,
-    color: 'text-emerald-400',
+    color: 'text-slate-300',
     descripcion: 'Predicción por producto',
     disponible: true,
   },
@@ -59,7 +59,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'alertas',
     label: 'Alertas',
     icon: Bell,
-    color: 'text-red-400',
+    color: 'text-slate-300',
     descripcion: 'Productos críticos',
     disponible: true,
   },
@@ -67,7 +67,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'reposicion',
     label: 'Reposición',
     icon: Package,
-    color: 'text-amber-400',
+    color: 'text-slate-300',
     descripcion: 'Sugerencias de compra',
     disponible: true,
   },
@@ -75,7 +75,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'tendencias',
     label: 'Tendencias',
     icon: Activity,
-    color: 'text-purple-400',
+    color: 'text-slate-300',
     descripcion: 'Análisis histórico',
     disponible: true,
   },
@@ -130,8 +130,8 @@ export default function DemandPlanningModule() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-500/20 rounded-xl">
-            <Zap className="h-6 w-6 text-indigo-400" />
+          <div className="p-2 bg-slate-800/40 rounded-xl">
+            <Zap className="h-6 w-6 text-slate-300" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-100">Demand Planning</h2>
@@ -139,7 +139,7 @@ export default function DemandPlanningModule() {
         </div>
         
         <div className="flex items-center gap-2 text-xs text-slate-500">
-          <div className="flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-full">
+          <div className="flex items-center gap-1 px-2 py-1 bg-slate-800/40 text-slate-300 rounded-full">
             <Activity className="h-3 w-3" />
             <span>API Conectada</span>
           </div>

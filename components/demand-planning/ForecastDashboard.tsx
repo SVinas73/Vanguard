@@ -192,7 +192,7 @@ export default function ForecastDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-indigo-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -204,8 +204,8 @@ export default function ForecastDashboard() {
         <div className="flex items-center gap-3">
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs ${
             stats.apiDisponible 
-              ? 'bg-emerald-500/20 text-emerald-400' 
-              : 'bg-red-500/20 text-red-400'
+              ? 'bg-slate-800/40 text-slate-300' 
+              : 'bg-slate-800/40 text-slate-300'
           }`}>
             {stats.apiDisponible ? (
               <>
@@ -237,7 +237,7 @@ export default function ForecastDashboard() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+        <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl text-slate-300 text-sm">
           {error}
         </div>
       )}
@@ -280,7 +280,7 @@ export default function ForecastDashboard() {
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
           <div className="p-4 border-b border-slate-800/50 flex items-center justify-between">
             <h3 className="font-semibold text-slate-200 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-400" />
+              <AlertTriangle className="h-5 w-5 text-slate-300" />
               Productos Críticos
             </h3>
             <span className="text-xs text-slate-500">{productosCriticos.length} productos</span>
@@ -301,8 +301,8 @@ export default function ForecastDashboard() {
                       </span>
                     </div>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      producto.urgencia === 'critica' ? 'bg-red-500/20 text-red-400' :
-                      producto.urgencia === 'media' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-400'
+                      producto.urgencia === 'critica' ? 'bg-slate-800/40 text-slate-300' :
+                      producto.urgencia === 'media' ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-500/20 text-slate-400'
                     }`}>
                       {producto.dias_restantes.toFixed(0)}d
                     </span>
@@ -315,8 +315,8 @@ export default function ForecastDashboard() {
               ))
             ) : (
               <div className="p-8 text-center text-slate-500">
-                <CheckCircle className="h-10 w-10 mx-auto mb-2 text-emerald-400" />
-                <p className="text-emerald-400">Sin productos críticos</p>
+                <CheckCircle className="h-10 w-10 mx-auto mb-2 text-slate-300" />
+                <p className="text-slate-300">Sin productos críticos</p>
               </div>
             )}
           </div>
@@ -326,7 +326,7 @@ export default function ForecastDashboard() {
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
           <div className="p-4 border-b border-slate-800/50 flex items-center justify-between">
             <h3 className="font-semibold text-slate-200 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-emerald-400" />
+              <TrendingUp className="h-5 w-5 text-slate-300" />
               Top Demanda Semanal
             </h3>
             <span className="text-xs text-slate-500">Predicción XGBoost</span>
@@ -347,14 +347,14 @@ export default function ForecastDashboard() {
                           {producto.descripcion}
                         </span>
                       </div>
-                      <span className="text-sm font-bold text-emerald-400">
+                      <span className="text-sm font-bold text-slate-300">
                         {producto.demanda_predicha_semana.toFixed(0)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
+                          className="h-full bg-gradient-to-r from-slate-800 to-slate-800 rounded-full"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -418,11 +418,11 @@ interface KPICardProps {
 
 function KPICard({ titulo, valor, subtitulo, icono: Icon, color, alerta }: KPICardProps) {
   const colorClasses = {
-    indigo: 'text-indigo-400 bg-indigo-500/20 border-indigo-500/30',
-    emerald: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30',
-    red: 'text-red-400 bg-red-500/20 border-red-500/30',
-    amber: 'text-amber-400 bg-amber-500/20 border-amber-500/30',
-    purple: 'text-purple-400 bg-purple-500/20 border-purple-500/30',
+    indigo: 'text-slate-300 bg-slate-800/40 border-slate-700/40',
+    emerald: 'text-slate-300 bg-slate-800/40 border-slate-700/40',
+    red: 'text-slate-300 bg-slate-800/40 border-slate-700/40',
+    amber: 'text-slate-300 bg-slate-800/40 border-slate-700/40',
+    purple: 'text-slate-300 bg-slate-800/40 border-slate-700/40',
   };
   
   const [textColor, bgColor, borderColor] = colorClasses[color].split(' ');
@@ -454,12 +454,12 @@ function ModeloCard({ nombre, descripcion, uso, precision, estado }: ModeloCardP
     <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Zap className="h-4 w-4 text-indigo-400" />
+          <Zap className="h-4 w-4 text-slate-300" />
           <span className="font-semibold text-slate-200">{nombre}</span>
         </div>
         <span className={`text-xs px-2 py-0.5 rounded-full ${
-          estado === 'activo' ? 'bg-emerald-500/20 text-emerald-400' :
-          estado === 'entrenando' ? 'bg-amber-500/20 text-amber-400' :
+          estado === 'activo' ? 'bg-slate-800/40 text-slate-300' :
+          estado === 'entrenando' ? 'bg-slate-800/40 text-slate-300' :
           'bg-slate-500/20 text-slate-400'
         }`}>
           {estado}

@@ -16,20 +16,20 @@ import {
 import { useWmsToast } from '@/components/wms/useWmsToast';
 
 const ESTADO_CONFIG: Record<EstadoTicket, { label: string; bg: string; color: string }> = {
-  abierto:           { label: 'Abierto',           bg: 'bg-blue-500/15',    color: 'text-blue-300' },
-  en_progreso:       { label: 'En progreso',       bg: 'bg-amber-500/15',   color: 'text-amber-300' },
-  esperando_cliente: { label: 'Esp. cliente',      bg: 'bg-cyan-500/15',    color: 'text-cyan-300' },
-  esperando_repuesto:{ label: 'Esp. repuesto',     bg: 'bg-purple-500/15',  color: 'text-purple-300' },
-  resuelto:          { label: 'Resuelto',          bg: 'bg-emerald-500/15', color: 'text-emerald-300' },
+  abierto:           { label: 'Abierto',           bg: 'bg-slate-800/40',    color: 'text-slate-300' },
+  en_progreso:       { label: 'En progreso',       bg: 'bg-slate-800/40',   color: 'text-slate-300' },
+  esperando_cliente: { label: 'Esp. cliente',      bg: 'bg-slate-800/40',    color: 'text-slate-300' },
+  esperando_repuesto:{ label: 'Esp. repuesto',     bg: 'bg-slate-800/40',  color: 'text-slate-300' },
+  resuelto:          { label: 'Resuelto',          bg: 'bg-slate-800/40', color: 'text-slate-300' },
   cerrado:           { label: 'Cerrado',           bg: 'bg-slate-500/15',   color: 'text-slate-300' },
   cancelado:         { label: 'Cancelado',         bg: 'bg-slate-500/15',   color: 'text-slate-400' },
 };
 
 const PRIORIDAD_CONFIG: Record<PrioridadTicket, { label: string; bg: string; color: string }> = {
   baja:    { label: 'Baja',    bg: 'bg-slate-500/15',  color: 'text-slate-300' },
-  normal:  { label: 'Normal',  bg: 'bg-blue-500/15',   color: 'text-blue-300' },
-  alta:    { label: 'Alta',    bg: 'bg-amber-500/15',  color: 'text-amber-300' },
-  critica: { label: 'Crítica', bg: 'bg-red-500/15',    color: 'text-red-300' },
+  normal:  { label: 'Normal',  bg: 'bg-slate-800/40',   color: 'text-slate-300' },
+  alta:    { label: 'Alta',    bg: 'bg-slate-800/40',  color: 'text-slate-300' },
+  critica: { label: 'Crítica', bg: 'bg-slate-800/40',    color: 'text-slate-300' },
 };
 
 const CATEGORIA_OPTIONS: Array<{ value: CategoriaTicket; label: string }> = [
@@ -187,7 +187,7 @@ export default function TicketsModule() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-blue-400" /></div>;
+    return <div className="flex items-center justify-center p-12"><RefreshCw className="h-8 w-8 animate-spin text-slate-300" /></div>;
   }
 
   // ========== DETALLE ==========
@@ -203,7 +203,7 @@ export default function TicketsModule() {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <Headphones className="h-6 w-6 text-blue-400" />
+              <Headphones className="h-6 w-6 text-slate-300" />
               {selected.numero}
             </h3>
             <p className="text-sm text-slate-200 mt-1">{selected.asunto}</p>
@@ -211,7 +211,7 @@ export default function TicketsModule() {
               <span className={cn('inline-flex px-2 py-0.5 rounded text-xs font-medium', cfgEstado.bg, cfgEstado.color)}>{cfgEstado.label}</span>
               <span className={cn('inline-flex px-2 py-0.5 rounded text-xs font-medium', cfgPrio.bg, cfgPrio.color)}>Prioridad: {cfgPrio.label}</span>
               {slaVencido && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-300">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-800/40 text-slate-300">
                   <AlertTriangle className="h-3 w-3" /> SLA vencido
                 </span>
               )}
@@ -249,7 +249,7 @@ export default function TicketsModule() {
                 ) : comentarios.map(c => (
                   <div key={c.id} className={cn(
                     'rounded-lg p-3',
-                    c.rol === 'cliente' ? 'bg-blue-500/10 border border-blue-500/20' :
+                    c.rol === 'cliente' ? 'bg-slate-800/40 border border-slate-700/40' :
                     c.rol === 'sistema' ? 'bg-slate-800/30' :
                     'bg-slate-800/50',
                   )}>
@@ -258,7 +258,7 @@ export default function TicketsModule() {
                       <span className="text-xs font-medium text-slate-300">
                         {c.autor || 'Sistema'}
                       </span>
-                      {c.rol === 'cliente' && <span className="text-[10px] px-1 rounded bg-blue-500/20 text-blue-300">Cliente</span>}
+                      {c.rol === 'cliente' && <span className="text-[10px] px-1 rounded bg-slate-800/40 text-slate-300">Cliente</span>}
                       <span className="ml-auto text-[10px] text-slate-500">
                         {new Date(c.created_at).toLocaleString('es-UY')}
                       </span>
@@ -302,7 +302,7 @@ export default function TicketsModule() {
                 <Field
                   label="SLA"
                   value={new Date(selected.sla_vencimiento).toLocaleString('es-UY')}
-                  highlight={slaVencido ? 'text-red-300' : undefined}
+                  highlight={slaVencido ? 'text-slate-300' : undefined}
                 />
               )}
               {selected.fecha_primera_respuesta && (
@@ -335,8 +335,8 @@ export default function TicketsModule() {
             )}
 
             {!selected.asignado_a && (
-              <div className="bg-amber-500/5 border border-amber-500/30 rounded-xl p-3">
-                <div className="text-xs text-amber-300 mb-2 flex items-center gap-1">
+              <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3">
+                <div className="text-xs text-slate-300 mb-2 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" /> Sin asignar
                 </div>
                 <select
@@ -363,7 +363,7 @@ export default function TicketsModule() {
         <toast.Toast />
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Plus className="h-6 w-6 text-blue-400" />
+            <Plus className="h-6 w-6 text-slate-300" />
             Nuevo ticket de soporte
           </h3>
           <button onClick={() => setVista('lista')} className="p-2 hover:bg-slate-800 rounded-lg">
@@ -463,7 +463,7 @@ export default function TicketsModule() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Headphones className="h-6 w-6 text-blue-400" />
+            <Headphones className="h-6 w-6 text-slate-300" />
             Tickets de Soporte
           </h3>
         </div>
@@ -480,10 +480,10 @@ export default function TicketsModule() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi icon={Clock} label="Abiertos" value={stats.abiertos} color="text-blue-300" />
-        <Kpi icon={RefreshCw} label="En progreso" value={stats.enProgreso} color="text-amber-300" />
-        <Kpi icon={AlertTriangle} label="Críticos activos" value={stats.criticos} color="text-red-300" />
-        <Kpi icon={XCircle} label="SLA vencido" value={stats.slaBreached} color="text-red-300" />
+        <Kpi icon={Clock} label="Abiertos" value={stats.abiertos} color="text-slate-300" />
+        <Kpi icon={RefreshCw} label="En progreso" value={stats.enProgreso} color="text-slate-300" />
+        <Kpi icon={AlertTriangle} label="Críticos activos" value={stats.criticos} color="text-slate-300" />
+        <Kpi icon={XCircle} label="SLA vencido" value={stats.slaBreached} color="text-slate-300" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -548,7 +548,7 @@ export default function TicketsModule() {
                     </td>
                     <td className="px-4 py-3">
                       {slaVenc ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-red-300">
+                        <span className="inline-flex items-center gap-1 text-xs text-slate-300">
                           <AlertTriangle className="h-3 w-3" /> Vencido
                         </span>
                       ) : t.sla_vencimiento ? (
@@ -560,7 +560,7 @@ export default function TicketsModule() {
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-400">{t.asignado_a?.split('@')[0] || 'Sin asignar'}</td>
                     <td className="px-4 py-3 text-right">
-                      <button className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-blue-400">
+                      <button className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-300">
                         <Eye className="h-3.5 w-3.5" />
                       </button>
                     </td>

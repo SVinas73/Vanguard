@@ -34,9 +34,9 @@ interface PdmMetricas {
 // ============================================
 
 const RIESGO_CONFIG = {
-  rojo: { label: 'pdm.riskHigh', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30', icon: AlertTriangle },
-  amarillo: { label: 'pdm.riskMedium', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', icon: AlertCircle },
-  verde: { label: 'pdm.riskLow', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', icon: CheckCircle },
+  rojo: { label: 'pdm.riskHigh', color: 'text-slate-300', bg: 'bg-slate-800/40', border: 'border-slate-700/40', icon: AlertTriangle },
+  amarillo: { label: 'pdm.riskMedium', color: 'text-slate-300', bg: 'bg-slate-800/40', border: 'border-slate-700/40', icon: AlertCircle },
+  verde: { label: 'pdm.riskLow', color: 'text-slate-300', bg: 'bg-slate-800/40', border: 'border-slate-700/40', icon: CheckCircle },
 } as const;
 
 const TIPO_EQUIPO_ICON: Record<string, typeof Wrench> = {
@@ -255,12 +255,12 @@ export default function MantenimientoPredictivo() {
   const renderKPIs = () => {
     if (!metricas) return null;
     const kpis = [
-      { label: t('pdm.totalEquipment'), value: metricas.totalEquipos, icon: Settings, color: 'text-blue-400' },
-      { label: t('pdm.highRisk'), value: metricas.equiposRiesgoAlto, icon: AlertTriangle, color: 'text-red-400' },
-      { label: t('pdm.mediumRisk'), value: metricas.equiposRiesgoMedio, icon: AlertCircle, color: 'text-amber-400' },
-      { label: t('pdm.pendingAlerts'), value: metricas.alertasPendientes, icon: Bell, color: 'text-purple-400' },
-      { label: t('pdm.upcomingServices'), value: metricas.proximosServices, icon: Calendar, color: 'text-cyan-400' },
-      { label: t('pdm.avgMTBF'), value: metricas.mtbfPromedio ? `${Math.round(metricas.mtbfPromedio)}d` : '--', icon: TrendingUp, color: 'text-emerald-400' },
+      { label: t('pdm.totalEquipment'), value: metricas.totalEquipos, icon: Settings, color: 'text-slate-300' },
+      { label: t('pdm.highRisk'), value: metricas.equiposRiesgoAlto, icon: AlertTriangle, color: 'text-slate-300' },
+      { label: t('pdm.mediumRisk'), value: metricas.equiposRiesgoMedio, icon: AlertCircle, color: 'text-slate-300' },
+      { label: t('pdm.pendingAlerts'), value: metricas.alertasPendientes, icon: Bell, color: 'text-slate-300' },
+      { label: t('pdm.upcomingServices'), value: metricas.proximosServices, icon: Calendar, color: 'text-slate-300' },
+      { label: t('pdm.avgMTBF'), value: metricas.mtbfPromedio ? `${Math.round(metricas.mtbfPromedio)}d` : '--', icon: TrendingUp, color: 'text-slate-300' },
     ];
 
     return (
@@ -432,9 +432,9 @@ export default function MantenimientoPredictivo() {
             {/* Risk Semaphore */}
             <div className={cn(
               'p-4 rounded-xl border',
-              eq.nivel_riesgo === 'rojo' ? 'bg-red-500/5 border-red-500/30' :
-              eq.nivel_riesgo === 'amarillo' ? 'bg-amber-500/5 border-amber-500/30' :
-              'bg-emerald-500/5 border-emerald-500/30'
+              eq.nivel_riesgo === 'rojo' ? 'bg-slate-800/40 border-slate-700/40' :
+              eq.nivel_riesgo === 'amarillo' ? 'bg-slate-800/40 border-slate-700/40' :
+              'bg-slate-800/40 border-slate-700/40'
             )}>
               <div className="flex items-center justify-between mb-3">
                 <RiskBadge nivel={eq.nivel_riesgo} />
@@ -474,7 +474,7 @@ export default function MantenimientoPredictivo() {
             {eq.repuestos_sugeridos && eq.repuestos_sugeridos.length > 0 && (
               <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
                 <h4 className="font-medium text-slate-200 mb-3 flex items-center gap-2">
-                  <Package size={16} className="text-amber-400" />
+                  <Package size={16} className="text-slate-300" />
                   {t('pdm.suggestedParts')}
                 </h4>
                 <div className="space-y-2">
@@ -484,7 +484,7 @@ export default function MantenimientoPredictivo() {
                         <div className="text-sm text-slate-200">{rep.nombre}</div>
                         <div className="text-xs text-slate-500">{rep.motivo}</div>
                       </div>
-                      <div className="text-sm font-medium text-amber-400">x{rep.cantidad_sugerida}</div>
+                      <div className="text-sm font-medium text-slate-300">x{rep.cantidad_sugerida}</div>
                     </div>
                   ))}
                 </div>
@@ -542,9 +542,9 @@ export default function MantenimientoPredictivo() {
                       <div className="flex items-center justify-between mb-1">
                         <span className={cn(
                           'text-xs font-medium px-2 py-0.5 rounded',
-                          ev.tipo_evento === 'correctivo' ? 'bg-red-500/10 text-red-400' :
-                          ev.tipo_evento === 'preventivo' ? 'bg-emerald-500/10 text-emerald-400' :
-                          'bg-blue-500/10 text-blue-400'
+                          ev.tipo_evento === 'correctivo' ? 'bg-slate-800/40 text-slate-300' :
+                          ev.tipo_evento === 'preventivo' ? 'bg-slate-800/40 text-slate-300' :
+                          'bg-slate-800/40 text-slate-300'
                         )}>
                           {ev.tipo_evento}
                         </span>
@@ -571,22 +571,22 @@ export default function MantenimientoPredictivo() {
     <div className="space-y-3">
       {alertas.length === 0 ? (
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center">
-          <CheckCircle size={40} className="mx-auto text-emerald-400 mb-3" />
+          <CheckCircle size={40} className="mx-auto text-slate-300 mb-3" />
           <p className="text-slate-300">{t('pdm.noAlerts')}</p>
         </div>
       ) : (
         alertas.map(a => (
           <div key={a.id} className={cn(
             'bg-slate-900 border rounded-xl p-4',
-            a.nivel === 'critical' ? 'border-red-500/40' :
-            a.nivel === 'warning' ? 'border-amber-500/40' :
+            a.nivel === 'critical' ? 'border-slate-700/40' :
+            a.nivel === 'warning' ? 'border-slate-700/40' :
             'border-slate-700'
           )}>
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
-                {a.nivel === 'critical' ? <AlertTriangle size={20} className="text-red-400 mt-0.5" /> :
-                 a.nivel === 'warning' ? <AlertCircle size={20} className="text-amber-400 mt-0.5" /> :
-                 <Info size={20} className="text-blue-400 mt-0.5" />}
+                {a.nivel === 'critical' ? <AlertTriangle size={20} className="text-slate-300 mt-0.5" /> :
+                 a.nivel === 'warning' ? <AlertCircle size={20} className="text-slate-300 mt-0.5" /> :
+                 <Info size={20} className="text-slate-300 mt-0.5" />}
                 <div>
                   <h4 className="font-medium text-slate-200">{a.titulo}</h4>
                   <p className="text-sm text-slate-400 mt-1">{a.mensaje}</p>
@@ -678,8 +678,8 @@ export default function MantenimientoPredictivo() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-blue-600/10 border border-blue-500/20">
-            <Cpu size={20} className="text-blue-400" />
+          <div className="p-2 rounded-xl bg-slate-800/40 border border-slate-700/40">
+            <Cpu size={20} className="text-slate-300" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-slate-100">{t('pdm.title')}</h2>
@@ -689,8 +689,8 @@ export default function MantenimientoPredictivo() {
         <div className="flex items-center gap-2">
           {/* AI Status */}
           <span className={cn('flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border',
-            aiOnline === true ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
-            aiOnline === false ? 'bg-red-500/10 text-red-400 border-red-500/30' :
+            aiOnline === true ? 'bg-slate-800/40 text-slate-300 border-slate-700/40' :
+            aiOnline === false ? 'bg-slate-800/40 text-slate-300 border-slate-700/40' :
             'bg-slate-700 text-slate-400 border-slate-600'
           )}>
             <span className={cn('w-1.5 h-1.5 rounded-full', aiOnline ? 'bg-emerald-400' : 'bg-red-400')} />

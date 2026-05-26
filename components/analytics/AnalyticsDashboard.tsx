@@ -449,8 +449,8 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30">
-            <Brain size={28} className="text-emerald-400" />
+          <div className="p-3 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-800 border border-slate-700/40">
+            <Brain size={28} className="text-slate-300" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Analytics IA</h1>
@@ -467,7 +467,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
                   period === p
-                    ? 'bg-emerald-500/20 text-emerald-400'
+                    ? 'bg-slate-800/40 text-slate-300'
                     : 'text-slate-400 hover:text-slate-200'
                 )}
               >
@@ -532,7 +532,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
             className={cn(
               'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
               activeTab === tab.id
-                ? 'bg-emerald-500/20 text-emerald-400'
+                ? 'bg-slate-800/40 text-slate-300'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             )}
           >
@@ -549,7 +549,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold flex items-center gap-2">
-                <Activity size={18} className="text-cyan-400" />
+                <Activity size={18} className="text-slate-300" />
                 Flujo de Inventario
               </h3>
             </div>
@@ -602,7 +602,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold flex items-center gap-2">
-                <PieChartIcon size={18} className="text-purple-400" />
+                <PieChartIcon size={18} className="text-slate-300" />
                 Valor por Categoría
               </h3>
             </div>
@@ -640,12 +640,12 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
           <Card className="p-6 lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold flex items-center gap-2">
-                <Sparkles size={18} className="text-amber-400" />
+                <Sparkles size={18} className="text-slate-300" />
                 Insights Principales
               </h3>
               <button
                 onClick={() => setActiveTab('insights')}
-                className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+                className="text-sm text-slate-300 hover:text-slate-300 flex items-center gap-1"
               >
                 Ver todos <ChevronRight size={14} />
               </button>
@@ -663,37 +663,37 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
         <div className="space-y-6">
           {/* Resumen de predicciones */}
           <div className="grid grid-cols-3 gap-4">
-            <Card className="p-4 border-red-500/30 bg-red-500/5">
+            <Card className="p-4 border-slate-700/40 bg-slate-800/40">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-red-500/20">
-                  <AlertTriangle size={20} className="text-red-400" />
+                <div className="p-2 rounded-lg bg-slate-800/40">
+                  <AlertTriangle size={20} className="text-slate-300" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-red-400">
+                  <p className="text-2xl font-bold text-slate-300">
                     {sortedPredictions.filter(p => p.prediction.days !== null && p.prediction.days < 7 && p.prediction.days !== Infinity).length}
                   </p>
                 </div>
               </div>
             </Card>
-            <Card className="p-4 border-amber-500/30 bg-amber-500/5">
+            <Card className="p-4 border-slate-700/40 bg-slate-800/40">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/20">
-                  <Clock size={20} className="text-amber-400" />
+                <div className="p-2 rounded-lg bg-slate-800/40">
+                  <Clock size={20} className="text-slate-300" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-amber-400">
+                  <p className="text-2xl font-bold text-slate-300">
                     {sortedPredictions.filter(p => p.prediction.days !== null && p.prediction.days >= 7 && p.prediction.days < 14).length}
                   </p>
                 </div>
               </div>
             </Card>
-            <Card className="p-4 border-emerald-500/30 bg-emerald-500/5">
+            <Card className="p-4 border-slate-700/40 bg-slate-800/40">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/20">
-                  <CheckCircle size={20} className="text-emerald-400" />
+                <div className="p-2 rounded-lg bg-slate-800/40">
+                  <CheckCircle size={20} className="text-slate-300" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-emerald-400">
+                  <p className="text-2xl font-bold text-slate-300">
                     {sortedPredictions.filter(p => p.prediction.days === null || p.prediction.days === Infinity || p.prediction.days >= 14).length}
                   </p>
                 </div>
@@ -704,7 +704,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
           {/* Lista de predicciones */}
           <Card className="p-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <TrendingUp size={18} className="text-emerald-400" />
+              <TrendingUp size={18} className="text-slate-300" />
               Predicción de Agotamiento
             </h3>
             <div className="space-y-3 max-h-[500px] overflow-y-auto">
@@ -762,7 +762,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
           {/* Gráfico ABC */}
           <Card className="p-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Target size={18} className="text-emerald-400" />
+              <Target size={18} className="text-slate-300" />
               Curva de Pareto (ABC)
             </h3>
             <div className="h-[300px]">
@@ -847,7 +847,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
           {/* Gráfico de líneas detallado */}
           <Card className="p-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Activity size={18} className="text-cyan-400" />
+              <Activity size={18} className="text-slate-300" />
               Tendencia de Movimientos
             </h3>
             <div className="h-[400px]">
@@ -875,7 +875,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
           {/* Comparativa de categorías */}
           <Card className="p-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Layers size={18} className="text-purple-400" />
+              <Layers size={18} className="text-slate-300" />
               Stock por Categoría
             </h3>
             <div className="h-[300px]">
@@ -903,7 +903,7 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold flex items-center gap-2">
-              <Lightbulb size={18} className="text-amber-400" />
+              <Lightbulb size={18} className="text-slate-300" />
               Insights Generados por IA
             </h3>
             <span className="text-sm text-slate-400">{insights.length} insights detectados</span>
@@ -942,11 +942,11 @@ interface KPICardProps {
 
 function KPICard({ title, value, icon, color, trend, subtitle }: KPICardProps) {
   const colorClasses = {
-    emerald: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30',
-    cyan: 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30',
-    amber: 'text-amber-400 bg-amber-500/20 border-amber-500/30',
-    purple: 'text-purple-400 bg-purple-500/20 border-purple-500/30',
-    red: 'text-red-400 bg-red-500/20 border-red-500/30',
+    emerald: 'text-slate-300 bg-slate-800/40 border-slate-700/40',
+    cyan: 'text-slate-300 bg-slate-800/40 border-slate-700/40',
+    amber: 'text-slate-300 bg-slate-800/40 border-slate-700/40',
+    purple: 'text-slate-300 bg-slate-800/40 border-slate-700/40',
+    red: 'text-slate-300 bg-slate-800/40 border-slate-700/40',
     slate: 'text-slate-400 bg-slate-500/20 border-slate-500/30',
   };
 
@@ -959,7 +959,7 @@ function KPICard({ title, value, icon, color, trend, subtitle }: KPICardProps) {
           <span className={textColor}>{icon}</span>
         </div>
         {trend !== undefined && (
-          <span className={cn('flex items-center text-xs font-medium', trend >= 0 ? 'text-emerald-400' : 'text-red-400')}>
+          <span className={cn('flex items-center text-xs font-medium', trend >= 0 ? 'text-slate-300' : 'text-slate-300')}>
             {trend >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
             {Math.abs(trend)}%
           </span>
@@ -987,20 +987,20 @@ function PredictionRow({ product, prediction }: PredictionRowProps) {
   return (
     <div className={cn(
       'flex items-center justify-between p-4 rounded-xl border transition-colors',
-      isCritical ? 'bg-red-500/5 border-red-500/30' :
-      isWarning ? 'bg-amber-500/5 border-amber-500/30' :
+      isCritical ? 'bg-slate-800/40 border-slate-700/40' :
+      isWarning ? 'bg-slate-800/40 border-slate-700/40' :
       'bg-slate-800/30 border-slate-700/30'
     )}>
       <div className="flex items-center gap-4">
         <div className={cn(
           'w-12 h-12 rounded-xl flex items-center justify-center',
-          isCritical ? 'bg-red-500/20' :
-          isWarning ? 'bg-amber-500/20' :
-          'bg-emerald-500/20'
+          isCritical ? 'bg-slate-800/40' :
+          isWarning ? 'bg-slate-800/40' :
+          'bg-slate-800/40'
         )}>
-          {isCritical ? <AlertTriangle size={20} className="text-red-400" /> :
-           isWarning ? <Clock size={20} className="text-amber-400" /> :
-           <CheckCircle size={20} className="text-emerald-400" />}
+          {isCritical ? <AlertTriangle size={20} className="text-slate-300" /> :
+           isWarning ? <Clock size={20} className="text-slate-300" /> :
+           <CheckCircle size={20} className="text-slate-300" />}
         </div>
         <div>
           <p className="font-medium text-sm">{product.descripcion}</p>
@@ -1010,9 +1010,9 @@ function PredictionRow({ product, prediction }: PredictionRowProps) {
       <div className="text-right">
         <p className={cn(
           'text-lg font-bold font-mono',
-          isCritical ? 'text-red-400' :
-          isWarning ? 'text-amber-400' :
-          'text-emerald-400'
+          isCritical ? 'text-slate-300' :
+          isWarning ? 'text-slate-300' :
+          'text-slate-300'
         )}>
           {isInfinity ? '∞' : days ?? '—'} días
         </p>
@@ -1046,10 +1046,10 @@ interface InsightCardProps {
 
 function InsightCard({ insight, compact }: InsightCardProps) {
   const typeConfig = {
-    warning: { icon: <AlertTriangle size={18} />, color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
-    success: { icon: <CheckCircle size={18} />, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
-    info: { icon: <Info size={18} />, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
-    action: { icon: <Zap size={18} />, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
+    warning: { icon: <AlertTriangle size={18} />, color: 'text-slate-300', bg: 'bg-slate-800/40', border: 'border-slate-700/40' },
+    success: { icon: <CheckCircle size={18} />, color: 'text-slate-300', bg: 'bg-slate-800/40', border: 'border-slate-700/40' },
+    info: { icon: <Info size={18} />, color: 'text-slate-300', bg: 'bg-slate-800/40', border: 'border-slate-700/40' },
+    action: { icon: <Zap size={18} />, color: 'text-slate-300', bg: 'bg-slate-800/40', border: 'border-slate-700/40' },
   };
 
   const config = typeConfig[insight.type];

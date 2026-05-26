@@ -279,7 +279,7 @@ export default function QMSDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-emerald-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -290,7 +290,7 @@ export default function QMSDashboard() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-            <Shield className="h-7 w-7 text-emerald-400" />
+            <Shield className="h-7 w-7 text-slate-300" />
             Quality Management System
           </h2>
           <p className="text-slate-400 text-sm mt-1">
@@ -335,7 +335,7 @@ export default function QMSDashboard() {
             {tab.label}
             {tab.badge !== undefined && tab.badge > 0 && (
               <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full ${
-                tab.badgeColor === 'red' ? 'bg-red-500/20 text-red-400' : 'bg-slate-700 text-slate-300'
+                tab.badgeColor === 'red' ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-700 text-slate-300'
               }`}>
                 {tab.badge}
               </span>
@@ -427,10 +427,10 @@ function DashboardView({
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-slate-400">Tasa Aprobación</span>
-            <Award className="h-5 w-5 text-emerald-400" />
+            <Award className="h-5 w-5 text-slate-300" />
           </div>
-          <div className="text-2xl font-bold text-emerald-400">{metricas.tasaAprobacion.toFixed(1)}%</div>
-          <div className={`text-xs flex items-center gap-1 ${metricas.tasaAprobacionTendencia >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+          <div className="text-2xl font-bold text-slate-300">{metricas.tasaAprobacion.toFixed(1)}%</div>
+          <div className={`text-xs flex items-center gap-1 ${metricas.tasaAprobacionTendencia >= 0 ? 'text-slate-300' : 'text-slate-300'}`}>
             {metricas.tasaAprobacionTendencia >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
             {metricas.tasaAprobacionTendencia >= 0 ? '+' : ''}{metricas.tasaAprobacionTendencia}%
           </div>
@@ -439,20 +439,20 @@ function DashboardView({
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-slate-400">Pendientes</span>
-            <Clock className="h-5 w-5 text-amber-400" />
+            <Clock className="h-5 w-5 text-slate-300" />
           </div>
-          <div className="text-2xl font-bold text-amber-400">{metricas.inspeccionesPendientes}</div>
+          <div className="text-2xl font-bold text-slate-300">{metricas.inspeccionesPendientes}</div>
           <div className="text-xs text-slate-500">{metricas.inspeccionesHoy} hoy</div>
         </div>
 
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-slate-400">NCRs Abiertas</span>
-            <AlertTriangle className="h-5 w-5 text-orange-400" />
+            <AlertTriangle className="h-5 w-5 text-slate-300" />
           </div>
-          <div className="text-2xl font-bold text-orange-400">{metricas.ncrsAbiertas}</div>
+          <div className="text-2xl font-bold text-slate-300">{metricas.ncrsAbiertas}</div>
           {metricas.ncrsCriticas > 0 && (
-            <div className="text-xs text-red-400 flex items-center gap-1">
+            <div className="text-xs text-slate-300 flex items-center gap-1">
               <AlertCircle className="h-3 w-3" />
               {metricas.ncrsCriticas} críticas
             </div>
@@ -462,31 +462,31 @@ function DashboardView({
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-slate-400">CAPAs Activas</span>
-            <Target className="h-5 w-5 text-purple-400" />
+            <Target className="h-5 w-5 text-slate-300" />
           </div>
-          <div className="text-2xl font-bold text-purple-400">{metricas.capasAbiertas}</div>
+          <div className="text-2xl font-bold text-slate-300">{metricas.capasAbiertas}</div>
           {metricas.capasVencidas > 0 && (
-            <div className="text-xs text-red-400">{metricas.capasVencidas} vencidas</div>
+            <div className="text-xs text-slate-300">{metricas.capasVencidas} vencidas</div>
           )}
         </div>
 
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-slate-400">PPM Defectos</span>
-            <Gauge className="h-5 w-5 text-cyan-400" />
+            <Gauge className="h-5 w-5 text-slate-300" />
           </div>
-          <div className={`text-2xl font-bold ${metricas.ppmDefectos < 1000 ? 'text-emerald-400' : metricas.ppmDefectos < 5000 ? 'text-amber-400' : 'text-red-400'}`}>
+          <div className={`text-2xl font-bold ${metricas.ppmDefectos < 1000 ? 'text-slate-300' : metricas.ppmDefectos < 5000 ? 'text-slate-300' : 'text-slate-300'}`}>
             {metricas.ppmDefectos.toLocaleString()}
           </div>
           <div className="text-xs text-slate-500">partes/millón</div>
         </div>
 
-        <div className={`bg-slate-900/50 border rounded-xl p-4 ${metricas.recallsActivos > 0 ? 'border-red-500/50' : 'border-slate-800/50'}`}>
+        <div className={`bg-slate-900/50 border rounded-xl p-4 ${metricas.recallsActivos > 0 ? 'border-slate-700/40' : 'border-slate-800/50'}`}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-slate-400">Recalls</span>
-            <AlertOctagon className={`h-5 w-5 ${metricas.recallsActivos > 0 ? 'text-red-400' : 'text-slate-500'}`} />
+            <AlertOctagon className={`h-5 w-5 ${metricas.recallsActivos > 0 ? 'text-slate-300' : 'text-slate-500'}`} />
           </div>
-          <div className={`text-2xl font-bold ${metricas.recallsActivos > 0 ? 'text-red-400' : 'text-slate-400'}`}>
+          <div className={`text-2xl font-bold ${metricas.recallsActivos > 0 ? 'text-slate-300' : 'text-slate-400'}`}>
             {metricas.recallsActivos}
           </div>
         </div>
@@ -494,35 +494,35 @@ function DashboardView({
 
       {/* Alertas críticas */}
       {(metricas.ncrsCriticas > 0 || metricas.recallsActivos > 0 || metricas.capasVencidas > 0) && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-          <div className="flex items-center gap-2 text-red-400 font-semibold mb-3">
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
+          <div className="flex items-center gap-2 text-slate-300 font-semibold mb-3">
             <Bell className="h-5 w-5" />
             Alertas Críticas
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {metricas.recallsActivos > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-red-500/10 rounded-lg">
-                <AlertOctagon className="h-8 w-8 text-red-400" />
+              <div className="flex items-center gap-3 p-3 bg-slate-800/40 rounded-lg">
+                <AlertOctagon className="h-8 w-8 text-slate-300" />
                 <div>
-                  <div className="font-medium text-red-400">{metricas.recallsActivos} Recall(s) Activo(s)</div>
+                  <div className="font-medium text-slate-300">{metricas.recallsActivos} Recall(s) Activo(s)</div>
                   <div className="text-xs text-slate-400">Acción inmediata</div>
                 </div>
               </div>
             )}
             {metricas.ncrsCriticas > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-lg">
-                <AlertTriangle className="h-8 w-8 text-orange-400" />
+              <div className="flex items-center gap-3 p-3 bg-slate-800/40 rounded-lg">
+                <AlertTriangle className="h-8 w-8 text-slate-300" />
                 <div>
-                  <div className="font-medium text-orange-400">{metricas.ncrsCriticas} NCR(s) Crítica(s)</div>
+                  <div className="font-medium text-slate-300">{metricas.ncrsCriticas} NCR(s) Crítica(s)</div>
                   <div className="text-xs text-slate-400">Pendientes</div>
                 </div>
               </div>
             )}
             {metricas.capasVencidas > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-amber-500/10 rounded-lg">
-                <Clock className="h-8 w-8 text-amber-400" />
+              <div className="flex items-center gap-3 p-3 bg-slate-800/40 rounded-lg">
+                <Clock className="h-8 w-8 text-slate-300" />
                 <div>
-                  <div className="font-medium text-amber-400">{metricas.capasVencidas} CAPA(s) Vencida(s)</div>
+                  <div className="font-medium text-slate-300">{metricas.capasVencidas} CAPA(s) Vencida(s)</div>
                   <div className="text-xs text-slate-400">Fecha excedida</div>
                 </div>
               </div>
@@ -535,7 +535,7 @@ function DashboardView({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
-            <Activity className="h-4 w-4 text-emerald-400" />
+            <Activity className="h-4 w-4 text-slate-300" />
             Tendencia de Inspecciones
           </h3>
           <div className="h-64">
@@ -554,7 +554,7 @@ function DashboardView({
 
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-orange-400" />
+            <AlertTriangle className="h-4 w-4 text-slate-300" />
             NCRs por Severidad
           </h3>
           <div className="h-64 flex items-center justify-center">
@@ -580,7 +580,7 @@ function DashboardView({
               </ResponsiveContainer>
             ) : (
               <div className="text-center text-slate-500">
-                <CheckCircle className="h-12 w-12 mx-auto mb-2 text-emerald-400" />
+                <CheckCircle className="h-12 w-12 mx-auto mb-2 text-slate-300" />
                 <p>No hay NCRs abiertas</p>
               </div>
             )}
@@ -594,12 +594,12 @@ function DashboardView({
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl">
           <div className="p-4 border-b border-slate-800 flex justify-between items-center">
             <h3 className="font-semibold text-slate-200 flex items-center gap-2">
-              <ClipboardCheck className="h-5 w-5 text-emerald-400" />
+              <ClipboardCheck className="h-5 w-5 text-slate-300" />
               Últimas Inspecciones
             </h3>
             <button 
               onClick={() => onTabChange('inspecciones')}
-              className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+              className="text-sm text-slate-300 hover:text-slate-300 flex items-center gap-1"
             >
               Ver todas <ChevronRight className="h-4 w-4" />
             </button>
@@ -630,12 +630,12 @@ function DashboardView({
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl">
           <div className="p-4 border-b border-slate-800 flex justify-between items-center">
             <h3 className="font-semibold text-slate-200 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-400" />
+              <AlertTriangle className="h-5 w-5 text-slate-300" />
               NCRs Recientes
             </h3>
             <button 
               onClick={() => onTabChange('ncr')}
-              className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+              className="text-sm text-slate-300 hover:text-slate-300 flex items-center gap-1"
             >
               Ver todas <ChevronRight className="h-4 w-4" />
             </button>
@@ -658,7 +658,7 @@ function DashboardView({
             })}
             {ncrs.filter(n => !['cerrada', 'cancelada'].includes(n.estado)).length === 0 && (
               <div className="p-8 text-center text-slate-500">
-                <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-400" />
+                <CheckCircle className="h-8 w-8 mx-auto mb-2 text-slate-300" />
                 No hay NCRs abiertas
               </div>
             )}
@@ -670,7 +670,7 @@ function DashboardView({
             {metricas.instrumentosPorCalibrar > 0 && (
               <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
                 <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-                  <Thermometer className="h-5 w-5 text-cyan-400" />
+                  <Thermometer className="h-5 w-5 text-slate-300" />
                   Instrumentos Próximos a Calibrar
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -681,15 +681,15 @@ function DashboardView({
                       const dias = inst.dias_para_calibracion as number;
                       return (
                         <div key={inst.id} className={`p-3 rounded-lg ${
-                          dias < 0 ? 'bg-red-500/10 border border-red-500/30' :
-                          dias <= 7 ? 'bg-amber-500/10 border border-amber-500/30' :
+                          dias < 0 ? 'bg-slate-800/40 border border-slate-700/40' :
+                          dias <= 7 ? 'bg-slate-800/40 border border-slate-700/40' :
                           'bg-slate-800/30 border border-slate-700/30'
                         }`}>
                           <div className="font-mono text-sm text-slate-200">{inst.codigo}</div>
                           <div className="text-xs text-slate-400 truncate">{inst.nombre}</div>
                           <div className={`text-xs mt-1 font-medium ${
-                            dias < 0 ? 'text-red-400' :
-                            dias <= 7 ? 'text-amber-400' : 'text-slate-400'
+                            dias < 0 ? 'text-slate-300' :
+                            dias <= 7 ? 'text-slate-300' : 'text-slate-400'
                           }`}>
                             {dias < 0 
                               ? `Vencido hace ${Math.abs(dias)} días`
@@ -771,7 +771,7 @@ function DashboardView({
                         const config = ESTADO_INSPECCION_CONFIG[insp.estado];
                         return (
                           <tr key={insp.id} className="hover:bg-slate-800/30">
-                            <td className="px-4 py-3 font-mono text-sm text-emerald-400">{insp.numero}</td>
+                            <td className="px-4 py-3 font-mono text-sm text-slate-300">{insp.numero}</td>
                             <td className="px-4 py-3 text-sm text-slate-300 capitalize">{insp.tipo}</td>
                             <td className="px-4 py-3">
                               <div className="text-sm text-slate-200">{insp.producto_codigo}</div>
@@ -859,7 +859,7 @@ function DashboardView({
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <span className="font-mono text-sm text-orange-400">{ncr.numero}</span>
+                            <span className="font-mono text-sm text-slate-300">{ncr.numero}</span>
                             <span className={`px-2 py-0.5 rounded-full text-xs ${config?.bg} ${config?.color}`}>
                               {config?.label}
                             </span>
@@ -887,7 +887,7 @@ function DashboardView({
                               {formatDate(ncr.fecha_deteccion)}
                             </span>
                             {diasRestantes !== null && (
-                              <span className={`flex items-center gap-1 ${diasRestantes < 0 ? 'text-red-400' : diasRestantes <= 3 ? 'text-amber-400' : ''}`}>
+                              <span className={`flex items-center gap-1 ${diasRestantes < 0 ? 'text-slate-300' : diasRestantes <= 3 ? 'text-slate-300' : ''}`}>
                                 <Clock className="h-3 w-3" />
                                 {diasRestantes < 0 ? `Vencida hace ${Math.abs(diasRestantes)}d` : `${diasRestantes}d`}
                               </span>
@@ -904,7 +904,7 @@ function DashboardView({
               
               {ncrs.length === 0 && (
                 <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center text-slate-500">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
+                  <CheckCircle className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                   <p>No hay NCRs</p>
                 </div>
               )}
@@ -947,11 +947,11 @@ function DashboardView({
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <span className="font-mono text-sm text-purple-400">{capa.numero}</span>
+                          <span className="font-mono text-sm text-slate-300">{capa.numero}</span>
                           <span className={`px-2 py-0.5 rounded-full text-xs ${
-                            capa.tipo === 'correctiva' ? 'bg-red-500/20 text-red-400' :
-                            capa.tipo === 'preventiva' ? 'bg-blue-500/20 text-blue-400' :
-                            'bg-emerald-500/20 text-emerald-400'
+                            capa.tipo === 'correctiva' ? 'bg-slate-800/40 text-slate-300' :
+                            capa.tipo === 'preventiva' ? 'bg-slate-800/40 text-slate-300' :
+                            'bg-slate-800/40 text-slate-300'
                           }`}>
                             {capa.tipo.charAt(0).toUpperCase() + capa.tipo.slice(1)}
                           </span>
@@ -985,7 +985,7 @@ function DashboardView({
                             </span>
                           )}
                           {diasRestantes !== null && (
-                            <span className={`flex items-center gap-1 ${diasRestantes < 0 ? 'text-red-400' : diasRestantes <= 7 ? 'text-amber-400' : ''}`}>
+                            <span className={`flex items-center gap-1 ${diasRestantes < 0 ? 'text-slate-300' : diasRestantes <= 7 ? 'text-slate-300' : ''}`}>
                               <Clock className="h-3 w-3" />
                               {diasRestantes < 0 ? `Vencida hace ${Math.abs(diasRestantes)}d` : `${diasRestantes}d restantes`}
                             </span>
@@ -1045,11 +1045,11 @@ function DashboardView({
                   const claseConfig = CLASE_RECALL_CONFIG[recall.clase];
                   return (
                     <div key={recall.id} className={`bg-slate-900/50 border rounded-xl p-4 ${
-                      recall.estado !== 'cerrado' ? 'border-red-500/30' : 'border-slate-800/50'
+                      recall.estado !== 'cerrado' ? 'border-slate-700/40' : 'border-slate-800/50'
                     }`}>
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="font-mono text-sm text-red-400">{recall.numero}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs bg-red-500/20 ${claseConfig?.color}`}>
+                        <span className="font-mono text-sm text-slate-300">{recall.numero}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs bg-slate-800/40 ${claseConfig?.color}`}>
                           {claseConfig?.label}
                         </span>
                         <span className="px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-300 capitalize">
@@ -1069,7 +1069,7 @@ function DashboardView({
               </div>
             ) : (
               <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center text-slate-500">
-                <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
+                <CheckCircle className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                 <p>No hay recalls activos</p>
               </div>
             )}
@@ -1106,14 +1106,14 @@ function DashboardView({
                       const dias = inst.dias_para_calibracion;
                       return (
                         <tr key={inst.id} className="hover:bg-slate-800/30">
-                          <td className="px-4 py-3 font-mono text-sm text-cyan-400">{inst.codigo}</td>
+                          <td className="px-4 py-3 font-mono text-sm text-slate-300">{inst.codigo}</td>
                           <td className="px-4 py-3 text-sm text-slate-200">{inst.nombre}</td>
                           <td className="px-4 py-3 text-sm text-slate-400">{inst.ubicacion || '-'}</td>
                           <td className="px-4 py-3">
                             {inst.proxima_calibracion ? (
                               <span className={`text-sm ${
-                                dias !== null && dias < 0 ? 'text-red-400' :
-                                dias !== null && dias <= 7 ? 'text-amber-400' : 'text-slate-300'
+                                dias !== null && dias < 0 ? 'text-slate-300' :
+                                dias !== null && dias <= 7 ? 'text-slate-300' : 'text-slate-300'
                               }`}>
                                 {formatDate(inst.proxima_calibracion)}
                                 {dias !== null && (
@@ -1126,9 +1126,9 @@ function DashboardView({
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span className={`px-2 py-1 rounded-full text-xs ${
-                              inst.estado === 'activo' ? 'bg-emerald-500/20 text-emerald-400' :
-                              inst.estado === 'en_calibracion' ? 'bg-amber-500/20 text-amber-400' :
-                              'bg-red-500/20 text-red-400'
+                              inst.estado === 'activo' ? 'bg-slate-800/40 text-slate-300' :
+                              inst.estado === 'en_calibracion' ? 'bg-slate-800/40 text-slate-300' :
+                              'bg-slate-800/40 text-slate-300'
                             }`}>
                               {inst.estado}
                             </span>

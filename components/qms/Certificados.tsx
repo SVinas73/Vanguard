@@ -127,56 +127,56 @@ const TIPO_CONFIG: Record<TipoCertificado, {
   coa: { 
     label: 'COA', 
     labelFull: 'Certificate of Analysis',
-    color: 'text-emerald-400', 
-    bg: 'bg-emerald-500/20', 
+    color: 'text-slate-300', 
+    bg: 'bg-slate-800/40', 
     icon: FileCheck,
     descripcion: 'Certificado de Análisis - Resultados de pruebas de calidad'
   },
   coc: { 
     label: 'COC', 
     labelFull: 'Certificate of Conformance',
-    color: 'text-blue-400', 
-    bg: 'bg-blue-500/20', 
+    color: 'text-slate-300', 
+    bg: 'bg-slate-800/40', 
     icon: Shield,
     descripcion: 'Certificado de Conformidad - Cumplimiento de especificaciones'
   },
   coo: { 
     label: 'COO', 
     labelFull: 'Certificate of Origin',
-    color: 'text-amber-400', 
-    bg: 'bg-amber-500/20', 
+    color: 'text-slate-300', 
+    bg: 'bg-slate-800/40', 
     icon: Globe,
     descripcion: 'Certificado de Origen - País de manufactura'
   },
   msds: { 
     label: 'MSDS', 
     labelFull: 'Material Safety Data Sheet',
-    color: 'text-red-400', 
-    bg: 'bg-red-500/20', 
+    color: 'text-slate-300', 
+    bg: 'bg-slate-800/40', 
     icon: AlertTriangle,
     descripcion: 'Hoja de Datos de Seguridad del Material'
   },
   halal: { 
     label: 'Halal', 
     labelFull: 'Halal Certificate',
-    color: 'text-green-400', 
-    bg: 'bg-green-500/20', 
+    color: 'text-slate-300', 
+    bg: 'bg-slate-800/40', 
     icon: Award,
     descripcion: 'Certificación Halal'
   },
   kosher: { 
     label: 'Kosher', 
     labelFull: 'Kosher Certificate',
-    color: 'text-purple-400', 
-    bg: 'bg-purple-500/20', 
+    color: 'text-slate-300', 
+    bg: 'bg-slate-800/40', 
     icon: Star,
     descripcion: 'Certificación Kosher'
   },
   organico: { 
     label: 'Orgánico', 
     labelFull: 'Organic Certificate',
-    color: 'text-lime-400', 
-    bg: 'bg-lime-500/20', 
+    color: 'text-slate-300', 
+    bg: 'bg-slate-800/40', 
     icon: Leaf,
     descripcion: 'Certificación Orgánica'
   },
@@ -192,10 +192,10 @@ const TIPO_CONFIG: Record<TipoCertificado, {
 
 const ESTADO_CONFIG: Record<EstadoCertificado, { label: string; color: string; bg: string }> = {
   borrador: { label: 'Borrador', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  emitido: { label: 'Emitido', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  enviado: { label: 'Enviado', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  vencido: { label: 'Vencido', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  anulado: { label: 'Anulado', color: 'text-red-400', bg: 'bg-red-500/20' },
+  emitido: { label: 'Emitido', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  enviado: { label: 'Enviado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  vencido: { label: 'Vencido', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  anulado: { label: 'Anulado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 // ============================================
@@ -625,7 +625,7 @@ export default function Certificados() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-cyan-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -639,7 +639,7 @@ export default function Certificados() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <FileCheck className="h-6 w-6 text-cyan-400" />
+                <FileCheck className="h-6 w-6 text-slate-300" />
                 Certificados de Calidad
               </h3>
               <p className="text-slate-400 text-sm mt-1">
@@ -649,17 +649,17 @@ export default function Certificados() {
             
             {/* Stats */}
             <div className="flex gap-3">
-              <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                <div className="text-xs text-emerald-400">COA</div>
-                <div className="text-xl font-bold text-emerald-400">{stats.porTipo.coa}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">COA</div>
+                <div className="text-xl font-bold text-slate-300">{stats.porTipo.coa}</div>
               </div>
-              <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-                <div className="text-xs text-blue-400">COC</div>
-                <div className="text-xl font-bold text-blue-400">{stats.porTipo.coc}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">COC</div>
+                <div className="text-xl font-bold text-slate-300">{stats.porTipo.coc}</div>
               </div>
-              <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-                <div className="text-xs text-amber-400">COO</div>
-                <div className="text-xl font-bold text-amber-400">{stats.porTipo.coo}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">COO</div>
+                <div className="text-xl font-bold text-slate-300">{stats.porTipo.coo}</div>
               </div>
               <div className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl">
                 <div className="text-xs text-slate-400">Este mes</div>
@@ -678,7 +678,7 @@ export default function Certificados() {
                   placeholder="Buscar por número, producto, lote, cliente..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 />
               </div>
               
@@ -730,21 +730,21 @@ export default function Certificados() {
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => handleNuevoCertificado('coa')}
-              className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm hover:bg-emerald-500/20 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/40 border border-slate-700/40 rounded-lg text-slate-300 text-sm hover:bg-slate-800/40 transition-colors"
             >
               <FileCheck className="h-4 w-4" />
               + COA
             </button>
             <button
               onClick={() => handleNuevoCertificado('coc')}
-              className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/40 border border-slate-700/40 rounded-lg text-slate-300 text-sm hover:bg-slate-800/40 transition-colors"
             >
               <Shield className="h-4 w-4" />
               + COC
             </button>
             <button
               onClick={() => handleNuevoCertificado('coo')}
-              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-sm hover:bg-amber-500/20 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/40 border border-slate-700/40 rounded-lg text-slate-300 text-sm hover:bg-slate-800/40 transition-colors"
             >
               <Globe className="h-4 w-4" />
               + COO
@@ -776,7 +776,7 @@ export default function Certificados() {
                     return (
                       <tr key={cert.id} className="hover:bg-slate-800/30">
                         <td className="px-4 py-3">
-                          <span className="font-mono text-sm text-cyan-400">{cert.numero}</span>
+                          <span className="font-mono text-sm text-slate-300">{cert.numero}</span>
                         </td>
                         <td className="px-4 py-3">
                           <span className={`flex items-center gap-1.5 text-sm ${tipoConfig.color}`}>
@@ -1203,8 +1203,8 @@ function CertificadoForm({
                     onClick={() => onActualizarResultado(resultado.id, 'conforme', !resultado.conforme)}
                     className={`w-full py-2 rounded-lg text-xs font-medium ${
                       resultado.conforme
-                        ? 'bg-emerald-500/20 text-emerald-400'
-                        : 'bg-red-500/20 text-red-400'
+                        ? 'bg-slate-800/40 text-slate-300'
+                        : 'bg-slate-800/40 text-slate-300'
                     }`}
                   >
                     {resultado.conforme ? '✓' : '✗'}
@@ -1213,7 +1213,7 @@ function CertificadoForm({
                 <div className="col-span-1 pt-6">
                   <button
                     onClick={() => onEliminarResultado(resultado.id)}
-                    className="w-full py-2 hover:bg-red-500/20 rounded-lg text-red-400"
+                    className="w-full py-2 hover:bg-slate-800/40 rounded-lg text-slate-300"
                   >
                     <Trash2 className="h-4 w-4 mx-auto" />
                   </button>
@@ -1386,7 +1386,7 @@ function CertificadoDetalle({
           {cert.tipo === 'coa' && cert.resultados && cert.resultados.length > 0 && (
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
               <h4 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-emerald-400" />
+                <FileText className="h-5 w-5 text-slate-300" />
                 Resultados de Análisis
               </h4>
               <div className="overflow-x-auto">
@@ -1409,9 +1409,9 @@ function CertificadoDetalle({
                         <td className="px-3 py-2 text-sm text-slate-400">{r.metodo || '-'}</td>
                         <td className="px-3 py-2 text-center">
                           {r.conforme ? (
-                            <CheckCircle className="h-5 w-5 text-emerald-400 mx-auto" />
+                            <CheckCircle className="h-5 w-5 text-slate-300 mx-auto" />
                           ) : (
-                            <XCircle className="h-5 w-5 text-red-400 mx-auto" />
+                            <XCircle className="h-5 w-5 text-slate-300 mx-auto" />
                           )}
                         </td>
                       </tr>
@@ -1473,7 +1473,7 @@ function CertificadoDetalle({
             {cert.codigo_verificacion && (
               <div>
                 <label className="text-xs text-slate-500">Código Verificación</label>
-                <div className="font-mono text-cyan-400">{cert.codigo_verificacion}</div>
+                <div className="font-mono text-slate-300">{cert.codigo_verificacion}</div>
               </div>
             )}
           </div>
@@ -1513,7 +1513,7 @@ function CertificadoDetalle({
             {cert.estado !== 'anulado' && (
               <button
                 onClick={() => onCambiarEstado(cert.id, 'anulado')}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded-lg text-sm"
               >
                 <XCircle className="h-4 w-4" />
                 Anular
@@ -1615,7 +1615,7 @@ function CertificadoPreview({ cert, onVolver, onDescargar }: CertificadoPreviewP
                       <td className="px-3 py-2 text-sm text-slate-600">{r.especificacion}</td>
                       <td className="px-3 py-2 text-sm text-slate-800 font-medium">{r.resultado}</td>
                       <td className="px-3 py-2 text-center">
-                        <span className={`text-xs font-medium ${r.conforme ? 'text-emerald-600' : 'text-red-600'}`}>
+                        <span className={`text-xs font-medium ${r.conforme ? 'text-slate-300' : 'text-slate-300'}`}>
                           {r.conforme ? 'PASS' : 'FAIL'}
                         </span>
                       </td>

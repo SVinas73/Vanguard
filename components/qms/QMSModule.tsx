@@ -52,7 +52,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'dashboard',
     label: 'Dashboard',
     icon: BarChart3,
-    color: 'text-cyan-400',
+    color: 'text-slate-300',
     descripcion: 'Vista general y KPIs de calidad',
     disponible: true,
   },
@@ -60,7 +60,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'inspeccion-recepcion',
     label: 'Inspección Recepción',
     icon: ClipboardCheck,
-    color: 'text-emerald-400',
+    color: 'text-slate-300',
     descripcion: 'Control de calidad en recepción',
     disponible: true,
   },
@@ -68,7 +68,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'control-proceso',
     label: 'Control en Proceso',
     icon: Activity,
-    color: 'text-teal-400',  // cambié a teal para diferenciar
+    color: 'text-slate-300',  // cambié a teal para diferenciar
     descripcion: 'QC durante producción',
     disponible: true,  // ← CAMBIAR DE false A true
   },
@@ -76,7 +76,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'no-conformidades',
     label: 'No Conformidades',
     icon: AlertTriangle,
-    color: 'text-orange-400',
+    color: 'text-slate-300',
     descripcion: 'Gestión de NCRs',
     disponible: true,
   },
@@ -84,7 +84,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'acciones-correctivas',
     label: 'CAPAs',
     icon: Target,
-    color: 'text-purple-400',
+    color: 'text-slate-300',
     descripcion: 'Acciones correctivas/preventivas',
     disponible: true,
   },
@@ -92,7 +92,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'certificados',
     label: 'Certificados',
     icon: FileCheck,
-    color: 'text-cyan-400',
+    color: 'text-slate-300',
     descripcion: 'COA, COC, COO',
     disponible: true,
   },
@@ -100,7 +100,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'recalls',
     label: 'Recalls',
     icon: AlertOctagon,
-    color: 'text-red-400',
+    color: 'text-slate-300',
     descripcion: 'Retiros de producto',
     disponible: true,
   },
@@ -108,7 +108,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'instrumentos',
     label: 'Instrumentos',
     icon: Thermometer,
-    color: 'text-amber-400',
+    color: 'text-slate-300',
     descripcion: 'Control de calibración',
     disponible: true,
   },
@@ -116,7 +116,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
     id: 'auditorias',
     label: 'Auditorías',
     icon: Search,
-    color: 'text-indigo-400',
+    color: 'text-slate-300',
     descripcion: 'Auditorías internas/externas',
     disponible: true,
   },
@@ -165,7 +165,7 @@ export default function QMSModule() {
         {/* Header */}
         <div className="p-4 border-b border-slate-800/50">
           <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-cyan-400" />
+            <Shield className="h-5 w-5 text-slate-300" />
             <div>
               <h2 className="font-bold text-slate-100 text-sm">QMS</h2>
               <p className="text-[10px] text-slate-500">Sistema de Calidad</p>

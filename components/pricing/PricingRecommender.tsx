@@ -111,7 +111,7 @@ export function PricingRecommender() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-slate-100 tracking-tight flex items-center gap-2">
-            <Sparkles size={16} className="text-amber-400" />
+            <Sparkles size={16} className="text-slate-300" />
             {t('pricing.title') || 'Recomendador de Precios'}
           </h2>
           <p className="text-sm text-slate-500 mt-0.5">{t('pricing.subtitle') || 'ML aplicado: elasticidad de demanda + precio óptimo por producto'}</p>
@@ -129,7 +129,7 @@ export function PricingRecommender() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-5">
           <div className="text-[11px] uppercase tracking-[0.08em] text-slate-500 mb-2">{t('pricing.totalImpact') || 'Impacto anual estimado'}</div>
-          <div className="text-3xl font-semibold text-emerald-300 tabular-nums tracking-tight">
+          <div className="text-3xl font-semibold text-slate-300 tabular-nums tracking-tight">
             {loading ? '…' : fmtMoney(stats.totalImpacto, true)}
           </div>
           <p className="text-[11px] text-slate-500 mt-2">{t('pricing.totalImpactHint') || 'Si aplicás todas las recomendaciones positivas'}</p>
@@ -227,8 +227,8 @@ export function PricingRecommender() {
                     <td className="text-right tabular-nums px-2">
                       <span className={cn(
                         'inline-block px-1.5 py-0.5 rounded text-[11px] font-medium',
-                        r.delta_pct > 0 ? 'bg-emerald-500/10 text-emerald-300'
-                          : r.delta_pct < 0 ? 'bg-amber-500/10 text-amber-300'
+                        r.delta_pct > 0 ? 'bg-slate-800/40 text-slate-300'
+                          : r.delta_pct < 0 ? 'bg-slate-800/40 text-slate-300'
                           : 'bg-slate-700/40 text-slate-400'
                       )}>
                         {r.delta_pct >= 0 ? '+' : ''}{r.delta_pct.toFixed(1)}%
@@ -239,7 +239,7 @@ export function PricingRecommender() {
                     </td>
                     <td className="text-right tabular-nums px-2">
                       <span className={cn(
-                        r.impacto_margen_anual > 0 ? 'text-emerald-300' : r.impacto_margen_anual < 0 ? 'text-red-300' : 'text-slate-500'
+                        r.impacto_margen_anual > 0 ? 'text-slate-300' : r.impacto_margen_anual < 0 ? 'text-slate-300' : 'text-slate-500'
                       )}>
                         {r.impacto_margen_anual >= 0 ? '+' : ''}{fmtMoney(r.impacto_margen_anual, true)}
                       </span>
@@ -281,16 +281,16 @@ export function PricingRecommender() {
 }
 
 function OpIcon({ op }: { op: 'subir' | 'bajar' | 'mantener' }) {
-  if (op === 'subir') return <TrendingUp size={13} className="text-emerald-400 shrink-0" />;
-  if (op === 'bajar') return <TrendingDown size={13} className="text-amber-400 shrink-0" />;
+  if (op === 'subir') return <TrendingUp size={13} className="text-slate-300 shrink-0" />;
+  if (op === 'bajar') return <TrendingDown size={13} className="text-slate-300 shrink-0" />;
   return <Minus size={13} className="text-slate-500 shrink-0" />;
 }
 
 function ConfianzaBadge({ conf }: { conf: 'alta' | 'media' | 'baja' }) {
   const colors = {
-    alta: 'bg-emerald-500/10 text-emerald-300',
+    alta: 'bg-slate-800/40 text-slate-300',
     media: 'bg-slate-700/40 text-slate-300',
-    baja: 'bg-amber-500/10 text-amber-300',
+    baja: 'bg-slate-800/40 text-slate-300',
   };
   const labels = { alta: 'Alta', media: 'Media', baja: 'Baja' };
   return (
@@ -319,10 +319,10 @@ function DetalleRecomendacion({ rec, onClose }: { rec: Recomendacion; onClose: (
               <p className="text-xl font-semibold text-slate-200 tabular-nums">{fmtMoney(rec.precio_actual)}</p>
               <p className="text-[10px] text-slate-500 mt-1">Margen {rec.margen_actual_pct.toFixed(1)}%</p>
             </div>
-            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-md p-3">
-              <p className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Precio sugerido</p>
-              <p className="text-xl font-semibold text-emerald-300 tabular-nums">{fmtMoney(rec.precio_sugerido)}</p>
-              <p className="text-[10px] text-emerald-400/70 mt-1">Margen {rec.margen_sugerido_pct.toFixed(1)}%</p>
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-md p-3">
+              <p className="text-[10px] uppercase tracking-wider text-slate-300 mb-1">Precio sugerido</p>
+              <p className="text-xl font-semibold text-slate-300 tabular-nums">{fmtMoney(rec.precio_sugerido)}</p>
+              <p className="text-[10px] text-slate-300/70 mt-1">Margen {rec.margen_sugerido_pct.toFixed(1)}%</p>
             </div>
           </div>
 
@@ -345,7 +345,7 @@ function DetalleRecomendacion({ rec, onClose }: { rec: Recomendacion; onClose: (
             <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2">Impacto estimado anual</p>
             <p className={cn(
               'text-xl font-semibold tabular-nums',
-              rec.impacto_margen_anual >= 0 ? 'text-emerald-300' : 'text-red-300'
+              rec.impacto_margen_anual >= 0 ? 'text-slate-300' : 'text-slate-300'
             )}>
               {rec.impacto_margen_anual >= 0 ? '+' : ''}{fmtMoney(rec.impacto_margen_anual)}
             </p>
@@ -356,7 +356,7 @@ function DetalleRecomendacion({ rec, onClose }: { rec: Recomendacion; onClose: (
 
           <div className="flex items-center justify-between pt-2 text-[11px] text-slate-500">
             <span className="flex items-center gap-1.5">
-              {rec.confianza === 'alta' ? <CheckCircle2 size={11} className="text-emerald-400" /> : <AlertCircle size={11} className="text-amber-400" />}
+              {rec.confianza === 'alta' ? <CheckCircle2 size={11} className="text-slate-300" /> : <AlertCircle size={11} className="text-slate-300" />}
               Confianza: <span className="capitalize">{rec.confianza}</span>
             </span>
             <span>{rec.datos_usados.transacciones} ventas · {rec.datos_usados.niveles_precio} niveles de precio</span>

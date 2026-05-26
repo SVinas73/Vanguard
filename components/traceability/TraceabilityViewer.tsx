@@ -102,9 +102,9 @@ function useToast() {
     <div className="fixed bottom-4 right-4 z-50 space-y-2">
       {toasts.map(t => (
         <div key={t.id} className={`px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3 ${
-          t.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
-          t.type === 'error' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
-          'bg-amber-500/20 border-amber-500/30 text-amber-400'
+          t.type === 'success' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          t.type === 'error' ? 'bg-slate-800/40 border-slate-700/40 text-slate-300' :
+          'bg-slate-800/40 border-slate-700/40 text-slate-300'
         }`}>
           {t.type === 'success' ? <CheckCircle className="h-5 w-5" /> :
            t.type === 'error' ? <X className="h-5 w-5" /> :
@@ -132,58 +132,58 @@ function useToast() {
 
 const getEventoIcon = (tipo: TipoEvento, size: string = 'h-5 w-5') => {
   const icons: Record<TipoEvento, React.ReactNode> = {
-    RECEPCION: <PackageCheck className={`${size} text-emerald-400`} />,
-    INSPECCION_QC: <ClipboardCheck className={`${size} text-blue-400`} />,
-    ALMACENAMIENTO: <Warehouse className={`${size} text-purple-400`} />,
-    PICKING: <Package className={`${size} text-orange-400`} />,
-    PACKING: <Box className={`${size} text-yellow-400`} />,
-    ENVIO: <Send className={`${size} text-cyan-400`} />,
-    ENTREGA: <CheckCircle className={`${size} text-emerald-400`} />,
-    DEVOLUCION: <RotateCcw className={`${size} text-red-400`} />,
-    ENSAMBLAJE: <Settings className={`${size} text-indigo-400`} />,
-    TRANSFERENCIA: <ArrowRight className={`${size} text-blue-400`} />,
+    RECEPCION: <PackageCheck className={`${size} text-slate-300`} />,
+    INSPECCION_QC: <ClipboardCheck className={`${size} text-slate-300`} />,
+    ALMACENAMIENTO: <Warehouse className={`${size} text-slate-300`} />,
+    PICKING: <Package className={`${size} text-slate-300`} />,
+    PACKING: <Box className={`${size} text-slate-300`} />,
+    ENVIO: <Send className={`${size} text-slate-300`} />,
+    ENTREGA: <CheckCircle className={`${size} text-slate-300`} />,
+    DEVOLUCION: <RotateCcw className={`${size} text-slate-300`} />,
+    ENSAMBLAJE: <Settings className={`${size} text-slate-300`} />,
+    TRANSFERENCIA: <ArrowRight className={`${size} text-slate-300`} />,
     AJUSTE: <FileText className={`${size} text-slate-400`} />,
-    BAJA: <X className={`${size} text-red-400`} />,
-    CAMBIO_ESTADO: <RefreshCw className={`${size} text-yellow-400`} />,
+    BAJA: <X className={`${size} text-slate-300`} />,
+    CAMBIO_ESTADO: <RefreshCw className={`${size} text-slate-300`} />,
   };
   return icons[tipo] || <Clock className={`${size} text-slate-400`} />;
 };
 
 const getEventoColor = (tipo: TipoEvento) => {
   const colors: Record<TipoEvento, { border: string; bg: string; text: string }> = {
-    RECEPCION: { border: 'border-emerald-500', bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-    INSPECCION_QC: { border: 'border-blue-500', bg: 'bg-blue-500/20', text: 'text-blue-400' },
-    ALMACENAMIENTO: { border: 'border-purple-500', bg: 'bg-purple-500/20', text: 'text-purple-400' },
-    PICKING: { border: 'border-orange-500', bg: 'bg-orange-500/20', text: 'text-orange-400' },
-    PACKING: { border: 'border-yellow-500', bg: 'bg-yellow-500/20', text: 'text-yellow-400' },
-    ENVIO: { border: 'border-cyan-500', bg: 'bg-cyan-500/20', text: 'text-cyan-400' },
-    ENTREGA: { border: 'border-emerald-500', bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-    DEVOLUCION: { border: 'border-red-500', bg: 'bg-red-500/20', text: 'text-red-400' },
-    ENSAMBLAJE: { border: 'border-indigo-500', bg: 'bg-indigo-500/20', text: 'text-indigo-400' },
-    TRANSFERENCIA: { border: 'border-blue-500', bg: 'bg-blue-500/20', text: 'text-blue-400' },
+    RECEPCION: { border: 'border-emerald-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    INSPECCION_QC: { border: 'border-blue-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    ALMACENAMIENTO: { border: 'border-purple-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    PICKING: { border: 'border-orange-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    PACKING: { border: 'border-yellow-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    ENVIO: { border: 'border-cyan-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    ENTREGA: { border: 'border-emerald-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    DEVOLUCION: { border: 'border-red-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    ENSAMBLAJE: { border: 'border-indigo-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    TRANSFERENCIA: { border: 'border-blue-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
     AJUSTE: { border: 'border-slate-500', bg: 'bg-slate-500/20', text: 'text-slate-400' },
-    BAJA: { border: 'border-red-500', bg: 'bg-red-500/20', text: 'text-red-400' },
-    CAMBIO_ESTADO: { border: 'border-yellow-500', bg: 'bg-yellow-500/20', text: 'text-yellow-400' },
+    BAJA: { border: 'border-red-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    CAMBIO_ESTADO: { border: 'border-yellow-500', bg: 'bg-slate-800/40', text: 'text-slate-300' },
   };
   return colors[tipo] || { border: 'border-slate-500', bg: 'bg-slate-500/20', text: 'text-slate-400' };
 };
 
 const getResultadoColor = (resultado: ResultadoEvento) => {
   const colors: Record<ResultadoEvento, string> = {
-    EXITOSO: 'text-emerald-400',
-    FALLIDO: 'text-red-400',
-    PENDIENTE: 'text-yellow-400',
-    EN_PROCESO: 'text-blue-400',
+    EXITOSO: 'text-slate-300',
+    FALLIDO: 'text-slate-300',
+    PENDIENTE: 'text-slate-300',
+    EN_PROCESO: 'text-slate-300',
   };
   return colors[resultado] || 'text-slate-400';
 };
 
 const getResultadoBadge = (resultado: ResultadoEvento) => {
   const config: Record<ResultadoEvento, { bg: string; text: string }> = {
-    EXITOSO: { bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-    FALLIDO: { bg: 'bg-red-500/20', text: 'text-red-400' },
-    PENDIENTE: { bg: 'bg-yellow-500/20', text: 'text-yellow-400' },
-    EN_PROCESO: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
+    EXITOSO: { bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    FALLIDO: { bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    PENDIENTE: { bg: 'bg-slate-800/40', text: 'text-slate-300' },
+    EN_PROCESO: { bg: 'bg-slate-800/40', text: 'text-slate-300' },
   };
   return config[resultado] || { bg: 'bg-slate-500/20', text: 'text-slate-400' };
 };
@@ -960,7 +960,7 @@ export default function TraceabilityEnterprise({
   const DiagramaFlujo = () => (
     <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
       <h3 className="text-lg font-semibold text-slate-100 mb-6 flex items-center gap-2">
-        <Network className="h-5 w-5 text-emerald-400" />
+        <Network className="h-5 w-5 text-slate-300" />
         Flujo de Supply Chain
       </h3>
 
@@ -984,10 +984,10 @@ export default function TraceabilityEnterprise({
                     <Clock className="h-6 w-6 text-slate-600" />
                   )}
                   {etapa.completado && etapa.resultado === 'EXITOSO' && (
-                    <CheckCircle className="h-4 w-4 text-emerald-400 absolute -top-1 -right-1" />
+                    <CheckCircle className="h-4 w-4 text-slate-300 absolute -top-1 -right-1" />
                   )}
                   {etapa.completado && etapa.resultado === 'FALLIDO' && (
-                    <AlertCircle className="h-4 w-4 text-red-400 absolute -top-1 -right-1" />
+                    <AlertCircle className="h-4 w-4 text-slate-300 absolute -top-1 -right-1" />
                   )}
                 </div>
                 
@@ -1009,7 +1009,7 @@ export default function TraceabilityEnterprise({
                 {idx < flujoEtapas.length - 1 && (
                   <ChevronRight className={`absolute top-8 -right-4 h-4 w-4 ${
                     etapa.completado && flujoEtapas[idx + 1].completado
-                      ? 'text-emerald-400'
+                      ? 'text-slate-300'
                       : 'text-slate-700'
                   }`} />
                 )}
@@ -1023,7 +1023,7 @@ export default function TraceabilityEnterprise({
       <div className="mt-6 pt-4 border-t border-slate-800">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-slate-400">Progreso del flujo</span>
-          <span className="text-sm font-medium text-emerald-400">
+          <span className="text-sm font-medium text-slate-300">
             {flujoEtapas.filter(e => e.completado).length} / {flujoEtapas.length}
           </span>
         </div>
@@ -1046,7 +1046,7 @@ export default function TraceabilityEnterprise({
       return (
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-            <Layers className="h-5 w-5 text-indigo-400" />
+            <Layers className="h-5 w-5 text-slate-300" />
             Árbol de Genealogía
           </h3>
           <div className="text-center py-12 text-slate-500">
@@ -1062,9 +1062,9 @@ export default function TraceabilityEnterprise({
       const tieneHijos = nodo.children && nodo.children.length > 0;
 
       const colores = {
-        producto_final: { bg: 'bg-emerald-500/20', border: 'border-emerald-500', text: 'text-emerald-400' },
-        componente: { bg: 'bg-cyan-500/20', border: 'border-cyan-500', text: 'text-cyan-400' },
-        materia_prima: { bg: 'bg-amber-500/20', border: 'border-amber-500', text: 'text-amber-400' },
+        producto_final: { bg: 'bg-slate-800/40', border: 'border-emerald-500', text: 'text-slate-300' },
+        componente: { bg: 'bg-slate-800/40', border: 'border-cyan-500', text: 'text-slate-300' },
+        materia_prima: { bg: 'bg-slate-800/40', border: 'border-amber-500', text: 'text-slate-300' },
       };
 
       const color = colores[nodo.tipo];
@@ -1115,7 +1115,7 @@ export default function TraceabilityEnterprise({
     return (
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-          <Layers className="h-5 w-5 text-indigo-400" />
+          <Layers className="h-5 w-5 text-slate-300" />
           Árbol de Genealogía
         </h3>
 
@@ -1147,7 +1147,7 @@ export default function TraceabilityEnterprise({
   const PanelMetricas = () => (
     <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
       <h3 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-        <BarChart3 className="h-5 w-5 text-cyan-400" />
+        <BarChart3 className="h-5 w-5 text-slate-300" />
         Métricas de Tiempo
       </h3>
 
@@ -1164,7 +1164,7 @@ export default function TraceabilityEnterprise({
                 <span className="text-sm font-medium text-slate-300">{m.etapa}</span>
                 {m.cumpleSla !== undefined && (
                   <span className={`text-xs px-2 py-0.5 rounded ${
-                    m.cumpleSla ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                    m.cumpleSla ? 'bg-slate-800/40 text-slate-300' : 'bg-slate-800/40 text-slate-300'
                   }`}>
                     {m.cumpleSla ? '✓ Cumple SLA' : '✗ Excede SLA'}
                   </span>
@@ -1173,15 +1173,15 @@ export default function TraceabilityEnterprise({
 
               <div className="grid grid-cols-4 gap-4 text-center">
                 <div>
-                  <div className="text-lg font-bold text-cyan-400">{formatDuration(m.tiempoPromedio)}</div>
+                  <div className="text-lg font-bold text-slate-300">{formatDuration(m.tiempoPromedio)}</div>
                   <div className="text-xs text-slate-500">Promedio</div>
                 </div>
                 <div>
-                  <div className="text-lg font-bold text-emerald-400">{formatDuration(m.tiempoMinimo)}</div>
+                  <div className="text-lg font-bold text-slate-300">{formatDuration(m.tiempoMinimo)}</div>
                   <div className="text-xs text-slate-500">Mínimo</div>
                 </div>
                 <div>
-                  <div className="text-lg font-bold text-amber-400">{formatDuration(m.tiempoMaximo)}</div>
+                  <div className="text-lg font-bold text-slate-300">{formatDuration(m.tiempoMaximo)}</div>
                   <div className="text-xs text-slate-500">Máximo</div>
                 </div>
                 <div>
@@ -1205,10 +1205,10 @@ export default function TraceabilityEnterprise({
           ))}
 
           {/* Lead Time Total */}
-          <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+          <div className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-emerald-400">Lead Time Total</span>
-              <span className="text-2xl font-bold text-emerald-300">{formatDuration(stats.leadTimeMinutos)}</span>
+              <span className="text-sm font-medium text-slate-300">Lead Time Total</span>
+              <span className="text-2xl font-bold text-slate-300">{formatDuration(stats.leadTimeMinutos)}</span>
             </div>
           </div>
         </div>
@@ -1226,7 +1226,7 @@ export default function TraceabilityEnterprise({
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-emerald-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -1239,7 +1239,7 @@ export default function TraceabilityEnterprise({
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-            <GitBranch className="h-7 w-7 text-emerald-400" />
+            <GitBranch className="h-7 w-7 text-slate-300" />
             Trazabilidad End-to-End
           </h2>
           <p className="text-slate-400 text-sm mt-1">
@@ -1275,7 +1275,7 @@ export default function TraceabilityEnterprise({
               setSearchTerm('');
               setShowDropdown(false);
             }}
-            className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 focus:border-emerald-500/50 focus:outline-none"
+            className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 focus:border-slate-700/40 focus:outline-none"
           >
             <option value="producto">Por Producto</option>
             <option value="lote">Por Lote</option>
@@ -1302,7 +1302,7 @@ export default function TraceabilityEnterprise({
                 }
                 if (e.key === 'Escape') setShowDropdown(false);
               }}
-              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none"
+              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 placeholder-slate-500 focus:border-slate-700/40 focus:outline-none"
             />
             
             {/* Dropdown de opciones */}
@@ -1382,11 +1382,11 @@ export default function TraceabilityEnterprise({
       {itemInfo && (
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-              {itemInfo.tipo === 'Serial' ? <Package className="h-6 w-6 text-emerald-400" /> :
-               itemInfo.tipo === 'Lote' ? <Box className="h-6 w-6 text-cyan-400" /> :
-               itemInfo.tipo === 'Ensamblaje' ? <Settings className="h-6 w-6 text-indigo-400" /> :
-               <Layers className="h-6 w-6 text-purple-400" />}
+            <div className="w-12 h-12 rounded-xl bg-slate-800/40 border border-slate-700/40 flex items-center justify-center">
+              {itemInfo.tipo === 'Serial' ? <Package className="h-6 w-6 text-slate-300" /> :
+               itemInfo.tipo === 'Lote' ? <Box className="h-6 w-6 text-slate-300" /> :
+               itemInfo.tipo === 'Ensamblaje' ? <Settings className="h-6 w-6 text-slate-300" /> :
+               <Layers className="h-6 w-6 text-slate-300" />}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
@@ -1401,7 +1401,7 @@ export default function TraceabilityEnterprise({
               )}
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-emerald-400">{eventos.length}</div>
+              <div className="text-2xl font-bold text-slate-300">{eventos.length}</div>
               <div className="text-xs text-slate-500">eventos</div>
             </div>
           </div>
@@ -1412,23 +1412,23 @@ export default function TraceabilityEnterprise({
       {eventos.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-            <div className="text-2xl font-bold text-blue-400">{stats.total}</div>
+            <div className="text-2xl font-bold text-slate-300">{stats.total}</div>
             <div className="text-sm text-slate-500">Total Eventos</div>
           </div>
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-            <div className="text-2xl font-bold text-emerald-400">{stats.exitosos}</div>
+            <div className="text-2xl font-bold text-slate-300">{stats.exitosos}</div>
             <div className="text-sm text-slate-500">Exitosos</div>
           </div>
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-            <div className="text-2xl font-bold text-red-400">{stats.fallidos}</div>
+            <div className="text-2xl font-bold text-slate-300">{stats.fallidos}</div>
             <div className="text-sm text-slate-500">Fallidos</div>
           </div>
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-            <div className="text-2xl font-bold text-yellow-400">{stats.pendientes}</div>
+            <div className="text-2xl font-bold text-slate-300">{stats.pendientes}</div>
             <div className="text-sm text-slate-500">Pendientes</div>
           </div>
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
-            <div className="text-2xl font-bold text-cyan-400">{formatDuration(stats.leadTimeMinutos)}</div>
+            <div className="text-2xl font-bold text-slate-300">{formatDuration(stats.leadTimeMinutos)}</div>
             <div className="text-sm text-slate-500">Lead Time</div>
           </div>
         </div>
@@ -1436,15 +1436,15 @@ export default function TraceabilityEnterprise({
 
       {/* Alertas/Anomalías */}
       {anomalias.length > 0 && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-          <h4 className="font-semibold text-red-400 mb-3 flex items-center gap-2">
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
+          <h4 className="font-semibold text-slate-300 mb-3 flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
             Alertas Detectadas ({anomalias.length})
           </h4>
           <div className="space-y-2">
             {anomalias.map((a, idx) => (
               <div key={idx} className={`flex items-center gap-2 text-sm ${
-                a.severidad === 'alta' ? 'text-red-400' : a.severidad === 'media' ? 'text-amber-400' : 'text-yellow-400'
+                a.severidad === 'alta' ? 'text-slate-300' : a.severidad === 'media' ? 'text-slate-300' : 'text-slate-300'
               }`}>
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 {a.mensaje}
@@ -1468,7 +1468,7 @@ export default function TraceabilityEnterprise({
               onClick={() => setVistaActiva(tab.id as VistaActiva)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                 vistaActiva === tab.id
-                  ? 'bg-slate-800 text-emerald-400'
+                  ? 'bg-slate-800 text-slate-300'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -1497,7 +1497,7 @@ export default function TraceabilityEnterprise({
           {vistaActiva === 'timeline' && (
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-100 mb-6 flex items-center gap-2">
-                <GitBranch className="h-5 w-5 text-emerald-400" />
+                <GitBranch className="h-5 w-5 text-slate-300" />
                 Línea de Tiempo
               </h3>
 

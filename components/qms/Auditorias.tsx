@@ -151,35 +151,35 @@ type VistaActiva = 'lista' | 'nuevo' | 'detalle' | 'editar';
 // ============================================
 
 const TIPO_CONFIG: Record<TipoAuditoria, { label: string; color: string; bg: string; icon: React.ElementType; descripcion: string }> = {
-  interna: { label: 'Interna', color: 'text-blue-400', bg: 'bg-blue-500/20', icon: Building2, descripcion: 'Auditoría realizada por personal interno' },
-  externa: { label: 'Externa', color: 'text-purple-400', bg: 'bg-purple-500/20', icon: ExternalLink, descripcion: 'Auditoría realizada por terceros' },
-  cliente: { label: 'Cliente', color: 'text-cyan-400', bg: 'bg-cyan-500/20', icon: Users, descripcion: 'Auditoría realizada por el cliente' },
-  certificacion: { label: 'Certificación', color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: Award, descripcion: 'Auditoría de organismo certificador' },
-  proveedor: { label: 'Proveedor', color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Briefcase, descripcion: 'Auditoría a proveedores' },
+  interna: { label: 'Interna', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: Building2, descripcion: 'Auditoría realizada por personal interno' },
+  externa: { label: 'Externa', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: ExternalLink, descripcion: 'Auditoría realizada por terceros' },
+  cliente: { label: 'Cliente', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: Users, descripcion: 'Auditoría realizada por el cliente' },
+  certificacion: { label: 'Certificación', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: Award, descripcion: 'Auditoría de organismo certificador' },
+  proveedor: { label: 'Proveedor', color: 'text-slate-300', bg: 'bg-slate-800/40', icon: Briefcase, descripcion: 'Auditoría a proveedores' },
 };
 
 const ESTADO_CONFIG: Record<EstadoAuditoria, { label: string; color: string; bg: string }> = {
   planificada: { label: 'Planificada', color: 'text-slate-400', bg: 'bg-slate-500/20' },
-  en_preparacion: { label: 'En Preparación', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  en_proceso: { label: 'En Proceso', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  informe_pendiente: { label: 'Informe Pendiente', color: 'text-purple-400', bg: 'bg-purple-500/20' },
-  completada: { label: 'Completada', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  cancelada: { label: 'Cancelada', color: 'text-red-400', bg: 'bg-red-500/20' },
+  en_preparacion: { label: 'En Preparación', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_proceso: { label: 'En Proceso', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  informe_pendiente: { label: 'Informe Pendiente', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  completada: { label: 'Completada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  cancelada: { label: 'Cancelada', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 const TIPO_HALLAZGO_CONFIG: Record<TipoHallazgo, { label: string; color: string; bg: string; severidad: number }> = {
-  no_conformidad_mayor: { label: 'NC Mayor', color: 'text-red-500', bg: 'bg-red-500/20', severidad: 1 },
-  no_conformidad_menor: { label: 'NC Menor', color: 'text-orange-400', bg: 'bg-orange-500/20', severidad: 2 },
-  observacion: { label: 'Observación', color: 'text-amber-400', bg: 'bg-amber-500/20', severidad: 3 },
-  oportunidad_mejora: { label: 'Oportunidad de Mejora', color: 'text-blue-400', bg: 'bg-blue-500/20', severidad: 4 },
-  fortaleza: { label: 'Fortaleza', color: 'text-emerald-400', bg: 'bg-emerald-500/20', severidad: 5 },
+  no_conformidad_mayor: { label: 'NC Mayor', color: 'text-slate-300', bg: 'bg-slate-800/40', severidad: 1 },
+  no_conformidad_menor: { label: 'NC Menor', color: 'text-slate-300', bg: 'bg-slate-800/40', severidad: 2 },
+  observacion: { label: 'Observación', color: 'text-slate-300', bg: 'bg-slate-800/40', severidad: 3 },
+  oportunidad_mejora: { label: 'Oportunidad de Mejora', color: 'text-slate-300', bg: 'bg-slate-800/40', severidad: 4 },
+  fortaleza: { label: 'Fortaleza', color: 'text-slate-300', bg: 'bg-slate-800/40', severidad: 5 },
 };
 
 const ESTADO_HALLAZGO_CONFIG: Record<EstadoHallazgo, { label: string; color: string; bg: string }> = {
-  abierto: { label: 'Abierto', color: 'text-red-400', bg: 'bg-red-500/20' },
-  en_seguimiento: { label: 'En Seguimiento', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  verificado: { label: 'Verificado', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  cerrado: { label: 'Cerrado', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+  abierto: { label: 'Abierto', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  en_seguimiento: { label: 'En Seguimiento', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  verificado: { label: 'Verificado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
+  cerrado: { label: 'Cerrado', color: 'text-slate-300', bg: 'bg-slate-800/40' },
 };
 
 const CRITERIOS_COMUNES = [
@@ -586,7 +586,7 @@ export default function Auditorias() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-indigo-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -598,15 +598,15 @@ export default function Auditorias() {
         <>
           {/* Alertas próximas */}
           {stats.proximaSemana > 0 && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-4">
-              <div className="p-3 bg-amber-500/20 rounded-xl">
-                <Calendar className="h-6 w-6 text-amber-400" />
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 flex items-center gap-4">
+              <div className="p-3 bg-slate-800/40 rounded-xl">
+                <Calendar className="h-6 w-6 text-slate-300" />
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-amber-400">
+                <h4 className="font-semibold text-slate-300">
                   {stats.proximaSemana} auditoría(s) programada(s) para esta semana
                 </h4>
-                <p className="text-sm text-amber-300/70">
+                <p className="text-sm text-slate-300/70">
                   Revise la preparación y documentación necesaria
                 </p>
               </div>
@@ -617,7 +617,7 @@ export default function Auditorias() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <ClipboardList className="h-6 w-6 text-indigo-400" />
+                <ClipboardList className="h-6 w-6 text-slate-300" />
                 Gestión de Auditorías
               </h3>
               <p className="text-slate-400 text-sm mt-1">
@@ -631,18 +631,18 @@ export default function Auditorias() {
                 <div className="text-xs text-slate-400">Planificadas</div>
                 <div className="text-xl font-bold text-slate-300">{stats.planificadas}</div>
               </div>
-              <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-                <div className="text-xs text-blue-400">En Proceso</div>
-                <div className="text-xl font-bold text-blue-400">{stats.enProceso}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">En Proceso</div>
+                <div className="text-xl font-bold text-slate-300">{stats.enProceso}</div>
               </div>
-              <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                <div className="text-xs text-emerald-400">Completadas</div>
-                <div className="text-xl font-bold text-emerald-400">{stats.completadas}</div>
+              <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                <div className="text-xs text-slate-300">Completadas</div>
+                <div className="text-xl font-bold text-slate-300">{stats.completadas}</div>
               </div>
               {stats.ncMayores > 0 && (
-                <div className="px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-xl">
-                  <div className="text-xs text-red-400">NC Mayores</div>
-                  <div className="text-xl font-bold text-red-400">{stats.ncMayores}</div>
+                <div className="px-4 py-2 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+                  <div className="text-xs text-slate-300">NC Mayores</div>
+                  <div className="text-xl font-bold text-slate-300">{stats.ncMayores}</div>
                 </div>
               )}
             </div>
@@ -658,7 +658,7 @@ export default function Auditorias() {
                   placeholder="Buscar por número, título, auditor..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-700/40"
                 />
               </div>
               
@@ -751,7 +751,7 @@ export default function Auditorias() {
                     <div className="flex-1">
                       {/* Header */}
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <span className="font-mono text-sm text-indigo-400">{aud.numero}</span>
+                        <span className="font-mono text-sm text-slate-300">{aud.numero}</span>
                         <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${tipoConfig.bg} ${tipoConfig.color}`}>
                           <TipoIcon className="h-3 w-3" />
                           {tipoConfig.label}
@@ -773,16 +773,16 @@ export default function Auditorias() {
                       {(aud.total_hallazgos || 0) > 0 && (
                         <div className="flex gap-3 mb-2">
                           {(aud.nc_mayores || 0) > 0 && (
-                            <span className="text-xs text-red-400">{aud.nc_mayores} NC Mayor</span>
+                            <span className="text-xs text-slate-300">{aud.nc_mayores} NC Mayor</span>
                           )}
                           {(aud.nc_menores || 0) > 0 && (
-                            <span className="text-xs text-orange-400">{aud.nc_menores} NC Menor</span>
+                            <span className="text-xs text-slate-300">{aud.nc_menores} NC Menor</span>
                           )}
                           {(aud.observaciones || 0) > 0 && (
-                            <span className="text-xs text-amber-400">{aud.observaciones} Obs.</span>
+                            <span className="text-xs text-slate-300">{aud.observaciones} Obs.</span>
                           )}
                           {(aud.fortalezas || 0) > 0 && (
-                            <span className="text-xs text-emerald-400">{aud.fortalezas} Fortalezas</span>
+                            <span className="text-xs text-slate-300">{aud.fortalezas} Fortalezas</span>
                           )}
                         </div>
                       )}
@@ -793,7 +793,7 @@ export default function Auditorias() {
                           <Calendar className="h-3 w-3" />
                           {formatDate(aud.fecha_planificada)}
                           {diasParaAuditoria !== null && diasParaAuditoria >= 0 && aud.estado === 'planificada' && (
-                            <span className={diasParaAuditoria <= 7 ? 'text-amber-400' : ''}>
+                            <span className={diasParaAuditoria <= 7 ? 'text-slate-300' : ''}>
                               (en {diasParaAuditoria} días)
                             </span>
                           )}
@@ -1249,7 +1249,7 @@ function AuditoriaDetalle({
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-lg text-indigo-400">{aud.numero}</span>
+              <span className="font-mono text-lg text-slate-300">{aud.numero}</span>
               <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${tipoConfig.bg} ${tipoConfig.color}`}>
                 <TipoIcon className="h-3 w-3" />
                 {tipoConfig.label}
@@ -1288,21 +1288,21 @@ function AuditoriaDetalle({
           <div className="text-2xl font-bold text-slate-200">{aud.total_hallazgos || 0}</div>
           <div className="text-xs text-slate-400">Total</div>
         </div>
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-red-400">{aud.nc_mayores || 0}</div>
-          <div className="text-xs text-red-400">NC Mayores</div>
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+          <div className="text-2xl font-bold text-slate-300">{aud.nc_mayores || 0}</div>
+          <div className="text-xs text-slate-300">NC Mayores</div>
         </div>
-        <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-orange-400">{aud.nc_menores || 0}</div>
-          <div className="text-xs text-orange-400">NC Menores</div>
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+          <div className="text-2xl font-bold text-slate-300">{aud.nc_menores || 0}</div>
+          <div className="text-xs text-slate-300">NC Menores</div>
         </div>
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-amber-400">{aud.observaciones || 0}</div>
-          <div className="text-xs text-amber-400">Observaciones</div>
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+          <div className="text-2xl font-bold text-slate-300">{aud.observaciones || 0}</div>
+          <div className="text-xs text-slate-300">Observaciones</div>
         </div>
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-emerald-400">{aud.fortalezas || 0}</div>
-          <div className="text-xs text-emerald-400">Fortalezas</div>
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+          <div className="text-2xl font-bold text-slate-300">{aud.fortalezas || 0}</div>
+          <div className="text-xs text-slate-300">Fortalezas</div>
         </div>
       </div>
 
@@ -1322,7 +1322,7 @@ function AuditoriaDetalle({
                 onClick={() => setTabActivo(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                   tabActivo === tab.id
-                    ? 'border-indigo-500 text-indigo-400'
+                    ? 'border-indigo-500 text-slate-300'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -1464,7 +1464,7 @@ function AuditoriaDetalle({
                         {hallazgo.estado === 'abierto' && (
                           <button
                             onClick={() => onCambiarEstadoHallazgo(hallazgo.id, 'en_seguimiento')}
-                            className="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded text-xs"
+                            className="px-2 py-1 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded text-xs"
                           >
                             Seguimiento
                           </button>
@@ -1472,7 +1472,7 @@ function AuditoriaDetalle({
                         {hallazgo.estado === 'en_seguimiento' && (
                           <button
                             onClick={() => onCambiarEstadoHallazgo(hallazgo.id, 'verificado')}
-                            className="px-2 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded text-xs"
+                            className="px-2 py-1 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded text-xs"
                           >
                             Verificar
                           </button>
@@ -1480,7 +1480,7 @@ function AuditoriaDetalle({
                         {hallazgo.estado === 'verificado' && (
                           <button
                             onClick={() => onCambiarEstadoHallazgo(hallazgo.id, 'cerrado')}
-                            className="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded text-xs"
+                            className="px-2 py-1 bg-slate-800/40 hover:bg-slate-800/40 text-slate-300 rounded text-xs"
                           >
                             Cerrar
                           </button>
@@ -1493,7 +1493,7 @@ function AuditoriaDetalle({
             </div>
           ) : (
             <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center">
-              <CheckCircle className="h-12 w-12 mx-auto mb-3 text-emerald-400" />
+              <CheckCircle className="h-12 w-12 mx-auto mb-3 text-slate-300" />
               <p className="text-slate-400">No hay hallazgos registrados</p>
               {aud.estado === 'en_proceso' && null}
             </div>
