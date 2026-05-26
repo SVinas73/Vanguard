@@ -2,10 +2,13 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Product, Movement, StockPrediction } from '@/types';
-import { cn, formatCurrency, formatNumber } from '@/lib/utils';
+import { Product, Movement, StockPrediction, type Moneda } from '@/types';
+import { cn, formatNumber } from '@/lib/utils';
 import { Card } from '@/components/ui';
 import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valuation';
+import { formatMoney, convertir } from '@/lib/currency';
+import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
+import { useTiposCambio } from '@/hooks/useTiposCambio';
 import {
   AreaChart,
   Area,
@@ -111,6 +114,19 @@ const ABC_COLORS = {
 
 export function AnalyticsDashboard({ products, movements, predictions }: AnalyticsDashboardProps) {
   const { t } = useTranslation();
+
+  // Moneda destino desde Configuración. Los valores se calculan en UYU
+  // (base del sistema); acá convertimos para mostrar. Antes Analytics
+  // ignoraba la moneda y mostraba todo en pesos.
+  const { config: orgConfig } = useModulosHabilitados();
+  const { rates: ratesTable } = useTiposCambio();
+  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
+  const formatCurrency = (v: number): string => {
+    if (monedaTarget === 'UYU') return formatMoney(v, 'UYU');
+    const c = convertir(v, 'UYU', monedaTarget, ratesTable);
+    return c === null ? `${formatMoney(v, 'UYU')} *` : formatMoney(c, monedaTarget);
+  };
+
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [period, setPeriod] = useState<PeriodType>('month');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
