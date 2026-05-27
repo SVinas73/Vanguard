@@ -32,7 +32,7 @@ export const ALL_MODULES: TabType[] = [
   'inicio',
   'dashboard', 'executive', 'stock', 'movimientos', 'chat',
   'comercial', 'replenishment', 'proyectos', 'wms', 'facturacion',
-  'clientes_360', 'bom', 'ensamblajes',
+  'clientes_360',
   'taller', 'garantias', 'tickets', 'customer_risk', 'rma',
   'rrhh',
   'analytics', 'demand', 'pricing', 'reportes',

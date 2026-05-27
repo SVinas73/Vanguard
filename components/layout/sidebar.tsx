@@ -155,9 +155,15 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
         { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
         { id: 'facturacion', label: t('nav.invoicing') || 'Facturación electrónica', icon: FileText },
+      ]
+    },
+    {
+      key: 'clientes',
+      title: 'Clientes',
+      defaultOpen: false,
+      items: [
         { id: 'clientes_360', label: t('modules.customers360') || 'Cliente 360°', icon: Users },
-        { id: 'bom', label: t('modules.bom'), icon: Boxes, permission: 'canViewBOM' },
-        { id: 'ensamblajes', label: t('modules.assemblies'), icon: Wrench, permission: 'canViewBOM' },
+        { id: 'customer_risk', label: t('nav.customerRisk') || 'Clientes en riesgo', icon: ShieldAlert, badge: 'AI' },
       ]
     },
     {
@@ -168,7 +174,6 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'taller', label: t('modules.workshop'), icon: Wrench, permission: 'canViewTaller' },
         { id: 'garantias', label: t('modules.warranties') || 'Garantías', icon: Shield },
         { id: 'tickets', label: t('modules.tickets') || 'Tickets soporte', icon: MessageCircle },
-        { id: 'customer_risk', label: t('nav.customerRisk') || 'Clientes en riesgo', icon: ShieldAlert, badge: 'AI' },
         { id: 'rma', label: t('modules.returns'), icon: RotateCcw, permission: 'canViewRMA' },
       ]
     },
