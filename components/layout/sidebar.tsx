@@ -266,7 +266,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         'flex items-center gap-2.5 h-14 px-4 border-b border-[#1A1A1A]',
         collapsed && 'justify-center px-2'
       )}>
-        <Logo size={24} />
+        <Logo size={38} />
         {!collapsed && (
           <div className="flex-1 min-w-0">
             <h1 className="text-[13px] font-medium text-[#F1F1F1] tracking-tight">
