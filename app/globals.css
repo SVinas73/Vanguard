@@ -993,3 +993,10 @@ button.hover\:bg-teal-500:hover, button.hover\:bg-green-500:hover {
 /* Item activo del menú: barra/tinte azul también en light */
 .light-mode aside .bg-\[\#1A1A1A\]:hover,
 .light-mode aside .hover\:bg-\[\#1A1A1A\]:hover { background-color: rgba(59,130,246,0.12) !important; }
+
+/* =====================================================
+   SIDEBAR — modo OSCURO: letras más visibles
+   ===================================================== */
+/* Labels de ítems y títulos de sección un poco más claros para que se lean */
+aside .text-\[\#A0A0A0\] { color: #c4c9d4 !important; }
+aside .text-\[\#6B6B6B\] { color: #8d95a3 !important; }

@@ -39,7 +39,6 @@ const IntegracionesDashboard = dynamic(() => import('@/components/integraciones/
 const TallerEnterprise      = dynamic(() => import('@/components/taller'),                                                       { loading: ModuleLoader });
 const AuditLogPanel         = dynamic(() => import('@/components/audit').then(m => ({ default: m.AuditLogPanel })),              { loading: ModuleLoader });
 const ReportsEnterprise     = dynamic(() => import('@/components/reports').then(m => ({ default: m.ReportsEnterprise })),        { loading: ModuleLoader });
-const QuickScanner          = dynamic(() => import('@/components/scanner').then(m => ({ default: m.QuickScanner })),             { loading: ModuleLoader });
 const AIPredictionsPanel    = dynamic(() => import('@/components/ai').then(m => ({ default: m.AIPredictionsPanel })),            { loading: ModuleLoader });
 const AIAnomaliesPanel      = dynamic(() => import('@/components/ai').then(m => ({ default: m.AIAnomaliesPanel })),              { loading: ModuleLoader });
 const AIAssociationsPanel   = dynamic(() => import('@/components/ai').then(m => ({ default: m.AIAssociationsPanel })),           { loading: ModuleLoader });
@@ -1374,17 +1373,7 @@ export default function HomePage() {
         </div>
       </Modal>
 
-      {/* Scanner de código de barras */}
-      <QuickScanner
-        products={products}
-        onProductFound={(product) => handleOpenEdit(product)}
-        onOpenMovement={(product, tipo) => {
-          setNewMovement({ ...newMovement, codigo: product.codigo, tipo });
-          setShowNewMovement(true);
-        }}
-      />
-
-      {/* Chatbot IA */}
+      {/* Asistente Vanguard (IA) */}
       <ChatbotWidget />
       <CommandPalette
         open={paletteOpen}
