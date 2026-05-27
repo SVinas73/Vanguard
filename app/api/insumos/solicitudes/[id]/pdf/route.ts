@@ -28,35 +28,25 @@ const ESTADO_LABEL: Record<string, string> = {
 // Escudo Vanguard COMPLETO — réplica fiel del SVG de Logo.tsx
 // =====================================================
 // =====================================================
-// Logo Vanguard — V azul (chevron) con V blanca interior
+// Logo Vanguard — doble "V" (solo el símbolo)
 // =====================================================
-// Dibuja la V en azul dentro de un cuadrado de lado `size` (mm).
-// viewBox lógico 64x64. Mismo path que el componente Logo.
+// Dos trazos en V azul dentro de un cuadrado de lado `size` (mm).
+// viewBox lógico 64x64. Mismo trazo que el componente Logo.
 function dibujarEscudoVanguard(doc: jsPDF, x: number, y: number, size = 14) {
   const s = size / 64;
-
-  // Banda en V azul: 4,12 → 19,12 → 32,41 → 45,12 → 60,12 → 38,58 → 26,58
-  doc.setFillColor(37, 96, 176); // #2560b0
+  // V como banda azul (jsPDF no soporta evenodd holes fácil, así que la
+  // dibujamos como dos brazos rellenos que dejan el centro vacío).
+  doc.setFillColor(43, 98, 176); // #2b62b0
+  // Brazo izquierdo: 9,14 -> 22,19 -> 32,37(inner) -> 32,56(punta)
   doc.lines(
-    [
-      [15, 0],    // 4,12 -> 19,12
-      [13, 29],   // -> 32,41
-      [13, -29],  // -> 45,12
-      [15, 0],    // -> 60,12
-      [-22, 46],  // -> 38,58
-      [-12, 0],   // -> 26,58
-    ],
-    x + 4 * s, y + 12 * s, [s, s], 'F', true,
+    [[13, 5], [10, 18], [0, 19], [-23, -42]],
+    x + 9 * s, y + 14 * s, [s, s], 'F', true,
   );
-
-  // V blanca interior (línea): 22,12 -> 32,35 -> 42,12
-  doc.setDrawColor(255, 255, 255);
-  doc.setLineWidth(3.2 * s);
+  // Brazo derecho: 55,14 -> 42,19 -> 32,37 -> 32,56
   doc.lines(
-    [[10, 23], [10, -23]],
-    x + 22 * s, y + 12 * s, [s, s], 'S', false,
+    [[-13, 5], [-10, 18], [0, 19], [23, -42]],
+    x + 55 * s, y + 14 * s, [s, s], 'F', true,
   );
-
   doc.setFillColor(0, 0, 0); // reset
 }
 

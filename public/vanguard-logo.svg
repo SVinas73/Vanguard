@@ -1,10 +1,4 @@
 <svg width="256" height="256" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Vanguard" role="img">
-  <defs>
-    <linearGradient id="vg-v" x1="10" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#2f6fc4"/>
-      <stop offset="100%" stop-color="#1d4f9c"/>
-    </linearGradient>
-  </defs>
-  <path d="M4 12 L19 12 L32 41 L45 12 L60 12 L38 58 L26 58 Z" fill="url(#vg-v)"/>
-  <path d="M22 12 L32 35 L42 12" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" fill="#2b62b0"
+    d="M9 14 L32 56 L55 14 Z M22 19 L32 37 L42 19 Z M16 19 L19.5 19 L30 42 L26.5 42 Z"/>
 </svg>

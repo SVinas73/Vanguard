@@ -2,11 +2,11 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 // =====================================================
-// Vanguard Logo
+// Vanguard Logo — doble "V" (solo el símbolo)
 // =====================================================
-// Renderiza el escudo real desde /vang.png (el archivo que subís a
-// /public). Así el logo es EXACTO en todo el sistema y se actualiza
-// con solo reemplazar ese archivo — sin recreaciones en SVG.
+// SVG con fondo TRANSPARENTE: solo los trazos azules de la V. El hueco
+// entre los dos trazos deja ver el fondo del sistema (se camufla con el
+// color de fondo que haya en ese momento). Sin texto.
 //
 //   <Logo />            icono 32px
 //   <Logo size={64} />  tamaño custom
@@ -17,12 +17,14 @@ interface LogoProps {
   size?: number;
   className?: string;
   withText?: boolean;
-  /** compat con llamadas previas — ya no afectan (el logo es una imagen) */
+  /** compat con llamadas previas */
   mono?: boolean;
   dark?: boolean;
   textClassName?: string;
   gradientId?: string;
 }
+
+const AZUL = '#2b62b0';
 
 export function Logo({
   size = 32,
@@ -32,13 +34,26 @@ export function Logo({
 }: LogoProps) {
   return (
     <div className={cn('inline-flex items-center gap-2.5', className)}>
-      <img
-        src="/vang.png"
+      <svg
         width={size}
         height={size}
-        alt="Vanguard"
-        style={{ width: size, height: size, objectFit: 'contain', display: 'block' }}
-      />
+        viewBox="0 0 64 64"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="Vanguard"
+        role="img"
+      >
+        {/* V rellena (banda) con apertura central + ranura diagonal en el
+            brazo izquierdo. fill-rule evenodd → los huecos dejan ver el
+            fondo del sistema, así se camufla con el color del momento. */}
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          fill={AZUL}
+          d="M9 14 L32 56 L55 14 Z M22 19 L32 37 L42 19 Z M16 19 L19.5 19 L30 42 L26.5 42 Z"
+        />
+      </svg>
+
       {withText && (
         <span
           className={cn(
