@@ -186,12 +186,26 @@ export function InicioHome({ user, onTabChange, products }: InicioHomeProps) {
   return (
     <div className="relative min-h-[calc(100vh-3.5rem)] px-6 py-10">
       <div className="relative max-w-5xl mx-auto">
-        {/* Saludo */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-100">
-            {saludo}{nombre ? `, ${nombre}` : ''}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1 capitalize">{fecha}</p>
+        {/* Saludo + resumen rápido */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-100">
+              {saludo}{nombre ? `, ${nombre}` : ''}
+            </h1>
+            <p className="text-sm text-slate-500 mt-1 capitalize">{fecha}</p>
+          </div>
+          <div className="flex gap-3">
+            {[
+              { label: 'Productos', value: resumen.total },
+              { label: 'Stock bajo', value: resumen.bajos },
+              { label: 'Sin stock', value: resumen.agotados },
+            ].map(s => (
+              <div key={s.label} className="rounded-xl border border-slate-800/60 bg-slate-900/40 px-4 py-2 text-center min-w-[84px]">
+                <div className="text-xl font-semibold text-slate-100 tabular-nums">{s.value}</div>
+                <div className="text-[11px] text-slate-500">{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Recordatorios */}
