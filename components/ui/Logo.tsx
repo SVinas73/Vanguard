@@ -43,23 +43,14 @@ export function Logo({
         aria-label="Vanguard"
         role="img"
       >
-        {/* V exterior */}
+        {/* V rellena (banda) con apertura central + ranura diagonal en el
+            brazo izquierdo. fill-rule evenodd → los huecos dejan ver el
+            fondo del sistema, así se camufla con el color del momento. */}
         <path
-          d="M8 14 L32 54 L56 14"
-          fill="none"
-          stroke={AZUL}
-          strokeWidth="6"
-          strokeLinejoin="miter"
-          strokeMiterlimit="6"
-        />
-        {/* V interior (más corta) — el hueco deja ver el fondo del sistema */}
-        <path
-          d="M20 14 L32 39 L44 14"
-          fill="none"
-          stroke={AZUL}
-          strokeWidth="6"
-          strokeLinejoin="miter"
-          strokeMiterlimit="6"
+          fillRule="evenodd"
+          clipRule="evenodd"
+          fill={AZUL}
+          d="M9 14 L32 56 L55 14 Z M22 19 L32 37 L42 19 Z M16 19 L19.5 19 L30 42 L26.5 42 Z"
         />
       </svg>
 

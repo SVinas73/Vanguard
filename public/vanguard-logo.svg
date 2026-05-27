@@ -1,4 +1,4 @@
 <svg width="256" height="256" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Vanguard" role="img">
-  <path d="M8 14 L32 54 L56 14" fill="none" stroke="#2b62b0" stroke-width="6" stroke-linejoin="miter" stroke-miterlimit="6"/>
-  <path d="M20 14 L32 39 L44 14" fill="none" stroke="#2b62b0" stroke-width="6" stroke-linejoin="miter" stroke-miterlimit="6"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" fill="#2b62b0"
+    d="M9 14 L32 56 L55 14 Z M22 19 L32 37 L42 19 Z M16 19 L19.5 19 L30 42 L26.5 42 Z"/>
 </svg>

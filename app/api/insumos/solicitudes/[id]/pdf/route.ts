@@ -34,12 +34,19 @@ const ESTADO_LABEL: Record<string, string> = {
 // viewBox lógico 64x64. Mismo trazo que el componente Logo.
 function dibujarEscudoVanguard(doc: jsPDF, x: number, y: number, size = 14) {
   const s = size / 64;
-  doc.setDrawColor(43, 98, 176); // #2b62b0
-  doc.setLineWidth(6 * s);
-  // V exterior: 8,14 -> 32,54 -> 56,14
-  doc.lines([[24, 40], [24, -40]], x + 8 * s, y + 14 * s, [s, s], 'S', false);
-  // V interior: 20,14 -> 32,39 -> 44,14
-  doc.lines([[12, 25], [12, -25]], x + 20 * s, y + 14 * s, [s, s], 'S', false);
+  // V como banda azul (jsPDF no soporta evenodd holes fácil, así que la
+  // dibujamos como dos brazos rellenos que dejan el centro vacío).
+  doc.setFillColor(43, 98, 176); // #2b62b0
+  // Brazo izquierdo: 9,14 -> 22,19 -> 32,37(inner) -> 32,56(punta)
+  doc.lines(
+    [[13, 5], [10, 18], [0, 19], [-23, -42]],
+    x + 9 * s, y + 14 * s, [s, s], 'F', true,
+  );
+  // Brazo derecho: 55,14 -> 42,19 -> 32,37 -> 32,56
+  doc.lines(
+    [[-13, 5], [-10, 18], [0, 19], [23, -42]],
+    x + 55 * s, y + 14 * s, [s, s], 'F', true,
+  );
   doc.setFillColor(0, 0, 0); // reset
 }
 
