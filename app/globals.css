@@ -954,3 +954,19 @@ button.hover\:bg-teal-500:hover, button.hover\:bg-green-500:hover {
 .light-mode .hover\:bg-\[\#222222\]:hover, .light-mode .hover\:bg-\[\#242830\]:hover { background-color: #e9edf3 !important; }
 .light-mode .hover\:border-\[\#4A4A4A\]:hover, .light-mode .hover\:border-\[\#475569\]:hover { border-color: #b0b8c4 !important; }
 .light-mode .text-\[\#f8fafc\], .light-mode .text-\[\#F1F1F1\], .light-mode .text-\[\#f1f1f1\] { color: #1a2030 !important; }
+
+/* =====================================================
+   Escudo de fondo en la pantalla de Inicio — flotar lento
+   ===================================================== */
+@keyframes vgHomeFloat {
+  0%   { transform: translateY(0) scale(1); opacity: 0.05; }
+  50%  { transform: translateY(-18px) scale(1.04); opacity: 0.08; }
+  100% { transform: translateY(0) scale(1); opacity: 0.05; }
+}
+.vg-home-shield {
+  animation: vgHomeFloat 9s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vg-home-shield { animation: none; }
+}
