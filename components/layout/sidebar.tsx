@@ -111,13 +111,13 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    main: true,
-    operations: true,
-    postSales: true,
-    people: true,
-    analysis: true,
+    main: false,
+    operations: false,
+    postSales: false,
+    people: false,
+    analysis: false,
     control: false,
-    config: true,
+    config: false,
   });
 
   // Configuración de roles - colores más sutiles (Linear style)
