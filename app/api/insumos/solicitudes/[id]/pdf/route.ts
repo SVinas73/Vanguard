@@ -10,6 +10,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from '@/lib/security/permissions';
 import { jsPDF } from 'jspdf';
+import { readFile } from 'fs/promises';
+import path from 'path';
+
+// Carga el PNG del logo (public/vang.png) como data URI para embeberlo en
+// el PDF. Cacheado en memoria. Si falla, devolvemos null y el PDF cae al
+// dibujo vectorial de respaldo.
+let _logoCache: string | null | undefined;
+async function getLogoDataUri(): Promise<string | null> {
+  if (_logoCache !== undefined) return _logoCache;
+  try {
+    const buf = await readFile(path.join(process.cwd(), 'public', 'vang.png'));
+    _logoCache = `data:image/png;base64,${buf.toString('base64')}`;
+  } catch {
+    _logoCache = null;
+  }
+  return _logoCache;
+}
 import autoTable from 'jspdf-autotable';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -106,7 +123,17 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   // Escudo size=16mm, alto total ~19mm (incluye banner)
   const escudoSize = 16;
   const escudoH = escudoSize * 76 / 64;  // ~19mm
-  dibujarEscudoVanguard(doc, margin, margin, escudoSize);
+  // Preferimos el PNG real (public/vang.png). Si no está, dibujo vectorial.
+  const logoUri = await getLogoDataUri();
+  if (logoUri) {
+    try {
+      doc.addImage(logoUri, 'PNG', margin, margin, escudoSize, escudoSize);
+    } catch {
+      dibujarEscudoVanguard(doc, margin, margin, escudoSize);
+    }
+  } else {
+    dibujarEscudoVanguard(doc, margin, margin, escudoSize);
+  }
 
   // Texto al lado del escudo, centrado verticalmente con shield (no banner)
   const textY = margin + escudoSize * 32 / 64;  // centro del shield
