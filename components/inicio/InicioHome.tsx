@@ -209,9 +209,11 @@ export function InicioHome({ user, onTabChange, products }: InicioHomeProps) {
 
   return (
     <div className="relative min-h-[calc(100vh-3.5rem)] px-6 py-10 overflow-hidden">
-      {/* Escudo Vanguard muy tenue de fondo */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04] select-none">
-        <Logo size={520} />
+      {/* Escudo Vanguard muy tenue de fondo, flotando lento */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center select-none">
+        <div className="vg-home-shield">
+          <Logo size={520} />
+        </div>
       </div>
 
       <div className="relative max-w-5xl mx-auto">
