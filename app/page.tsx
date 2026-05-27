@@ -60,6 +60,7 @@ const CustomerRiskModule    = dynamic(() => import('@/components/customer-risk/C
 const ConfigModulos         = dynamic(() => import('@/components/configuracion/ConfigModulos').then(m => m.ConfigModulos),         { loading: ModuleLoader });
 const MisEmpresasModule     = dynamic(() => import('@/components/organization/MisEmpresasModule'),                                  { loading: ModuleLoader });
 const InicioHome            = dynamic(() => import('@/components/inicio/InicioHome').then(m => m.InicioHome),                        { loading: ModuleLoader });
+const GestionClientes       = dynamic(() => import('@/components/clientes/GestionClientes').then(m => m.GestionClientes),            { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -1012,6 +1013,10 @@ export default function HomePage() {
         {/* ==================== HISTORIAL CLIENTE 360 ==================== */}
         {activeTab === 'clientes_360' && (
           <HistorialCliente />
+        )}
+
+        {activeTab === 'gestion_clientes' && (
+          <GestionClientes userEmail={user?.email || ''} />
         )}
 
         {/* ==================== INTEGRACIONES ==================== */}
