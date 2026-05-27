@@ -950,13 +950,6 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => { setEditingCliente(null); setClienteForm({ codigo: '', tipo: 'persona', nombre: '', rut: '', email: '', telefono: '', direccion: '', limiteCredito: 0 }); setModalType('cliente'); }}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl"
-          >
-            <Users className="h-4 w-4" />
-            Clientes
-          </button>
-          <button
             onClick={() => {
               setVersionandoDe(null);
               setCotizacionForm({ clienteId: '', fechaValidez: '', notas: '', items: [] });

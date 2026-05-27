@@ -49,7 +49,6 @@ import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
 import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
 import { Logo } from '@/components/ui/Logo';
-import { NotificacionesBell } from '@/components/proyectos/NotificacionesBell';
 import { ChatBadge } from '@/components/chat';
 import { ApprovalsBadge } from '@/components/approvals/ApprovalsBadge';
 
@@ -154,7 +153,6 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'replenishment', label: t('nav.replenishment') || 'Reabastecimiento IA', icon: Truck, badge: 'AI' },
         { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
         { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
-        { id: 'facturacion', label: t('nav.invoicing') || 'Facturación electrónica', icon: FileText },
       ]
     },
     {
@@ -162,6 +160,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       title: 'Clientes',
       defaultOpen: false,
       items: [
+        { id: 'gestion_clientes', label: 'Gestión de clientes', icon: Users },
         { id: 'clientes_360', label: t('modules.customers360') || 'Cliente 360°', icon: Users },
         { id: 'customer_risk', label: t('nav.customerRisk') || 'Clientes en riesgo', icon: ShieldAlert, badge: 'AI' },
       ]
@@ -412,7 +411,6 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
           )}
         </button>
 
-        <NotificacionesBell collapsed={collapsed} />
         <LanguageSelector collapsed={collapsed} />
 
         {user && (
