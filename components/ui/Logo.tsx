@@ -33,15 +33,26 @@ export function Logo({
 }: LogoProps) {
   return (
     <div className={cn('inline-flex items-center gap-2.5', className)}>
-      {/* Usa el PNG real (transparente) → exacto y se camufla con el fondo.
-          Reemplazá public/vang.png con tu escudo. */}
-      <img
-        src="/vang.png"
+      {/* SVG inline: transparente (se camufla con el fondo del sistema),
+          siempre se renderiza y llena el cuadro (sin margen muerto como
+          tenía el PNG). */}
+      <svg
         width={size}
         height={size}
-        alt="Vanguard"
-        style={{ width: size, height: size, objectFit: 'contain', display: 'block' }}
-      />
+        viewBox="0 0 64 64"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="Vanguard"
+        role="img"
+        style={{ display: 'block' }}
+      >
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          fill="#2b62b0"
+          d="M4 12 L32 60 L60 12 L48 12 L32 41 L16 12 Z M22 17 L25 17 L33.5 44 L31 44 Z"
+        />
+      </svg>
       {withText && (
         <span
           className={cn(
