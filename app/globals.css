@@ -970,3 +970,33 @@ button.hover\:bg-teal-500:hover, button.hover\:bg-green-500:hover {
 @media (prefers-reduced-motion: reduce) {
   .vg-home-shield { animation: none; }
 }
+
+/* =====================================================
+   SIDEBAR — modo claro: texto más legible, hover notorio,
+   flecha de colapso visible
+   ===================================================== */
+/* Títulos de sección y labels: más oscuros/contrastados en light */
+.light-mode aside .text-\[\#6B6B6B\] { color: #5b6472 !important; }
+.light-mode aside .text-\[\#A0A0A0\] { color: #3f4655 !important; }
+.light-mode aside .text-\[\#F1F1F1\] { color: #1a2030 !important; }
+
+/* Hover de los ítems del menú en light: tinte azul sutil pero notorio */
+.light-mode aside button:hover,
+.light-mode aside a:hover {
+  background-color: rgba(59,130,246,0.10) !important;
+}
+
+/* Flecha de colapso (bg #0D0D0D) — en light queda blanca con borde claro */
+.light-mode .bg-\[\#0D0D0D\] { background-color: #ffffff !important; }
+.light-mode .bg-\[\#0D0D0D\] svg { color: #475066 !important; }
+
+/* Item activo del menú: barra/tinte azul también en light */
+.light-mode aside .bg-\[\#1A1A1A\]:hover,
+.light-mode aside .hover\:bg-\[\#1A1A1A\]:hover { background-color: rgba(59,130,246,0.12) !important; }
+
+/* =====================================================
+   SIDEBAR — modo OSCURO: letras más visibles
+   ===================================================== */
+/* Labels de ítems y títulos de sección un poco más claros para que se lean */
+aside .text-\[\#A0A0A0\] { color: #c4c9d4 !important; }
+aside .text-\[\#6B6B6B\] { color: #8d95a3 !important; }
