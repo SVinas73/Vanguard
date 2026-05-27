@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Briefcase, Package, ArrowLeftRight, MessageCircle,
   DollarSign, Truck, Kanban, Warehouse, FileText, Users, Boxes, Wrench,
   Shield, ShieldAlert, RotateCcw, Brain, Zap, Sparkles, QrCode, GitBranch,
-  Plug, Building2, AlertTriangle, CheckCircle2, ChevronRight, Plus, X,
+  Plug, Building2, AlertTriangle, CheckCircle2, ChevronRight, Plus, X, Sliders,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -69,22 +69,29 @@ interface Recordatorio {
 export function InicioHome({ user, onTabChange, products }: InicioHomeProps) {
   const { modulos } = useModulosHabilitados();
   const [recordatoriosBackend, setRecordatoriosBackend] = useState<Recordatorio[]>([]);
-  const [favoritos, setFavoritos] = useState<TabType[]>([]);
+  const [seleccion, setSeleccion] = useState<TabType[]>(PRINCIPALES);
   const [showPicker, setShowPicker] = useState(false);
 
-  const favKey = `vg:home-fav:${user?.email || 'anon'}`;
+  const selKey = `vg:home-tiles:${user?.email || 'anon'}`;
 
-  // Cargar favoritos guardados.
+  // Cargar selección guardada (default = los 5 principales).
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(favKey);
-      if (raw) setFavoritos(JSON.parse(raw));
+      const raw = localStorage.getItem(selKey);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) setSeleccion(arr);
+      }
     } catch { /* noop */ }
-  }, [favKey]);
+  }, [selKey]);
 
-  const guardarFav = (next: TabType[]) => {
-    setFavoritos(next);
-    try { localStorage.setItem(favKey, JSON.stringify(next)); } catch { /* noop */ }
+  const guardarSeleccion = (next: TabType[]) => {
+    setSeleccion(next);
+    try { localStorage.setItem(selKey, JSON.stringify(next)); } catch { /* noop */ }
+  };
+
+  const toggleTile = (id: TabType) => {
+    guardarSeleccion(seleccion.includes(id) ? seleccion.filter(x => x !== id) : [...seleccion, id]);
   };
 
   const nombre = user?.nombre || user?.email?.split('@')[0] || '';
@@ -101,23 +108,21 @@ export function InicioHome({ user, onTabChange, products }: InicioHomeProps) {
 
   const moduloSet = useMemo(() => new Set<string>(modulos), [modulos]);
 
-  // Tiles principales: los 5 por defecto que estén habilitados.
-  const principales = useMemo(
-    () => ALL_TILES.filter(t => PRINCIPALES.includes(t.id) && moduloSet.has(t.id as string)),
-    [moduloSet],
+  // Tiles mostrados: la selección del usuario, en su orden, filtrada por
+  // módulos habilitados. Se pueden agregar, quitar y cambiar desde el picker.
+  const tiles = useMemo(
+    () => seleccion
+      .map(id => ALL_TILES.find(t => t.id === id))
+      .filter((t): t is ModuleTile => !!t && moduloSet.has(t.id as string)),
+    [seleccion, moduloSet],
   );
-  // Tiles favoritos elegidos por el usuario (que estén habilitados y no sean principales).
-  const favTiles = useMemo(
-    () => ALL_TILES.filter(t => favoritos.includes(t.id) && moduloSet.has(t.id as string) && !PRINCIPALES.includes(t.id)),
-    [favoritos, moduloSet],
-  );
-  // Disponibles para agregar.
+  // Disponibles para el picker (todos los habilitados).
   const disponibles = useMemo(
-    () => ALL_TILES.filter(t => moduloSet.has(t.id as string) && !PRINCIPALES.includes(t.id)),
+    () => ALL_TILES.filter(t => moduloSet.has(t.id as string)),
     [moduloSet],
   );
 
-  // Resumen rápido (decoración con datos reales).
+  // Resumen rápido (sólo para los recordatorios, no se muestra como cards).
   const resumen = useMemo(() => {
     const total = products.length;
     const agotados = products.filter(p => p.stock === 0).length;
@@ -227,34 +232,39 @@ export function InicioHome({ user, onTabChange, products }: InicioHomeProps) {
             <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Accesos</h2>
             <button onClick={() => setShowPicker(v => !v)}
               className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-400 transition-colors">
-              <Plus size={14} /> Agregar módulos
+              <Sliders size={14} /> Personalizar
             </button>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {principales.map(t => <Tile key={t.id} t={t} big />)}
-            {favTiles.map(t => <Tile key={t.id} t={t} big />)}
+            {tiles.map(t => <Tile key={t.id} t={t} big />)}
+            {tiles.length === 0 && (
+              <div className="col-span-full text-sm text-slate-500 py-6 text-center">
+                No tenés accesos. Tocá "Personalizar" para agregar.
+              </div>
+            )}
           </div>
 
-          {/* Picker de favoritos */}
+          {/* Picker: agregar / quitar / cambiar módulos del inicio */}
           {showPicker && (
             <div className="mt-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-slate-200">Elegí qué módulos sumar a tu inicio</span>
+                <span className="text-sm font-medium text-slate-200">Elegí qué módulos ver en tu inicio (tocá para agregar o quitar)</span>
                 <button onClick={() => setShowPicker(false)} className="text-slate-500 hover:text-slate-200"><X size={16} /></button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                 {disponibles.map(t => {
-                  const activo = favoritos.includes(t.id);
+                  const activo = seleccion.includes(t.id);
                   const Icon = t.icon;
                   return (
                     <button key={t.id}
-                      onClick={() => guardarFav(activo ? favoritos.filter(f => f !== t.id) : [...favoritos, t.id])}
+                      onClick={() => toggleTile(t.id)}
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors border ${
                         activo ? 'bg-blue-500/10 border-blue-500/40 text-blue-300' : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'
                       }`}>
                       <Icon size={15} strokeWidth={2} />
-                      <span className="truncate">{t.label}</span>
+                      <span className="truncate flex-1 text-left">{t.label}</span>
+                      {activo ? <X size={13} className="opacity-70" /> : <Plus size={13} className="opacity-70" />}
                     </button>
                   );
                 })}

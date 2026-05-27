@@ -260,7 +260,7 @@ export function InventoryTrendChart({
                 Neto
               </div>
               <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
-                {totals.neto >= 0 ? '+' : ''}{fmt(Math.abs(totals.neto))}
+                {totals.neto >= 0 ? '+' : '−'}{fmt(Math.abs(totals.neto))}
               </div>
             </div>
           </div>
