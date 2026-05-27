@@ -55,43 +55,27 @@ export function Logo({
       >
         {!mono && !dark && (
           <defs>
-            <linearGradient id={`${gradientId}-v`} x1="8" y1="10" x2="56" y2="54" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#6ea0d6" />
-              <stop offset="50%" stopColor="#4a7fb5" />
-              <stop offset="100%" stopColor="#244c79" />
+            <linearGradient id={`${gradientId}-v`} x1="10" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#2f6fc4" />
+              <stop offset="100%" stopColor="#1d4f9c" />
             </linearGradient>
-            <radialGradient id={`${gradientId}-glow`} cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#bfe0ff" stopOpacity="0.95" />
-              <stop offset="40%" stopColor="#5aa0ff" stopOpacity="0.55" />
-              <stop offset="100%" stopColor="#5aa0ff" stopOpacity="0" />
-            </radialGradient>
           </defs>
         )}
 
-        {/* Haz exterior de la V */}
+        {/* V azul (chevron): banda en V con dos picos arriba y punta abajo */}
         <path
-          d="M6 11 L17 11 L32 44 L47 11 L58 11 L38 55 L26 55 Z"
+          d="M4 12 L19 12 L32 41 L45 12 L60 12 L38 58 L26 58 Z"
           fill={fill}
         />
-        {/* Haz interior (línea de hueco que crea el efecto de doble viga) */}
+        {/* V blanca interior — línea fina que sigue la V (look del escudo) */}
         <path
-          d="M26 11 L32 24 L38 11 L33 11 L32 13.5 L31 11 Z"
-          fill={dark ? '#0b0f17' : '#0e1626'}
-          fillOpacity="0.0"
+          d="M22 12 L32 35 L42 12"
+          fill="none"
+          stroke={dark ? '#0b0f17' : '#ffffff'}
+          strokeWidth="3.2"
+          strokeLinejoin="round"
+          strokeLinecap="round"
         />
-        {/* Brillo superior sutil en los bordes internos */}
-        {!mono && !dark && (
-          <path
-            d="M6 11 L17 11 L32 44 L31.2 45.8 L15.2 12.4 L6 12.4 Z"
-            fill="rgba(255,255,255,0.14)"
-          />
-        )}
-
-        {/* Punto de glow en el vértice */}
-        {!mono && !dark && (
-          <circle cx="32" cy="42" r="9" fill={`url(#${gradientId}-glow)`} />
-        )}
-        <circle cx="32" cy="42" r="2.4" fill={dark ? '#4a7fb5' : '#dcefff'} />
       </svg>
 
       {withText && (
