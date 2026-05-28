@@ -2,7 +2,9 @@
 // CLIENTE API - VANGUARD IA (Render)
 // ============================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_VANGUARD_IA_URL || 'https://vanguard-ia.onrender.com';
+import { AI_API_URL } from './api-url';
+
+const API_BASE_URL = AI_API_URL;
 
 // ============================================
 // TIPOS DE RESPUESTA DE LA API
@@ -60,6 +62,53 @@ export interface AnomalyResponse {
   valor_esperado?: number;
   valor_real?: number;
   desviacion_porcentaje?: number;
+}
+
+export interface AnomalyItem {
+  id: string;
+  codigo: string;
+  descripcion: string;
+  tipo: string;
+  cantidad: number;
+  fecha: string;
+  usuario: string;
+  anomaly_score: number;
+  razon: string;
+  severidad: 'alta' | 'media' | 'baja';
+}
+
+export interface AnomaliesResult {
+  anomalias: AnomalyItem[];
+  total_analizado: number;
+  total_anomalias: number;
+  periodo_dias?: number;
+  modelo?: string;
+  mensaje?: string;
+}
+
+export interface RealtimeAnomalyResult {
+  is_anomaly: boolean;
+  z_score?: number;
+  cantidad_promedio?: number;
+  cantidad_maxima_historica?: number;
+  alertas?: string[];
+  severidad?: string;
+  mensaje?: string;
+}
+
+export interface AssociationRuleItem {
+  si_compran: Array<{ codigo: string; descripcion: string }>;
+  tambien_compran: Array<{ codigo: string; descripcion: string }>;
+  confianza: number;
+  soporte: number;
+  lift: number;
+  interpretacion: string;
+}
+
+export interface AssociationRulesResult {
+  reglas: AssociationRuleItem[];
+  total_transacciones: number;
+  mensaje?: string;
 }
 
 export interface RecommendationResponse {
@@ -153,53 +202,59 @@ class VanguardIAClient {
   // ============================================
 
   /**
-   * Detecta anomalías en movimientos recientes
+   * Detecta anomalías en movimientos recientes (Isolation Forest).
+   * El backend devuelve un objeto { anomalias, total_analizado, ... }.
    */
-  async detectAnomalies(): Promise<AnomalyResponse[]> {
-    return this.fetch<AnomalyResponse[]>('/api/anomalies/detect');
+  async detectAnomalies(dias: number = 30): Promise<AnomaliesResult> {
+    return this.fetch<AnomaliesResult>(`/api/anomalies/detect?dias=${dias}`);
   }
 
   /**
-   * Verifica si un movimiento específico es anómalo
+   * Verifica en tiempo real si un movimiento sería anómalo antes de registrarlo.
+   * Mapea al endpoint real /api/anomalies/realtime-check (GET con query params).
    */
   async checkMovementAnomaly(
     codigo: string,
     cantidad: number,
     tipo: 'entrada' | 'salida'
-  ): Promise<AnomalyResponse> {
-    return this.fetch<AnomalyResponse>('/api/anomalies/check', {
-      method: 'POST',
-      body: JSON.stringify({ codigo, cantidad, tipo }),
+  ): Promise<RealtimeAnomalyResult> {
+    const params = new URLSearchParams({ codigo, tipo, cantidad: String(cantidad) });
+    return this.fetch<RealtimeAnomalyResult>(`/api/anomalies/realtime-check?${params}`);
+  }
+
+  // ============================================
+  // ASSOCIATIONS / RECOMMENDATIONS
+  // ============================================
+
+  /**
+   * Reglas de asociación "si sale X también sale Y" (Apriori).
+   */
+  async getAssociationRules(
+    minSupport: number = 0.1,
+    minConfidence: number = 0.5,
+    dias: number = 90
+  ): Promise<AssociationRulesResult> {
+    const params = new URLSearchParams({
+      min_support: String(minSupport),
+      min_confidence: String(minConfidence),
+      dias: String(dias),
     });
-  }
-
-  // ============================================
-  // RECOMMENDATIONS
-  // ============================================
-
-  /**
-   * Obtiene recomendaciones de reposición
-   */
-  async getReorderRecommendations(): Promise<RecommendationResponse[]> {
-    return this.fetch<RecommendationResponse[]>('/api/recommendations/reorder');
+    return this.fetch<AssociationRulesResult>(`/api/associations/rules?${params}`);
   }
 
   /**
-   * Obtiene recomendaciones de productos relacionados
+   * Productos frecuentemente movidos juntos (itemsets).
    */
-  async getRelatedProducts(codigo: string): Promise<RecommendationResponse[]> {
-    return this.fetch<RecommendationResponse[]>(`/api/recommendations/related/${codigo}`);
+  async getProductAssociations(minSupport: number = 0.1, dias: number = 90): Promise<any> {
+    const params = new URLSearchParams({ min_support: String(minSupport), dias: String(dias) });
+    return this.fetch(`/api/associations/frequent-items?${params}`);
   }
 
-  // ============================================
-  // ASSOCIATIONS
-  // ============================================
-
   /**
-   * Obtiene análisis de productos frecuentemente comprados juntos
+   * Productos relacionados a uno dado (recomendaciones por co-ocurrencia).
    */
-  async getProductAssociations(): Promise<any> {
-    return this.fetch('/api/associations/frequent');
+  async getRelatedProducts(codigo: string, dias: number = 90): Promise<any> {
+    return this.fetch(`/api/associations/recommendations/${codigo}?dias=${dias}`);
   }
 
   // ============================================
