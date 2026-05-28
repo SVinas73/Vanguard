@@ -389,6 +389,9 @@ export function ProductTable({
                 <th className={cn(thClass, 'text-right')} onClick={() => handleSort('precio')}>
                   <span className="flex items-center justify-end gap-1">{t('stock.price')} <SortIcon active={sortCol === 'precio'} dir={sortDir} /></span>
                 </th>
+                <th className={cn(thClass, 'text-right')} onClick={() => handleSort('costo')}>
+                  <span className="flex items-center justify-end gap-1">Costo <SortIcon active={sortCol === 'costo'} dir={sortDir} /></span>
+                </th>
                 <th className={cn(thClass, 'text-center')} onClick={() => handleSort('stock')}>
                   <span className="flex items-center justify-center gap-1">{t('stock.stockCol')} <SortIcon active={sortCol === 'stock'} dir={sortDir} /></span>
                 </th>
@@ -435,6 +438,13 @@ export function ProductTable({
                     <td className="px-3 py-2.5 text-right">
                       <span className="font-mono text-sm text-slate-300">
                         {formatMoney(product.precio, product.moneda ?? 'UYU', { minimumFractionDigits: 2 })}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      <span className="font-mono text-sm text-slate-400" title="Costo promedio ponderado (se actualiza con cada compra)">
+                        {product.costoPromedio
+                          ? formatMoney(product.costoPromedio, product.moneda ?? 'UYU', { minimumFractionDigits: 2 })
+                          : '—'}
                       </span>
                     </td>
                     <td className="px-3 py-2.5">
