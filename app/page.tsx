@@ -233,8 +233,10 @@ export default function HomePage() {
     categoria: '',
     stockMinimo: '10',
     almacenId: '',
-    stockInicial: '',      // NUEVO: stock inicial
-    costoInicial: '',      // NUEVO: costo de compra inicial
+    stockInicial: '',      // stock inicial (en unidades)
+    costoInicial: '',      // precio de compra (por unidad, o por pack si compraPorPack)
+    compraPorPack: false,  // si el precio de compra es por pack
+    unidadesPorPack: '',   // cuántas unidades trae el pack
   });
   const [aiSuggestion, setAiSuggestion] = useState<CategorySuggestion | null>(null);
 
@@ -552,7 +554,12 @@ export default function HomePage() {
 
     const codigoFinal = newProduct.codigo.toUpperCase().trim();
     const stockInicial = parseInt(newProduct.stockInicial) || 0;
-    const costoInicial = parseFloat(newProduct.costoInicial) || 0;
+    // Si la compra es por pack, el costo unitario = precio del pack / unidades por pack.
+    const precioCompra = parseFloat(newProduct.costoInicial) || 0;
+    const unidadesPack = parseInt(newProduct.unidadesPorPack) || 0;
+    const costoInicial = (newProduct.compraPorPack && unidadesPack > 0)
+      ? precioCompra / unidadesPack
+      : precioCompra;
     const userEmail = user?.email || 'Sistema';
 
     // 1. INSERT directo (no usamos addProduct del store: silencia errores).
@@ -635,6 +642,8 @@ export default function HomePage() {
       almacenId: '',
       stockInicial: '',
       costoInicial: '',
+      compraPorPack: false,
+      unidadesPorPack: '',
     });
     setShowNewProduct(false);
     setAiSuggestion(null);
@@ -1141,22 +1150,22 @@ export default function HomePage() {
             />
           </div>
 
-          {/* NUEVO: Stock Inicial y Costo */}
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-            <h4 className="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+          {/* Stock inicial + precio de compra (con opción de pack) */}
+          <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+            <h4 className="text-sm font-semibold text-blue-400 mb-3 flex items-center gap-2">
               <Package size={16} />
-              {t('stock.initialStock', 'Stock Inicial')} ({t('common.optional', 'opcional')})
+              Stock inicial y compra (opcional)
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label={t('stock.initialQuantity', 'Cantidad Inicial')}
+                label="Cantidad inicial (unidades)"
                 type="number"
                 value={newProduct.stockInicial}
                 onChange={(e) => setNewProduct({ ...newProduct, stockInicial: e.target.value })}
                 placeholder="0"
               />
               <Input
-                label={t('stock.unitCost', 'Costo Unitario')}
+                label={newProduct.compraPorPack ? 'Precio de compra (por pack)' : 'Precio de compra (por unidad)'}
                 type="number"
                 step="0.01"
                 value={newProduct.costoInicial}
@@ -1164,8 +1173,40 @@ export default function HomePage() {
                 placeholder="0.00"
               />
             </div>
+
+            {/* Compra por pack */}
+            <label className="flex items-center gap-2 mt-3 text-sm text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                className="accent-blue-500"
+                checked={newProduct.compraPorPack}
+                onChange={(e) => setNewProduct({ ...newProduct, compraPorPack: e.target.checked })}
+              />
+              El precio de compra es por pack (no por unidad)
+            </label>
+            {newProduct.compraPorPack && (
+              <div className="mt-2">
+                <Input
+                  label="Unidades por pack"
+                  type="number"
+                  value={newProduct.unidadesPorPack}
+                  onChange={(e) => setNewProduct({ ...newProduct, unidadesPorPack: e.target.value })}
+                  placeholder="Ej: 12"
+                />
+                {(() => {
+                  const pc = parseFloat(newProduct.costoInicial) || 0;
+                  const up = parseInt(newProduct.unidadesPorPack) || 0;
+                  return up > 0 && pc > 0 ? (
+                    <p className="text-xs text-blue-300 mt-1">
+                      Costo unitario calculado: {(pc / up).toFixed(2)} {newProduct.moneda}
+                    </p>
+                  ) : null;
+                })()}
+              </div>
+            )}
+
             <p className="text-xs text-slate-500 mt-2">
-              {t('stock.initialStockHint', 'Si agregas stock inicial, se creará automáticamente un movimiento de entrada.')}
+              Si cargás cantidad inicial, se crea automáticamente un movimiento de entrada con este costo.
             </p>
           </div>
 
