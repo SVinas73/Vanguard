@@ -167,13 +167,13 @@ export function InventoryTrendChart({
         )}
       </div>
 
-      {/* Gráfica */}
-      {!hasData ? (
-        <div className="flex items-center justify-center h-[280px] text-slate-500 text-sm">
-          Sin compras ni ventas en el período
+      {/* Gráfica — se muestra siempre (en 0 si no hay compras/ventas) */}
+      {!hasData && (
+        <div className="mb-2 text-xs text-slate-500">
+          Todavía no hay compras ni ventas en el período. La gráfica se irá llenando a medida que registres operaciones.
         </div>
-      ) : (
-        <>
+      )}
+      <>
           <div className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
@@ -286,7 +286,6 @@ export function InventoryTrendChart({
             </div>
           </div>
         </>
-      )}
     </div>
   );
 }
