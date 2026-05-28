@@ -1,20 +1,28 @@
 // =====================================================
-// Recomendador de precios — ML aplicado
+// Recomendador de precios — pricing científico
 // =====================================================
-// Estima la elasticidad de demanda de cada producto a partir
-// del histórico de transacciones (precio × cantidad), luego
-// propone el precio que maximiza el margen total esperado.
+// Estima la elasticidad-precio de la demanda de cada producto a partir del
+// histórico de transacciones y propone el precio que maximiza el margen total
+// esperado, con guardarraíles para evitar recomendaciones extremas.
 //
-// MODELO:
-//   1. Para cada producto, agrupar ventas por nivel de precio.
-//   2. Calcular demanda promedio por nivel de precio.
-//   3. Regresión log-log: log(Q) = a + b·log(P) → b = elasticidad.
-//   4. Precio óptimo P* = costo · (e / (e + 1)) donde e = elasticidad (negativa).
-//      Equivalente a la fórmula de monopolio con costos lineales.
+// METODOLOGÍA (mejoras sobre la versión inicial):
+//   1. Agrupar ventas por NIVEL DE PRECIO (buckets relativos del 2% para
+//      tolerar descuentos chicos / ruido), y usar la DEMANDA MEDIA POR
+//      TRANSACCIÓN de cada nivel (tasa de demanda), no la suma total — así no
+//      se sesga por cuántas veces apareció cada precio.
+//   2. Regresión log-log PONDERADA por nº de transacciones:
+//        log(Q) = a + e·log(P)  → e = elasticidad (típicamente < 0).
+//      Se calcula el R² para medir la calidad del ajuste.
+//   3. Precio óptimo (monopolio, costo lineal, elasticidad constante):
+//        e < -1 (elástica):   P* = c·e/(e+1)
+//        -1 ≤ e < 0 (inelástica): conviene subir → se sube hasta la banda.
+//   4. GUARDARRAÍLES: el precio sugerido se acota a ±banda% del precio actual
+//      (default 25%) y nunca cae por debajo de costo·(1+margenMínimo). Cuando
+//      el ajuste (R²) es pobre, se ENCOGE la recomendación hacia el precio
+//      actual (shrinkage) para no actuar sobre señales ruidosas.
 //
-// FALLBACK (datos insuficientes):
-//   - Heurística: margen objetivo 40%, sugerir precio = costo / 0.6.
-//   - Marcar confianza = "baja".
+// FALLBACK (datos insuficientes o sin variación de precio):
+//   - Margen objetivo (default 40%): precio = costo/(1−margen). Confianza baja.
 // =====================================================
 
 export interface VentaItem {
@@ -43,6 +51,7 @@ export interface Recomendacion {
   margen_actual_pct: number;
   margen_sugerido_pct: number;
   elasticidad: number | null;
+  r2: number | null;
   ingreso_esperado_anual_actual: number;
   ingreso_esperado_anual_sugerido: number;
   confianza: 'alta' | 'media' | 'baja';
@@ -52,159 +61,200 @@ export interface Recomendacion {
   datos_usados: { transacciones: number; niveles_precio: number };
 }
 
+export interface PricingOpts {
+  /** Máximo cambio relativo permitido vs precio actual (guardarraíl). */
+  bandaMaxCambio?: number;
+  /** Margen mínimo sobre costo que debe conservar el precio sugerido. */
+  margenMinimo?: number;
+  /** Margen objetivo del fallback heurístico. */
+  margenObjetivoDefault?: number;
+  minTransacciones?: number;
+  minNiveles?: number;
+}
+
 interface NivelPrecio {
   precio: number;
-  cantidad: number;
+  demandaMedia: number; // cantidad media por transacción a ese precio
   transacciones: number;
 }
 
-// Margen objetivo por defecto cuando no hay datos
-const MARGEN_OBJETIVO_DEFAULT = 0.40;
-const MIN_TRANSACCIONES = 8;
-const MIN_NIVELES_PRECIO = 2;
+const DEFAULTS: Required<PricingOpts> = {
+  bandaMaxCambio: 0.25,
+  margenMinimo: 0.05,
+  margenObjetivoDefault: 0.40,
+  minTransacciones: 8,
+  minNiveles: 2,
+};
+
+const MAX_ELASTICIDAD_ABS = 10; // descartar valores absurdos por ruido
+const R2_CONFIABLE = 0.6;       // umbral de ajuste para confianza alta
 
 /**
- * Agrupa ventas por nivel de precio (redondeado al 2%).
- * Esto detecta cambios de precio reales (no ruido).
+ * Agrupa ventas por nivel de precio (buckets relativos del 2%) y calcula la
+ * demanda media por transacción en cada nivel. Usar la MEDIA evita sesgar la
+ * elasticidad por la frecuencia con que apareció cada precio.
  */
 function agruparPorNivelPrecio(items: VentaItem[]): NivelPrecio[] {
   if (items.length === 0) return [];
-  // Bucket de precios redondeando al 2% para tolerar pequeños descuentos
-  const buckets: Record<string, { precio: number; cantidad: number; transacciones: number }> = {};
+  const buckets: Record<string, { precioSum: number; cantidad: number; transacciones: number }> = {};
   for (const it of items) {
     const p = Number(it.precio_unitario) || 0;
-    if (p <= 0) continue;
     const q = Number(it.cantidad) || 0;
-    if (q <= 0) continue;
-    // Redondear al 2% para detectar niveles distintos
-    const bucket = Math.round(p / (p * 0.02 || 1)) * (p * 0.02 || 1);
-    const key = String(Math.round(p * 100) / 100);
-    if (!buckets[key]) buckets[key] = { precio: p, cantidad: 0, transacciones: 0 };
+    if (p <= 0 || q <= 0) continue;
+    // Bucket logarítmico: agrupa precios dentro del ~2% en el mismo nivel.
+    const key = Math.round(Math.log(p) / 0.02).toString();
+    if (!buckets[key]) buckets[key] = { precioSum: 0, cantidad: 0, transacciones: 0 };
+    buckets[key].precioSum += p;
     buckets[key].cantidad += q;
     buckets[key].transacciones += 1;
   }
-  return Object.values(buckets).sort((a, b) => a.precio - b.precio);
+  return Object.values(buckets)
+    .map((b) => ({
+      precio: b.precioSum / b.transacciones,
+      demandaMedia: b.cantidad / b.transacciones,
+      transacciones: b.transacciones,
+    }))
+    .sort((a, b) => a.precio - b.precio);
 }
 
 /**
- * Regresión lineal simple: y = a + b·x.
- * Devuelve [a, b].
+ * Regresión lineal ponderada: y = a + b·x. Devuelve { a, b, r2 }.
+ * Los pesos (w) permiten dar más importancia a niveles con más transacciones.
  */
-function regresionLineal(xs: number[], ys: number[]): [number, number] | null {
-  if (xs.length < 2 || xs.length !== ys.length) return null;
+function regresionPonderada(
+  xs: number[], ys: number[], ws: number[],
+): { a: number; b: number; r2: number } | null {
   const n = xs.length;
-  const meanX = xs.reduce((s, v) => s + v, 0) / n;
-  const meanY = ys.reduce((s, v) => s + v, 0) / n;
-  let num = 0, den = 0;
+  if (n < 2 || ys.length !== n || ws.length !== n) return null;
+  const W = ws.reduce((s, v) => s + v, 0);
+  if (W <= 0) return null;
+  const meanX = xs.reduce((s, v, i) => s + v * ws[i], 0) / W;
+  const meanY = ys.reduce((s, v, i) => s + v * ws[i], 0) / W;
+  let sxy = 0, sxx = 0, syy = 0;
   for (let i = 0; i < n; i++) {
-    num += (xs[i] - meanX) * (ys[i] - meanY);
-    den += (xs[i] - meanX) ** 2;
+    const dx = xs[i] - meanX;
+    const dy = ys[i] - meanY;
+    sxy += ws[i] * dx * dy;
+    sxx += ws[i] * dx * dx;
+    syy += ws[i] * dy * dy;
   }
-  if (den === 0) return null;
-  const b = num / den;
+  if (sxx === 0) return null;
+  const b = sxy / sxx;
   const a = meanY - b * meanX;
-  return [a, b];
+  const r2 = syy === 0 ? 1 : Math.max(0, Math.min(1, (sxy * sxy) / (sxx * syy)));
+  return { a, b, r2 };
 }
 
 /**
- * Estima la elasticidad de demanda por regresión log-log.
- * Demanda Q = A · P^e → log(Q) = log(A) + e · log(P)
- * Devuelve el exponente e (típicamente negativo).
+ * Estima la elasticidad por regresión log-log ponderada.
+ * Devuelve { e, r2 } o null si no es confiable/finita.
  */
-function estimarElasticidad(niveles: NivelPrecio[]): number | null {
-  if (niveles.length < MIN_NIVELES_PRECIO) return null;
-  const logP = niveles.map(n => Math.log(n.precio));
-  const logQ = niveles.map(n => Math.log(n.cantidad));
-  const r = regresionLineal(logP, logQ);
+function estimarElasticidad(niveles: NivelPrecio[]): { e: number; r2: number } | null {
+  if (niveles.length < 2) return null;
+  const logP = niveles.map((n) => Math.log(n.precio));
+  const logQ = niveles.map((n) => Math.log(n.demandaMedia));
+  const ws = niveles.map((n) => n.transacciones);
+  const r = regresionPonderada(logP, logQ, ws);
   if (!r) return null;
-  const [, e] = r;
-  // Filtrar valores absurdos (problema de datos ruidosos)
-  if (!Number.isFinite(e)) return null;
-  if (Math.abs(e) > 10) return null;
-  return e;
+  if (!Number.isFinite(r.b) || Math.abs(r.b) > MAX_ELASTICIDAD_ABS) return null;
+  return { e: r.b, r2: r.r2 };
 }
 
 /**
- * Calcula el precio óptimo bajo elasticidad constante.
- * Fórmula del monopolio: P* = costo · e / (e + 1), donde e < -1 para que sea válido.
- * Si |e| ≤ 1 → demanda inelástica, subir precio siempre conviene (capeamos al +20%).
- * Si e > 0 → datos espurios, no usar.
+ * Precio óptimo bajo elasticidad constante, ya acotado por guardarraíles.
+ * - e < -1 (elástica): P* = c·e/(e+1).
+ * - -1 ≤ e < 0 (inelástica): subir conviene → vamos al tope de la banda.
+ * - shrink (0..1, derivado de R²) encoge la recomendación hacia el precio
+ *   actual cuando el ajuste es pobre.
  */
-function precioOptimoElasticidad(costo: number, elasticidad: number, precioActual: number): number {
-  if (elasticidad > 0) return precioActual; // dato espurio
-  if (elasticidad >= -1) {
-    // Demanda inelástica → ley dice subir, pero capeamos para evitar saltos extremos
-    return Math.min(precioActual * 1.2, costo * 2.5);
+function precioOptimo(
+  costo: number, elasticidad: number, precioActual: number,
+  shrink: number, opts: Required<PricingOpts>,
+): number {
+  const pisoMargen = costo * (1 + opts.margenMinimo);
+  const min = Math.max(precioActual * (1 - opts.bandaMaxCambio), pisoMargen);
+  const max = precioActual * (1 + opts.bandaMaxCambio);
+
+  let objetivo: number;
+  if (elasticidad >= 0) {
+    objetivo = precioActual; // dato espurio: no mover
+  } else if (elasticidad >= -1) {
+    // Inelástica: la teoría dice subir; subimos hacia el tope de la banda.
+    objetivo = max;
+  } else {
+    const optimo = costo * (elasticidad / (elasticidad + 1));
+    objetivo = Number.isFinite(optimo) && optimo > 0 ? optimo : precioActual;
   }
-  // Demanda elástica → fórmula del óptimo
-  const optimo = costo * (elasticidad / (elasticidad + 1));
-  if (!Number.isFinite(optimo) || optimo <= 0) return precioActual;
-  // No permitir que el precio caiga por debajo del costo + 10% mínimo
-  return Math.max(optimo, costo * 1.1);
+
+  // Shrinkage hacia el precio actual según calidad del ajuste.
+  const ajustado = precioActual + (objetivo - precioActual) * shrink;
+  // Guardarraíl final.
+  return Math.min(max, Math.max(min, ajustado));
 }
 
-/**
- * Calcula recomendaciones para una lista de productos.
- */
 export function recomendarPrecios(
   productos: ProductoInput[],
-  ventasItems: VentaItem[]
+  ventasItems: VentaItem[],
+  opts: PricingOpts = {},
 ): Recomendacion[] {
-  // Agrupar items por producto
+  const cfg = { ...DEFAULTS, ...opts };
+
   const porProducto: Record<string, VentaItem[]> = {};
   for (const it of ventasItems) {
     if (!it.producto_codigo) continue;
-    if (!porProducto[it.producto_codigo]) porProducto[it.producto_codigo] = [];
-    porProducto[it.producto_codigo].push(it);
+    (porProducto[it.producto_codigo] ??= []).push(it);
   }
 
   const recomendaciones: Recomendacion[] = [];
 
   for (const prod of productos) {
     const items = porProducto[prod.codigo] || [];
-    const costo = prod.costo_promedio > 0 ? prod.costo_promedio : (prod.precio_actual * 0.6);
+    const costo = prod.costo_promedio > 0 ? prod.costo_promedio : prod.precio_actual * 0.6;
     const precioActual = prod.precio_actual;
-    if (precioActual <= 0 || costo <= 0) continue;
+    if (!(precioActual > 0) || !(costo > 0)) continue;
 
     const margenActualPct = ((precioActual - costo) / precioActual) * 100;
-
     const niveles = agruparPorNivelPrecio(items);
-    const elasticidad = niveles.length >= MIN_NIVELES_PRECIO ? estimarElasticidad(niveles) : null;
     const transacciones = items.length;
+    const est = niveles.length >= cfg.minNiveles ? estimarElasticidad(niveles) : null;
 
     let precioSugerido: number;
     let confianza: 'alta' | 'media' | 'baja';
     let razon: string;
+    let elasticidad: number | null = null;
+    let r2: number | null = null;
 
-    if (elasticidad !== null && transacciones >= MIN_TRANSACCIONES) {
-      precioSugerido = precioOptimoElasticidad(costo, elasticidad, precioActual);
-      confianza = transacciones >= 30 && niveles.length >= 3 ? 'alta' : 'media';
-      razon = `Elasticidad estimada: ${elasticidad.toFixed(2)} (${transacciones} ventas, ${niveles.length} niveles de precio)`;
+    if (est !== null && transacciones >= cfg.minTransacciones) {
+      elasticidad = est.e;
+      r2 = est.r2;
+      // shrink: 0 si ajuste nulo, 1 si perfecto (suave, no lineal puro).
+      const shrink = Math.max(0.15, Math.min(1, est.r2 / R2_CONFIABLE));
+      precioSugerido = precioOptimo(costo, est.e, precioActual, shrink, cfg);
+      if (transacciones >= 30 && niveles.length >= 3 && est.r2 >= R2_CONFIABLE) confianza = 'alta';
+      else if (est.r2 >= 0.3) confianza = 'media';
+      else confianza = 'baja';
+      razon = `Elasticidad ${est.e.toFixed(2)} (R²=${est.r2.toFixed(2)}, ${transacciones} ventas, ${niveles.length} niveles)`;
     } else {
-      // Fallback heurístico
-      precioSugerido = costo / (1 - MARGEN_OBJETIVO_DEFAULT);
+      precioSugerido = costo / (1 - cfg.margenObjetivoDefault);
       confianza = 'baja';
-      razon = transacciones < MIN_TRANSACCIONES
-        ? `Pocas ventas (${transacciones}). Sugerencia basada en margen objetivo del 40%.`
-        : 'Sin variación de precio histórica. Sugerencia basada en margen objetivo del 40%.';
+      razon = transacciones < cfg.minTransacciones
+        ? `Pocas ventas (${transacciones}). Sugerencia por margen objetivo del ${Math.round(cfg.margenObjetivoDefault * 100)}%.`
+        : `Sin variación de precio histórica. Sugerencia por margen objetivo del ${Math.round(cfg.margenObjetivoDefault * 100)}%.`;
     }
 
     const margenSugeridoPct = ((precioSugerido - costo) / precioSugerido) * 100;
     const deltaPct = ((precioSugerido - precioActual) / precioActual) * 100;
 
-    // Estimar ingreso anual: usar volumen anualizado (proyección lineal desde transacciones)
-    const cantidadAnualActual = items.reduce((s, it) => s + (Number(it.cantidad) || 0), 0);
-    const ingresoActualAnual = cantidadAnualActual * precioActual;
-
-    // Demanda esperada al precio sugerido (con elasticidad)
-    let cantidadAnualSugerida = cantidadAnualActual;
+    // Volumen observado (proxy anual) e impacto esperado vía elasticidad.
+    const cantidadActual = items.reduce((s, it) => s + (Number(it.cantidad) || 0), 0);
+    const ingresoActualAnual = cantidadActual * precioActual;
+    let cantidadSugerida = cantidadActual;
     if (elasticidad !== null && precioActual > 0) {
-      // Q' = Q · (P'/P)^e
-      const ratio = precioSugerido / precioActual;
-      cantidadAnualSugerida = cantidadAnualActual * Math.pow(ratio, elasticidad);
+      cantidadSugerida = cantidadActual * Math.pow(precioSugerido / precioActual, elasticidad);
     }
-    const ingresoSugeridoAnual = cantidadAnualSugerida * precioSugerido;
-    const impactoMargenAnual = (precioSugerido - costo) * cantidadAnualSugerida - (precioActual - costo) * cantidadAnualActual;
+    const ingresoSugeridoAnual = cantidadSugerida * precioSugerido;
+    const impactoMargenAnual =
+      (precioSugerido - costo) * cantidadSugerida - (precioActual - costo) * cantidadActual;
 
     let oportunidad: 'subir' | 'bajar' | 'mantener';
     if (Math.abs(deltaPct) < 3) oportunidad = 'mantener';
@@ -220,6 +270,7 @@ export function recomendarPrecios(
       margen_actual_pct: Number(margenActualPct.toFixed(1)),
       margen_sugerido_pct: Number(margenSugeridoPct.toFixed(1)),
       elasticidad: elasticidad !== null ? Number(elasticidad.toFixed(2)) : null,
+      r2: r2 !== null ? Number(r2.toFixed(2)) : null,
       ingreso_esperado_anual_actual: Math.round(ingresoActualAnual),
       ingreso_esperado_anual_sugerido: Math.round(ingresoSugeridoAnual),
       confianza,
@@ -230,6 +281,5 @@ export function recomendarPrecios(
     });
   }
 
-  // Ordenar por impacto de margen anual descendente (oportunidades más grandes primero)
   return recomendaciones.sort((a, b) => b.impacto_margen_anual - a.impacto_margen_anual);
 }

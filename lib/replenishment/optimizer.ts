@@ -106,9 +106,13 @@ function serieDemandaDiaria(
   const buckets: Record<string, number> = {};
   for (const m of movs) {
     const fecha = new Date(m.fecha);
+    // Guard: fecha inválida (parsing fallido) o fuera de ventana → ignorar.
+    if (Number.isNaN(fecha.getTime())) continue;
     if (fecha < inicio) continue;
+    const cantidad = Number(m.cantidad);
+    if (!Number.isFinite(cantidad) || cantidad <= 0) continue;
     const key = fecha.toISOString().slice(0, 10);
-    buckets[key] = (buckets[key] || 0) + (Number(m.cantidad) || 0);
+    buckets[key] = (buckets[key] || 0) + cantidad;
   }
   const serie: number[] = [];
   for (let i = 0; i < diasVentana; i++) {

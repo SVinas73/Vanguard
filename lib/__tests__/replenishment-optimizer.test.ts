@@ -123,3 +123,53 @@ describe('Replenishment Optimizer — capital sobre stockout', () => {
     expect(sugs[0].cantidad_optima_compra).toBeGreaterThan(0);
   });
 });
+
+describe('Replenishment Optimizer — robustez y casos borde', () => {
+  it('no rompe sin productos ni movimientos', () => {
+    expect(optimizarReabastecimiento([], [])).toEqual([]);
+  });
+
+  it('maneja producto con costo 0 usando 60% del precio de venta', () => {
+    const productos: ProductoStock[] = [
+      { codigo: 'R1', nombre: 'Sin costo', stock_actual: 10, stock_en_transito: 0, costo_promedio: 0, precio_venta: 100 },
+    ];
+    const sugs = optimizarReabastecimiento(productos, generarVentasDiarias('R1', 2, 90));
+    expect(sugs).toHaveLength(1);
+    expect(Number.isFinite(sugs[0].capital_inmovilizado_actual)).toBe(true);
+  });
+
+  it('no produce NaN/Infinity en ningún campo numérico', () => {
+    const productos: ProductoStock[] = [
+      { codigo: 'N1', nombre: 'Activo', stock_actual: 50, stock_en_transito: 5, costo_promedio: 20, precio_venta: 35 },
+      { codigo: 'N2', nombre: 'Muerto', stock_actual: 30, stock_en_transito: 0, costo_promedio: 15, precio_venta: 25 },
+      { codigo: 'N3', nombre: 'Sin stock', stock_actual: 0, stock_en_transito: 0, costo_promedio: 10, precio_venta: 18 },
+    ];
+    const movs = [
+      ...generarVentasDiarias('N1', 4, 120),
+      ...generarVentasDiarias('N3', 1, 30),
+      // N2 sin movimientos → stock muerto
+    ];
+    const sugs = optimizarReabastecimiento(productos, movs);
+    for (const s of sugs) {
+      for (const [k, v] of Object.entries(s)) {
+        if (typeof v === 'number') {
+          expect(Number.isFinite(v), `${s.codigo}.${k} debe ser finito`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('ignora movimientos con cantidad o fecha inválida', () => {
+    const productos: ProductoStock[] = [
+      { codigo: 'B1', nombre: 'Bordes', stock_actual: 20, stock_en_transito: 0, costo_promedio: 10, precio_venta: 20 },
+    ];
+    const movs: MovimientoSalida[] = [
+      { producto_codigo: 'B1', cantidad: NaN as unknown as number, fecha: new Date().toISOString() },
+      { producto_codigo: 'B1', cantidad: 5, fecha: 'fecha-invalida' },
+      ...generarVentasDiarias('B1', 2, 60),
+    ];
+    const sugs = optimizarReabastecimiento(productos, movs);
+    expect(sugs).toHaveLength(1);
+    expect(Number.isFinite(sugs[0].demanda_diaria_promedio)).toBe(true);
+  });
+});

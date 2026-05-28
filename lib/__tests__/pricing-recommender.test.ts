@@ -70,6 +70,80 @@ describe('Pricing Recommender — elasticidad y precio óptimo', () => {
     expect(recs[0].impacto_margen_anual).toBeGreaterThanOrEqual(recs[1].impacto_margen_anual);
   });
 
+  it('NUNCA baja el precio de un inelástico con costo bajo (fix de guardarraíl)', () => {
+    // Bug previo: con costo bajo, el cap costo*2.5 podía recomendar BAJAR un
+    // inelástico. Ahora debe subir (o mantener), nunca bajar.
+    const prod: ProductoInput[] = [
+      { codigo: 'IN1', nombre: 'Inelástico costo bajo', precio_actual: 100, costo_promedio: 10 },
+    ];
+    const ventas: VentaItem[] = [
+      ...Array.from({ length: 12 }, () => ({ producto_codigo: 'IN1', cantidad: 10, precio_unitario: 90, costo_unitario: 10 })),
+      ...Array.from({ length: 12 }, () => ({ producto_codigo: 'IN1', cantidad: 10, precio_unitario: 100, costo_unitario: 10 })),
+      ...Array.from({ length: 12 }, () => ({ producto_codigo: 'IN1', cantidad: 9, precio_unitario: 110, costo_unitario: 10 })),
+    ];
+    const r = recomendarPrecios(prod, ventas)[0];
+    expect(r.precio_sugerido).toBeGreaterThanOrEqual(r.precio_actual);
+    expect(r.oportunidad).not.toBe('bajar');
+  });
+
+  it('respeta el guardarraíl de banda (±25% por defecto) y el piso de margen', () => {
+    const prod: ProductoInput[] = [
+      { codigo: 'G1', nombre: 'Elástico extremo', precio_actual: 100, costo_promedio: 60 },
+    ];
+    // Demanda extremadamente elástica (caída brusca) → óptimo lejos del actual
+    const ventas: VentaItem[] = [
+      ...Array.from({ length: 15 }, () => ({ producto_codigo: 'G1', cantidad: 200, precio_unitario: 80, costo_unitario: 60 })),
+      ...Array.from({ length: 15 }, () => ({ producto_codigo: 'G1', cantidad: 100, precio_unitario: 90, costo_unitario: 60 })),
+      ...Array.from({ length: 15 }, () => ({ producto_codigo: 'G1', cantidad: 5, precio_unitario: 100, costo_unitario: 60 })),
+    ];
+    const r = recomendarPrecios(prod, ventas)[0];
+    expect(r.precio_sugerido).toBeGreaterThanOrEqual(75); // 100·(1−0.25)
+    expect(r.precio_sugerido).toBeLessThanOrEqual(125);    // 100·(1+0.25)
+    expect(r.precio_sugerido).toBeGreaterThan(60);         // sobre el costo
+  });
+
+  it('permite configurar la banda de cambio máximo', () => {
+    const prod: ProductoInput[] = [
+      { codigo: 'G2', nombre: 'Banda chica', precio_actual: 100, costo_promedio: 60 },
+    ];
+    const ventas: VentaItem[] = [
+      ...Array.from({ length: 15 }, () => ({ producto_codigo: 'G2', cantidad: 200, precio_unitario: 80, costo_unitario: 60 })),
+      ...Array.from({ length: 15 }, () => ({ producto_codigo: 'G2', cantidad: 5, precio_unitario: 100, costo_unitario: 60 })),
+    ];
+    const r = recomendarPrecios(prod, ventas, { bandaMaxCambio: 0.05 })[0];
+    expect(r.precio_sugerido).toBeLessThanOrEqual(105);
+    expect(r.precio_sugerido).toBeGreaterThanOrEqual(95);
+  });
+
+  it('ignora productos con precio o costo inválido sin romper', () => {
+    const prods: ProductoInput[] = [
+      { codigo: 'Z1', nombre: 'Precio cero', precio_actual: 0, costo_promedio: 10 },
+      { codigo: 'Z2', nombre: 'Negativo', precio_actual: -5, costo_promedio: 10 },
+      { codigo: 'Z3', nombre: 'OK', precio_actual: 50, costo_promedio: 30 },
+    ];
+    const recs = recomendarPrecios(prods, []);
+    expect(recs.map((r) => r.codigo)).toEqual(['Z3']);
+    expect(Number.isFinite(recs[0].precio_sugerido)).toBe(true);
+  });
+
+  it('reporta R² y nunca devuelve NaN/Infinity', () => {
+    const prod: ProductoInput[] = [
+      { codigo: 'Q1', nombre: 'Con ajuste', precio_actual: 100, costo_promedio: 60 },
+    ];
+    const ventas: VentaItem[] = [
+      ...Array.from({ length: 12 }, () => ({ producto_codigo: 'Q1', cantidad: 8, precio_unitario: 80, costo_unitario: 60 })),
+      ...Array.from({ length: 12 }, () => ({ producto_codigo: 'Q1', cantidad: 4, precio_unitario: 100, costo_unitario: 60 })),
+      ...Array.from({ length: 12 }, () => ({ producto_codigo: 'Q1', cantidad: 2, precio_unitario: 120, costo_unitario: 60 })),
+    ];
+    const r = recomendarPrecios(prod, ventas)[0];
+    expect(r.r2).not.toBeNull();
+    expect(r.r2!).toBeGreaterThanOrEqual(0);
+    expect(r.r2!).toBeLessThanOrEqual(1);
+    for (const v of [r.precio_sugerido, r.delta_pct, r.margen_sugerido_pct, r.impacto_margen_anual]) {
+      expect(Number.isFinite(v)).toBe(true);
+    }
+  });
+
   it('filtra elasticidades absurdas (>10 en valor absoluto)', () => {
     const prod: ProductoInput[] = [
       { codigo: 'D1', nombre: 'Datos ruidosos', precio_actual: 100, costo_promedio: 60 },

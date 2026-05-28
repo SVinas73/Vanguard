@@ -225,13 +225,16 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
 
   // Análisis ABC
   const abcAnalysis = useMemo(() => {
-    // Calcular valor total de movimientos por producto
+    // Valor de CONSUMO por producto (ABC clásico = demanda × costo unitario).
+    // Se valúa a costo, no a precio de venta, para ser consistente con el KPI
+    // de valor de inventario y reflejar el capital realmente consumido.
     const productValues = products.map(p => {
       const productMovements = filteredMovements.filter(m => m.codigo === p.codigo);
       const totalMovements = productMovements.length;
+      const costoUnit = (p.costoPromedio && p.costoPromedio > 0) ? p.costoPromedio : (p.precio || 0);
       const totalValue = productMovements
         .filter(m => m.tipo === 'salida')
-        .reduce((sum, m) => sum + (m.cantidad * p.precio), 0);
+        .reduce((sum, m) => sum + (m.cantidad * costoUnit), 0);
 
       return {
         ...p,
@@ -411,7 +414,9 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
 
     // Productos sin movimiento
     if (kpis.productsNoMovement > 0) {
-      const percentage = Math.round((kpis.productsNoMovement / kpis.totalProducts) * 100);
+      const percentage = kpis.totalProducts > 0
+        ? Math.round((kpis.productsNoMovement / kpis.totalProducts) * 100)
+        : 0;
       insightsList.push({
         id: 'no-movement',
         type: 'info',
@@ -1045,7 +1050,7 @@ function PredictionRow({ product, prediction }: PredictionRowProps) {
                 isWarning ? 'bg-amber-500' :
                 'bg-emerald-500'
               )}
-              style={{ width: `${Math.round(prediction.confidence * 100)}%` }}
+              style={{ width: `${Math.round(Math.max(0, Math.min(1, prediction.confidence)) * 100)}%` }}
             />
           </div>
           <span className="text-xs text-slate-500">{Math.round(prediction.confidence * 100)}%</span>
