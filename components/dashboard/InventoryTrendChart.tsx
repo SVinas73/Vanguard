@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 import { formatMoney, convertir } from '@/lib/currency';
 import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
 import { useTiposCambio } from '@/hooks/useTiposCambio';
@@ -46,41 +47,53 @@ export function InventoryTrendChart({
   const { rates: ratesTable } = useTiposCambio();
   const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
 
-  const chartData = useMemo(() => {
-    // Mapa de COSTO por producto (no precio de venta). Antes usaba
-    // costoPromedio ?? precio, lo que valuaba las salidas al precio de
-    // venta e inflaba los montos vs el valor de inventario (que es a costo).
-    const costoMap = new Map<string, number>(
-      products.map((p: any) => [p.codigo, Number(p.costoPromedio) || 0])
-    );
+  // Flujo = COMPRAS (entradas) vs VENTAS (salidas). NO movimientos de stock.
+  // Si no hay compras ni ventas, queda todo en 0 (ej: uso solo para insumos).
+  const [ordenes, setOrdenes] = useState<{
+    compras: Array<{ fecha: string; total: number }>;
+    ventas: Array<{ fecha: string; total: number }>;
+  }>({ compras: [], ventas: [] });
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const desde = new Date();
+      desde.setDate(desde.getDate() - days);
+      const desdeISO = desde.toISOString();
+
+      // Compras: órdenes de compra no canceladas. Ventas: órdenes de venta
+      // no canceladas. Tomamos el total de cada orden por su fecha.
+      const [resCompras, resVentas] = await Promise.all([
+        supabase.from('ordenes_compra')
+          .select('total, fecha_orden, estado')
+          .gte('fecha_orden', desdeISO)
+          .neq('estado', 'cancelada'),
+        supabase.from('ordenes_venta')
+          .select('total, fecha_orden, estado')
+          .gte('fecha_orden', desdeISO)
+          .neq('estado', 'cancelada'),
+      ]);
+      if (cancelled) return;
+      setOrdenes({
+        compras: (resCompras.data || []).map((o: any) => ({ fecha: o.fecha_orden, total: Number(o.total) || 0 })),
+        ventas: (resVentas.data || []).map((o: any) => ({ fecha: o.fecha_orden, total: Number(o.total) || 0 })),
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [days]);
+
+  const chartData = useMemo(() => {
     const now = new Date();
     const data: Array<{ date: string; entradas: number; salidas: number; neto: number }> = [];
+    const bucket = (arr: Array<{ fecha: string; total: number }>, dayStr: string) =>
+      arr.reduce((s, o) => (o.fecha?.slice(0, 10) === dayStr ? s + o.total : s), 0);
 
     for (let d = days - 1; d >= 0; d--) {
       const day = new Date(now);
       day.setDate(day.getDate() - d);
       const dayStr = day.toISOString().slice(0, 10);
-
-      let entradas = 0;
-      let salidas = 0;
-
-      movements.forEach((m: any) => {
-        const mDate = new Date(m.timestamp).toISOString().slice(0, 10);
-        if (mDate !== dayStr) return;
-        const cantidad = Number(m.cantidad) || 0;
-        const costoProm = costoMap.get(m.codigo) ?? 0;
-        if (m.tipo === 'entrada') {
-          // Entrada valuada al costo de compra real del movimiento si existe;
-          // si no, al costo promedio del producto.
-          const costoCompra = Number(m.costoCompra ?? m.costo_compra) || 0;
-          entradas += cantidad * (costoCompra > 0 ? costoCompra : costoProm);
-        } else {
-          // Salida valuada al costo (no al precio de venta).
-          salidas += cantidad * costoProm;
-        }
-      });
-
+      const entradas = bucket(ordenes.compras, dayStr); // compras
+      const salidas = bucket(ordenes.ventas, dayStr);    // ventas
       data.push({
         date: day.toLocaleDateString('es-UY', { day: '2-digit', month: 'short' }),
         entradas: Math.round(entradas),
@@ -88,9 +101,8 @@ export function InventoryTrendChart({
         neto: Math.round(entradas - salidas),
       });
     }
-
     return data;
-  }, [movements, products, days]);
+  }, [ordenes, days]);
 
   const hasData = chartData.some(d => d.entradas > 0 || d.salidas > 0);
 
@@ -131,7 +143,7 @@ export function InventoryTrendChart({
             Flujo de inventario
           </h3>
           <p className="text-sm text-slate-400 mt-0.5">
-            Entradas vs salidas en valor ($) · últimos {days === 365 ? '12 meses' : `${days} días`}
+            Compras vs ventas · últimos {days === 365 ? '12 meses' : `${days} días`}
           </p>
         </div>
 
@@ -158,7 +170,7 @@ export function InventoryTrendChart({
       {/* Gráfica */}
       {!hasData ? (
         <div className="flex items-center justify-center h-[280px] text-slate-500 text-sm">
-          Sin movimientos en el período seleccionado
+          Sin compras ni ventas en el período
         </div>
       ) : (
         <>
@@ -205,7 +217,7 @@ export function InventoryTrendChart({
                   labelStyle={{ color: 'var(--content-secondary, #94a3b8)' }}
                   formatter={(value: number, name: string) => [
                     fmt(value),
-                    name === 'entradas' ? 'Entradas' : 'Salidas',
+                    name === 'entradas' ? 'Compras' : 'Ventas',
                   ]}
                   cursor={{ stroke: 'currentColor', strokeOpacity: 0.15, strokeWidth: 1 }}
                 />
@@ -238,11 +250,11 @@ export function InventoryTrendChart({
           <div className="flex items-center gap-5 mt-3 mb-5 text-sm">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-emerald-400" />
-              <span className="text-slate-400">Entradas</span>
+              <span className="text-slate-400">Compras</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-red-400" />
-              <span className="text-slate-400">Salidas</span>
+              <span className="text-slate-400">Ventas</span>
             </div>
           </div>
 
@@ -250,7 +262,7 @@ export function InventoryTrendChart({
           <div className="grid grid-cols-3 gap-4 pt-5 border-t border-slate-800/60">
             <div>
               <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
-                Entradas
+                Compras
               </div>
               <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
                 {fmt(totals.entradas)}
@@ -258,7 +270,7 @@ export function InventoryTrendChart({
             </div>
             <div>
               <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
-                Salidas
+                Ventas
               </div>
               <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
                 {fmt(totals.salidas)}
