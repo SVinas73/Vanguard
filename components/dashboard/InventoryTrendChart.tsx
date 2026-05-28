@@ -47,8 +47,11 @@ export function InventoryTrendChart({
   const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
 
   const chartData = useMemo(() => {
-    const productCostMap = new Map(
-      products.map((p: any) => [p.codigo, p.costoPromedio ?? p.precio])
+    // Mapa de COSTO por producto (no precio de venta). Antes usaba
+    // costoPromedio ?? precio, lo que valuaba las salidas al precio de
+    // venta e inflaba los montos vs el valor de inventario (que es a costo).
+    const costoMap = new Map<string, number>(
+      products.map((p: any) => [p.codigo, Number(p.costoPromedio) || 0])
     );
 
     const now = new Date();
@@ -64,11 +67,17 @@ export function InventoryTrendChart({
 
       movements.forEach((m: any) => {
         const mDate = new Date(m.timestamp).toISOString().slice(0, 10);
-        if (mDate === dayStr) {
-          const cost = productCostMap.get(m.codigo) ?? 0;
-          const value = m.cantidad * cost;
-          if (m.tipo === 'entrada') entradas += value;
-          else salidas += value;
+        if (mDate !== dayStr) return;
+        const cantidad = Number(m.cantidad) || 0;
+        const costoProm = costoMap.get(m.codigo) ?? 0;
+        if (m.tipo === 'entrada') {
+          // Entrada valuada al costo de compra real del movimiento si existe;
+          // si no, al costo promedio del producto.
+          const costoCompra = Number(m.costoCompra ?? m.costo_compra) || 0;
+          entradas += cantidad * (costoCompra > 0 ? costoCompra : costoProm);
+        } else {
+          // Salida valuada al costo (no al precio de venta).
+          salidas += cantidad * costoProm;
         }
       });
 
