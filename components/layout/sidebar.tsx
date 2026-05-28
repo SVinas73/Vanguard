@@ -139,20 +139,19 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'inicio', label: 'Inicio', icon: Home },
         { id: 'dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
         { id: 'executive', label: t('nav.executive') || 'Vista Ejecutiva', icon: Briefcase, badge: 'C' },
-        { id: 'stock', label: t('nav.stock'), icon: Package },
-        { id: 'movimientos', label: t('nav.movements'), icon: ArrowLeftRight },
-        { id: 'chat', label: t('modules.messages'), icon: MessageCircle },
+        { id: 'comercial', label: t('modules.comercial'), icon: DollarSign, permission: 'canViewComercial' },
       ]
     },
     {
-      key: 'operations',
-      title: t('nav.operations') || 'Operaciones',
-      defaultOpen: true,
+      key: 'logistica',
+      title: 'Logística',
+      defaultOpen: false,
       items: [
-        { id: 'comercial', label: t('modules.comercial'), icon: DollarSign, permission: 'canViewComercial' },
-        { id: 'replenishment', label: t('nav.replenishment') || 'Reabastecimiento IA', icon: Truck, badge: 'AI' },
-        { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
+        { id: 'movimientos', label: t('nav.movements'), icon: ArrowLeftRight },
+        { id: 'stock', label: t('nav.stock'), icon: Package },
         { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
+        { id: 'replenishment', label: t('nav.replenishment') || 'Reabastecimiento IA', icon: Truck, badge: 'AI' },
+        { id: 'demand', label: t('modules.demandPlanning'), icon: Zap, badge: 'AI', permission: 'canViewDemand' },
       ]
     },
     {
@@ -182,6 +181,8 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       defaultOpen: true,
       items: [
         { id: 'rrhh', label: t('modules.hr') || 'Recursos Humanos', icon: Users },
+        { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
+        { id: 'chat', label: t('modules.messages'), icon: MessageCircle },
       ]
     },
     {
@@ -190,7 +191,6 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       defaultOpen: true,
       items: [
         { id: 'analytics', label: t('nav.analytics'), icon: Brain, badge: 'AI' },
-        { id: 'demand', label: t('modules.demandPlanning'), icon: Zap, badge: 'AI', permission: 'canViewDemand' },
         { id: 'pricing', label: t('nav.pricing') || 'Precios IA', icon: Sparkles, badge: 'AI' },
         { id: 'reportes', label: t('nav.reports'), icon: FileText, permission: 'canViewReports' },
       ]
@@ -213,7 +213,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
       defaultOpen: false,
       items: [
         { id: 'empresas', label: 'Mis empresas', icon: Building2 },
-        { id: 'configuracion', label: 'Modo Lite / Full', icon: Sparkles },
+        { id: 'configuracion', label: 'General', icon: Sparkles },
         { id: 'integraciones', label: t('nav.integrations'), icon: Plug },
       ]
     },
