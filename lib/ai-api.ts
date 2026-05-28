@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_AI_API_URL || 'http://localhost:8000';
+import { AI_API_URL } from './ai/api-url';
+
+const API_URL = AI_API_URL;
 
 export const aiApi = {
   // Predicción de agotamiento de stock (Holt-Winters)

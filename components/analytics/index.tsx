@@ -191,7 +191,8 @@ export function AlertList({ products, predictions, maxItems = 100 }: AlertListPr
     const classified = products
       .map((p) => {
         const pred = predictions[p.codigo];
-        const ratio = p.stock / p.stockMinimo;
+        // Guard: stockMinimo 0 → evitar NaN/Infinity que rompen el orden.
+        const ratio = p.stockMinimo > 0 ? p.stock / p.stockMinimo : (p.stock > 0 ? Infinity : 0);
         const daysLeft = pred?.days;
         
         let urgency: 'critica' | 'media' | 'baja';

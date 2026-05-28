@@ -5,8 +5,23 @@
 // postsale-mvp  → análisis cualitativo (LLM sobre emails)
 // =====================================================
 
-const VANGUARD_IA_URL = process.env.NEXT_PUBLIC_VANGUARD_IA_URL || '';
+import { AI_API_URL } from '@/lib/ai/api-url';
+
+const VANGUARD_IA_URL = AI_API_URL;
 const POSTSALE_URL = process.env.NEXT_PUBLIC_POSTSALE_URL || '';
+
+const FETCH_TIMEOUT_MS = 30_000;
+
+/** fetch con timeout vía AbortController (evita requests colgados). */
+async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
 
 export interface ChurnScore {
   cliente_id: string;
@@ -69,7 +84,7 @@ export interface PostsaleTarea {
 async function fetchVanguardIA<T>(path: string, init?: RequestInit): Promise<T | null> {
   if (!VANGUARD_IA_URL) return null;
   try {
-    const r = await fetch(`${VANGUARD_IA_URL}${path}`, {
+    const r = await fetchWithTimeout(`${VANGUARD_IA_URL}${path}`, {
       ...init,
       headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
     });
@@ -107,7 +122,7 @@ export async function trainChurnModel(): Promise<{ entrenado: boolean; auc_test:
 async function fetchPostsale<T>(path: string, init?: RequestInit): Promise<T | null> {
   if (!POSTSALE_URL) return null;
   try {
-    const r = await fetch(`${POSTSALE_URL}${path}`, {
+    const r = await fetchWithTimeout(`${POSTSALE_URL}${path}`, {
       ...init,
       headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
     });

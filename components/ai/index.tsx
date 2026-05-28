@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { aiApi } from '@/lib/ai-api';
 import { cn } from '@/lib/utils';
@@ -201,6 +201,80 @@ function getUrgencyStyle(urgencia: string, t: (key: string) => string): Severity
 }
 
 // ============================================
+// HOOK HÍBRIDO: backend-first + fallback local
+// ============================================
+// Intenta traer datos del backend de IA (modelos potentes: Isolation Forest,
+// Apriso/mlxtend, XGBoost). Si el backend no responde, cae al cálculo local
+// para que el dashboard nunca quede vacío. Expone la fuente real ('backend' /
+// 'local') para mostrarla con honestidad en la UI.
+
+type DataSource = 'backend' | 'local' | 'loading';
+
+function useHybridData<T>(
+  fetchBackend: () => Promise<T>,
+  computeLocal: () => T,
+  deps: React.DependencyList,
+): { data: T; source: DataSource; loading: boolean; refresh: () => void } {
+  const [data, setData] = useState<T>(() => computeLocal());
+  const [source, setSource] = useState<DataSource>('loading');
+  const [loading, setLoading] = useState(true);
+  const [nonce, setNonce] = useState(0);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const localFn = useCallback(computeLocal, deps);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const backendFn = useCallback(fetchBackend, deps);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    backendFn()
+      .then((res) => {
+        if (cancelled) return;
+        setData(res);
+        setSource('backend');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setData(localFn());
+        setSource('local');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [backendFn, localFn, nonce]);
+
+  const refresh = useCallback(() => setNonce((n) => n + 1), []);
+  return { data, source, loading, refresh };
+}
+
+function SourceTag({ source }: { source: DataSource }) {
+  const { t } = useTranslation();
+  if (source === 'loading') return null;
+  const isBackend = source === 'backend';
+  return (
+    <span
+      className={cn(
+        'text-[9px] px-1.5 py-0.5 rounded-full font-semibold uppercase tracking-wide',
+        isBackend
+          ? 'bg-emerald-500/10 text-emerald-400'
+          : 'bg-slate-700/40 text-slate-400',
+      )}
+      title={
+        isBackend
+          ? t('ai.sourceBackendHint', 'Modelos del backend de IA (Vanguard-IA)')
+          : t('ai.sourceLocalHint', 'Cálculo local en el navegador (backend no disponible)')
+      }
+    >
+      {isBackend ? 'IA' : t('ai.sourceLocal', 'local')}
+    </span>
+  );
+}
+
+// ============================================
 // AI PREDICTIONS PANEL
 // ============================================
 
@@ -229,9 +303,8 @@ interface AIPanelDataProps {
 export function AIPredictionsPanel({ products = [], movements = [], predictions = {}, onRefresh }: AIPanelDataProps) {
   const { t } = useTranslation();
 
-  // Computamos los productos críticos LOCALMENTE con el predictor que ya
-  // corre en la app (sin depender del backend Python que no está deployado).
-  const data: PredictionsSummary = useMemo(() => {
+  // Fallback local: predictor client-side que ya corre en la app.
+  const computeLocal = useCallback((): PredictionsSummary => {
     const alertas = getStockAlerts(products, predictions);
     const criticos = alertas
       .map((p) => {
@@ -263,9 +336,16 @@ export function AIPredictionsPanel({ products = [], movements = [], predictions 
     };
   }, [products, predictions]);
 
-  const loading = false;
+  // Backend-first: resumen de productos críticos (Holt-Winters/XGBoost).
+  const fetchBackend = useCallback(async (): Promise<PredictionsSummary> => {
+    return aiApi.getPredictionsSummary();
+  }, []);
+
+  const { data, source, loading, refresh } = useHybridData(
+    fetchBackend, computeLocal, [products, predictions],
+  );
   const error = null;
-  const fetchData = () => { onRefresh?.(); };
+  const fetchData = () => { refresh(); onRefresh?.(); };
 
   const accentColor = '#836ba0'; // violet
 
@@ -278,12 +358,15 @@ export function AIPredictionsPanel({ products = [], movements = [], predictions 
       onRefresh={fetchData}
       footer={
         data ? (
-          <span>
-            {data.total_criticos}{' '}
-            {t('ai.analyzedProducts').replace(
-              '{total}',
-              data.total_analizado.toString()
-            )}
+          <span className="flex items-center justify-between gap-2">
+            <span>
+              {data.total_criticos}{' '}
+              {t('ai.analyzedProducts').replace(
+                '{total}',
+                data.total_analizado.toString()
+              )}
+            </span>
+            <SourceTag source={source} />
           </span>
         ) : null
       }
@@ -388,8 +471,8 @@ interface AnomaliesData {
 export function AIAnomaliesPanel({ products = [], movements = [], onRefresh }: AIPanelDataProps) {
   const { t } = useTranslation();
 
-  // Detección de anomalías LOCAL (Z-score sobre el historial) — sin backend.
-  const data: AnomaliesData = useMemo(() => {
+  // Fallback local: detección Z-score sobre el historial.
+  const computeLocal = useCallback((): AnomaliesData => {
     const encontradas = findAllAnomalies(products, movements);
     const anomalias: Anomaly[] = encontradas.slice(0, 20).map(({ movement, anomaly }, i) => {
       const prod = products.find((p) => p.codigo === movement.codigo);
@@ -414,9 +497,34 @@ export function AIAnomaliesPanel({ products = [], movements = [], onRefresh }: A
     };
   }, [products, movements]);
 
-  const loading = false;
+  // Backend-first: Isolation Forest. Normaliza el score (decision_function,
+  // negativo = más anómalo) a 0..1 para la barra visual.
+  const fetchBackend = useCallback(async (): Promise<AnomaliesData> => {
+    const res = await aiApi.detectAnomalies(30);
+    const anomalias: Anomaly[] = (res.anomalias ?? []).map((a: any, i: number) => ({
+      id: String(a.id ?? i),
+      codigo: a.codigo,
+      descripcion: a.descripcion ?? a.codigo,
+      tipo: a.tipo,
+      cantidad: a.cantidad,
+      fecha: a.fecha,
+      usuario: a.usuario ?? '',
+      anomaly_score: Math.min(1, Math.max(0, Math.abs(a.anomaly_score ?? 0))),
+      razon: a.razon ?? '',
+      severidad: (a.severidad ?? 'baja') as 'alta' | 'media' | 'baja',
+    }));
+    return {
+      anomalias,
+      total_analizado: res.total_analizado ?? movements.length,
+      total_anomalias: res.total_anomalias ?? anomalias.length,
+    };
+  }, [movements.length]);
+
+  const { data, source, loading, refresh } = useHybridData(
+    fetchBackend, computeLocal, [products, movements],
+  );
   const error = null;
-  const fetchData = () => { onRefresh?.(); };
+  const fetchData = () => { refresh(); onRefresh?.(); };
 
   const accentColor = '#dfa6a6'; // rose
 
@@ -429,12 +537,15 @@ export function AIAnomaliesPanel({ products = [], movements = [], onRefresh }: A
       onRefresh={fetchData}
       footer={
         data ? (
-          <span>
-            {data.total_anomalias}{' '}
-            {t('ai.analyzedMovements').replace(
-              '{total}',
-              data.total_analizado.toString()
-            )}
+          <span className="flex items-center justify-between gap-2">
+            <span>
+              {data.total_anomalias}{' '}
+              {t('ai.analyzedMovements').replace(
+                '{total}',
+                data.total_analizado.toString()
+              )}
+            </span>
+            <SourceTag source={source} />
           </span>
         ) : null
       }
@@ -532,9 +643,8 @@ interface AssociationsData {
 export function AIAssociationsPanel({ products = [], movements = [], onRefresh }: AIPanelDataProps) {
   const { t } = useTranslation();
 
-  // Reglas de asociación LOCALES: productos cuyas SALIDAS ocurren el mismo
-  // día. Es un Apriori simplificado client-side (sin backend Python).
-  const data: AssociationsData = useMemo(() => {
+  // Fallback local: Apriori simplificado client-side (salidas del mismo día).
+  const computeLocal = useCallback((): AssociationsData => {
     const desc = new Map(products.map((p) => [p.codigo, p.descripcion]));
 
     // Agrupar salidas por día → "canastas"
@@ -581,9 +691,23 @@ export function AIAssociationsPanel({ products = [], movements = [], onRefresh }
     return { reglas, total_transacciones: totalCanastas };
   }, [products, movements]);
 
-  const loading = false;
+  // Backend-first: reglas de asociación con Apriori (mlxtend).
+  const fetchBackend = useCallback(async (): Promise<AssociationsData> => {
+    const res = await aiApi.getAssociationRules(0.1, 0.3, 90);
+    const reglas: AssociationRule[] = (res.reglas ?? []).map((r: any) => ({
+      si_compran: r.si_compran ?? [],
+      tambien_compran: r.tambien_compran ?? [],
+      confianza: r.confianza ?? 0,
+      interpretacion: r.interpretacion ?? '',
+    }));
+    return { reglas, total_transacciones: res.total_transacciones ?? 0 };
+  }, []);
+
+  const { data, source, loading, refresh } = useHybridData(
+    fetchBackend, computeLocal, [products, movements],
+  );
   const error = null;
-  const fetchData = () => { onRefresh?.(); };
+  const fetchData = () => { refresh(); onRefresh?.(); };
 
   const accentColor = '#4a7fb5'; // cyan
 
@@ -596,10 +720,13 @@ export function AIAssociationsPanel({ products = [], movements = [], onRefresh }
       onRefresh={fetchData}
       footer={
         data ? (
-          <span>
-            {data.reglas.length > 0
-              ? `${data.reglas.length} reglas · ${data.total_transacciones} transacciones`
-              : `${(data as any).total_movimientos || data.total_transacciones || 0} movimientos`}
+          <span className="flex items-center justify-between gap-2">
+            <span>
+              {data.reglas.length > 0
+                ? `${data.reglas.length} reglas · ${data.total_transacciones} transacciones`
+                : `${(data as any).total_movimientos || data.total_transacciones || 0} movimientos`}
+            </span>
+            <SourceTag source={source} />
           </span>
         ) : null
       }
