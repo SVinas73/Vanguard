@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -9,6 +9,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types';
+import { useInventoryStore } from '@/store';
+import { supabase } from '@/lib/supabase';
+import { DashboardView } from '@/components/dashboard';
 
 import ComercialDashboard from './ComercialDashboard';
 import ComprasEnterprisePanel from './ComprasEnterprisePanel';
@@ -40,6 +43,47 @@ export default function ComercialModule({
   const { t } = useTranslation();
   const { hasPermission } = useAuth(false);
   const [subTab, setSubTab] = useState<ComercialSubTab>(activeSubTab);
+
+  // Sub-subtabs internos del panel "Solicitudes de insumos":
+  // - 'solicitud' → SolicitudesInsumosPanel (lo actual)
+  // - 'analisis'  → DashboardView (réplica del Dashboard) filtrado a insumos
+  const [insumosSubTab, setInsumosSubTab] = useState<'solicitud' | 'analisis'>('solicitud');
+  const [insumosPeriod, setInsumosPeriod] = useState('30d');
+
+  // Datos del store para el "Análisis de insumos"
+  const { products: allProducts, movements: allMovements, predictions } = useInventoryStore();
+
+  // Lista de almacenes para identificar cuáles son de insumos (nombre contiene "insumo")
+  const [almacenes, setAlmacenes] = useState<Array<{ id: string; nombre: string }>>([]);
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from('almacenes')
+      .select('id, nombre')
+      .then(({ data }) => {
+        if (!cancelled && data) setAlmacenes(data);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const insumosAlmacenIds = useMemo(
+    () => new Set(
+      almacenes
+        .filter(a => (a.nombre || '').toLowerCase().includes('insumo'))
+        .map(a => a.id)
+    ),
+    [almacenes]
+  );
+
+  // Productos / movimientos filtrados al/los almacén(es) de insumos
+  const insumosProducts = useMemo(
+    () => allProducts.filter(p => p.almacenId != null && insumosAlmacenIds.has(p.almacenId)),
+    [allProducts, insumosAlmacenIds]
+  );
+  const insumosMovements = useMemo(() => {
+    const codes = new Set(insumosProducts.map(p => p.codigo));
+    return allMovements.filter(m => codes.has(m.codigo));
+  }, [allMovements, insumosProducts]);
 
   useEffect(() => {
     setSubTab(activeSubTab);
@@ -135,7 +179,46 @@ export default function ComercialModule({
       )}
 
       {subTab === 'insumos' && (
-        <SolicitudesInsumosPanel />
+        <div className="space-y-5">
+          {/* Sub-subtabs internos (pestañas secundarias tipo pill) */}
+          <div className="flex items-center gap-1">
+            {([
+              { id: 'solicitud' as const, label: 'Solicitud de insumos' },
+              { id: 'analisis' as const, label: 'Análisis de insumos' },
+            ]).map((s) => {
+              const isActive = insumosSubTab === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setInsumosSubTab(s.id)}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap',
+                    isActive
+                      ? 'bg-blue-500/15 text-blue-400 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  )}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {insumosSubTab === 'solicitud' && <SolicitudesInsumosPanel />}
+
+          {insumosSubTab === 'analisis' && (
+            <DashboardView
+              products={insumosProducts}
+              movements={insumosMovements}
+              predictions={predictions}
+              userName={userEmail?.split('@')[0]}
+              period={insumosPeriod}
+              onPeriodChange={setInsumosPeriod}
+              onNavigate={() => {}}
+              onRefresh={() => {}}
+            />
+          )}
+        </div>
       )}
 
       {subTab === 'facturacion' && (

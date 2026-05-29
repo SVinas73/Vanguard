@@ -850,6 +850,8 @@ interface StatCardProps {
 export { CrossModuleSummary } from './CrossModuleSummary';
 export { InventoryTrendChart } from './InventoryTrendChart';
 export { PeriodSelector } from './PeriodSelector';
+export { DashboardView } from './DashboardView';
+export type { DashboardViewProps } from './DashboardView';
 
 export function StatCard({ label, value, icon, color, trend, subtitle }: StatCardProps) {
   const kpiColor = (

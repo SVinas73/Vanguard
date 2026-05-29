@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { ComercialSubTab } from '@/components/comercial';
 
 // Módulos del dashboard que se ven al toque (no se splittean)
-import { WelcomeHeader, StatsGrid, InsightsPanel, CrossModuleSummary, InventoryTrendChart, PeriodSelector } from '@/components/dashboard';
+import { WelcomeHeader, StatsGrid, InsightsPanel, CrossModuleSummary, InventoryTrendChart, PeriodSelector, DashboardView } from '@/components/dashboard';
 import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { GlobalSearch } from '@/components/search';
@@ -122,7 +122,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [dashboardPeriod, setDashboardPeriod] = useState('30d');
-  const [dashboardAlmacenId, setDashboardAlmacenId] = useState<string>('todos');
+  const [dashboardAlmacenId, setDashboardAlmacenId] = useState<string>('');
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [comercialSubTab, setComercialSubTab] = useState<ComercialSubTab>('dashboard');
 
@@ -274,8 +274,14 @@ export default function HomePage() {
         .order('es_principal', { ascending: false });
       if (data) {
         setAlmacenes(data);
-        // Con ≤1 almacén el filtro no aplica: forzar vista completa.
-        if (data.length <= 1) setDashboardAlmacenId('todos');
+        // El dashboard principal muestra SOLO almacenes de venta (NO insumos).
+        // Un almacén es de insumos si su nombre contiene "insumo" (case-insensitive).
+        const ventaAlmacenes = data.filter(a => !(a.nombre || '').toLowerCase().includes('insumo'));
+        // El dashboard se filtra siempre por un almacén de venta concreto (sin opción
+        // "todos"). Si el seleccionado no existe en la lista de venta, default al primero.
+        setDashboardAlmacenId(prev =>
+          ventaAlmacenes.some(a => a.id === prev) ? prev : (ventaAlmacenes[0]?.id ?? '')
+        );
       }
     };
     
@@ -343,94 +349,12 @@ export default function HomePage() {
     return getStockAlerts(products, predictions);
   }, [products, predictions]);
 
-  // Dashboard stats — filtered by warehouse if selected
-  const stats = useMemo(() => {
-    const filteredProducts = dashboardAlmacenId === 'todos'
-      ? products
-      : products.filter(p => p.almacenId === dashboardAlmacenId);
-
-    // Movement filter: si hay almacén seleccionado, solo movs cuyo producto pertenece
-    const productCodesInAlmacen = new Set(filteredProducts.map(p => p.codigo));
-    const filteredMovements = dashboardAlmacenId === 'todos'
-      ? movements
-      : movements.filter(m => productCodesInAlmacen.has(m.codigo));
-
-    const activeProducts = filteredProducts.length;
-
-    // Stock bajo = stock > 0 AND ≤ minimo (separar de agotados)
-    const stockBajoSinAgotados = filteredProducts.filter(p => p.stock > 0 && p.stockMinimo > 0 && p.stock <= p.stockMinimo).length;
-    const agotados = filteredProducts.filter(p => p.stock === 0).length;
-
-    // Ventanas según el período del dashboard
-    const now = Date.now();
-    const periodStart = new Date(now - periodDays * 86400000);
-    const prevPeriodStart = new Date(now - periodDays * 2 * 86400000);
-
-    const movementsInPeriod = filteredMovements.filter(
-      (m) => new Date(m.timestamp) >= periodStart
-    );
-    const movementsInPrevPeriod = filteredMovements.filter(
-      (m) => {
-        const t = new Date(m.timestamp);
-        return t >= prevPeriodStart && t < periodStart;
-      }
-    );
-
-    // ROTACIÓN — días de inventario reales en la ventana seleccionada.
-    const salesInPeriod = movementsInPeriod.filter(m => m.tipo === 'salida');
-
-    let avgRotation = 0;
-    let dailyAvgSales = 0;
-    if (salesInPeriod.length > 0) {
-      const oldest = salesInPeriod.reduce((min, m) => {
-        const t = new Date(m.timestamp).getTime();
-        return t < min ? t : min;
-      }, now);
-      const daysSpan = Math.max(1, Math.min(periodDays, Math.ceil((now - oldest) / 86400000)));
-      const totalSales = salesInPeriod.reduce((sum, m) => sum + m.cantidad, 0);
-      dailyAvgSales = totalSales / daysSpan;
-      const totalStock = filteredProducts.reduce((sum, p) => sum + p.stock, 0);
-      avgRotation = dailyAvgSales > 0 ? Math.round(totalStock / dailyAvgSales) : 0;
-    }
-
-    // Trend: movimientos en período vs período anterior
-    const movsCount = movementsInPeriod.length;
-    const prevMovsCount = movementsInPrevPeriod.length;
-    const movementTrend = prevMovsCount > 0
-      ? { value: Math.round(((movsCount - prevMovsCount) / prevMovsCount) * 100), label: `vs ${periodLabel} ant.` }
-      : undefined;
-
-    return [
-      {
-        label: t('dashboard.activeProducts', 'Productos Activos'),
-        value: formatNumber(activeProducts),
-        icon: <Package size={24} />,
-        color: 'emerald',
-        subtitle: dashboardAlmacenId === 'todos' ? 'SKUs en catálogo' : 'SKUs en este almacén',
-      },
-      {
-        label: t('dashboard.avgRotation', 'Rotación Promedio'),
-        value: avgRotation > 0 ? `${avgRotation}d` : '—',
-        icon: <TrendingUp size={24} />,
-        color: 'cyan',
-        subtitle: dailyAvgSales > 0 ? `${dailyAvgSales.toFixed(1)} unid/día (${periodLabel})` : `Sin ventas en ${periodLabel}`,
-      },
-      {
-        label: t('dashboard.lowStock', 'Stock Bajo'),
-        value: stockBajoSinAgotados.toString(),
-        icon: <AlertTriangle size={24} />,
-        color: stockBajoSinAgotados > 0 ? 'amber' : 'slate',
-        subtitle: agotados > 0 ? `+ ${agotados} agotados` : 'Sin agotados',
-      },
-      {
-        label: `Movimientos · ${periodLabel}`,
-        value: movsCount.toString(),
-        icon: <ArrowLeftRight size={24} />,
-        color: 'purple',
-        trend: movementTrend,
-      },
-    ];
-  }, [products, movements, t, dashboardAlmacenId, periodDays, periodLabel]);
+  // Almacenes de venta (NO insumos). El dashboard principal muestra SOLO
+  // artículos de venta; un almacén es de insumos si su nombre contiene "insumo".
+  const almacenesVenta = useMemo(
+    () => almacenes.filter(a => !(a.nombre || '').toLowerCase().includes('insumo')),
+    [almacenes]
+  );
 
   // Productos / movimientos filtrados por almacén — usados en cards del dashboard
   const dashboardProducts = useMemo(() => {
@@ -753,93 +677,36 @@ export default function HomePage() {
 
         {/* ==================== DASHBOARD ==================== */}
         {activeTab === 'dashboard' && (
-          <div className="space-y-5">
-            {/* Header: saludo + selector almacén + período + refresh */}
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="flex-1 min-w-0">
-                <WelcomeHeader
-                  userName={user?.nombre || user?.email?.split('@')[0]}
-                  products={dashboardProducts}
-                  predictions={predictions}
-                />
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0 pt-1">
-                {/* Selector de almacén — solo tiene sentido con 2+ almacenes.
-                    Con un único almacén, filtrar por él excluiría los productos
-                    sin almacén asignado y daría métricas distintas a "Todos",
-                    confundiendo (siendo el mismo depósito). */}
-                {almacenes.length > 1 && (
-                  <select
-                    value={dashboardAlmacenId}
-                    onChange={(e) => setDashboardAlmacenId(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-sm text-slate-200 transition-colors focus:outline-none focus:border-indigo-500"
-                    title="Filtrar dashboard por almacén"
-                  >
-                    <option value="todos">Todos los almacenes</option>
-                    {almacenes.map(a => (
-                      <option key={a.id} value={a.id}>{a.nombre}</option>
-                    ))}
-                  </select>
-                )}
-                <PeriodSelector value={dashboardPeriod} onChange={setDashboardPeriod} />
-                <button
-                  onClick={handleManualRefresh}
-                  className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-colors"
-                  title={`Última actualización: ${lastRefresh.toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' })}`}
+          <DashboardView
+            products={dashboardProducts}
+            movements={dashboardMovements}
+            predictions={predictions}
+            userName={user?.nombre || user?.email?.split('@')[0]}
+            period={dashboardPeriod}
+            onPeriodChange={setDashboardPeriod}
+            onNavigate={(tab) => handleTabChange(tab as TabType)}
+            onRefresh={handleManualRefresh}
+            onCategoryClick={(category: string) => {
+              setSelectedCategory(category);
+              handleTabChange('stock');
+            }}
+            headerRight={
+              /* Selector de almacén — lista SOLO almacenes de venta (NO insumos).
+                 El dashboard se filtra por el almacén elegido; default al primero. */
+              almacenesVenta.length > 0 ? (
+                <select
+                  value={dashboardAlmacenId}
+                  onChange={(e) => setDashboardAlmacenId(e.target.value)}
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-sm text-slate-200 transition-colors focus:outline-none focus:border-indigo-500"
+                  title="Filtrar dashboard por almacén"
                 >
-                  <RefreshCw size={14} className="text-slate-400 hover:text-slate-200 transition-colors" />
-                </button>
-              </div>
-            </div>
-
-            {/* KPIs principales */}
-            <StatsGrid stats={stats} products={dashboardProducts} movements={dashboardMovements} />
-
-            {/* Valor del Inventario (con desglose por almacén) */}
-            <InventoryValueCard
-              products={dashboardProducts}
-              movements={dashboardMovements}
-              periodDays={periodDays}
-              periodLabel={periodLabel}
-              onCategoryClick={(category: string) => {
-                setSelectedCategory(category);
-                handleTabChange('stock');
-              }}
-            />
-
-            {/* Flujo de inventario */}
-            <InventoryTrendChart
-              movements={dashboardMovements}
-              products={dashboardProducts}
-              days={periodDays}
-            />
-
-            {/* Top consumidos + Insights — lado a lado (60/40) */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-              <div className="lg:col-span-3 rounded-xl p-6 bg-slate-900/40 border border-slate-800">
-                <ConsumptionChart
-                  movements={dashboardMovements}
-                  products={dashboardProducts}
-                  fixedPeriod={dashboardPeriod as '7d' | '30d' | '90d' | '1a'}
-                />
-              </div>
-              <div className="lg:col-span-2">
-                <InsightsPanel
-                  products={dashboardProducts}
-                  movements={dashboardMovements}
-                  predictions={predictions}
-                  onNavigate={(tab) => handleTabChange(tab as TabType)}
-                />
-              </div>
-            </div>
-
-            {/* Paneles de IA — predicciones, anomalías, asociaciones */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <AIPredictionsPanel products={dashboardProducts} movements={dashboardMovements} predictions={predictions} onRefresh={handleManualRefresh} />
-              <AIAnomaliesPanel products={dashboardProducts} movements={dashboardMovements} onRefresh={handleManualRefresh} />
-              <AIAssociationsPanel products={dashboardProducts} movements={dashboardMovements} onRefresh={handleManualRefresh} />
-            </div>
-          </div>
+                  {almacenesVenta.map(a => (
+                    <option key={a.id} value={a.id}>{a.nombre}</option>
+                  ))}
+                </select>
+              ) : undefined
+            }
+          />
         )}
 
         {/* ==================== STOCK (con Almacenes embebido) ==================== */}
