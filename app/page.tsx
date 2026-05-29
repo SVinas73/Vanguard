@@ -122,7 +122,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [dashboardPeriod, setDashboardPeriod] = useState('30d');
-  const [dashboardAlmacenId, setDashboardAlmacenId] = useState<string>('todos');
+  const [dashboardAlmacenId, setDashboardAlmacenId] = useState<string>('');
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [comercialSubTab, setComercialSubTab] = useState<ComercialSubTab>('dashboard');
 
@@ -274,8 +274,11 @@ export default function HomePage() {
         .order('es_principal', { ascending: false });
       if (data) {
         setAlmacenes(data);
-        // Con ≤1 almacén el filtro no aplica: forzar vista completa.
-        if (data.length <= 1) setDashboardAlmacenId('todos');
+        // El dashboard se filtra siempre por un almacén concreto (sin opción
+        // "todos"). Si el seleccionado no existe en la lista, default al primero.
+        setDashboardAlmacenId(prev =>
+          data.some(a => a.id === prev) ? prev : (data[0]?.id ?? '')
+        );
       }
     };
     
@@ -764,18 +767,16 @@ export default function HomePage() {
                 />
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 pt-1">
-                {/* Selector de almacén — solo tiene sentido con 2+ almacenes.
-                    Con un único almacén, filtrar por él excluiría los productos
-                    sin almacén asignado y daría métricas distintas a "Todos",
-                    confundiendo (siendo el mismo depósito). */}
-                {almacenes.length > 1 && (
+                {/* Selector de almacén — lista los almacenes existentes (sin
+                    opción "todos"). El dashboard se filtra por el almacén
+                    elegido; default al primero. */}
+                {almacenes.length > 0 && (
                   <select
                     value={dashboardAlmacenId}
                     onChange={(e) => setDashboardAlmacenId(e.target.value)}
                     className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-sm text-slate-200 transition-colors focus:outline-none focus:border-indigo-500"
                     title="Filtrar dashboard por almacén"
                   >
-                    <option value="todos">Todos los almacenes</option>
                     {almacenes.map(a => (
                       <option key={a.id} value={a.id}>{a.nombre}</option>
                     ))}

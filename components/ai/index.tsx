@@ -345,7 +345,8 @@ export function AIPredictionsPanel({ products = [], movements = [], predictions 
     fetchBackend, computeLocal, [products, predictions],
   );
   const error = null;
-  const fetchData = () => { refresh(); onRefresh?.(); };
+  // Refresca SOLO este card (no recarga toda la página).
+  const fetchData = () => { refresh(); };
 
   const accentColor = '#836ba0'; // violet
 
@@ -524,7 +525,8 @@ export function AIAnomaliesPanel({ products = [], movements = [], onRefresh }: A
     fetchBackend, computeLocal, [products, movements],
   );
   const error = null;
-  const fetchData = () => { refresh(); onRefresh?.(); };
+  // Refresca SOLO este card (no recarga toda la página).
+  const fetchData = () => { refresh(); };
 
   const accentColor = '#dfa6a6'; // rose
 
@@ -707,7 +709,8 @@ export function AIAssociationsPanel({ products = [], movements = [], onRefresh }
     fetchBackend, computeLocal, [products, movements],
   );
   const error = null;
-  const fetchData = () => { refresh(); onRefresh?.(); };
+  // Refresca SOLO este card (no recarga toda la página).
+  const fetchData = () => { refresh(); };
 
   const accentColor = '#4a7fb5'; // cyan
 

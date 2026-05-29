@@ -203,7 +203,7 @@ export function ProductTable({
   );
 
   const handleExport = useCallback((toExport: Product[]) => {
-    const headers = ['Código', 'Descripción', 'Categoría', 'Almacén', 'Precio', 'Costo Promedio', 'Stock', 'Stock Mínimo'];
+    const headers = ['Código', 'Descripción', 'Categoría', 'Almacén', 'Precio de venta', 'Último costo', 'Stock', 'Stock Mínimo'];
     const rows = toExport.map(p => [
       p.codigo,
       `"${p.descripcion}"`,
@@ -387,10 +387,10 @@ export function ProductTable({
                   </th>
                 )}
                 <th className={cn(thClass, 'text-right')} onClick={() => handleSort('precio')}>
-                  <span className="flex items-center justify-end gap-1">{t('stock.price')} <SortIcon active={sortCol === 'precio'} dir={sortDir} /></span>
+                  <span className="flex items-center justify-end gap-1">Precio de venta <SortIcon active={sortCol === 'precio'} dir={sortDir} /></span>
                 </th>
                 <th className={cn(thClass, 'text-right')} onClick={() => handleSort('costo')}>
-                  <span className="flex items-center justify-end gap-1">Costo <SortIcon active={sortCol === 'costo'} dir={sortDir} /></span>
+                  <span className="flex items-center justify-end gap-1">Último costo <SortIcon active={sortCol === 'costo'} dir={sortDir} /></span>
                 </th>
                 <th className={cn(thClass, 'text-center')} onClick={() => handleSort('stock')}>
                   <span className="flex items-center justify-center gap-1">{t('stock.stockCol')} <SortIcon active={sortCol === 'stock'} dir={sortDir} /></span>
