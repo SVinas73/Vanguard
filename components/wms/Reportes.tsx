@@ -159,9 +159,9 @@ export default function Reportes() {
                   <td className="px-4 py-2 text-right text-slate-300">{p.lineas_completadas}</td>
                   <td className="px-4 py-2 text-right">
                     <span className={cn('font-semibold',
-                      p.picks_por_hora > 30 ? 'text-slate-300' :
+                      p.picks_por_hora > 30 ? 'text-emerald-400' :
                       p.picks_por_hora > 15 ? 'text-slate-300' :
-                      'text-slate-300'
+                      'text-red-400'
                     )}>
                       {p.picks_por_hora}
                     </span>
@@ -169,9 +169,9 @@ export default function Reportes() {
                   <td className="px-4 py-2 text-right text-slate-400">{p.min_por_unidad}</td>
                   <td className="px-4 py-2 text-right">
                     <span className={cn(
-                      p.exactitud_pct >= 99 ? 'text-slate-300' :
+                      p.exactitud_pct >= 99 ? 'text-emerald-400' :
                       p.exactitud_pct >= 95 ? 'text-slate-300' :
-                      'text-slate-300'
+                      'text-amber-400'
                     )}>
                       {p.exactitud_pct}%
                     </span>
@@ -214,9 +214,9 @@ export default function Reportes() {
               <div>
                 <div className="text-xs text-slate-500 uppercase">Exactitud</div>
                 <div className={cn('text-xl font-bold mt-0.5',
-                  e.exactitud_pct >= 98 ? 'text-slate-300' :
-                  e.exactitud_pct >= 95 ? 'text-slate-300' :
-                  'text-slate-300'
+                  e.exactitud_pct >= 98 ? 'text-emerald-400' :
+                  e.exactitud_pct >= 95 ? 'text-amber-400' :
+                  'text-red-400'
                 )}>
                   {e.exactitud_pct}%
                 </div>

@@ -477,26 +477,48 @@ export default function Inventario() {
 
     setSaving(true);
     try {
-      // Actualizar stock en las ubicaciones
+      // Aplicar ajustes: persistir la cantidad real en cada UBICACIÓN (DB) y
+      // luego recalcular el stock GLOBAL del producto como la suma de TODAS sus
+      // ubicaciones (antes se sobrescribía con el conteo de una sola ubicación,
+      // corrompiendo el stock de productos con presencia en varias ubicaciones).
+      const nuevasCantidades = new Map<string, number>(); // stockItem.id -> cantidad
+      const productosAfectados = new Set<string>();
+
       for (const linea of lineasConDiferencia) {
         const stockItem = stockUbicaciones.find(
           s => s.producto_codigo === linea.producto_codigo && s.ubicacion_codigo === linea.ubicacion_codigo
         );
-        
         if (stockItem && linea.cantidad_contada !== undefined) {
-          // Actualizar stock local
-          setStockUbicaciones(prev => prev.map(s => 
-            s.id === stockItem.id 
-              ? { ...s, cantidad: linea.cantidad_contada!, cantidad_disponible: linea.cantidad_contada! - s.cantidad_reservada }
-              : s
-          ));
-          
-          // También actualizar stock del producto en tabla productos
+          nuevasCantidades.set(stockItem.id, linea.cantidad_contada);
+          productosAfectados.add(linea.producto_codigo);
+          // Persistir la cantidad contada en la ubicación (DB)
           await supabase
-            .from('productos')
-            .update({ stock: linea.cantidad_contada })
-            .eq('codigo', linea.producto_codigo);
+            .from('wms_stock_ubicacion')
+            .update({
+              cantidad: linea.cantidad_contada,
+              cantidad_disponible: linea.cantidad_contada - (stockItem.cantidad_reservada || 0),
+            })
+            .eq('id', stockItem.id);
         }
+      }
+
+      // Estado local con las nuevas cantidades por ubicación
+      setStockUbicaciones(prev => prev.map(s =>
+        nuevasCantidades.has(s.id)
+          ? { ...s, cantidad: nuevasCantidades.get(s.id)!, cantidad_disponible: nuevasCantidades.get(s.id)! - (s.cantidad_reservada || 0) }
+          : s
+      ));
+
+      // Stock global del producto = suma de TODAS sus ubicaciones (con los
+      // valores recién ajustados aplicados).
+      for (const codigo of productosAfectados) {
+        const totalProducto = stockUbicaciones
+          .filter(s => s.producto_codigo === codigo)
+          .reduce((sum, s) => sum + (nuevasCantidades.get(s.id) ?? s.cantidad ?? 0), 0);
+        await supabase
+          .from('productos')
+          .update({ stock: totalProducto })
+          .eq('codigo', codigo);
       }
       
       // Marcar líneas como ajustadas
