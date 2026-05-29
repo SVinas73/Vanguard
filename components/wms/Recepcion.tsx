@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
+import { sincronizarStockProducto } from '@/lib/wms-stock-sync';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import {
@@ -596,6 +597,9 @@ export default function Recepcion() {
         .from('wms_ubicaciones')
         .update({ estado: 'ocupada' })
         .eq('id', tarea.ubicacion_destino_id);
+
+      // Mantener productos.stock = suma de ubicaciones (fuente de verdad).
+      await sincronizarStockProducto(tarea.producto_codigo);
     }
 
     // 3. Marcar la línea de recepción como con putaway hecho
