@@ -68,6 +68,7 @@ import { Bot, Search, ArrowLeftRight, Plus, Package, User, Clock, DollarSign, Tr
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { TabType, CategorySuggestion, AnomalyResult, Product, Almacen } from '@/types';
 import { useInventoryStore } from '@/store';
+import { recordModuleVisit } from '@/lib/home/routine';
 import { CATEGORIA_NOMBRES } from '@/lib/constants';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 import {
@@ -142,7 +143,9 @@ export default function HomePage() {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('vg:tab-change', { detail: { tab } }));
     }
-  }, []);
+    // Aprendizaje de rutina: registrar qué módulo usa y cuándo (local).
+    recordModuleVisit(user?.email || 'anon', tab);
+  }, [user?.email]);
 
   // ===== Sprint D: Command Palette + Focus Mode =====
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
@@ -269,7 +272,11 @@ export default function HomePage() {
         .select('id, nombre')
         .eq('activo', true)
         .order('es_principal', { ascending: false });
-      if (data) setAlmacenes(data);
+      if (data) {
+        setAlmacenes(data);
+        // Con ≤1 almacén el filtro no aplica: forzar vista completa.
+        if (data.length <= 1) setDashboardAlmacenId('todos');
+      }
     };
     
     if (user) {
@@ -739,6 +746,8 @@ export default function HomePage() {
             user={user}
             onTabChange={handleTabChange}
             products={products}
+            movements={movements}
+            predictions={predictions}
           />
         )}
 
@@ -755,18 +764,23 @@ export default function HomePage() {
                 />
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 pt-1">
-                {/* Selector de almacén — el dashboard se filtra entero */}
-                <select
-                  value={dashboardAlmacenId}
-                  onChange={(e) => setDashboardAlmacenId(e.target.value)}
-                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-sm text-slate-200 transition-colors focus:outline-none focus:border-indigo-500"
-                  title="Filtrar dashboard por almacén"
-                >
-                  <option value="todos">Todos los almacenes</option>
-                  {almacenes.map(a => (
-                    <option key={a.id} value={a.id}>{a.nombre}</option>
-                  ))}
-                </select>
+                {/* Selector de almacén — solo tiene sentido con 2+ almacenes.
+                    Con un único almacén, filtrar por él excluiría los productos
+                    sin almacén asignado y daría métricas distintas a "Todos",
+                    confundiendo (siendo el mismo depósito). */}
+                {almacenes.length > 1 && (
+                  <select
+                    value={dashboardAlmacenId}
+                    onChange={(e) => setDashboardAlmacenId(e.target.value)}
+                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-sm text-slate-200 transition-colors focus:outline-none focus:border-indigo-500"
+                    title="Filtrar dashboard por almacén"
+                  >
+                    <option value="todos">Todos los almacenes</option>
+                    {almacenes.map(a => (
+                      <option key={a.id} value={a.id}>{a.nombre}</option>
+                    ))}
+                  </select>
+                )}
                 <PeriodSelector value={dashboardPeriod} onChange={setDashboardPeriod} />
                 <button
                   onClick={handleManualRefresh}
