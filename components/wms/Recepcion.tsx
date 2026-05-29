@@ -1231,12 +1231,51 @@ function RecepcionDetalle({ orden, tareasPutaway, tabActivo, setTabActivo, onVol
         </div>
       )}
 
-      {tabActivo === 'historial' && (
-        <div className="text-center py-8 text-slate-500">
-          <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-          <p>Historial próximamente</p>
-        </div>
-      )}
+      {tabActivo === 'historial' && (() => {
+        // Línea de tiempo del ciclo de vida de la orden (datos ya cargados).
+        const eventos: { fecha: string; titulo: string; detalle?: string }[] = [];
+        if (orden.created_at) eventos.push({ fecha: orden.created_at, titulo: 'Orden de recepción creada', detalle: orden.numero });
+        if (orden.fecha_esperada) eventos.push({ fecha: orden.fecha_esperada, titulo: 'Recepción esperada' });
+        if (orden.fecha_recepcion) eventos.push({ fecha: orden.fecha_recepcion, titulo: 'Mercadería recibida', detalle: orden.recibido_por ? `por ${orden.recibido_por}` : undefined });
+        for (const tp of tareasPutaway) {
+          if (tp.fecha_completado) {
+            eventos.push({
+              fecha: tp.fecha_completado,
+              titulo: `Put-away completado: ${tp.producto_codigo}`,
+              detalle: tp.ubicacion_destino_codigo ? `→ ${tp.ubicacion_destino_codigo}` : undefined,
+            });
+          }
+        }
+        eventos.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+
+        if (eventos.length === 0) {
+          return (
+            <div className="text-center py-8 text-slate-500">
+              <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>Sin eventos registrados para esta orden</p>
+            </div>
+          );
+        }
+        return (
+          <div className="p-4 space-y-3">
+            {eventos.map((e, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <div className="flex flex-col items-center">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5" />
+                  {i < eventos.length - 1 && <div className="w-px flex-1 bg-slate-700 min-h-[24px]" />}
+                </div>
+                <div className="flex-1 pb-2">
+                  <div className="text-sm text-slate-200">{e.titulo}</div>
+                  {e.detalle && <div className="text-xs text-slate-500">{e.detalle}</div>}
+                  <div className="text-[11px] text-slate-600 mt-0.5">
+                    {new Date(e.fecha).toLocaleString('es-UY', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }
