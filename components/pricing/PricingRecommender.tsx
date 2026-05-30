@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { useAlmacenes } from '@/hooks/useAlmacenes';
+import { AlmacenSelector } from '@/components/common/AlmacenSelector';
 import {
   recomendarPrecios,
   type Recomendacion,
@@ -35,6 +37,7 @@ const fmtMoney = (v: number, compact = false) => {
 
 export function PricingRecommender() {
   const { t } = useTranslation();
+  const { almacenes, almacenId, setAlmacenId, filtrarPorAlmacen } = useAlmacenes();
   const [recomendaciones, setRecomendaciones] = useState<Recomendacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<Filtro>('todos');
@@ -46,7 +49,8 @@ export function PricingRecommender() {
 
   useEffect(() => {
     cargar();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [almacenId]);
 
   async function cargar() {
     setLoading(true);
@@ -55,14 +59,14 @@ export function PricingRecommender() {
     haceUnAno.setFullYear(haceUnAno.getFullYear() - 1);
 
     const [resProd, resItems] = await Promise.all([
-      supabase.from('productos').select('codigo, descripcion, precio, costo_promedio, categoria, stock').not('codigo', 'is', null),
+      supabase.from('productos').select('codigo, descripcion, precio, costo_promedio, categoria, stock, almacen_id').not('codigo', 'is', null),
       supabase
         .from('ordenes_venta_items')
         .select('producto_codigo, cantidad, precio_unitario, costo_unitario, ordenes_venta(fecha_orden, estado)')
         .limit(5000),
     ]);
 
-    const productosRaw = resProd.data || [];
+    const productosRaw = filtrarPorAlmacen(resProd.data || []);
     const itemsRaw = resItems.data || [];
 
     const productos: ProductoInput[] = productosRaw.map((p: any) => ({
@@ -116,13 +120,16 @@ export function PricingRecommender() {
           </h2>
           <p className="text-sm text-slate-500 mt-0.5">{t('pricing.subtitle') || 'ML aplicado: elasticidad de demanda + precio óptimo por producto'}</p>
         </div>
-        <button
-          onClick={cargar}
-          className="p-1.5 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-md hover:bg-slate-900"
-          title={t('pricing.reload') || 'Recalcular'}
-        >
-          <RefreshCw size={13} className={cn(loading && 'animate-spin')} />
-        </button>
+        <div className="flex items-center gap-2">
+          <AlmacenSelector almacenes={almacenes} value={almacenId} onChange={setAlmacenId} />
+          <button
+            onClick={cargar}
+            className="p-1.5 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-md hover:bg-slate-900"
+            title={t('pricing.reload') || 'Recalcular'}
+          >
+            <RefreshCw size={13} className={cn(loading && 'animate-spin')} />
+          </button>
+        </div>
       </div>
 
       {/* Stats grandes */}

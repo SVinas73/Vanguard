@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { useAlmacenes } from '@/hooks/useAlmacenes';
+import { AlmacenSelector } from '@/components/common/AlmacenSelector';
 
 // ============================================
 // TIPOS
@@ -462,11 +464,14 @@ export default function TraceabilityEnterprise({
       let opciones: Array<{ value: string; label: string; extra?: string }> = [];
 
       if (tipo === 'producto') {
-        const { data } = await supabase
+        let q = supabase
           .from('productos')
-          .select('codigo, descripcion')
+          .select('codigo, descripcion, almacen_id')
           .order('descripcion')
           .limit(100);
+        // Filtrar por el almacén seleccionado (misma lógica que el resto de módulos).
+        if (almacenId) q = q.eq('almacen_id', almacenId);
+        const { data } = await q;
         opciones = (data || []).map(p => ({
           value: p.codigo,
           label: `${p.codigo} - ${p.descripcion}`,
