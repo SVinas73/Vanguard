@@ -216,7 +216,8 @@ const clasificarABC = (productos: Producto[]): Producto[] => {
   let acumulado = 0;
   return productosConValor.map(p => {
     acumulado += p.valorStock;
-    const porcentajeAcumulado = (acumulado / valorTotal) * 100;
+    // Guard: si el valor total es 0 (todo sin stock/costo), evitar NaN/Infinity.
+    const porcentajeAcumulado = valorTotal > 0 ? (acumulado / valorTotal) * 100 : 0;
 
     let clasificacion: 'A' | 'B' | 'C';
     if (porcentajeAcumulado <= 80) {
@@ -790,10 +791,10 @@ export default function CostosEnterprise() {
         motivo: motivo || 'Actualización manual',
       });
 
-      // Actualizar producto
+      // Actualizar producto (la columna real es `precio`, no `precio_venta`).
       await supabase
         .from('productos')
-        .update({ precio_venta: nuevoPrecio })
+        .update({ precio: nuevoPrecio })
         .eq('id', producto.id);
 
       await registrarAuditoria('productos', 'ACTUALIZAR_PRECIO', producto.codigo, { precio: producto.precio }, { precio: nuevoPrecio, motivo }, user?.email || '');
@@ -905,7 +906,7 @@ export default function CostosEnterprise() {
 
           await supabase
             .from('productos')
-            .update({ precio_venta: update.valorNuevo })
+            .update({ precio: update.valorNuevo })
             .eq('id', update.producto.id);
         } else {
           await supabase.from('historial_costos').insert({
@@ -1013,7 +1014,7 @@ export default function CostosEnterprise() {
         if (precioIdx !== -1 && cols[precioIdx]) {
           const nuevoPrecio = parseFloat(cols[precioIdx].replace(/[^0-9.,]/g, '').replace(',', '.'));
           if (!isNaN(nuevoPrecio)) {
-            updates.precio_venta = nuevoPrecio;
+            updates.precio = nuevoPrecio;
 
             // Historial
             await supabase.from('historial_precios').insert({

@@ -455,16 +455,24 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
           .update({ cantidad_recibida: ordenItem.cantidadRecibida + item.cantidadRecibida })
           .eq('id', item.ordenItemId);
 
-        // Actualizar stock
+        // Actualizar stock y costo promedio ponderado
         const { data: prod } = await supabase
           .from('productos')
-          .select('id, stock')
+          .select('id, stock, costo_promedio')
           .eq('codigo', ordenItem.productoCodigo)
           .single();
 
         if (prod) {
+          const stockPrevio = Number(prod.stock) || 0;
+          const costoPrevio = Number(prod.costo_promedio) || 0;
+          const nuevoStock = stockPrevio + item.cantidadRecibida;
+          // Costo promedio ponderado: (valor previo + valor nuevo) / stock total.
+          const nuevoCosto = nuevoStock > 0
+            ? ((stockPrevio * costoPrevio) + (item.cantidadRecibida * (ordenItem.costoUnitario || 0))) / nuevoStock
+            : costoPrevio;
+
           await supabase.from('productos')
-            .update({ stock: prod.stock + item.cantidadRecibida })
+            .update({ stock: nuevoStock, costo_promedio: Math.round(nuevoCosto * 100) / 100 })
             .eq('codigo', ordenItem.productoCodigo);
 
           // Movimiento de entrada

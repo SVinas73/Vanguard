@@ -235,7 +235,7 @@ export default function ComercialAnalytics() {
       if (existing) {
         existing.ventas += ingreso;
         existing.costo += costoItem;
-        existing.ordenes += 0;
+        // El conteo real de órdenes se calcula más abajo (ordenCount).
       } else {
         clienteMap.set(cid, { clienteId: cid, nombre, ventas: ingreso, costo: costoItem, margen: 0, margenPct: 0, ordenes: 1 });
       }
