@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { useAlmacenes } from '@/hooks/useAlmacenes';
+import { AlmacenSelector } from '@/components/common/AlmacenSelector';
 import {
   optimizarReabastecimiento,
   type Sugerencia,
@@ -36,6 +38,7 @@ const fmtMoney = (v: number, compact = false) => {
 
 export function ReplenishmentDashboard() {
   const { t } = useTranslation();
+  const { almacenes, almacenId, setAlmacenId, filtrarPorAlmacen } = useAlmacenes();
   const [sugerencias, setSugerencias] = useState<Sugerencia[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<Filtro>('todos');
@@ -52,7 +55,8 @@ export function ReplenishmentDashboard() {
 
   useEffect(() => {
     cargar();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [almacenId]);
 
   async function cargar() {
     setLoading(true);
@@ -62,7 +66,7 @@ export function ReplenishmentDashboard() {
     const [resProd, resMovs, resOcAbiertas] = await Promise.all([
       supabase
         .from('productos')
-        .select('codigo, descripcion, stock, costo_promedio, precio, categoria')
+        .select('codigo, descripcion, stock, costo_promedio, precio, categoria, almacen_id')
         .gt('stock', -1)
         .limit(2000),
       supabase
@@ -100,7 +104,12 @@ export function ReplenishmentDashboard() {
       }
     }
 
-    const productos: ProductoStock[] = (resProd.data || []).map((p: any) => ({
+    // Filtrar por almacén elegido ANTES de optimizar: el análisis es SOLO
+    // del almacén seleccionado. Productos sin almacen_id quedan fuera cuando
+    // hay un almacén activo (filtrarPorAlmacen lo maneja sin romper).
+    const productosAlmacen = filtrarPorAlmacen(resProd.data || []);
+
+    const productos: ProductoStock[] = productosAlmacen.map((p: any) => ({
       codigo: p.codigo,
       nombre: p.descripcion || p.codigo,
       stock_actual: Number(p.stock) || 0,
@@ -156,13 +165,16 @@ export function ReplenishmentDashboard() {
           </h2>
           <p className="text-sm text-slate-500 mt-0.5">{t('replenishment.subtitle') || 'EOQ + punto de reorden conservador · optimiza capital, evita sobre-stock'}</p>
         </div>
-        <button
-          onClick={cargar}
-          className="p-1.5 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-md hover:bg-slate-900"
-          title={t('replenishment.reload') || 'Recalcular'}
-        >
-          <RefreshCw size={13} className={cn(loading && 'animate-spin')} />
-        </button>
+        <div className="flex items-center gap-2">
+          <AlmacenSelector almacenes={almacenes} value={almacenId} onChange={setAlmacenId} />
+          <button
+            onClick={cargar}
+            className="p-1.5 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-md hover:bg-slate-900"
+            title={t('replenishment.reload') || 'Recalcular'}
+          >
+            <RefreshCw size={13} className={cn(loading && 'animate-spin')} />
+          </button>
+        </div>
       </div>
 
       {/* Stats grandes — foco capital */}

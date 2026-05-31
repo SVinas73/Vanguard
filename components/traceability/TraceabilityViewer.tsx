@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { useAlmacenes } from '@/hooks/useAlmacenes';
+import { AlmacenSelector } from '@/components/common/AlmacenSelector';
 
 // ============================================
 // TIPOS
@@ -255,6 +257,7 @@ export default function TraceabilityEnterprise({
   onClose,
 }: TraceabilityEnterpriseProps) {
   const { user } = useAuth();
+  const { almacenes, almacenId, setAlmacenId } = useAlmacenes();
   const toast = useToast();
 
   // Estado principal
@@ -462,11 +465,14 @@ export default function TraceabilityEnterprise({
       let opciones: Array<{ value: string; label: string; extra?: string }> = [];
 
       if (tipo === 'producto') {
-        const { data } = await supabase
+        let q = supabase
           .from('productos')
-          .select('codigo, descripcion')
+          .select('codigo, descripcion, almacen_id')
           .order('descripcion')
           .limit(100);
+        // Filtrar por el almacén seleccionado (misma lógica que el resto de módulos).
+        if (almacenId) q = q.eq('almacen_id', almacenId);
+        const { data } = await q;
         opciones = (data || []).map(p => ({
           value: p.codigo,
           label: `${p.codigo} - ${p.descripcion}`,
@@ -513,10 +519,11 @@ export default function TraceabilityEnterprise({
     }
   };
 
-  // Cargar opciones al cambiar tipo de búsqueda
+  // Cargar opciones al cambiar tipo de búsqueda o almacén
   useEffect(() => {
     cargarOpciones(searchType);
-  }, [searchType]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchType, almacenId]);
 
   // ============================================
   // BÚSQUEDA
@@ -1246,7 +1253,8 @@ export default function TraceabilityEnterprise({
             Seguimiento completo del ciclo de vida del producto
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <AlmacenSelector almacenes={almacenes} value={almacenId} onChange={setAlmacenId} />
           {eventos.length > 0 && (
             <button
               onClick={exportarPDF}

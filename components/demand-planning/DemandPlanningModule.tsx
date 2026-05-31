@@ -12,6 +12,8 @@ import ProductForecast from './ProductForecast';
 import CriticalAlerts from './CriticalAlerts';
 import ReorderSuggestions from './ReorderSuggestions';
 import TrendAnalysis from './TrendAnalysis';
+import { useAlmacenes } from '@/hooks/useAlmacenes';
+import { AlmacenSelector } from '@/components/common/AlmacenSelector';
 
 // ============================================
 // TIPOS
@@ -95,6 +97,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
 
 export default function DemandPlanningModule() {
   const [moduloActivo, setModuloActivo] = useState<ModuloDemand>('dashboard');
+  const { almacenes, almacenId, setAlmacenId } = useAlmacenes();
 
   const moduloConfig = MENU_ITEMS.find(m => m.id === moduloActivo);
 
@@ -102,15 +105,15 @@ export default function DemandPlanningModule() {
   const renderModulo = () => {
     switch (moduloActivo) {
       case 'dashboard':
-        return <ForecastDashboard />;
+        return <ForecastDashboard almacenId={almacenId} />;
       case 'forecast':
-        return <ProductForecast />;
+        return <ProductForecast almacenId={almacenId} />;
       case 'alertas':
-        return <CriticalAlerts />;
+        return <CriticalAlerts almacenId={almacenId} />;
       case 'reposicion':
-        return <ReorderSuggestions />;
+        return <ReorderSuggestions almacenId={almacenId} />;
       case 'tendencias':
-        return <TrendAnalysis />;
+        return <TrendAnalysis almacenId={almacenId} />;
       case 'configuracion':
         return (
           <div className="flex items-center justify-center h-64 text-slate-500">
@@ -176,16 +179,19 @@ export default function DemandPlanningModule() {
         })}
       </div>
 
-      {/* Breadcrumb del módulo activo */}
-      {moduloConfig && (
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-slate-500">Demand Planning</span>
-          <span className="text-slate-600">/</span>
-          <span className={moduloConfig.color}>{moduloConfig.label}</span>
-          <span className="text-slate-600">—</span>
-          <span className="text-slate-500">{moduloConfig.descripcion}</span>
-        </div>
-      )}
+      {/* Breadcrumb del módulo activo + selector de almacén */}
+      <div className="flex items-center justify-between gap-2">
+        {moduloConfig && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-slate-500">Demand Planning</span>
+            <span className="text-slate-600">/</span>
+            <span className={moduloConfig.color}>{moduloConfig.label}</span>
+            <span className="text-slate-600">—</span>
+            <span className="text-slate-500">{moduloConfig.descripcion}</span>
+          </div>
+        )}
+        <AlmacenSelector almacenes={almacenes} value={almacenId} onChange={setAlmacenId} />
+      </div>
 
       {/* Contenido del módulo */}
       <div className="min-h-[400px]">

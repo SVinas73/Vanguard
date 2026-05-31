@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
+import { sincronizarStockProducto } from '@/lib/wms-stock-sync';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import {
@@ -620,13 +621,27 @@ export default function Picking() {
           .eq('producto_codigo', lineaActualData.producto_codigo)
           .maybeSingle();
         if (stockUbic) {
-          await supabase
+          const disponible = (stockUbic as any).cantidad || 0;
+          // Validación anti-overpicking: no permitir pickear más que lo físico.
+          if (cantidad > disponible) {
+            toast.error(
+              `No hay stock suficiente en la ubicación: ${disponible} disponible(s), se intentó pickear ${cantidad}.`
+            );
+            return;
+          }
+          const { error: errStock } = await supabase
             .from('wms_stock_ubicacion')
             .update({
-              cantidad: Math.max(0, ((stockUbic as any).cantidad || 0) - cantidad),
+              cantidad: Math.max(0, disponible - cantidad),
               ultimo_movimiento: new Date().toISOString(),
             })
             .eq('id', (stockUbic as any).id);
+          if (errStock) {
+            toast.error(`No se pudo actualizar el stock de la ubicación: ${errStock.message}`);
+            return;
+          }
+          // Mantener productos.stock = suma de ubicaciones (fuente de verdad).
+          await sincronizarStockProducto(lineaActualData.producto_codigo);
         }
       }
 

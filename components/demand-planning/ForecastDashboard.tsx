@@ -46,7 +46,7 @@ interface ProductoCritico {
 // COMPONENTE PRINCIPAL
 // ============================================
 
-export default function ForecastDashboard() {
+export default function ForecastDashboard({ almacenId }: { almacenId?: string } = {}) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,19 +73,22 @@ export default function ForecastDashboard() {
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [almacenId]);
 
   const loadDashboardData = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      // 1. Cargar productos de Supabase (excluyendo borrados)
-      const { data: productosData } = await supabase
+      // 1. Cargar productos de Supabase (excluyendo borrados), filtrando por almacén
+      let qProd = supabase
         .from('productos')
         .select('*')
         .is('deleted_at', null)
         .order('descripcion');
+      if (almacenId) qProd = qProd.eq('almacen_id', almacenId);
+      const { data: productosData } = await qProd;
       
       if (productosData) {
         setProductos(productosData.map(p => ({

@@ -9,6 +9,8 @@ import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valua
 import { formatMoney, convertir } from '@/lib/currency';
 import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
 import { useTiposCambio } from '@/hooks/useTiposCambio';
+import { useAlmacenes } from '@/hooks/useAlmacenes';
+import { AlmacenSelector } from '@/components/common/AlmacenSelector';
 import {
   AreaChart,
   Area,
@@ -112,8 +114,16 @@ const ABC_COLORS = {
 // COMPONENTE PRINCIPAL
 // ============================================
 
-export function AnalyticsDashboard({ products, movements, predictions }: AnalyticsDashboardProps) {
+export function AnalyticsDashboard({ products: allProducts, movements: allMovements, predictions }: AnalyticsDashboardProps) {
   const { t } = useTranslation();
+  const { almacenes, almacenId, setAlmacenId, filtrarPorAlmacen } = useAlmacenes();
+  // Filtrar por el almacén elegido (misma lógica que el resto de módulos).
+  // Todo el dashboard usa `products`/`movements` ya filtrados.
+  const products = useMemo(() => filtrarPorAlmacen(allProducts), [allProducts, almacenId]);
+  const movements = useMemo(() => {
+    const codes = new Set(products.map((p: any) => p.codigo));
+    return allMovements.filter((m: any) => codes.has(m.codigo));
+  }, [allMovements, products]);
 
   // Moneda destino desde Configuración. Los valores se calculan en UYU
   // (base del sistema); acá convertimos para mostrar. Antes Analytics
@@ -479,6 +489,8 @@ export function AnalyticsDashboard({ products, movements, predictions }: Analyti
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Selector de almacén */}
+          <AlmacenSelector almacenes={almacenes} value={almacenId} onChange={setAlmacenId} />
           {/* Selector de período */}
           <div className="flex items-center gap-1 p-1 bg-slate-800/50 rounded-xl">
             {(['week', 'month', 'quarter', 'year'] as PeriodType[]).map(p => (

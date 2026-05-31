@@ -29,7 +29,7 @@ interface ForecastProductoExtendido {
 // COMPONENTE PRINCIPAL
 // ============================================
 
-export default function ProductForecast() {
+export default function ProductForecast({ almacenId }: { almacenId?: string } = {}) {
   const [loading, setLoading] = useState(true);
   const [productos, setProductos] = useState<Product[]>([]);
   const [movimientos, setMovimientos] = useState<Movement[]>([]);
@@ -48,16 +48,19 @@ export default function ProductForecast() {
 
   useEffect(() => {
     loadData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [almacenId]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      // Cargar productos
-      const { data: productosData } = await supabase
+      // Cargar productos (filtrando por almacén)
+      let qProd = supabase
         .from('productos')
         .select('*')
         .order('descripcion');
+      if (almacenId) qProd = qProd.eq('almacen_id', almacenId);
+      const { data: productosData } = await qProd;
       
       if (productosData) {
         const prods: Product[] = productosData.map(p => ({

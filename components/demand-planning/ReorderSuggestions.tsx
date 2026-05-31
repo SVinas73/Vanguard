@@ -42,7 +42,7 @@ interface SugerenciaReposicion {
 // COMPONENTE PRINCIPAL
 // ============================================
 
-export default function ReorderSuggestions() {
+export default function ReorderSuggestions({ almacenId }: { almacenId?: string } = {}) {
   const [loading, setLoading] = useState(true);
   const [sugerencias, setSugerencias] = useState<SugerenciaReposicion[]>([]);
   const [filtroUrgencia, setFiltroUrgencia] = useState<string>('todas');
@@ -55,15 +55,18 @@ export default function ReorderSuggestions() {
 
   useEffect(() => {
     loadSugerencias();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [almacenId]);
 
   const loadSugerencias = async () => {
     setLoading(true);
     try {
-      // Cargar productos
-      const { data: productosData } = await supabase
+      // Cargar productos (filtrando por almacén)
+      let qProd = supabase
         .from('productos')
         .select('*');
+      if (almacenId) qProd = qProd.eq('almacen_id', almacenId);
+      const { data: productosData } = await qProd;
       
       if (!productosData) return;
 

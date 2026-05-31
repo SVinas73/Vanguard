@@ -24,7 +24,7 @@ interface AlertaExtendida extends CriticalProduct {
 // COMPONENTE PRINCIPAL
 // ============================================
 
-export default function CriticalAlerts() {
+export default function CriticalAlerts({ almacenId }: { almacenId?: string } = {}) {
   const [loading, setLoading] = useState(true);
   const [alertas, setAlertas] = useState<AlertaExtendida[]>([]);
   const [filtro, setFiltro] = useState<'todas' | 'critica' | 'media' | 'baja'>('todas');
@@ -32,15 +32,25 @@ export default function CriticalAlerts() {
 
   useEffect(() => {
     loadAlertas();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [almacenId]);
 
   const loadAlertas = async () => {
     setLoading(true);
     try {
       // Obtener productos críticos de la API
       const summary = await vanguardIA.getPredictionsSummary();
-      
-      const alertasExtendidas: AlertaExtendida[] = summary.productos_criticos.map(p => {
+
+      // Filtrar a los productos del almacén elegido (la API no filtra por almacén).
+      let criticos = summary.productos_criticos;
+      if (almacenId) {
+        const { data: prodsAlmacen } = await supabase
+          .from('productos').select('codigo').eq('almacen_id', almacenId);
+        const codes = new Set((prodsAlmacen || []).map((p: any) => p.codigo));
+        criticos = criticos.filter(p => codes.has(p.codigo));
+      }
+
+      const alertasExtendidas: AlertaExtendida[] = criticos.map(p => {
         let tipoAlerta: AlertaExtendida['tipo_alerta'] = 'agotamiento';
         let accionSugerida = '';
         
@@ -78,10 +88,12 @@ export default function CriticalAlerts() {
   };
 
   const loadAlertasLocales = async () => {
-    const { data: productos } = await supabase
+    let qAlertas = supabase
       .from('productos')
       .select('*')
       .or(`stock.lte.stock_minimo,stock.eq.0`);
+    if (almacenId) qAlertas = qAlertas.eq('almacen_id', almacenId);
+    const { data: productos } = await qAlertas;
     
     if (productos) {
       const alertasLocales: AlertaExtendida[] = productos.map(p => ({
