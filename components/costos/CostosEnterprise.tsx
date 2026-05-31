@@ -17,6 +17,8 @@ import {
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
 import { useAuth } from '@/hooks/useAuth';
+import { useAlmacenes } from '@/hooks/useAlmacenes';
+import { AlmacenSelector } from '@/components/common/AlmacenSelector';
 import { valuarInventarioSync } from '@/lib/inventory-valuation';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -214,7 +216,8 @@ const clasificarABC = (productos: Producto[]): Producto[] => {
   let acumulado = 0;
   return productosConValor.map(p => {
     acumulado += p.valorStock;
-    const porcentajeAcumulado = (acumulado / valorTotal) * 100;
+    // Guard: si el valor total es 0 (todo sin stock/costo), evitar NaN/Infinity.
+    const porcentajeAcumulado = valorTotal > 0 ? (acumulado / valorTotal) * 100 : 0;
 
     let clasificacion: 'A' | 'B' | 'C';
     if (porcentajeAcumulado <= 80) {
@@ -277,6 +280,9 @@ function useToast() {
 export default function CostosEnterprise() {
   const { user } = useAuth();
   const toast = useToast();
+  // Selector de almacén: todo el Centro de Costos (todas sus sub-pestañas)
+  // trabaja con el almacén seleccionado. Misma lógica que el resto de módulos.
+  const { almacenes, almacenId, setAlmacenId } = useAlmacenes();
 
   // Estado principal
   const [loading, setLoading] = useState(true);
@@ -346,7 +352,8 @@ export default function CostosEnterprise() {
 
   useEffect(() => {
     loadAllData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [almacenId]);
 
   const loadAllData = async () => {
     try {
@@ -368,11 +375,13 @@ export default function CostosEnterprise() {
   };
 
   const loadProductos = async () => {
-    const { data, error } = await supabase
+    let q = supabase
       .from('productos')
       .select('*')
       .is('deleted_at', null)
       .order('codigo');
+    if (almacenId) q = q.eq('almacen_id', almacenId);
+    const { data, error } = await q;
 
     if (error) {
       console.error('Error cargando productos:', error);
@@ -428,6 +437,14 @@ export default function CostosEnterprise() {
   };
 
   const loadLotes = async () => {
+    // Filtrar lotes por los productos del almacén seleccionado.
+    let codigosAlmacen: Set<string> | null = null;
+    if (almacenId) {
+      const { data: prods } = await supabase
+        .from('productos').select('codigo').eq('almacen_id', almacenId);
+      codigosAlmacen = new Set((prods || []).map((p: any) => p.codigo));
+    }
+
     const { data } = await supabase
       .from('lotes')
       .select(`
@@ -438,7 +455,10 @@ export default function CostosEnterprise() {
       .order('fecha_compra', { ascending: true });
 
     if (data) {
-      setLotes(data.map((l: any) => ({
+      const filtrados = codigosAlmacen
+        ? data.filter((l: any) => codigosAlmacen!.has(l.codigo))
+        : data;
+      setLotes(filtrados.map((l: any) => ({
         id: l.id,
         producto_id: l.producto_id,
         codigo: l.codigo,
@@ -771,10 +791,10 @@ export default function CostosEnterprise() {
         motivo: motivo || 'Actualización manual',
       });
 
-      // Actualizar producto
+      // Actualizar producto (la columna real es `precio`, no `precio_venta`).
       await supabase
         .from('productos')
-        .update({ precio_venta: nuevoPrecio })
+        .update({ precio: nuevoPrecio })
         .eq('id', producto.id);
 
       await registrarAuditoria('productos', 'ACTUALIZAR_PRECIO', producto.codigo, { precio: producto.precio }, { precio: nuevoPrecio, motivo }, user?.email || '');
@@ -886,7 +906,7 @@ export default function CostosEnterprise() {
 
           await supabase
             .from('productos')
-            .update({ precio_venta: update.valorNuevo })
+            .update({ precio: update.valorNuevo })
             .eq('id', update.producto.id);
         } else {
           await supabase.from('historial_costos').insert({
@@ -994,7 +1014,7 @@ export default function CostosEnterprise() {
         if (precioIdx !== -1 && cols[precioIdx]) {
           const nuevoPrecio = parseFloat(cols[precioIdx].replace(/[^0-9.,]/g, '').replace(',', '.'));
           if (!isNaN(nuevoPrecio)) {
-            updates.precio_venta = nuevoPrecio;
+            updates.precio = nuevoPrecio;
 
             // Historial
             await supabase.from('historial_precios').insert({
@@ -1359,6 +1379,7 @@ export default function CostosEnterprise() {
           <p className="text-slate-400 text-sm mt-1">Gestión integral de costos, márgenes y rentabilidad</p>
         </div>
         <div className="flex items-center gap-2">
+          <AlmacenSelector almacenes={almacenes} value={almacenId} onChange={setAlmacenId} />
           <button onClick={loadAllData} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-400">
             <RefreshCw className="h-4 w-4" />
           </button>

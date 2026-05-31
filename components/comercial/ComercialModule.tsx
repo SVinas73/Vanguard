@@ -85,6 +85,14 @@ export default function ComercialModule({
     return allMovements.filter(m => codes.has(m.codigo));
   }, [allMovements, insumosProducts]);
 
+  // Compras y Ventas trabajan SOLO con el depósito de ventas, NUNCA con
+  // insumos. Filtramos la lista de productos excluyendo los almacenes de
+  // insumos (los insumos no se compran/venden por estos submódulos).
+  const productsVenta = useMemo(
+    () => products.filter(p => !p.almacenId || !insumosAlmacenIds.has(p.almacenId)),
+    [products, insumosAlmacenIds]
+  );
+
   useEffect(() => {
     setSubTab(activeSubTab);
   }, [activeSubTab]);
@@ -147,11 +155,11 @@ export default function ComercialModule({
       )}
 
       {subTab === 'compras' && (
-        <ComprasEnterprisePanel products={products} userEmail={userEmail} />
+        <ComprasEnterprisePanel products={productsVenta} userEmail={userEmail} />
       )}
 
       {subTab === 'ventas' && (
-        <VentasEnterprisePanel products={products} userEmail={userEmail} />
+        <VentasEnterprisePanel products={productsVenta} userEmail={userEmail} />
       )}
 
       {subTab === 'finanzas' && (
@@ -216,6 +224,7 @@ export default function ComercialModule({
               onPeriodChange={setInsumosPeriod}
               onNavigate={() => {}}
               onRefresh={() => {}}
+              flowSource="movements"
             />
           )}
         </div>

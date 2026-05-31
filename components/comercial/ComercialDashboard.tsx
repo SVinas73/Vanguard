@@ -113,7 +113,7 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
         supabase
           .from('ordenes_venta')
           .select('id, total')
-          .not('estado', 'in', '("cancelada","entregada")'),
+          .not('estado', 'in', '(cancelada,entregada)'),
         supabase
           .from('ordenes_venta')
           .select('saldo_pendiente')
@@ -136,7 +136,7 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
         supabase
           .from('ordenes_compra')
           .select('id, total')
-          .not('estado', 'in', '("cancelada","recibida")'),
+          .not('estado', 'in', '(cancelada,recibida)'),
         supabase
           .from('ordenes_compra')
           .select('total')
