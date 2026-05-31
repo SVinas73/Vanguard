@@ -439,13 +439,29 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
       }
     }
 
+    const subtotal = form.items.reduce((sum, i) => sum + ((i.cantidad * i.precioUnitario) - (i.descuento || 0)), 0);
+
+    // Validar límite de crédito del cliente (si tiene uno configurado > 0).
+    // Bloquea si el saldo pendiente + esta orden superan el límite.
+    const cliente = clientes.find(c => c.id === form.clienteId);
+    if (cliente && cliente.limiteCredito > 0) {
+      const expuesto = (cliente.saldoPendiente || 0) + subtotal;
+      if (expuesto > cliente.limiteCredito) {
+        const disponible = cliente.limiteCredito - (cliente.saldoPendiente || 0);
+        toast.error(
+          'Límite de crédito excedido',
+          `${cliente.nombre || 'Cliente'}: límite ${formatCurrency(cliente.limiteCredito)}, ` +
+          `saldo actual ${formatCurrency(cliente.saldoPendiente || 0)}. Disponible: ${formatCurrency(Math.max(0, disponible))}.`
+        );
+        return;
+      }
+    }
+
     try {
       setProcesando('creating');
 
       const { count } = await supabase.from('ordenes_venta').select('*', { count: 'exact', head: true });
       const numero = `OV-${String((count || 0) + 1).padStart(6, '0')}`;
-      
-      const subtotal = form.items.reduce((sum, i) => sum + ((i.cantidad * i.precioUnitario) - (i.descuento || 0)), 0);
 
       const vendedorEmail = ordenForm.vendedorEmail || userEmail;
 

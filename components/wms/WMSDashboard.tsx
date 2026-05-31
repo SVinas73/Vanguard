@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getAlmacenesInsumoIds, excluirInsumos } from '@/lib/wms-insumos-filter';
 import {
   Package, MapPin, AlertTriangle, Clock, CheckCircle,
   RefreshCw, Warehouse, Layers, Target, Truck, Box,
@@ -75,6 +76,9 @@ export default function WMSDashboard() {
       const hoy = new Date();
       const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).toISOString();
 
+      // WMS no opera el almacén de insumos: lo excluimos de los KPIs.
+      const idsInsumos = await getAlmacenesInsumoIds();
+
       // ---- KPIs (queries reales) ----
       const [
         ubicacionesRes,
@@ -120,7 +124,7 @@ export default function WMSDashboard() {
           .eq('activo', true),
         supabase
           .from('productos')
-          .select('codigo, stock, stockMinimo:stock_minimo'),
+          .select('codigo, stock, almacen_id, stockMinimo:stock_minimo'),
         supabase
           .from('lotes')
           .select('id, fecha_vencimiento')
@@ -166,8 +170,8 @@ export default function WMSDashboard() {
         };
       });
 
-      // ---- Productos ----
-      const prods = productosRes.data || [];
+      // ---- Productos (excluyendo insumos) ----
+      const prods = excluirInsumos(productosRes.data || [], idsInsumos);
       const sinStock = prods.filter((p: any) => (p.stock ?? 0) === 0).length;
       const bajoMin = prods.filter((p: any) => (p.stock ?? 0) > 0 && (p.stock ?? 0) <= (p.stockMinimo ?? 0)).length;
 

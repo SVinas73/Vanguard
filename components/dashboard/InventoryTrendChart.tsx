@@ -306,38 +306,37 @@ export function InventoryTrendChart({
             </div>
           </div>
 
-          {/* Panel ENTRADAS / SALIDAS / NETO — estilo mockup */}
-          <div className="grid grid-cols-3 gap-4 pt-5 border-t border-slate-800/60">
-            <div>
-              <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
-                {labelEntradas}
+          {/* Panel de totales — solo en modo 'orders' ($). En modo
+              'movements' el total general de unidades no aporta (productos con
+              consumos muy distintos), así que se muestra solo la gráfica. */}
+          {!esMovimientos && (
+            <div className="grid grid-cols-3 gap-4 pt-5 border-t border-slate-800/60">
+              <div>
+                <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
+                  {labelEntradas}
+                </div>
+                <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
+                  {fmt(totals.entradas)}
+                </div>
               </div>
-              <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
-                {fmt(totals.entradas)}
+              <div>
+                <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
+                  {labelSalidas}
+                </div>
+                <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
+                  {fmt(totals.salidas)}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
+                  Neto
+                </div>
+                <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
+                  {totals.neto >= 0 ? '+' : '−'}{fmt(Math.abs(totals.neto))}
+                </div>
               </div>
             </div>
-            <div>
-              <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
-                {labelSalidas}
-              </div>
-              <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
-                {fmt(totals.salidas)}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
-                {esMovimientos ? 'Variación neta' : 'Neto'}
-              </div>
-              <div className={cn(
-                'text-4xl font-semibold tabular-nums mt-1 leading-none',
-                esMovimientos
-                  ? (totals.neto >= 0 ? 'text-emerald-400' : 'text-red-400')
-                  : 'text-white'
-              )}>
-                {totals.neto >= 0 ? '+' : '−'}{fmt(Math.abs(totals.neto))}
-              </div>
-            </div>
-          </div>
+          )}
         </>
     </div>
   );

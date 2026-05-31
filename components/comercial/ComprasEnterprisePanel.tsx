@@ -156,6 +156,7 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
     fechaEsperada: '',
     prioridad: 'normal' as OrdenCompra['prioridad'],
     notas: '',
+    tasaIva: 22, // % IVA por defecto (Uruguay). Editable en el form.
     items: [] as Array<{ productoCodigo: string; cantidad: number; costoUnitario: number }>,
   });
 
@@ -295,6 +296,9 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
       const numero = `OC-${String((count || 0) + 1).padStart(6, '0')}`;
       
       const subtotal = newOrden.items.reduce((sum, i) => sum + (i.cantidad * i.costoUnitario), 0);
+      const tasa = Math.max(0, Number(newOrden.tasaIva) || 0) / 100;
+      const impuestos = Math.round(subtotal * tasa * 100) / 100;
+      const total = Math.round((subtotal + impuestos) * 100) / 100;
 
       const { data: ordenData, error: ordenError } = await supabase
         .from('ordenes_compra')
@@ -305,7 +309,8 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
           prioridad: newOrden.prioridad,
           fecha_esperada: newOrden.fechaEsperada || null,
           subtotal,
-          total: subtotal,
+          impuestos,
+          total,
           notas: newOrden.notas || null,
           creado_por: userEmail,
         })
@@ -331,13 +336,14 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
         estado: 'borrador',
         prioridad: newOrden.prioridad,
         subtotal,
-        total: subtotal,
+        impuestos,
+        total,
         items: itemsToInsert,
       }, userEmail);
 
       toast.success('Orden creada', `Orden ${numero} creada correctamente`);
       setModalType(null);
-      setNewOrden({ proveedorId: '', fechaEsperada: '', prioridad: 'normal', notas: '', items: [] });
+      setNewOrden({ proveedorId: '', fechaEsperada: '', prioridad: 'normal', notas: '', tasaIva: 22, items: [] });
       loadData();
     } catch (error: any) {
       toast.error('Error al crear orden', error.message);
@@ -438,6 +444,14 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
 
         const ordenItem = selectedOrden.items.find(i => i.id === item.ordenItemId);
         if (!ordenItem) continue;
+
+        // Guard: recibida + rechazada no puede superar lo pendiente.
+        const pendiente = ordenItem.cantidadOrdenada - ordenItem.cantidadRecibida;
+        if (item.cantidadRecibida + (item.cantidadRechazada || 0) > pendiente) {
+          toast.error('Cantidad inválida', `${ordenItem.productoCodigo}: recibido + rechazado supera lo pendiente (${pendiente})`);
+          setProcesando(null);
+          return;
+        }
 
         // Insertar item de recepción
         await supabase.from('recepciones_compra_items').insert({
@@ -976,14 +990,36 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                     <div className="text-center py-4 text-slate-500 text-sm">Agregue productos</div>
                   )}
                 </div>
-                {newOrden.items.length > 0 && (
-                  <div className="mt-2 p-2 bg-slate-800/40 border border-slate-700/40 rounded-xl flex justify-between">
-                    <span className="text-sm text-slate-400">Total:</span>
-                    <span className="font-bold text-slate-300">
-                      {formatCurrency(newOrden.items.reduce((s, i) => s + i.cantidad * i.costoUnitario, 0))}
-                    </span>
-                  </div>
-                )}
+                {newOrden.items.length > 0 && (() => {
+                  const sub = newOrden.items.reduce((s, i) => s + i.cantidad * i.costoUnitario, 0);
+                  const imp = Math.round(sub * (Math.max(0, Number(newOrden.tasaIva) || 0) / 100) * 100) / 100;
+                  return (
+                    <div className="mt-2 p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl space-y-1.5">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-400">Subtotal:</span>
+                        <span className="text-slate-300">{formatCurrency(sub)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-400 flex items-center gap-1.5">
+                          IVA
+                          <input
+                            type="number"
+                            value={newOrden.tasaIva}
+                            onChange={(e) => setNewOrden({ ...newOrden, tasaIva: parseFloat(e.target.value) || 0 })}
+                            className="w-14 px-1.5 py-0.5 bg-slate-900 border border-slate-700 rounded text-xs text-right"
+                            min="0" step="0.5"
+                          />
+                          %
+                        </span>
+                        <span className="text-slate-300">{formatCurrency(imp)}</span>
+                      </div>
+                      <div className="flex justify-between pt-1.5 border-t border-slate-700/40">
+                        <span className="text-sm text-slate-400">Total:</span>
+                        <span className="font-bold text-slate-200">{formatCurrency(sub + imp)}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div>
@@ -1068,7 +1104,10 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                               value={formItem?.cantidadRecibida || 0}
                               onChange={(e) => {
                                 const items = [...recepcionForm.items];
-                                items[idx] = { ...items[idx], cantidadRecibida: parseInt(e.target.value) || 0 };
+                                const rechazada = items[idx]?.cantidadRechazada || 0;
+                                // Recibida + rechazada no puede superar lo pendiente.
+                                const recibida = Math.max(0, Math.min(parseInt(e.target.value) || 0, pendiente - rechazada));
+                                items[idx] = { ...items[idx], cantidadRecibida: recibida };
                                 setRecepcionForm({ ...recepcionForm, items });
                               }}
                               min="0"
@@ -1083,10 +1122,14 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
                               value={formItem?.cantidadRechazada || 0}
                               onChange={(e) => {
                                 const items = [...recepcionForm.items];
-                                items[idx] = { ...items[idx], cantidadRechazada: parseInt(e.target.value) || 0 };
+                                const recibida = items[idx]?.cantidadRecibida || 0;
+                                // Rechazada + recibida no puede superar lo pendiente.
+                                const rechazada = Math.max(0, Math.min(parseInt(e.target.value) || 0, pendiente - recibida));
+                                items[idx] = { ...items[idx], cantidadRechazada: rechazada };
                                 setRecepcionForm({ ...recepcionForm, items });
                               }}
                               min="0"
+                              max={pendiente}
                               className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-300"
                             />
                           </div>
