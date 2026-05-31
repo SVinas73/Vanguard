@@ -665,6 +665,26 @@ export default function Picking() {
           })
           .eq('id', reservaProducto.id);
       }
+
+      // 3. Trazabilidad: registrar el movimiento de salida por picking.
+      const { error: errMov } = await supabase.from('wms_movimientos').insert({
+        numero: `PCK-${Date.now()}`,
+        tipo: 'salida',
+        estado: 'completado',
+        producto_codigo: lineaActualData.producto_codigo,
+        cantidad,
+        ubicacion_origen_codigo: lineaActualData.ubicacion_codigo || null,
+        lote_numero: lineaActualData.lote_numero || null,
+        documento_referencia: ordenSeleccionada.numero,
+        documento_tipo: 'orden_picking',
+        ejecutado_por: user?.email || null,
+        fecha_solicitud: new Date().toISOString(),
+        fecha_ejecucion: new Date().toISOString(),
+      });
+      if (errMov) {
+        // No bloquea el picking (el stock ya se descontó), pero queda avisado.
+        console.warn('[picking] no se pudo registrar wms_movimientos:', errMov.message);
+      }
     }
 
     // Actualizar línea (memoria local)
