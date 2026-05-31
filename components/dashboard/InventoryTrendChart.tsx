@@ -29,6 +29,12 @@ interface InventoryTrendChartProps {
   days?: number;
   /** Si no quieres que muestre el selector interno, pasalo controlado. */
   showPeriodSelector?: boolean;
+  /**
+   * 'orders' (default): compras (órdenes de compra) vs ventas (órdenes de venta), en $.
+   * 'movements': entradas vs salidas de stock (unidades), desde `movements`.
+   *   Para inventarios que NO se venden (ej: insumos).
+   */
+  flowSource?: 'orders' | 'movements';
 }
 
 const PERIOD_OPTIONS = [
@@ -39,8 +45,10 @@ const PERIOD_OPTIONS = [
 
 export function InventoryTrendChart({
   movements, products, days: initialDays = 30, showPeriodSelector = true,
+  flowSource = 'orders',
 }: InventoryTrendChartProps) {
   const [days, setDays] = useState(initialDays);
+  const esMovimientos = flowSource === 'movements';
 
   // Moneda destino desde Configuración. Origen = UYU (base del sistema).
   const { config: orgConfig } = useModulosHabilitados();
@@ -55,6 +63,8 @@ export function InventoryTrendChart({
   }>({ compras: [], ventas: [] });
 
   useEffect(() => {
+    // En modo 'movements' no se consultan órdenes: los datos salen de la prop.
+    if (esMovimientos) return;
     let cancelled = false;
     (async () => {
       const desde = new Date();
@@ -80,7 +90,25 @@ export function InventoryTrendChart({
       });
     })();
     return () => { cancelled = true; };
-  }, [days]);
+  }, [days, esMovimientos]);
+
+  // Modo 'movements': pre-agrupar las cantidades por día (entradas/salidas).
+  const movFlow = useMemo(() => {
+    const entradasPorDia: Record<string, number> = {};
+    const salidasPorDia: Record<string, number> = {};
+    if (!esMovimientos) return { entradasPorDia, salidasPorDia };
+    for (const m of movements || []) {
+      const ts = m.timestamp ?? m.created_at ?? m.fecha;
+      const d = ts instanceof Date ? ts : new Date(ts);
+      if (Number.isNaN(d.getTime())) continue;
+      const dayStr = d.toISOString().slice(0, 10);
+      const cant = Number(m.cantidad) || 0;
+      if (cant <= 0) continue;
+      if (m.tipo === 'entrada') entradasPorDia[dayStr] = (entradasPorDia[dayStr] || 0) + cant;
+      else if (m.tipo === 'salida') salidasPorDia[dayStr] = (salidasPorDia[dayStr] || 0) + cant;
+    }
+    return { entradasPorDia, salidasPorDia };
+  }, [movements, esMovimientos]);
 
   const chartData = useMemo(() => {
     const now = new Date();
@@ -92,8 +120,12 @@ export function InventoryTrendChart({
       const day = new Date(now);
       day.setDate(day.getDate() - d);
       const dayStr = day.toISOString().slice(0, 10);
-      const entradas = bucket(ordenes.compras, dayStr); // compras
-      const salidas = bucket(ordenes.ventas, dayStr);    // ventas
+      const entradas = esMovimientos
+        ? (movFlow.entradasPorDia[dayStr] || 0)
+        : bucket(ordenes.compras, dayStr); // compras
+      const salidas = esMovimientos
+        ? (movFlow.salidasPorDia[dayStr] || 0)
+        : bucket(ordenes.ventas, dayStr);  // ventas
       data.push({
         date: day.toLocaleDateString('es-UY', { day: '2-digit', month: 'short' }),
         entradas: Math.round(entradas),
@@ -102,7 +134,7 @@ export function InventoryTrendChart({
       });
     }
     return data;
-  }, [ordenes, days]);
+  }, [ordenes, days, esMovimientos, movFlow]);
 
   const hasData = chartData.some(d => d.entradas > 0 || d.salidas > 0);
 
@@ -125,14 +157,30 @@ export function InventoryTrendChart({
   const sinTasa = monedaTarget !== 'UYU'
     && convertir(1, 'UYU', monedaTarget, ratesTable) === null;
 
+  // Formato de unidades (modo movimientos): enteros con separador de miles.
+  const fmtUnidades = (v: number) => `${Math.round(v).toLocaleString('es-UY')} u`;
+  const fmtUnidadesShort = (v: number) =>
+    Math.abs(v) >= 1000 ? `${Math.round(v / 1000).toLocaleString('es-UY')}k` : `${Math.round(v)}`;
+
   const fmt = (v: number) =>
-    sinTasa ? `${formatMoney(v, 'UYU')} *` : formatMoney(conv(v), monedaTarget);
+    esMovimientos
+      ? fmtUnidades(v)
+      : (sinTasa ? `${formatMoney(v, 'UYU')} *` : formatMoney(conv(v), monedaTarget));
   const fmtShort = (v: number) => {
+    if (esMovimientos) return fmtUnidadesShort(v);
     const x = conv(v);
     return x >= 1000
       ? `${formatMoney(x / 1000, monedaTarget, { maximumFractionDigits: 0 })}k`
       : formatMoney(x, monedaTarget, { maximumFractionDigits: 0 });
   };
+
+  // Etiquetas según el modo.
+  const labelEntradas = esMovimientos ? 'Entradas' : 'Compras';
+  const labelSalidas = esMovimientos ? 'Salidas' : 'Ventas';
+  const subtituloFlujo = esMovimientos ? 'Entradas vs salidas' : 'Compras vs ventas';
+  const emptyMsg = esMovimientos
+    ? 'Todavía no hay entradas ni salidas en el período. La gráfica se irá llenando a medida que registres movimientos.'
+    : 'Todavía no hay compras ni ventas en el período. La gráfica se irá llenando a medida que registres operaciones.';
 
   return (
     <div className="rounded-xl p-6 bg-slate-900/40 border border-slate-800">
@@ -143,7 +191,7 @@ export function InventoryTrendChart({
             Flujo de inventario
           </h3>
           <p className="text-sm text-slate-400 mt-0.5">
-            Compras vs ventas · últimos {days === 365 ? '12 meses' : `${days} días`}
+            {subtituloFlujo} · últimos {days === 365 ? '12 meses' : `${days} días`}
           </p>
         </div>
 
@@ -170,7 +218,7 @@ export function InventoryTrendChart({
       {/* Gráfica — se muestra siempre (en 0 si no hay compras/ventas) */}
       {!hasData && (
         <div className="mb-2 text-xs text-slate-500">
-          Todavía no hay compras ni ventas en el período. La gráfica se irá llenando a medida que registres operaciones.
+          {emptyMsg}
         </div>
       )}
       <>
@@ -217,7 +265,7 @@ export function InventoryTrendChart({
                   labelStyle={{ color: 'var(--content-secondary, #94a3b8)' }}
                   formatter={(value: number, name: string) => [
                     fmt(value),
-                    name === 'entradas' ? 'Compras' : 'Ventas',
+                    name === 'entradas' ? labelEntradas : labelSalidas,
                   ]}
                   cursor={{ stroke: 'currentColor', strokeOpacity: 0.15, strokeWidth: 1 }}
                 />
@@ -250,11 +298,11 @@ export function InventoryTrendChart({
           <div className="flex items-center gap-5 mt-3 mb-5 text-sm">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-emerald-400" />
-              <span className="text-slate-400">Compras</span>
+              <span className="text-slate-400">{labelEntradas}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-red-400" />
-              <span className="text-slate-400">Ventas</span>
+              <span className="text-slate-400">{labelSalidas}</span>
             </div>
           </div>
 
@@ -262,7 +310,7 @@ export function InventoryTrendChart({
           <div className="grid grid-cols-3 gap-4 pt-5 border-t border-slate-800/60">
             <div>
               <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
-                Compras
+                {labelEntradas}
               </div>
               <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
                 {fmt(totals.entradas)}
@@ -270,7 +318,7 @@ export function InventoryTrendChart({
             </div>
             <div>
               <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
-                Ventas
+                {labelSalidas}
               </div>
               <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
                 {fmt(totals.salidas)}
@@ -278,9 +326,14 @@ export function InventoryTrendChart({
             </div>
             <div>
               <div className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
-                Neto
+                {esMovimientos ? 'Variación neta' : 'Neto'}
               </div>
-              <div className="text-4xl font-semibold text-white tabular-nums mt-1 leading-none">
+              <div className={cn(
+                'text-4xl font-semibold tabular-nums mt-1 leading-none',
+                esMovimientos
+                  ? (totals.neto >= 0 ? 'text-emerald-400' : 'text-red-400')
+                  : 'text-white'
+              )}>
                 {totals.neto >= 0 ? '+' : '−'}{fmt(Math.abs(totals.neto))}
               </div>
             </div>

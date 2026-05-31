@@ -37,6 +37,12 @@ export interface DashboardViewProps {
   onCategoryClick?: (category: string) => void;
   /** Contenido adicional a la derecha del header (ej: selector de almacén). */
   headerRight?: ReactNode;
+  /**
+   * Fuente del gráfico de flujo. 'orders' (default) usa compras vs ventas.
+   * 'movements' usa entradas vs salidas de stock — útil para inventarios que
+   * no se venden (ej: insumos).
+   */
+  flowSource?: 'orders' | 'movements';
 }
 
 export function DashboardView({
@@ -50,6 +56,7 @@ export function DashboardView({
   onRefresh,
   onCategoryClick,
   headerRight,
+  flowSource = 'orders',
 }: DashboardViewProps) {
   const { t } = useTranslation();
 
@@ -188,6 +195,7 @@ export function DashboardView({
         movements={movements}
         products={products}
         days={periodDays}
+        flowSource={flowSource}
       />
 
       {/* Top consumidos + Insights — lado a lado (60/40) */}
