@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { Product, Almacen } from '@/types';
 import { registrarAuditoria } from '@/lib/audit';
+import { getAlmacenesInsumoIds, excluirInsumos } from '@/lib/wms-insumos-filter';
 import { crearAprobacion, requiereAprobacion } from '@/lib/approvals';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
@@ -113,12 +114,14 @@ export default function Inventario() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Cargar productos reales
-      const { data: productosData } = await supabase
+      // Cargar productos reales (WMS no opera el almacén de insumos)
+      const idsInsumos = await getAlmacenesInsumoIds();
+      const { data: productosRaw } = await supabase
         .from('productos')
         .select('*')
         .order('descripcion');
-      
+      const productosData = excluirInsumos(productosRaw || [], idsInsumos);
+
       if (productosData) {
         setProductos(productosData.map(p => ({
           codigo: p.codigo,

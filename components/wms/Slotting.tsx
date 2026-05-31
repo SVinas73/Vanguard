@@ -208,14 +208,30 @@ export default function Slotting() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Cargar productos
+      // Cargar almacenes primero, para identificar cuáles son de insumos.
+      // WMS NO opera el almacén de insumos: lo excluimos de todo el slotting.
+      const { data: almacenesData } = await supabase
+        .from('almacenes')
+        .select('*')
+        .eq('activo', true);
+
+      const idsInsumos = new Set(
+        (almacenesData || [])
+          .filter((a: any) => (a.nombre || '').toLowerCase().includes('insumo'))
+          .map((a: any) => a.id)
+      );
+
+      // Cargar productos (excluyendo los del almacén de insumos)
       const { data: productosData } = await supabase
         .from('productos')
         .select('*')
         .order('descripcion');
-      
+
       if (productosData) {
-        setProductos(productosData.map(p => ({
+        const productosVenta = productosData.filter(
+          (p: any) => !p.almacen_id || !idsInsumos.has(p.almacen_id)
+        );
+        setProductos(productosVenta.map(p => ({
           codigo: p.codigo,
           descripcion: p.descripcion,
           precio: p.precio,
@@ -227,12 +243,6 @@ export default function Slotting() {
         })));
       }
 
-      // Cargar almacenes
-      const { data: almacenesData } = await supabase
-        .from('almacenes')
-        .select('*')
-        .eq('activo', true);
-      
       if (almacenesData) {
         setAlmacenes(almacenesData.map(a => ({
           id: a.id,

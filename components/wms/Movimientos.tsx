@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Product, Almacen, Movement } from '@/types';
 import { registrarAuditoria } from '@/lib/audit';
+import { getAlmacenesInsumoIds, excluirInsumos } from '@/lib/wms-insumos-filter';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import {
@@ -212,12 +213,14 @@ export default function Movimientos() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Cargar productos
-      const { data: productosData } = await supabase
+      // Cargar productos (WMS no opera el almacén de insumos)
+      const idsInsumos = await getAlmacenesInsumoIds();
+      const { data: productosRaw } = await supabase
         .from('productos')
         .select('*')
         .order('descripcion');
-      
+      const productosData = excluirInsumos(productosRaw || [], idsInsumos);
+
       if (productosData) {
         setProductos(productosData.map(p => ({
           codigo: p.codigo,
