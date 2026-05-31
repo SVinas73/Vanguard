@@ -158,6 +158,7 @@ export default function Recepcion() {
   
   const [ordenes, setOrdenes] = useState<OrdenRecepcion[]>([]);
   const [tareasPutaway, setTareasPutaway] = useState<TareaPutaway[]>([]);
+  const [almacenes, setAlmacenes] = useState<Array<{ id: string; nombre: string }>>([]);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<string>('activas');
@@ -206,6 +207,14 @@ export default function Recepcion() {
         .in('estado', ['pendiente', 'asignado', 'en_proceso'])
         .order('prioridad', { ascending: true });
       setTareasPutaway(putawayData || []);
+
+      // Cargar almacenes (para asignar la recepción al almacén correcto)
+      const { data: almData } = await supabase
+        .from('almacenes')
+        .select('id, nombre')
+        .eq('activo', true)
+        .order('es_principal', { ascending: false });
+      setAlmacenes(almData || []);
     } finally {
       setLoading(false);
     }
@@ -635,31 +644,56 @@ export default function Recepcion() {
   const handleCrearRecepcion = async () => {
     setSaving(true);
     try {
-      const nuevaOrden: OrdenRecepcion = {
-        id: `rec-${Date.now()}`,
+      const almacen = almacenes[0]; // principal (lista ordenada por es_principal)
+      if (!almacen) {
+        toast.error('No hay almacenes configurados. Creá uno en Stock → Almacenes.');
+        return;
+      }
+
+      // Persistir la orden en DB (antes solo vivía en memoria con id temporal).
+      const payload = {
         numero: generarNumeroRecepcion(),
         tipo_origen: formData.tipo_origen,
-        orden_compra_numero: formData.orden_compra_numero || undefined,
+        orden_compra_numero: formData.orden_compra_numero || null,
         proveedor_nombre: formData.proveedor_nombre,
-        almacen_id: '1',
-        almacen_nombre: 'Almacén Principal',
-        fecha_esperada: formData.fecha_esperada || undefined,
+        almacen_id: almacen.id,
+        fecha_esperada: formData.fecha_esperada || null,
         estado: 'pendiente',
         lineas_totales: 0,
         lineas_recibidas: 0,
         unidades_esperadas: 0,
         unidades_recibidas: 0,
-        guia_remision: formData.guia_remision || undefined,
+        guia_remision: formData.guia_remision || null,
         requiere_inspeccion: formData.requiere_inspeccion,
-        notas: formData.notas || undefined,
-        created_at: new Date().toISOString(),
+        notas: formData.notas || null,
+      };
+
+      const { data, error } = await supabase
+        .from('wms_ordenes_recepcion')
+        .insert(payload)
+        .select()
+        .single();
+
+      if (error || !data) {
+        toast.error(`No se pudo crear la recepción: ${error?.message || 'error desconocido'}`);
+        return;
+      }
+
+      const nuevaOrden: OrdenRecepcion = {
+        ...(data as any),
+        almacen_nombre: almacen.nombre,
         lineas: [],
       };
 
       setOrdenes(prev => [nuevaOrden, ...prev]);
       setOrdenSeleccionada(nuevaOrden);
       setVistaActiva('detalle');
-      
+      // Resetear el form
+      setFormData({
+        tipo_origen: 'compra', orden_compra_numero: '', proveedor_nombre: '',
+        guia_remision: '', fecha_esperada: '', requiere_inspeccion: false, notas: '',
+      });
+      toast.success(`Recepción ${nuevaOrden.numero} creada`);
     } finally {
       setSaving(false);
     }
