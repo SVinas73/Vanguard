@@ -57,7 +57,7 @@ interface TendenciaCategoria {
 // COMPONENTE PRINCIPAL
 // ============================================
 
-export default function TrendAnalysis() {
+export default function TrendAnalysis({ almacenId }: { almacenId?: string } = {}) {
   const [loading, setLoading] = useState(true);
   const [productos, setProductos] = useState<Product[]>([]);
   const [movimientos, setMovimientos] = useState<Movement[]>([]);
@@ -70,16 +70,19 @@ export default function TrendAnalysis() {
 
   useEffect(() => {
     loadData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [almacenId]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      // Cargar productos
-      const { data: productosData } = await supabase
+      // Cargar productos (filtrando por almacén)
+      let qProd = supabase
         .from('productos')
         .select('*');
-      
+      if (almacenId) qProd = qProd.eq('almacen_id', almacenId);
+      const { data: productosData } = await qProd;
+
       if (productosData) {
         setProductos(productosData.map(p => ({
           codigo: p.codigo,
@@ -99,8 +102,14 @@ export default function TrendAnalysis() {
         .gte('created_at', hace90d)
         .order('created_at', { ascending: false });
 
-      if (movData) {
-        const movs: Movement[] = movData.map(m => ({
+      // Filtrar movimientos a los productos del almacén elegido.
+      const codigosAlmacen = new Set((productosData || []).map((p: any) => p.codigo));
+      const movDataFiltrado = almacenId
+        ? (movData || []).filter((m: any) => codigosAlmacen.has(m.codigo))
+        : (movData || []);
+
+      if (movDataFiltrado) {
+        const movs: Movement[] = movDataFiltrado.map(m => ({
           id: m.id,
           codigo: m.codigo,
           tipo: m.tipo,
@@ -109,7 +118,7 @@ export default function TrendAnalysis() {
           timestamp: new Date(m.created_at),
         }));
         setMovimientos(movs);
-        
+
         // Calcular tendencias
         const tendenciasCalc = calcularTendencias(productosData || [], movs);
         setTendencias(tendenciasCalc);
