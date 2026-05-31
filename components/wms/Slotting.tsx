@@ -318,6 +318,14 @@ export default function Slotting() {
       const esPremium = idsZonaPremium.has(ubic.zonaId);
       const esBaja = idsZonaBaja.has(ubic.zonaId);
 
+      // Ahorro estimado: picks/día × distancia que se acorta al reubicar.
+      // Heurística transparente: zona baja↔premium ~ 25 m de diferencia de
+      // recorrido por pick, y ~3.5 s de caminata cada 10 m (vel. típica picker).
+      const DIST_ENTRE_ZONAS_M = 25;
+      const picksDia = (item.movimientos_90d || 0) / 90;
+      const ahorroDistDia = Math.round(picksDia * DIST_ENTRE_ZONAS_M);
+      const ahorroTiempoDia = Math.round((ahorroDistDia / 10) * 3.5 / 60 * 10) / 10; // min/día
+
       if (item.clasificacion_abc === 'A' && esBaja) {
         recs.push({
           id: `rec-${item.producto_codigo}`,
@@ -330,8 +338,8 @@ export default function Slotting() {
           razon: `Producto clase A con ${item.movimientos_90d} movimientos/90d ubicado en zona de baja prioridad`,
           clasificacion_abc: 'A',
           prioridad: 3,
-          ahorro_tiempo_min: 0,
-          ahorro_distancia_m: 0,
+          ahorro_tiempo_min: ahorroTiempoDia,
+          ahorro_distancia_m: ahorroDistDia,
           estado: 'pendiente',
           fecha_creacion: new Date().toISOString(),
         });
@@ -347,8 +355,8 @@ export default function Slotting() {
           razon: `Producto clase C ocupando espacio premium con solo ${item.movimientos_90d} movimientos/90d`,
           clasificacion_abc: 'C',
           prioridad: 2,
-          ahorro_tiempo_min: 0,
-          ahorro_distancia_m: 0,
+          ahorro_tiempo_min: ahorroTiempoDia,
+          ahorro_distancia_m: ahorroDistDia,
           estado: 'pendiente',
           fecha_creacion: new Date().toISOString(),
         });
@@ -548,25 +556,82 @@ export default function Slotting() {
     }
   };
 
-  const handleAprobarRecomendacion = (recId: string) => {
-    setRecomendaciones(prev => prev.map(r => 
-      r.id === recId ? { ...r, estado: 'aprobada' as EstadoRecomendacion, aprobado_por: 'usuario' } : r
-    ));
+  // Persiste el estado de una recomendación en wms_recomendaciones_slotting
+  // (upsert por producto: las recomendaciones se regeneran con ids efímeros).
+  const persistirRecomendacion = async (rec: RecomendacionSlotting, patch: Record<string, any>) => {
+    try {
+      const { error } = await supabase
+        .from('wms_recomendaciones_slotting')
+        .upsert({
+          producto_codigo: rec.producto_codigo,
+          producto_nombre: rec.producto?.descripcion || rec.producto_codigo,
+          ubicacion_origen: rec.ubicacion_origen,
+          ubicacion_destino: rec.ubicacion_destino,
+          zona_destino: rec.zona_destino || null,
+          clasificacion_abc: rec.clasificacion_abc,
+          razon: rec.razon,
+          ahorro_distancia_m: rec.ahorro_distancia_m || 0,
+          ahorro_tiempo_min: rec.ahorro_tiempo_min || 0,
+          creado_por: user?.email || null,
+          updated_at: new Date().toISOString(),
+          ...patch,
+        }, { onConflict: 'producto_codigo' });
+      if (error) {
+        toast.warning(`Estado actualizado localmente; no se pudo persistir: ${error.message}`);
+      }
+    } catch (e: any) {
+      toast.warning('Estado actualizado localmente; no se pudo persistir.');
+    }
   };
 
-  const handleRechazarRecomendacion = (recId: string) => {
-    setRecomendaciones(prev => prev.map(r => 
+  const handleAprobarRecomendacion = async (recId: string) => {
+    const rec = recomendaciones.find(r => r.id === recId);
+    setRecomendaciones(prev => prev.map(r =>
+      r.id === recId ? { ...r, estado: 'aprobada' as EstadoRecomendacion, aprobado_por: user?.email || 'usuario' } : r
+    ));
+    if (rec) await persistirRecomendacion(rec, {
+      estado: 'aprobada', aprobado_por: user?.email || null, fecha_aprobacion: new Date().toISOString(),
+    });
+  };
+
+  const handleRechazarRecomendacion = async (recId: string) => {
+    const rec = recomendaciones.find(r => r.id === recId);
+    setRecomendaciones(prev => prev.map(r =>
       r.id === recId ? { ...r, estado: 'rechazada' as EstadoRecomendacion } : r
     ));
+    if (rec) await persistirRecomendacion(rec, { estado: 'rechazada' });
   };
 
   const handleEjecutarRecomendacion = async (recId: string) => {
     setSaving(true);
     try {
-      // En producción: crear movimiento de transferencia interna
-      setRecomendaciones(prev => prev.map(r => 
-        r.id === recId 
-          ? { ...r, estado: 'ejecutada' as EstadoRecomendacion, fecha_ejecucion: new Date().toISOString(), ejecutado_por: 'usuario' } 
+      const rec = recomendaciones.find(r => r.id === recId);
+      const fecha = new Date().toISOString();
+      // Trazabilidad: registrar la reubicación como movimiento interno.
+      if (rec) {
+        await supabase.from('wms_movimientos').insert({
+          numero: `SLT-${Date.now()}`,
+          tipo: 'transferencia',
+          estado: 'completado',
+          producto_codigo: rec.producto_codigo,
+          cantidad: 0,
+          ubicacion_origen_codigo: rec.ubicacion_origen || null,
+          ubicacion_destino_codigo: rec.ubicacion_destino || null,
+          motivo: 'reubicacion_slotting',
+          documento_tipo: 'slotting',
+          ejecutado_por: user?.email || null,
+          fecha_solicitud: fecha,
+          fecha_ejecucion: fecha,
+        }).then(({ error }) => {
+          if (error) console.warn('[slotting] no se pudo registrar movimiento:', error.message);
+        });
+        await persistirRecomendacion(rec, {
+          estado: 'ejecutada', ejecutado_por: user?.email || null, fecha_ejecucion: fecha,
+        });
+      }
+      setRecomendaciones(prev => prev.map(r =>
+        r.id === recId
+          ? { ...r, estado: 'ejecutada' as EstadoRecomendacion, fecha_ejecucion: fecha, ejecutado_por: user?.email || 'usuario' }
           : r
       ));
     } finally {

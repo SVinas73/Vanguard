@@ -211,6 +211,30 @@ export default function Packing() {
     const { error } = await supabase.from('wms_paquetes').update(updates).eq('id', paquete.id);
     if (error) { toast.error(error.message); return; }
 
+    // Conectar con ventas: al despachar/entregar, reflejar el estado en la
+    // orden de venta asociada (vía la orden de picking del paquete).
+    if (nuevoEstado === 'despachado' || nuevoEstado === 'entregado') {
+      let ordenVentaId = paquete.orden_venta_id || null;
+      if (!ordenVentaId && paquete.orden_picking_id) {
+        const { data: op } = await supabase
+          .from('wms_ordenes_picking')
+          .select('orden_venta_id')
+          .eq('id', paquete.orden_picking_id)
+          .maybeSingle();
+        ordenVentaId = (op as any)?.orden_venta_id || null;
+      }
+      if (ordenVentaId) {
+        const estadoVenta = nuevoEstado === 'despachado' ? 'despachada' : 'entregada';
+        const { error: errOV } = await supabase
+          .from('ordenes_venta')
+          .update({ estado: estadoVenta })
+          .eq('id', ordenVentaId);
+        if (errOV) {
+          toast.warning(`Paquete actualizado, pero no se pudo actualizar la orden de venta: ${errOV.message}`);
+        }
+      }
+    }
+
     await registrarAuditoria('wms_paquetes', `ESTADO_${nuevoEstado.toUpperCase()}`,
       paquete.numero, { estado: paquete.estado }, updates, user?.email || '');
 

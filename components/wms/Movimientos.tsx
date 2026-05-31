@@ -399,6 +399,18 @@ export default function Movimientos() {
     setSaving(true);
     try {
       const cantidad = parseInt(formMovimiento.cantidad) || 0;
+      if (cantidad <= 0) {
+        toast.error('La cantidad debe ser mayor a 0');
+        return;
+      }
+      // Validación de stock para salidas: no permitir sacar más de lo disponible.
+      if (formMovimiento.tipo === 'salida') {
+        const prod = productos.find(p => p.codigo === formMovimiento.producto_codigo);
+        if (prod && cantidad > prod.stock) {
+          toast.error(`Stock insuficiente: hay ${prod.stock} unidad(es) de ${prod.codigo}, se intentó sacar ${cantidad}.`);
+          return;
+        }
+      }
       const numero = generarNumeroMovimiento();
       const payload = {
         numero,
@@ -563,47 +575,57 @@ export default function Movimientos() {
     
     setSaving(true);
     try {
-      const nuevaTrans: TransferenciaAlmacen = {
-        id: `trf-${Date.now()}`,
+      const items = formTransferencia.items.map((item) => ({
+        producto_codigo: item.producto_codigo,
+        cantidad_solicitada: item.cantidad,
+        cantidad_enviada: 0,
+        cantidad_recibida: 0,
+        ubicacion_origen: item.ubicacion_origen ?? null,
+      }));
+
+      // Persistir cabecera + items (jsonb) en DB. Antes solo vivía en memoria.
+      const payload = {
         numero: generarNumeroTransferencia(),
         almacen_origen_id: formTransferencia.almacen_origen_id,
         almacen_destino_id: formTransferencia.almacen_destino_id,
         estado: 'borrador',
         fecha_solicitud: new Date().toISOString(),
-        items: formTransferencia.items.map((item, idx) => ({
-          id: `item-${idx}`,
-          transferencia_id: '',
-          producto_codigo: item.producto_codigo,
-          cantidad_solicitada: item.cantidad,
-          cantidad_enviada: 0,
-          cantidad_recibida: 0,
-          ubicacion_origen: item.ubicacion_origen,
-        })),
-        notas: formTransferencia.notas || undefined,
+        items,
+        notas: formTransferencia.notas || null,
       };
-      
-      setTransferencias(prev => [nuevaTrans, ...prev]);
-      
-      // Resetear form
-      setFormTransferencia({
-        almacen_origen_id: '',
-        almacen_destino_id: '',
-        notas: '',
-        items: [],
-      });
-      
+
+      const { data, error } = await supabase
+        .from('transferencias')
+        .insert(payload)
+        .select()
+        .single();
+
+      if (error || !data) {
+        toast.error(`No se pudo crear la transferencia: ${error?.message || 'error desconocido'}`);
+        return;
+      }
+
+      setTransferencias(prev => [data as TransferenciaAlmacen, ...prev]);
+      setFormTransferencia({ almacen_origen_id: '', almacen_destino_id: '', notas: '', items: [] });
       setVistaActiva('transferencias');
-      
+      toast.success(`Transferencia ${(data as any).numero} creada`);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleEnviarTransferencia = (transId: string) => {
-    setTransferencias(prev => prev.map(t => 
-      t.id === transId 
-        ? { ...t, estado: 'enviada' as const, fecha_envio: new Date().toISOString() }
-        : t
+  const handleEnviarTransferencia = async (transId: string) => {
+    const fecha = new Date().toISOString();
+    const { error } = await supabase
+      .from('transferencias')
+      .update({ estado: 'enviada', fecha_envio: fecha })
+      .eq('id', transId);
+    if (error) {
+      toast.error(`No se pudo enviar: ${error.message}`);
+      return;
+    }
+    setTransferencias(prev => prev.map(t =>
+      t.id === transId ? { ...t, estado: 'enviada' as const, fecha_envio: fecha } : t
     ));
   };
 
@@ -613,29 +635,38 @@ export default function Movimientos() {
     
     setSaving(true);
     try {
-      // Actualizar stock: restar del origen, sumar al destino
+      // Mover los productos al almacén destino (el stock es global por producto;
+      // la transferencia reubica el producto de almacén).
       for (const item of trans.items) {
-        const producto = productos.find(p => p.codigo === item.producto_codigo);
-        if (producto) {
-          // En un sistema real actualizarías stock_almacen, aquí simplificamos
-          await supabase
-            .from('productos')
-            .update({ almacen_id: trans.almacen_destino_id })
-            .eq('codigo', item.producto_codigo);
+        const { error: errProd } = await supabase
+          .from('productos')
+          .update({ almacen_id: trans.almacen_destino_id })
+          .eq('codigo', item.producto_codigo);
+        if (errProd) {
+          toast.error(`No se pudo mover ${item.producto_codigo}: ${errProd.message}`);
+          return;
         }
       }
-      
-      setTransferencias(prev => prev.map(t => 
-        t.id === transId 
-          ? { 
-              ...t, 
-              estado: 'recibida' as const, 
-              fecha_recepcion: new Date().toISOString(),
-              items: t.items.map(i => ({ ...i, cantidad_recibida: i.cantidad_solicitada }))
-            }
+
+      const fecha = new Date().toISOString();
+      const itemsRecibidos = trans.items.map(i => ({ ...i, cantidad_recibida: i.cantidad_solicitada }));
+
+      // Persistir el cierre de la transferencia en DB.
+      const { error: errTrans } = await supabase
+        .from('transferencias')
+        .update({ estado: 'recibida', fecha_recepcion: fecha, items: itemsRecibidos })
+        .eq('id', transId);
+      if (errTrans) {
+        toast.error(`No se pudo cerrar la transferencia: ${errTrans.message}`);
+        return;
+      }
+
+      setTransferencias(prev => prev.map(t =>
+        t.id === transId
+          ? { ...t, estado: 'recibida' as const, fecha_recepcion: fecha, items: itemsRecibidos }
           : t
       ));
-      
+      toast.success('Transferencia recibida');
     } finally {
       setSaving(false);
     }

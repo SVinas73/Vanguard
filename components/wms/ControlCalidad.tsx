@@ -183,6 +183,38 @@ export default function ControlCalidad() {
       fecha_cierre: new Date().toISOString(),
     }).eq('id', nc.id);
     if (error) { toast.error(error.message); return; }
+
+    // Efecto sobre stock: rechazar o devolver al proveedor saca la cantidad
+    // afectada del inventario disponible (productos.stock es la fuente de verdad).
+    const sacaStock = accionForm.accion === 'rechazar' || accionForm.accion === 'devolver_proveedor';
+    if (sacaStock && nc.producto_codigo && (nc.cantidad_afectada || 0) > 0) {
+      const { data: prod } = await supabase
+        .from('productos').select('stock').eq('codigo', nc.producto_codigo).maybeSingle();
+      if (prod) {
+        const nuevoStock = Math.max(0, (Number((prod as any).stock) || 0) - (nc.cantidad_afectada || 0));
+        const { error: errStock } = await supabase
+          .from('productos').update({ stock: nuevoStock }).eq('codigo', nc.producto_codigo);
+        if (errStock) {
+          toast.warning(`NC cerrada, pero no se pudo ajustar el stock: ${errStock.message}`);
+        } else {
+          // Trazabilidad de la baja por calidad.
+          await supabase.from('wms_movimientos').insert({
+            numero: `QC-${Date.now()}`,
+            tipo: 'salida',
+            estado: 'completado',
+            producto_codigo: nc.producto_codigo,
+            cantidad: nc.cantidad_afectada,
+            documento_referencia: nc.numero,
+            documento_tipo: 'no_conformidad',
+            motivo: accionForm.accion,
+            ejecutado_por: user?.email || null,
+            fecha_solicitud: new Date().toISOString(),
+            fecha_ejecucion: new Date().toISOString(),
+          });
+        }
+      }
+    }
+
     await registrarAuditoria('wms_no_conformidades', 'CERRAR', nc.numero,
       { estado: nc.estado }, { accion: accionForm.accion }, user?.email || '');
     toast.success(`${nc.numero} cerrada — ${accionForm.accion}`);
