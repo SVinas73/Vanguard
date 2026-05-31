@@ -173,8 +173,34 @@ export async function getTiemposCiclo(diasAtras: number = 30): Promise<ReporteTi
     }
   });
 
+  // Recepción → put-away: fecha_recepcion de la orden → fecha_completado de la
+  // tarea de put-away de esa orden.
+  const { data: recepciones } = await supabase
+    .from('wms_ordenes_recepcion')
+    .select('id, fecha_recepcion')
+    .gte('fecha_recepcion', desde);
+  const recepcionPorId = new Map<string, string>();
+  (recepciones || []).forEach((r: any) => { if (r.fecha_recepcion) recepcionPorId.set(r.id, r.fecha_recepcion); });
+
+  let recPutaway = 0;
+  let recPutawayN = 0;
+  if (recepcionPorId.size > 0) {
+    const { data: tareas } = await supabase
+      .from('wms_tareas_putaway')
+      .select('orden_recepcion_id, fecha_completado')
+      .eq('estado', 'completado')
+      .not('fecha_completado', 'is', null);
+    (tareas || []).forEach((tp: any) => {
+      const fRec = recepcionPorId.get(tp.orden_recepcion_id);
+      if (fRec && tp.fecha_completado) {
+        const min = (new Date(tp.fecha_completado).getTime() - new Date(fRec).getTime()) / 60000;
+        if (min > 0 && min < 7 * 24 * 60) { recPutaway += min; recPutawayN++; }
+      }
+    });
+  }
+
   return {
-    recepcion_a_putaway_promedio_min: 0,
+    recepcion_a_putaway_promedio_min: recPutawayN > 0 ? Math.round(recPutaway / recPutawayN) : 0,
     picking_a_pack_promedio_min: pickTimeN > 0 ? Math.round(pickTime / pickTimeN) : 0,
     pack_a_despacho_promedio_min: packDespachoN > 0 ? Math.round(packDespacho / packDespachoN) : 0,
     ciclo_completo_promedio_horas: pickTimeN > 0 ? Math.round(((pickTime / pickTimeN) + (packDespacho / Math.max(1, packDespachoN))) / 60 * 10) / 10 : 0,
