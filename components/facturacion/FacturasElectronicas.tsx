@@ -11,7 +11,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useWmsToast } from '@/components/wms/useWmsToast';
 import {
-  crearBorradorCFE, firmarCFE,
+  crearBorradorCFE, firmarCFE, generarPDFFactura,
   registrarAceptacionDGI, registrarRechazoDGI,
   type CFE, type EstadoCFE, type LineaCFE, type TipoCFE, type Receptor,
 } from '@/lib/uy-cfe';
@@ -273,9 +273,13 @@ export default function FacturasElectronicas() {
           <div className="space-y-3">
             <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 space-y-2">
               <h4 className="text-sm font-semibold text-slate-200 mb-2">Acciones</h4>
-              <button onClick={() => imprimir(selected)} className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm">
+              <button onClick={() => generarPDFFactura(selected.id, 'abrir')} className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm">
                 <Printer className="h-4 w-4" />
-                Imprimir
+                Ver / Imprimir PDF
+              </button>
+              <button onClick={() => generarPDFFactura(selected.id, 'descargar')} className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm">
+                <Printer className="h-4 w-4" />
+                Descargar PDF
               </button>
               {selected.estado === 'borrador' && (
                 <button onClick={() => firmar(selected)} className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm">

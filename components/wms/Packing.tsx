@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
-import { facturarOrdenVenta } from '@/lib/uy-cfe';
+import { facturarOrdenVenta, generarPDFFactura } from '@/lib/uy-cfe';
 import { VerificacionEmpaque } from './VerificacionEmpaque';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
@@ -246,7 +246,9 @@ export default function Packing() {
           if (res.yaFacturada) {
             toast.warning('La orden ya tenía una factura emitida.');
           } else if (res.cfe) {
-            toast.success(`Factura ${res.cfe.serie}-${res.cfe.numero} generada (borrador). Firmala en Facturación.`);
+            toast.success(`Factura ${res.cfe.serie}-${res.cfe.numero} generada. Abriendo PDF…`);
+            // PDF lindo y completo de la factura.
+            generarPDFFactura(res.cfe.id, 'abrir').catch(() => {});
           } else if (res.error) {
             toast.warning(`Paquete despachado, pero no se pudo facturar: ${res.error}`);
           }
