@@ -28,9 +28,9 @@ import {
 // TIPOS
 // ============================================
 
-type CategoriaReporte = 
-  | 'inventario' | 'movimientos' | 'compras' | 'ventas' 
-  | 'produccion' | 'rma' | 'financiero';
+type CategoriaReporte =
+  | 'inventario' | 'movimientos' | 'compras' | 'ventas'
+  | 'pickeadores' | 'rma' | 'financiero';
 
 type TipoReporte =
   // Inventario
@@ -41,8 +41,8 @@ type TipoReporte =
   | 'com_por_proveedor' | 'com_costos' | 'com_lead_times' | 'com_recepciones' | 'com_ordenes_pendientes'
   // Ventas
   | 'ven_por_cliente' | 'ven_por_producto' | 'ven_rentabilidad' | 'ven_cotizaciones' | 'ven_cuentas_cobrar'
-  // Producción
-  | 'pro_ensamblajes' | 'pro_eficiencia' | 'pro_consumo_materiales' | 'pro_qc'
+  // Pickeadores (WMS)
+  | 'pick_productividad' | 'pick_lineas' | 'pick_tiempos'
   // RMA
   | 'rma_periodo' | 'rma_motivos' | 'rma_costos' | 'rma_tiempo_resolucion'
   // Financiero
@@ -283,40 +283,31 @@ const REPORTES_CONFIG: ConfigReporte[] = [
     tieneGrafico: true,
   },
 
-  // PRODUCCIÓN
+  // PICKEADORES (WMS)
   {
-    id: 'pro_ensamblajes',
-    nombre: 'Ensamblajes',
-    descripcion: 'Órdenes de producción completadas',
-    icono: <Settings className="h-5 w-5" />,
-    categoria: 'produccion',
-    filtrosDisponibles: ['fechas', 'almacen'],
-    tieneGrafico: true,
-  },
-  {
-    id: 'pro_eficiencia',
-    nombre: 'Eficiencia Productiva',
-    descripcion: 'Variación de costos planificado vs real',
+    id: 'pick_productividad',
+    nombre: 'Productividad de pickeadores',
+    descripcion: 'Órdenes, unidades y picks/hora por pickeador',
     icono: <Target className="h-5 w-5" />,
-    categoria: 'produccion',
+    categoria: 'pickeadores',
     filtrosDisponibles: ['fechas'],
     tieneGrafico: true,
   },
   {
-    id: 'pro_consumo_materiales',
-    nombre: 'Consumo de Materiales',
-    descripcion: 'Componentes utilizados en producción',
+    id: 'pick_lineas',
+    nombre: 'Líneas pickeadas',
+    descripcion: 'Líneas completadas y short-picks por pickeador',
     icono: <Layers className="h-5 w-5" />,
-    categoria: 'produccion',
-    filtrosDisponibles: ['fechas', 'categoria'],
+    categoria: 'pickeadores',
+    filtrosDisponibles: ['fechas'],
     tieneGrafico: true,
   },
   {
-    id: 'pro_qc',
-    nombre: 'Control de Calidad',
-    descripcion: 'Inspecciones y resultados QC',
-    icono: <CheckCircle className="h-5 w-5" />,
-    categoria: 'produccion',
+    id: 'pick_tiempos',
+    nombre: 'Tiempos de picking',
+    descripcion: 'Tiempo promedio por orden y por unidad',
+    icono: <Clock className="h-5 w-5" />,
+    categoria: 'pickeadores',
     filtrosDisponibles: ['fechas'],
     tieneGrafico: true,
   },
@@ -394,7 +385,7 @@ const CATEGORIAS_CONFIG: Record<CategoriaReporte, { nombre: string; icono: React
   movimientos: { nombre: 'Movimientos', icono: <ArrowUpDown className="h-5 w-5" />, color: 'blue' },
   compras: { nombre: 'Compras', icono: <ShoppingCart className="h-5 w-5" />, color: 'purple' },
   ventas: { nombre: 'Ventas', icono: <TrendUp className="h-5 w-5" />, color: 'cyan' },
-  produccion: { nombre: 'Producción', icono: <Settings className="h-5 w-5" />, color: 'amber' },
+  pickeadores: { nombre: 'Pickeadores', icono: <Target className="h-5 w-5" />, color: 'amber' },
   rma: { nombre: 'Devoluciones', icono: <RotateCcw className="h-5 w-5" />, color: 'red' },
   financiero: { nombre: 'Financiero', icono: <DollarSign className="h-5 w-5" />, color: 'indigo' },
 };
@@ -698,18 +689,15 @@ export default function ReportsEnterprise() {
           datos = await generarReporteCuentasCobrar();
           break;
 
-        // PRODUCCIÓN
-        case 'pro_ensamblajes':
-          datos = await generarReporteEnsamblajes();
+        // PICKEADORES
+        case 'pick_productividad':
+          datos = await generarReportePickProductividad();
           break;
-        case 'pro_eficiencia':
-          datos = await generarReporteEficiencia();
+        case 'pick_lineas':
+          datos = await generarReportePickLineas();
           break;
-        case 'pro_consumo_materiales':
-          datos = await generarReporteConsumoMateriales();
-          break;
-        case 'pro_qc':
-          datos = await generarReporteQC();
+        case 'pick_tiempos':
+          datos = await generarReportePickTiempos();
           break;
 
         // RMA
@@ -882,7 +870,7 @@ export default function ReportsEnterprise() {
 
     const filas = productos.map(p => {
       acumulado += p.valorTotal;
-      const porcentajeAcumulado = (acumulado / valorTotal) * 100;
+      const porcentajeAcumulado = valorTotal > 0 ? (acumulado / valorTotal) * 100 : 0;
       let clasificacion = 'C';
       if (porcentajeAcumulado <= 80) clasificacion = 'A';
       else if (porcentajeAcumulado <= 95) clasificacion = 'B';
@@ -1065,7 +1053,7 @@ export default function ReportsEnterprise() {
       supabase.from('movimientos')
         .select('codigo')
         .gte('created_at', filtros.fechaInicio)
-        .lte('created_at', filtros.fechaFin),
+        .lte('created_at', `T23:59:59`),
     ]);
 
     // Costo unitario efectivo por producto (FIFO ponderado, sino costo promedio)
@@ -1228,7 +1216,7 @@ export default function ReportsEnterprise() {
       .from('ordenes_compra')
       .select('*, proveedor:proveedores(nombre)')
       .gte('fecha_orden', filtros.fechaInicio)
-      .lte('fecha_orden', filtros.fechaFin);
+      .lte('fecha_orden', `T23:59:59`);
 
     if (filtros.proveedorId) query = query.eq('proveedor_id', filtros.proveedorId);
 
@@ -1316,7 +1304,7 @@ export default function ReportsEnterprise() {
       .select('*, cliente:clientes(nombre)')
       .in('estado', ['confirmada', 'en_proceso', 'enviada', 'entregada'])
       .gte('fecha_orden', filtros.fechaInicio)
-      .lte('fecha_orden', filtros.fechaFin);
+      .lte('fecha_orden', `T23:59:59`);
 
     if (filtros.clienteId) query = query.eq('cliente_id', filtros.clienteId);
 
@@ -1362,14 +1350,15 @@ export default function ReportsEnterprise() {
   const generarReporteVentasProducto = async (): Promise<DatosReporte> => {
     const { data: items } = await supabase
       .from('ordenes_venta_items')
-      .select('*, orden:ordenes_venta(fecha_orden, estado)')
+      .select('*, orden:ordenes_venta!inner(fecha_orden, estado)')
       .gte('orden.fecha_orden', filtros.fechaInicio)
-      .lte('orden.fecha_orden', filtros.fechaFin);
+      .lte('orden.fecha_orden', `${filtros.fechaFin}T23:59:59`)
+      .not('orden.estado', 'eq', 'cancelada');
 
     const porProducto: Record<string, { descripcion: string; cantidad: number; total: number }> = {};
     (items || []).forEach((i: any) => {
-      if (!i.orden || !['confirmada', 'en_proceso', 'enviada', 'entregada'].includes(i.orden.estado)) return;
-      
+      if (!i.orden || i.orden.estado === 'borrador') return;
+
       if (!porProducto[i.producto_codigo]) {
         porProducto[i.producto_codigo] = { descripcion: i.producto_descripcion, cantidad: 0, total: 0 };
       }
@@ -1457,111 +1446,144 @@ export default function ReportsEnterprise() {
   };
 
   // ENSAMBLAJES
-  const generarReporteEnsamblajes = async (): Promise<DatosReporte> => {
-    const { data } = await supabase
-      .from('ensamblajes')
-      .select('*')
-      .gte('created_at', filtros.fechaInicio)
-      .lte('created_at', `${filtros.fechaFin}T23:59:59`)
-      .order('created_at', { ascending: false });
+  // ============================================
+  // PICKEADORES (WMS)
+  // ============================================
 
-    const filas = (data || []).map((e: any) => ({
-      numero: e.numero,
-      producto: e.producto_descripcion || e.producto_codigo,
-      cantidadPlanificada: e.cantidad_planificada,
-      cantidadProducida: e.cantidad_producida || 0,
-      estado: e.estado,
-      costoPlan: parseFloat(e.costo_total_planificado) || 0,
-      costoReal: parseFloat(e.costo_total_real) || 0,
-      variacion: e.costo_total_planificado > 0 
-        ? (((parseFloat(e.costo_total_real) || 0) - (parseFloat(e.costo_total_planificado) || 0)) / parseFloat(e.costo_total_planificado) * 100)
-        : 0,
-    }));
+  /** Agrega métricas por pickeador desde wms_ordenes_picking en el período. */
+  const cargarMetricasPicking = async () => {
+    const { data: ordenes } = await supabase
+      .from('wms_ordenes_picking')
+      .select('picker_asignado, estado, unidades_pickeadas, lineas_completadas, lineas_totales, fecha_inicio, fecha_completada')
+      .not('picker_asignado', 'is', null)
+      .gte('fecha_completada', filtros.fechaInicio)
+      .lte('fecha_completada', `${filtros.fechaFin}T23:59:59`);
 
-    const completados = filas.filter(f => f.estado === 'completado').length;
-    const enProceso = filas.filter(f => f.estado === 'en_proceso').length;
+    const acc: Record<string, {
+      picker: string; ordenes: number; unidades: number; lineas: number;
+      lineasShort: number; minutos: number; ordenesConTiempo: number;
+    }> = {};
 
-    const graficoData = [
-      { name: 'Completados', value: completados },
-      { name: 'En Proceso', value: enProceso },
-      { name: 'Planificados', value: filas.filter(f => f.estado === 'planificado').length },
-    ];
+    for (const o of (ordenes || []) as any[]) {
+      const k = o.picker_asignado as string;
+      if (!acc[k]) acc[k] = { picker: k, ordenes: 0, unidades: 0, lineas: 0, lineasShort: 0, minutos: 0, ordenesConTiempo: 0 };
+      acc[k].ordenes += 1;
+      acc[k].unidades += Number(o.unidades_pickeadas) || 0;
+      acc[k].lineas += Number(o.lineas_completadas) || 0;
+      acc[k].lineasShort += Math.max(0, (Number(o.lineas_totales) || 0) - (Number(o.lineas_completadas) || 0));
+      if (o.fecha_inicio && o.fecha_completada) {
+        const min = (new Date(o.fecha_completada).getTime() - new Date(o.fecha_inicio).getTime()) / 60000;
+        if (min > 0 && min < 24 * 60) { acc[k].minutos += min; acc[k].ordenesConTiempo += 1; }
+      }
+    }
+    return Object.values(acc);
+  };
 
+  // PRODUCTIVIDAD DE PICKEADORES
+  const generarReportePickProductividad = async (): Promise<DatosReporte> => {
+    const m = await cargarMetricasPicking();
+    const filas = m.map(p => {
+      const horas = p.minutos / 60;
+      const picksPorHora = horas > 0 ? p.unidades / horas : 0;
+      return {
+        picker: p.picker,
+        ordenes: p.ordenes,
+        unidades: p.unidades,
+        lineas: p.lineas,
+        picksPorHora: Math.round(picksPorHora * 10) / 10,
+      };
+    }).sort((a, b) => b.unidades - a.unidades);
+
+    const totalUnidades = filas.reduce((s, f) => s + f.unidades, 0);
+    const totalOrdenes = filas.reduce((s, f) => s + f.ordenes, 0);
     return {
-      titulo: 'Ensamblajes',
+      titulo: 'Productividad de pickeadores',
       subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
       columnas: [
-        { key: 'numero', label: 'Orden' },
-        { key: 'producto', label: 'Producto' },
-        { key: 'cantidadPlanificada', label: 'Plan.', tipo: 'numero' },
-        { key: 'cantidadProducida', label: 'Prod.', tipo: 'numero' },
-        { key: 'estado', label: 'Estado' },
-        { key: 'costoPlan', label: 'Costo Plan', tipo: 'moneda' },
-        { key: 'costoReal', label: 'Costo Real', tipo: 'moneda' },
-        { key: 'variacion', label: 'Var %', tipo: 'porcentaje' },
+        { key: 'picker', label: 'Pickeador' },
+        { key: 'ordenes', label: 'Órdenes', tipo: 'numero' },
+        { key: 'unidades', label: 'Unidades', tipo: 'numero' },
+        { key: 'lineas', label: 'Líneas', tipo: 'numero' },
+        { key: 'picksPorHora', label: 'Unid./hora', tipo: 'numero' },
       ],
       filas,
-      graficoData,
-      graficoTipo: 'pie',
+      graficoData: filas.slice(0, 12).map(f => ({ name: f.picker.split('@')[0], value: f.unidades })),
+      graficoTipo: 'bar',
       kpis: [
-        { label: 'Total Órdenes', valor: filas.length, color: 'purple' },
-        { label: 'Completadas', valor: completados, color: 'emerald' },
-        { label: 'En Proceso', valor: enProceso, color: 'amber' },
+        { label: 'Pickeadores', valor: filas.length, color: 'purple' },
+        { label: 'Órdenes', valor: formatNumber(totalOrdenes), color: 'cyan' },
+        { label: 'Unidades', valor: formatNumber(totalUnidades), color: 'emerald' },
       ],
     };
   };
 
-  // EFICIENCIA PRODUCTIVA
-  const generarReporteEficiencia = async (): Promise<DatosReporte> => {
-    const { data } = await supabase
-      .from('ensamblajes')
-      .select('*')
-      .eq('estado', 'completado')
-      .gte('created_at', filtros.fechaInicio)
-      .lte('created_at', `${filtros.fechaFin}T23:59:59`);
-
-    const filas = (data || []).map((e: any) => {
-      const costoPlan = parseFloat(e.costo_total_planificado) || 0;
-      const costoReal = parseFloat(e.costo_total_real) || 0;
+  // LÍNEAS PICKEADAS
+  const generarReportePickLineas = async (): Promise<DatosReporte> => {
+    const m = await cargarMetricasPicking();
+    const filas = m.map(p => {
+      const totalLineas = p.lineas + p.lineasShort;
+      const exactitud = totalLineas > 0 ? (p.lineas / totalLineas) * 100 : 100;
       return {
-        numero: e.numero,
-        producto: e.producto_descripcion || e.producto_codigo,
-        cantidad: e.cantidad_producida || e.cantidad_planificada,
-        costoPlan,
-        costoReal,
-        variacion: costoPlan > 0 ? ((costoReal - costoPlan) / costoPlan * 100) : 0,
-        duracion: e.duracion_real_minutos,
+        picker: p.picker,
+        lineas: p.lineas,
+        lineasShort: p.lineasShort,
+        exactitud: Math.round(exactitud * 10) / 10,
       };
-    });
+    }).sort((a, b) => b.lineas - a.lineas);
 
-    const variacionPromedio = filas.length > 0 
-      ? filas.reduce((s, f) => s + f.variacion, 0) / filas.length 
-      : 0;
-
-    const graficoData = filas.slice(0, 15).map(f => ({
-      name: f.numero,
-      planificado: f.costoPlan,
-      real: f.costoReal,
-    }));
-
+    const totalLineas = filas.reduce((s, f) => s + f.lineas, 0);
+    const totalShort = filas.reduce((s, f) => s + f.lineasShort, 0);
     return {
-      titulo: 'Eficiencia Productiva',
+      titulo: 'Líneas pickeadas',
       subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
       columnas: [
-        { key: 'numero', label: 'Orden' },
-        { key: 'producto', label: 'Producto' },
-        { key: 'cantidad', label: 'Cantidad', tipo: 'numero' },
-        { key: 'costoPlan', label: 'Costo Plan', tipo: 'moneda' },
-        { key: 'costoReal', label: 'Costo Real', tipo: 'moneda' },
-        { key: 'variacion', label: 'Variación %', tipo: 'porcentaje' },
+        { key: 'picker', label: 'Pickeador' },
+        { key: 'lineas', label: 'Líneas completas', tipo: 'numero' },
+        { key: 'lineasShort', label: 'Short / faltantes', tipo: 'numero' },
+        { key: 'exactitud', label: 'Exactitud %', tipo: 'porcentaje' },
       ],
       filas,
-      graficoData,
+      graficoData: filas.slice(0, 12).map(f => ({ name: f.picker.split('@')[0], value: f.lineas })),
       graficoTipo: 'bar',
       kpis: [
-        { label: 'Completadas', valor: filas.length, color: 'emerald' },
-        { label: 'Variación Prom.', valor: formatPercent(variacionPromedio), color: variacionPromedio > 5 ? 'red' : 'emerald' },
-        { label: 'Costo Total', valor: formatCurrency(filas.reduce((s, f) => s + f.costoReal, 0)), color: 'purple' },
+        { label: 'Líneas completas', valor: formatNumber(totalLineas), color: 'emerald' },
+        { label: 'Short picks', valor: formatNumber(totalShort), color: totalShort > 0 ? 'amber' : 'emerald' },
+        { label: 'Pickeadores', valor: filas.length, color: 'purple' },
+      ],
+    };
+  };
+
+  // TIEMPOS DE PICKING
+  const generarReportePickTiempos = async (): Promise<DatosReporte> => {
+    const m = await cargarMetricasPicking();
+    const filas = m.filter(p => p.ordenesConTiempo > 0).map(p => {
+      const minPorOrden = p.ordenesConTiempo > 0 ? p.minutos / p.ordenesConTiempo : 0;
+      const minPorUnidad = p.unidades > 0 ? p.minutos / p.unidades : 0;
+      return {
+        picker: p.picker,
+        ordenes: p.ordenesConTiempo,
+        minPorOrden: Math.round(minPorOrden * 10) / 10,
+        minPorUnidad: Math.round(minPorUnidad * 100) / 100,
+      };
+    }).sort((a, b) => a.minPorUnidad - b.minPorUnidad);
+
+    const minProm = filas.length > 0 ? filas.reduce((s, f) => s + f.minPorOrden, 0) / filas.length : 0;
+    return {
+      titulo: 'Tiempos de picking',
+      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'picker', label: 'Pickeador' },
+        { key: 'ordenes', label: 'Órdenes', tipo: 'numero' },
+        { key: 'minPorOrden', label: 'Min/orden', tipo: 'numero' },
+        { key: 'minPorUnidad', label: 'Min/unidad', tipo: 'numero' },
+      ],
+      filas,
+      graficoData: filas.slice(0, 12).map(f => ({ name: f.picker.split('@')[0], value: f.minPorOrden })),
+      graficoTipo: 'bar',
+      kpis: [
+        { label: 'Pickeadores', valor: filas.length, color: 'purple' },
+        { label: 'Min/orden prom.', valor: `${Math.round(minProm * 10) / 10}`, color: 'cyan' },
+        { label: 'Más rápido', valor: filas[0]?.picker?.split('@')[0] || '—', color: 'emerald' },
       ],
     };
   };
@@ -1842,7 +1864,7 @@ export default function ReportsEnterprise() {
   // LEAD TIMES
   const generarReporteLeadTimes = async (): Promise<DatosReporte> => {
     const { data } = await supabase.from('ordenes_compra').select('*, proveedor:proveedores(nombre)')
-      .not('fecha_recepcion', 'is', null).gte('fecha_orden', filtros.fechaInicio).lte('fecha_orden', filtros.fechaFin);
+      .not('fecha_recepcion', 'is', null).gte('fecha_orden', filtros.fechaInicio).lte('fecha_orden', `T23:59:59`);
 
     const porProv: Record<string, { dias: number[]; ordenes: number }> = {};
     (data || []).forEach((oc: any) => {
@@ -1880,7 +1902,7 @@ export default function ReportsEnterprise() {
   // RECEPCIONES
   const generarReporteRecepciones = async (): Promise<DatosReporte> => {
     const { data } = await supabase.from('ordenes_compra').select('*, proveedor:proveedores(nombre)')
-      .in('estado', ['recibida', 'parcial']).gte('fecha_orden', filtros.fechaInicio).lte('fecha_orden', filtros.fechaFin)
+      .in('estado', ['recibida', 'parcial']).gte('fecha_orden', filtros.fechaInicio).lte('fecha_orden', `T23:59:59`)
       .order('fecha_recepcion', { ascending: false });
 
     const filas = (data || []).map((oc: any) => ({
@@ -1907,8 +1929,9 @@ export default function ReportsEnterprise() {
 
   // RENTABILIDAD
   const generarReporteRentabilidad = async (): Promise<DatosReporte> => {
-    const { data } = await supabase.from('ordenes_venta_detalle').select('producto_codigo, cantidad, precio_unitario, subtotal, orden:ordenes_venta(fecha_orden, estado)')
-      .gte('orden.fecha_orden', filtros.fechaInicio).lte('orden.fecha_orden', filtros.fechaFin);
+    const { data } = await supabase.from('ordenes_venta_items').select('producto_codigo, cantidad, precio_unitario, subtotal, orden:ordenes_venta!inner(fecha_orden, estado)')
+      .gte('orden.fecha_orden', filtros.fechaInicio).lte('orden.fecha_orden', `${filtros.fechaFin}T23:59:59`)
+      .not('orden.estado', 'eq', 'cancelada');
 
     const { data: productos } = await supabase.from('productos').select('codigo, descripcion, costo_promedio').is('deleted_at', null);
     const costoMap = new Map((productos || []).map(p => [p.codigo, { desc: p.descripcion, costo: p.costo_promedio || 0 }]));
@@ -1954,7 +1977,7 @@ export default function ReportsEnterprise() {
   // COTIZACIONES
   const generarReporteCotizaciones = async (): Promise<DatosReporte> => {
     const { data } = await supabase.from('ordenes_venta').select('*, cliente:clientes(nombre)')
-      .gte('fecha_orden', filtros.fechaInicio).lte('fecha_orden', filtros.fechaFin);
+      .gte('fecha_orden', filtros.fechaInicio).lte('fecha_orden', `T23:59:59`);
 
     const cotizaciones = (data || []).filter((ov: any) => ov.estado === 'borrador' || ov.estado === 'cotizacion');
     const confirmadas = (data || []).filter((ov: any) => ov.estado !== 'borrador' && ov.estado !== 'cotizacion' && ov.estado !== 'cancelada');
@@ -1993,80 +2016,6 @@ export default function ReportsEnterprise() {
   };
 
   // CONSUMO DE MATERIALES
-  const generarReporteConsumoMateriales = async (): Promise<DatosReporte> => {
-    const { data } = await supabase.from('ensamblaje_componentes').select('producto_codigo, cantidad_usada, costo_unitario, ensamblaje:ensamblajes(fecha_inicio, estado)')
-      .gte('ensamblaje.fecha_inicio', filtros.fechaInicio).lte('ensamblaje.fecha_inicio', filtros.fechaFin);
-
-    const { data: productos } = await supabase.from('productos').select('codigo, descripcion').is('deleted_at', null);
-    const prodMap = new Map((productos || []).map(p => [p.codigo, p.descripcion]));
-
-    const porMaterial: Record<string, { cantidad: number; costo: number }> = {};
-    (data || []).filter((c: any) => c.ensamblaje).forEach((c: any) => {
-      const key = c.producto_codigo;
-      if (!porMaterial[key]) porMaterial[key] = { cantidad: 0, costo: 0 };
-      porMaterial[key].cantidad += c.cantidad_usada || 0;
-      porMaterial[key].costo += (c.cantidad_usada || 0) * (parseFloat(c.costo_unitario) || 0);
-    });
-
-    const filas = Object.entries(porMaterial).map(([codigo, d]) => ({
-      codigo, descripcion: prodMap.get(codigo) || codigo, ...d,
-    })).sort((a, b) => b.costo - a.costo);
-
-    const graficoData = filas.slice(0, 10).map(f => ({ name: f.codigo, value: f.costo }));
-
-    return {
-      titulo: 'Consumo de Materiales en Producción',
-      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
-      columnas: [
-        { key: 'codigo', label: 'Código' }, { key: 'descripcion', label: 'Material' },
-        { key: 'cantidad', label: 'Consumido', tipo: 'numero' }, { key: 'costo', label: 'Costo Total', tipo: 'moneda' },
-      ],
-      filas, graficoData, graficoTipo: 'bar',
-      kpis: [
-        { label: 'Materiales', valor: filas.length, color: 'amber' },
-        { label: 'Costo Total', valor: formatCurrency(filas.reduce((s, f) => s + f.costo, 0)), color: 'red' },
-      ],
-    };
-  };
-
-  // CONTROL DE CALIDAD
-  const generarReporteQC = async (): Promise<DatosReporte> => {
-    const { data } = await supabase.from('qms_inspecciones').select('*')
-      .gte('created_at', filtros.fechaInicio).lte('created_at', `${filtros.fechaFin}T23:59:59`);
-
-    const inspecciones = data || [];
-    const aprobadas = inspecciones.filter((i: any) => i.estado === 'aprobado');
-    const rechazadas = inspecciones.filter((i: any) => i.estado === 'rechazado');
-    const pendientes = inspecciones.filter((i: any) => i.estado === 'pendiente' || i.estado === 'en_proceso');
-
-    const filas = inspecciones.map((i: any) => ({
-      numero: i.numero || i.id, producto: i.producto_codigo || '-', tipo: i.tipo_inspeccion || '-',
-      estado: i.estado, fecha: i.created_at, decision: i.decision || '-',
-    }));
-
-    const graficoData = [
-      { name: 'Aprobadas', value: aprobadas.length },
-      { name: 'Rechazadas', value: rechazadas.length },
-      { name: 'Pendientes', value: pendientes.length },
-    ];
-
-    return {
-      titulo: 'Control de Calidad - Inspecciones',
-      subtitulo: `${formatDate(filtros.fechaInicio)} - ${formatDate(filtros.fechaFin)}`,
-      columnas: [
-        { key: 'numero', label: 'N°' }, { key: 'producto', label: 'Producto' },
-        { key: 'tipo', label: 'Tipo' }, { key: 'estado', label: 'Estado' },
-        { key: 'fecha', label: 'Fecha', tipo: 'fecha' }, { key: 'decision', label: 'Decisión' },
-      ],
-      filas, graficoData, graficoTipo: 'pie',
-      kpis: [
-        { label: 'Total', valor: inspecciones.length, color: 'purple' },
-        { label: 'Aprobadas', valor: aprobadas.length, color: 'emerald' },
-        { label: 'Tasa Aprobación', valor: `${inspecciones.length > 0 ? (aprobadas.length / inspecciones.length * 100).toFixed(1) : 0}%`, color: 'cyan' },
-      ],
-    };
-  };
-
   // COSTOS DE DEVOLUCIONES
   const generarReporteRMACostos = async (): Promise<DatosReporte> => {
     const { data } = await supabase.from('rma').select('*, cliente:clientes(nombre)')
