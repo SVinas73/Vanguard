@@ -253,6 +253,9 @@ export default function Picking() {
   const loadData = async () => {
     setLoading(true);
     try {
+      // Lista de pickeadores (para asignación manual desde la lista de órdenes)
+      cargarMetricasPickers().then(setPickerMetricas).catch(() => {});
+
       // Cargar waves
       const { data: wavesData } = await supabase
         .from('wms_waves_picking')
@@ -392,6 +395,24 @@ export default function Picking() {
     setOrdenesSeleccionadas(new Set(sug.ordenesIds));
     setVistaActiva('ordenes');
     toast.success(`${sug.ordenesIds.length} órdenes seleccionadas — confirmá la wave`);
+  };
+
+  // Asignación MANUAL: el responsable elige a qué pickeador va el pedido.
+  const asignarPickerManual = async (orden: OrdenPicking, email: string) => {
+    if (!email) return;
+    const picker = pickerMetricas.find(p => p.email === email);
+    await supabase
+      .from('wms_ordenes_picking')
+      .update({ picker_asignado: email, estado: 'asignada' })
+      .eq('id', orden.id);
+    setOrdenes(prev => prev.map(o =>
+      o.id === orden.id ? { ...o, picker_asignado: email, estado: 'asignada' as EstadoOrdenPicking } : o
+    ));
+    await registrarAuditoria(
+      'wms_ordenes_picking', 'ASIGNAR_PICKER_MANUAL', orden.numero,
+      { picker: orden.picker_asignado }, { picker: email }, user?.email || ''
+    );
+    toast.success(`Asignado a ${picker?.nombre || email}`);
   };
 
   const asignarMejorPicker = async (orden: OrdenPicking) => {
@@ -947,6 +968,20 @@ export default function Picking() {
                     </div>
                     
                     <div className="flex flex-col gap-2">
+                      {/* Asignación manual del pickeador */}
+                      {['pendiente', 'asignada'].includes(orden.estado) && (
+                        <select
+                          value={orden.picker_asignado || ''}
+                          onChange={(e) => asignarPickerManual(orden, e.target.value)}
+                          className="px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 max-w-[160px]"
+                          title="Asignar a un pickeador"
+                        >
+                          <option value="">Asignar a…</option>
+                          {pickerMetricas.map(p => (
+                            <option key={p.email} value={p.email}>{p.nombre || p.email}</option>
+                          ))}
+                        </select>
+                      )}
                       {orden.estado === 'asignada' && (
                         <button
                           onClick={() => handleIniciarPicking(orden)}
