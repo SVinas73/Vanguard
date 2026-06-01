@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { BarcodeScanner } from '@/components/scanner';
 import {
-  Barcode, Camera, Check, AlertTriangle, X, ScanLine, PackageCheck,
+  Barcode, Camera, Check, AlertTriangle, X, ScanLine, PackageCheck, Sparkles,
 } from 'lucide-react';
 
 // =====================================================
@@ -98,6 +98,22 @@ export function VerificacionEmpaque({
     }
   };
 
+  // Resumen IA del pedido (local, en lenguaje natural): tamaño + alertas.
+  const resumenIA = useMemo(() => {
+    if (lineas.length === 0) return '';
+    const totalUds = lineas.reduce((s, l) => s + (l.cantidad_pickeada || 0), 0);
+    const conFaltante = lineas.filter(l => l.cantidad_pickeada < l.cantidad_solicitada);
+    const conNota = lineas.filter(l => l.notas && l.notas.trim());
+    const partes: string[] = [];
+    const tam = totalUds >= 40 || lineas.length >= 8 ? 'Pedido grande' : 'Pedido';
+    partes.push(`${tam}: ${lineas.length} ${lineas.length === 1 ? 'ítem' : 'ítems'}, ${totalUds} unidades preparadas.`);
+    if (conFaltante.length > 0) {
+      partes.push(`Faltan/parciales: ${conFaltante.slice(0, 3).map(l => l.producto_codigo).join(', ')}${conFaltante.length > 3 ? '…' : ''}.`);
+    }
+    if (conNota.length > 0) partes.push(`Revisá ${conNota.length} ${conNota.length === 1 ? 'nota del pickeador' : 'notas del pickeador'}.`);
+    return partes.join(' ');
+  }, [lineas]);
+
   // Progreso: líneas con cantidad_pickeada > 0 que estén completas.
   const lineasAVerificar = lineas.filter(l => l.cantidad_pickeada > 0);
   const completos = lineasAVerificar.filter(
@@ -121,6 +137,14 @@ export function VerificacionEmpaque({
           <X className="h-5 w-5" />
         </button>
       </div>
+
+      {/* Resumen IA del pedido */}
+      {resumenIA && (
+        <div className="rounded-xl border border-blue-500/25 bg-blue-500/5 p-3 flex items-start gap-2">
+          <Sparkles className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-slate-300">{resumenIA}</p>
+        </div>
+      )}
 
       {/* Faltantes del pickeador */}
       {hayFaltantes && (

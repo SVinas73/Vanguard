@@ -11,6 +11,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { registrarAuditoria } from '@/lib/audit';
 import { crearPickingWmsDesdeVenta } from '@/lib/wms-bridge';
 import { evaluarHabilitacionCliente } from '@/lib/customer-eligibility';
+import { analizarOrden } from '@/lib/order-intelligence';
 import { crearAprobacion, getAprobacionPorOrigen } from '@/lib/approvals';
 import { emitirEvento } from '@/lib/api-gateway/webhooks';
 import { Product } from '@/types';
@@ -545,6 +546,26 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
         updateData.fecha_entregada = new Date().toISOString().split('T')[0];
       }
 
+      // IA — anomalías del pedido: si hay cantidades inusuales vs lo que el
+      // cliente suele pedir, avisar y dejar que el usuario confirme.
+      if (nuevoEstado === 'confirmada' && orden.items?.length) {
+        try {
+          const intel = await analizarOrden({
+            clienteId: orden.clienteId,
+            clienteNombre: orden.cliente?.nombre,
+            total: orden.total,
+            items: orden.items.map(i => ({ productoCodigo: i.productoCodigo, cantidad: i.cantidad })),
+          });
+          if (intel.anomalias.length > 0) {
+            const detalle = intel.anomalias.slice(0, 4).map(a => `• ${a.producto_codigo}: ${a.mensaje}`).join('\n');
+            const ok = window.confirm(
+              `La IA detectó cantidades inusuales en este pedido:\n\n${detalle}\n\n¿Confirmar de todas formas?`
+            );
+            if (!ok) { setProcesando(null); return; }
+          }
+        } catch { /* IA no disponible → seguir normal */ }
+      }
+
       // GATE DE ADMINISTRACIÓN: al confirmar, evaluar si el cliente está
       // habilitado. Si está OK pasa de largo; si no, la orden queda RETENIDA
       // y le llega una tarea de revisión a Administración (no se prepara).
@@ -561,16 +582,31 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
           // Tarea a Administración (idempotente por orden).
           const yaExiste = await getAprobacionPorOrigen('habilitacion_cliente', orden.id);
           if (!yaExiste) {
+            // IA — score de riesgo del cliente para acelerar la decisión.
+            let riesgoTxt = '';
+            let riesgoPayload: any = null;
+            try {
+              const intel = await analizarOrden({
+                clienteId: orden.clienteId, clienteNombre: orden.cliente?.nombre,
+                total: orden.total, items: (orden.items || []).map(i => ({ productoCodigo: i.productoCodigo, cantidad: i.cantidad })),
+              });
+              if (intel.riesgoCliente) {
+                const r = intel.riesgoCliente;
+                riesgoTxt = ` · IA: riesgo ${r.nivel} (${Math.round(r.probabilidad * 100)}%). Sugerencia: ${r.sugerencia}`;
+                riesgoPayload = r;
+              }
+            } catch { /* IA no disponible */ }
+
             await crearAprobacion({
               origenTipo: 'habilitacion_cliente',
               origenId: orden.id,
               origenCodigo: orden.numero,
               titulo: `Revisar habilitación: ${orden.cliente?.nombre || 'cliente'} — ${orden.numero}`,
-              descripcion: elig.resumen,
+              descripcion: elig.resumen + riesgoTxt,
               monto: orden.total,
               moneda: 'UYU',
-              prioridad: elig.motivos.some(m => m.motivo === 'bloqueado' || m.motivo === 'deuda_vencida') ? 'alta' : 'normal',
-              payload: { motivos: elig.motivos, cliente_id: orden.clienteId, orden_numero: orden.numero },
+              prioridad: (riesgoPayload?.nivel === 'critico' || elig.motivos.some(m => m.motivo === 'bloqueado' || m.motivo === 'deuda_vencida')) ? 'alta' : 'normal',
+              payload: { motivos: elig.motivos, cliente_id: orden.clienteId, orden_numero: orden.numero, riesgo_ia: riesgoPayload },
               solicitadoPor: userEmail,
             });
           }
