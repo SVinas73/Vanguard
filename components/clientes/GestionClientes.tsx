@@ -21,11 +21,12 @@ interface Cliente {
   telefono?: string | null;
   direccion?: string | null;
   limite_credito?: number | null;
+  bloqueado?: boolean;
   activo?: boolean;
 }
 
 const FORM_VACIO = {
-  codigo: '', tipo: 'persona', nombre: '', rut: '', email: '', telefono: '', direccion: '', limiteCredito: 0,
+  codigo: '', tipo: 'persona', nombre: '', rut: '', email: '', telefono: '', direccion: '', limiteCredito: 0, bloqueado: false,
 };
 
 export function GestionClientes({ userEmail }: { userEmail?: string }) {
@@ -63,6 +64,7 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
       codigo: c.codigo || '', tipo: c.tipo || 'persona', nombre: c.nombre || '',
       rut: c.rut || '', email: c.email || '', telefono: c.telefono || '',
       direccion: c.direccion || '', limiteCredito: Number(c.limite_credito) || 0,
+      bloqueado: c.bloqueado === true,
     });
     setError(null);
     setModalOpen(true);
@@ -84,6 +86,7 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
       telefono: form.telefono || null,
       direccion: form.direccion || null,
       limite_credito: form.limiteCredito || 0,
+      bloqueado: form.bloqueado,
     };
     const res = editando
       ? await supabase.from('clientes').update(data).eq('id', editando.id)
@@ -202,9 +205,16 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Límite de crédito</label>
                   <input type="number" value={form.limiteCredito} onChange={e => setForm({ ...form, limiteCredito: parseFloat(e.target.value) || 0 })}
+                    min="0" step="100" placeholder="0 = sin límite"
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200" />
+                  <p className="text-[11px] text-slate-500 mt-1">0 = sin límite. Se valida al crear pedidos.</p>
                 </div>
               </div>
+              <label className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded cursor-pointer">
+                <input type="checkbox" checked={form.bloqueado}
+                  onChange={e => setForm({ ...form, bloqueado: e.target.checked })} className="rounded" />
+                <span className="text-sm text-slate-300">Cliente bloqueado (no puede generar pedidos)</span>
+              </label>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Email</label>

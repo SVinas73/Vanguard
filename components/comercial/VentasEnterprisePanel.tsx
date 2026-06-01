@@ -28,6 +28,7 @@ interface Cliente {
   direccion?: string;
   limiteCredito: number;
   saldoPendiente: number;
+  bloqueado: boolean;
 }
 
 interface OrdenVentaItem {
@@ -237,7 +238,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
 
   // Form cliente
   const [clienteForm, setClienteForm] = useState({
-    codigo: '', tipo: 'persona' as 'persona' | 'empresa', nombre: '', rut: '', email: '', telefono: '', direccion: '', limiteCredito: 0,
+    codigo: '', tipo: 'persona' as 'persona' | 'empresa', nombre: '', rut: '', email: '', telefono: '', direccion: '', limiteCredito: 0, bloqueado: false,
   });
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
 
@@ -359,6 +360,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
           direccion: c.direccion,
           limiteCredito: parseFloat(c.limite_credito) || 0,
           saldoPendiente: parseFloat(c.saldo_pendiente) || 0,
+          bloqueado: c.bloqueado === true,
         })));
       }
 
@@ -441,9 +443,18 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
 
     const subtotal = form.items.reduce((sum, i) => sum + ((i.cantidad * i.precioUnitario) - (i.descuento || 0)), 0);
 
+    // Control de administración: el cliente debe estar habilitado para comprar.
+    const cliente = clientes.find(c => c.id === form.clienteId);
+    if (cliente?.bloqueado) {
+      toast.error(
+        'Cliente bloqueado',
+        `${cliente.nombre || 'El cliente'} está bloqueado por Administración y no puede generar pedidos. Revisá su estado de cuenta.`
+      );
+      return;
+    }
+
     // Validar límite de crédito del cliente (si tiene uno configurado > 0).
     // Bloquea si el saldo pendiente + esta orden superan el límite.
-    const cliente = clientes.find(c => c.id === form.clienteId);
     if (cliente && cliente.limiteCredito > 0) {
       const expuesto = (cliente.saldoPendiente || 0) + subtotal;
       if (expuesto > cliente.limiteCredito) {
@@ -867,6 +878,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
         telefono: clienteForm.telefono || null,
         direccion: clienteForm.direccion || null,
         limite_credito: clienteForm.limiteCredito,
+        bloqueado: clienteForm.bloqueado,
       };
 
       if (editingCliente) {
@@ -881,7 +893,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
 
       setModalType(null);
       setEditingCliente(null);
-      setClienteForm({ codigo: '', tipo: 'persona', nombre: '', rut: '', email: '', telefono: '', direccion: '', limiteCredito: 0 });
+      setClienteForm({ codigo: '', tipo: 'persona', nombre: '', rut: '', email: '', telefono: '', direccion: '', limiteCredito: 0, bloqueado: false });
       loadData();
     } catch (error: any) {
       toast.error('Error', error.message);
@@ -1623,6 +1635,32 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                 <label className="block text-sm text-slate-400 mb-1">Email</label>
                 <input type="email" value={clienteForm.email} onChange={(e) => setClienteForm({ ...clienteForm, email: e.target.value })} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100" />
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Límite de crédito</label>
+                  <input
+                    type="number"
+                    value={clienteForm.limiteCredito}
+                    onChange={(e) => setClienteForm({ ...clienteForm, limiteCredito: parseFloat(e.target.value) || 0 })}
+                    min="0" step="100"
+                    placeholder="0 = sin límite"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">0 = sin límite. Se valida al crear pedidos.</p>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Estado</label>
+                  <label className="flex items-center gap-2 px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={clienteForm.bloqueado}
+                      onChange={(e) => setClienteForm({ ...clienteForm, bloqueado: e.target.checked })}
+                      className="rounded"
+                    />
+                    <span className="text-sm text-slate-300">Bloqueado (no puede comprar)</span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-3 mt-6 pt-4 border-t border-slate-700">
@@ -1642,7 +1680,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                       <span className="text-sm text-slate-200">{c.codigo} - {c.nombre}</span>
                       <span className={cn('ml-2 text-xs', c.tipo === 'empresa' ? 'text-slate-300' : 'text-slate-500')}>{c.tipo}</span>
                     </div>
-                    <button onClick={() => { setEditingCliente(c); setClienteForm({ codigo: c.codigo, tipo: c.tipo, nombre: c.nombre, rut: c.rut || '', email: c.email || '', telefono: c.telefono || '', direccion: c.direccion || '', limiteCredito: c.limiteCredito }); }} className="p-1 hover:bg-slate-700 rounded">
+                    <button onClick={() => { setEditingCliente(c); setClienteForm({ codigo: c.codigo, tipo: c.tipo, nombre: c.nombre, rut: c.rut || '', email: c.email || '', telefono: c.telefono || '', direccion: c.direccion || '', limiteCredito: c.limiteCredito, bloqueado: c.bloqueado }); }} className="p-1 hover:bg-slate-700 rounded">
                       <Edit className="h-4 w-4 text-slate-400" />
                     </button>
                   </div>
