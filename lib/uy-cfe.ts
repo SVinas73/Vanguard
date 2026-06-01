@@ -248,6 +248,95 @@ export async function crearBorradorCFE(nuevo: NuevoCFE): Promise<CFE | null> {
 }
 
 // =====================================================
+// AUTO-FACTURACIÓN DESDE ORDEN DE VENTA
+// =====================================================
+
+/**
+ * Crea un CFE en borrador a partir de una orden de venta. Se usa para la
+ * facturación automática al despachar un paquete (packing → factura).
+ *
+ * - Si el cliente tiene RUT → e-Factura (111). Si no → e-Ticket (101).
+ * - Es idempotente: si la orden ya tiene un CFE no anulado, no crea otro
+ *   y devuelve { yaFacturada: true }.
+ *
+ * Devuelve { cfe, yaFacturada, error } para que el llamador decida.
+ */
+export async function facturarOrdenVenta(
+  ordenVentaId: string,
+  emitidoPor: string,
+): Promise<{ cfe: CFE | null; yaFacturada: boolean; error?: string }> {
+  // 1. Idempotencia: ¿ya hay un CFE para esta orden?
+  const { data: existentes } = await supabase
+    .from('cfe_uy')
+    .select('id, estado')
+    .eq('origen_tipo', 'orden_venta')
+    .eq('origen_id', ordenVentaId)
+    .neq('estado', 'anulado');
+  if (existentes && existentes.length > 0) {
+    return { cfe: null, yaFacturada: true };
+  }
+
+  // 2. Cargar la orden + cliente + items.
+  const { data: orden, error: errOrden } = await supabase
+    .from('ordenes_venta')
+    .select('id, numero, moneda, cliente_id, clientes(id, codigo, nombre, rut, direccion), ordenes_venta_items(producto_codigo, cantidad, precio_unitario, descuento_item)')
+    .eq('id', ordenVentaId)
+    .maybeSingle();
+
+  if (errOrden || !orden) {
+    return { cfe: null, yaFacturada: false, error: errOrden?.message || 'Orden de venta no encontrada' };
+  }
+
+  const items = (orden as any).ordenes_venta_items || [];
+  if (items.length === 0) {
+    return { cfe: null, yaFacturada: false, error: 'La orden no tiene líneas para facturar' };
+  }
+
+  const cliente = (orden as any).clientes || {};
+  const rut: string | null = cliente.rut || null;
+  const tipoCFE: TipoCFE = rut ? 111 : 101; // e-Factura si hay RUT, si no e-Ticket
+
+  // 3. Armar líneas del CFE. El precio de venta ya incluye/excluye IVA según
+  //    cómo se cargó; acá lo tratamos como neto + IVA 22% (tasa básica).
+  const lineas: LineaCFE[] = items.map((it: any) => {
+    const cantidad = Number(it.cantidad) || 0;
+    const precio = Number(it.precio_unitario) || 0;
+    const descTotal = Number(it.descuento_item) || 0;
+    const subtotal = cantidad * precio;
+    const descuentoPct = subtotal > 0 ? (descTotal / subtotal) * 100 : 0;
+    return {
+      productoCodigo: it.producto_codigo,
+      descripcion: it.producto_codigo,
+      cantidad,
+      precioUnitario: precio,
+      descuentoPct: Math.round(descuentoPct * 100) / 100,
+      ivaTasa: 22,
+    };
+  });
+
+  const receptor: Receptor | undefined = rut
+    ? { tipo: 'rut', documento: rut, nombre: cliente.nombre || 'Cliente', direccion: cliente.direccion || undefined }
+    : (cliente.nombre ? { tipo: 'otro', documento: cliente.codigo || '', nombre: cliente.nombre } : undefined);
+
+  const cfe = await crearBorradorCFE({
+    tipoCFE,
+    origenTipo: 'orden_venta',
+    origenId: (orden as any).id,
+    origenCodigo: (orden as any).numero,
+    receptor,
+    lineas,
+    moneda: (orden as any).moneda || 'UYU',
+    notas: `Facturación automática de la orden ${(orden as any).numero}`,
+    emitidoPor,
+  });
+
+  if (!cfe) {
+    return { cfe: null, yaFacturada: false, error: 'No se pudo crear el CFE (¿emisor configurado en cfe_emisor_config?)' };
+  }
+  return { cfe, yaFacturada: false };
+}
+
+// =====================================================
 // FIRMA (skeleton — la real se hace server-side con cert)
 // =====================================================
 
