@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
+import { facturarOrdenVenta } from '@/lib/uy-cfe';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import { cn } from '@/lib/utils';
@@ -231,6 +232,19 @@ export default function Packing() {
           .eq('id', ordenVentaId);
         if (errOV) {
           toast.warning(`Paquete actualizado, pero no se pudo actualizar la orden de venta: ${errOV.message}`);
+        }
+
+        // Auto-facturación: al DESPACHAR, generar el CFE (factura electrónica)
+        // desde la orden de venta. El empaquetador factura en el mismo paso.
+        if (nuevoEstado === 'despachado') {
+          const res = await facturarOrdenVenta(ordenVentaId, user?.email || '');
+          if (res.yaFacturada) {
+            toast.warning('La orden ya tenía una factura emitida.');
+          } else if (res.cfe) {
+            toast.success(`Factura ${res.cfe.serie}-${res.cfe.numero} generada (borrador). Firmala en Facturación.`);
+          } else if (res.error) {
+            toast.warning(`Paquete despachado, pero no se pudo facturar: ${res.error}`);
+          }
         }
       }
     }
