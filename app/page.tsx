@@ -31,6 +31,7 @@ const ComercialModule       = dynamic(() => import('@/components/comercial').the
 const ChatModule            = dynamic(() => import('@/components/chat').then(m => ({ default: m.ChatModule })),                  { loading: ModuleLoader });
 const DemandPlanningModule  = dynamic(() => import('@/components/demand-planning').then(m => ({ default: m.DemandPlanningModule })), { loading: ModuleLoader });
 const WMSModule             = dynamic(() => import('@/components/wms').then(m => ({ default: m.WMSModule })),                    { loading: ModuleLoader });
+const DistribucionModule    = dynamic(() => import('@/components/distribucion/DistribucionModule'),                            { loading: ModuleLoader });
 const QMSModule             = dynamic(() => import('@/components/qms').then(m => ({ default: m.QMSModule })),                    { loading: ModuleLoader });
 const ProyectosDashboard    = dynamic(() => import('@/components/proyectos').then(m => ({ default: m.ProyectosDashboard })),     { loading: ModuleLoader });
 const StockDashboard        = dynamic(() => import('@/components/stock').then(m => ({ default: m.StockDashboard })),             { loading: ModuleLoader });
@@ -819,6 +820,12 @@ export default function HomePage() {
         {activeTab === 'wms' && (
           <div className="w-full">
             <WMSModule />
+          </div>
+        )}
+
+        {activeTab === 'distribucion' && (
+          <div className="w-full">
+            <DistribucionModule />
           </div>
         )}
 

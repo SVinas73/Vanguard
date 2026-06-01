@@ -150,6 +150,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         { id: 'movimientos', label: t('nav.movements'), icon: ArrowLeftRight },
         { id: 'stock', label: t('nav.stock'), icon: Package },
         { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
+        { id: 'distribucion', label: 'Distribución', icon: Truck },
         { id: 'replenishment', label: t('nav.replenishment') || 'Reabastecimiento IA', icon: Truck, badge: 'AI' },
         { id: 'demand', label: t('modules.demandPlanning'), icon: Zap, badge: 'AI', permission: 'canViewDemand' },
       ]
