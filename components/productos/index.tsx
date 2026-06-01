@@ -203,13 +203,12 @@ export function ProductTable({
   );
 
   const handleExport = useCallback((toExport: Product[]) => {
-    const headers = ['Código', 'Descripción', 'Categoría', 'Almacén', 'Precio de venta', 'Último costo', 'Stock', 'Stock Mínimo'];
+    const headers = ['Código', 'Descripción', 'Categoría', 'Almacén', 'Último costo', 'Stock', 'Stock Mínimo'];
     const rows = toExport.map(p => [
       p.codigo,
       `"${p.descripcion}"`,
       p.categoria,
       p.almacen?.nombre || 'Sin almacén',
-      p.precio.toFixed(2),
       (p.costoPromedio || 0).toFixed(2),
       p.stock,
       p.stockMinimo,
@@ -386,9 +385,6 @@ export function ProductTable({
                     {t('stock.warehouse')}
                   </th>
                 )}
-                <th className={cn(thClass, 'text-right')} onClick={() => handleSort('precio')}>
-                  <span className="flex items-center justify-end gap-1">Precio de venta <SortIcon active={sortCol === 'precio'} dir={sortDir} /></span>
-                </th>
                 <th className={cn(thClass, 'text-right')} onClick={() => handleSort('costo')}>
                   <span className="flex items-center justify-end gap-1">Último costo <SortIcon active={sortCol === 'costo'} dir={sortDir} /></span>
                 </th>
@@ -435,11 +431,6 @@ export function ProductTable({
                         <AlmacenBadge almacen={product.almacen} />
                       </td>
                     )}
-                    <td className="px-3 py-2.5 text-right">
-                      <span className="font-mono text-sm text-slate-300">
-                        {formatMoney(product.precio, product.moneda ?? 'UYU', { minimumFractionDigits: 2 })}
-                      </span>
-                    </td>
                     <td className="px-3 py-2.5 text-right">
                       <span className="font-mono text-sm text-slate-400" title="Costo promedio ponderado (se actualiza con cada compra)">
                         {product.costoPromedio

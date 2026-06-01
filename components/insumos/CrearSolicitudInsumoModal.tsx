@@ -467,6 +467,8 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
           userEmail={user?.email || ''}
           descripcionInicial={search}
           almacenIdInicial={almacenesInsumos[0]?.id || ''}
+          ocultarPrecio
+
           onClose={() => setShowNuevoProducto(null)}
           onCreated={(producto) => {
             // Capturamos el item ID ANTES de cualquier async para evitar

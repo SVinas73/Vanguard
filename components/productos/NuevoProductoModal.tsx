@@ -26,6 +26,8 @@ interface Props {
   descripcionInicial?: string;
   /** Pre-selecciona almacén (útil si lo creás desde un módulo que ya filtra por almacén) */
   almacenIdInicial?: string;
+  /** Oculta el precio de venta (ej: insumos, que no se venden). Guarda precio 0. */
+  ocultarPrecio?: boolean;
 }
 
 interface Almacen {
@@ -45,6 +47,7 @@ export default function NuevoProductoModal({
   codigoInicial = '',
   descripcionInicial = '',
   almacenIdInicial = '',
+  ocultarPrecio = false,
 }: Props) {
   const [codigo, setCodigo] = useState(codigoInicial.toUpperCase());
   const [descripcion, setDescripcion] = useState(descripcionInicial);
@@ -67,7 +70,7 @@ export default function NuevoProductoModal({
     setError(null);
     if (!codigo.trim()) return setError('Código requerido');
     if (!descripcion.trim()) return setError('Descripción requerida');
-    if (!precio || parseFloat(precio) <= 0) return setError('Precio inválido');
+    if (!ocultarPrecio && (!precio || parseFloat(precio) <= 0)) return setError('Precio inválido');
     if (!categoria) return setError('Categoría requerida');
 
     setSaving(true);
@@ -83,7 +86,7 @@ export default function NuevoProductoModal({
       const nuevoProducto = {
         codigo: codigoFinal,
         descripcion: descripcionFinal,
-        precio: parseFloat(precio),
+        precio: ocultarPrecio ? 0 : parseFloat(precio),
         moneda: 'UYU',
         categoria,
         stock: 0,
@@ -175,7 +178,8 @@ export default function NuevoProductoModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className={ocultarPrecio ? '' : 'grid grid-cols-2 gap-3'}>
+            {!ocultarPrecio && (
             <div>
               <label className="block text-xs text-slate-400 mb-1">Precio de venta *</label>
               <input
@@ -187,6 +191,7 @@ export default function NuevoProductoModal({
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200"
               />
             </div>
+            )}
             <div>
               <label className="block text-xs text-slate-400 mb-1">Stock mínimo</label>
               <input
