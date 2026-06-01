@@ -31,7 +31,7 @@ export const LITE_MODULES: TabType[] = [
 export const ALL_MODULES: TabType[] = [
   'inicio',
   'dashboard', 'executive', 'stock', 'movimientos', 'chat',
-  'comercial', 'replenishment', 'proyectos', 'wms', 'facturacion',
+  'comercial', 'replenishment', 'proyectos', 'wms', 'distribucion', 'facturacion',
   'gestion_clientes', 'clientes_360',
   'taller', 'garantias', 'tickets', 'customer_risk', 'rma',
   'rrhh',
@@ -102,6 +102,7 @@ export const MODULE_LABELS: Record<TabType, string> = {
   replenishment: 'Reabastecimiento IA',
   proyectos: 'Proyectos',
   wms: 'WMS (depósitos)',
+  distribucion: 'Distribución',
   facturacion: 'Facturación',
   gestion_clientes: 'Gestión de clientes',
   clientes_360: 'Clientes 360°',
