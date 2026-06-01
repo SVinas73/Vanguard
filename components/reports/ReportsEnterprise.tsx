@@ -549,6 +549,8 @@ export default function ReportsEnterprise() {
 
   // Datos para filtros
   const [almacenes, setAlmacenes] = useState<Array<{ id: string; nombre: string }>>([]);
+  // Almacenes de insumos: se excluyen de TODOS los reportes.
+  const [insumoIds, setInsumoIds] = useState<Set<string>>(new Set());
   const [categorias, setCategorias] = useState<string[]>([]);
   const [proveedores, setProveedores] = useState<Array<{ id: string; nombre: string }>>([]);
   const [clientes, setClientes] = useState<Array<{ id: string; nombre: string }>>([]);
@@ -584,7 +586,14 @@ export default function ReportsEnterprise() {
         supabase.from('productos').select('categoria').is('deleted_at', null).order('categoria'),
       ]);
 
-      if (almRes.data) setAlmacenes(almRes.data);
+      if (almRes.data) {
+        setAlmacenes(almRes.data);
+        // Set de ids de almacenes de insumos: NINGÚN reporte puede incluirlos
+        // (los insumos no son del negocio de venta).
+        setInsumoIds(new Set(
+          almRes.data.filter((a: any) => (a.nombre || '').toLowerCase().includes('insumo')).map((a: any) => a.id)
+        ));
+      }
       if (provRes.data) setProveedores(provRes.data);
       if (cliRes.data) setClientes(cliRes.data);
       if (prodRes.data) {
@@ -607,6 +616,9 @@ export default function ReportsEnterprise() {
   // ============================================
   // GENERADORES DE REPORTES
   // ============================================
+
+  // ¿El almacén es de insumos? Ningún reporte de venta debe incluirlos.
+  const esInsumo = (almacenId?: string | null) => !!almacenId && insumoIds.has(almacenId);
 
   const generarReporte = async () => {
     if (!reporteSeleccionado) return;
@@ -753,7 +765,8 @@ export default function ReportsEnterprise() {
                almacen_id, almacen:almacenes(id, codigo, nombre)`)
       .is('deleted_at', null);
     if (filtros.categoriaProducto) prodQuery = prodQuery.eq('categoria', filtros.categoriaProducto);
-    const { data: productos } = await prodQuery.order('descripcion');
+    const { data: productosRaw } = await prodQuery.order('descripcion');
+    const productos = (productosRaw || []).filter((p: any) => !esInsumo(p.almacen_id));
 
     const { data: lotes } = await supabase.from('lotes')
       .select('codigo, cantidad_disponible, costo_unitario')
@@ -826,14 +839,15 @@ export default function ReportsEnterprise() {
   // ANÁLISIS ABC — usa la lib unificada para que el ranking refleje
   // valor REAL (FIFO) y no precio de venta.
   const generarReporteABC = async (): Promise<DatosReporte> => {
-    const [{ data: rawProds }, { data: lotes }] = await Promise.all([
+    const [{ data: rawProdsAll }, { data: lotes }] = await Promise.all([
       supabase.from('productos')
-        .select('codigo, descripcion, categoria, stock, stock_minimo, costo_promedio')
+        .select('codigo, descripcion, categoria, stock, stock_minimo, costo_promedio, almacen_id')
         .is('deleted_at', null),
       supabase.from('lotes')
         .select('codigo, cantidad_disponible, costo_unitario')
         .gt('cantidad_disponible', 0),
     ]);
+    const rawProds = (rawProdsAll || []).filter((p: any) => !esInsumo(p.almacen_id));
 
     const valuacion = valuarInventarioSync(
       (rawProds || []).map((p: any) => ({
@@ -924,7 +938,7 @@ export default function ReportsEnterprise() {
   // STOCK POR ALMACÉN — usa el desglose por almacén de la lib unificada
   // (los lotes no tienen almacen_id; el almacén viene del producto).
   const generarReporteStockAlmacen = async (): Promise<DatosReporte> => {
-    const [{ data: rawProds }, { data: lotes }] = await Promise.all([
+    const [{ data: rawProdsAll }, { data: lotes }] = await Promise.all([
       supabase.from('productos')
         .select(`codigo, descripcion, categoria, stock, stock_minimo, costo_promedio,
                  almacen_id, almacen:almacenes(id, codigo, nombre)`)
@@ -933,6 +947,7 @@ export default function ReportsEnterprise() {
         .select('codigo, cantidad_disponible, costo_unitario')
         .gt('cantidad_disponible', 0),
     ]);
+    const rawProds = (rawProdsAll || []).filter((p: any) => !esInsumo(p.almacen_id));
 
     const valuacion = valuarInventarioSync(
       (rawProds || []).map((p: any) => ({
@@ -992,12 +1007,12 @@ export default function ReportsEnterprise() {
   const generarReporteStockMinimo = async (): Promise<DatosReporte> => {
     const { data } = await supabase
       .from('productos')
-      .select('codigo, descripcion, categoria, stock, stock_minimo, precio')
+      .select('codigo, descripcion, categoria, stock, stock_minimo, precio, almacen_id')
       .is('deleted_at', null)
       .gt('stock_minimo', 0);
 
     const filas = (data || [])
-      .filter(p => p.stock <= p.stock_minimo)
+      .filter(p => !esInsumo((p as any).almacen_id) && p.stock <= p.stock_minimo)
       .map(p => ({
         codigo: p.codigo,
         descripcion: p.descripcion,
@@ -1045,7 +1060,7 @@ export default function ReportsEnterprise() {
   const generarReporteSinMovimiento = async (): Promise<DatosReporte> => {
     const [{ data: productos }, { data: lotes }, { data: movimientos }] = await Promise.all([
       supabase.from('productos')
-        .select('codigo, descripcion, categoria, stock, precio, costo_promedio')
+        .select('codigo, descripcion, categoria, stock, precio, costo_promedio, almacen_id')
         .is('deleted_at', null),
       supabase.from('lotes')
         .select('codigo, cantidad_disponible, costo_unitario')
@@ -1053,7 +1068,7 @@ export default function ReportsEnterprise() {
       supabase.from('movimientos')
         .select('codigo')
         .gte('created_at', filtros.fechaInicio)
-        .lte('created_at', `T23:59:59`),
+        .lte('created_at', `${filtros.fechaFin}T23:59:59`),
     ]);
 
     // Costo unitario efectivo por producto (FIFO ponderado, sino costo promedio)
@@ -1074,7 +1089,7 @@ export default function ReportsEnterprise() {
     const codigosConMov = new Set(movimientos?.map(m => m.codigo) || []);
 
     const filas = (productos || [])
-      .filter(p => !codigosConMov.has(p.codigo) && p.stock > 0)
+      .filter(p => !esInsumo((p as any).almacen_id) && !codigosConMov.has(p.codigo) && p.stock > 0)
       .map(p => {
         const costoUnit = costoUnitMap.get(p.codigo) ?? (parseFloat((p as any).costo_promedio) || 0);
         return {
@@ -1110,13 +1125,15 @@ export default function ReportsEnterprise() {
   const generarReporteMovimientos = async (): Promise<DatosReporte> => {
     let query = supabase
       .from('movimientos')
-      .select('*, producto:productos(descripcion)')
+      .select('*, producto:productos(descripcion, almacen_id)')
       .gte('created_at', filtros.fechaInicio)
       .lte('created_at', `${filtros.fechaFin}T23:59:59`);
 
     const { data } = await query.order('created_at', { ascending: false });
 
-    const filas = (data || []).map((m: any) => ({
+    const filas = (data || [])
+      .filter((m: any) => !esInsumo(m.producto?.almacen_id))
+      .map((m: any) => ({
       fecha: m.created_at,
       tipo: m.tipo,
       codigo: m.codigo,
@@ -1172,13 +1189,15 @@ export default function ReportsEnterprise() {
   const generarReporteAjustes = async (): Promise<DatosReporte> => {
     const { data } = await supabase
       .from('movimientos')
-      .select('*, producto:productos(descripcion)')
+      .select('*, producto:productos(descripcion, almacen_id)')
       .eq('tipo', 'ajuste')
       .gte('created_at', filtros.fechaInicio)
       .lte('created_at', `${filtros.fechaFin}T23:59:59`)
       .order('created_at', { ascending: false });
 
-    const filas = (data || []).map((m: any) => ({
+    const filas = (data || [])
+      .filter((m: any) => !esInsumo(m.producto?.almacen_id))
+      .map((m: any) => ({
       fecha: m.created_at,
       codigo: m.codigo,
       descripcion: m.producto?.descripcion || m.codigo,
@@ -1695,12 +1714,15 @@ export default function ReportsEnterprise() {
       .select('codigo, cantidad_disponible, costo_unitario, fecha_compra')
       .gt('cantidad_disponible', 0);
 
-    const { data: productos } = await supabase.from('productos').select('codigo, descripcion, categoria').is('deleted_at', null);
+    const { data: productos } = await supabase.from('productos').select('codigo, descripcion, categoria, almacen_id').is('deleted_at', null);
     const prodMap = new Map((productos || []).map(p => [p.codigo, p]));
     const ahora = Date.now();
 
     const buckets = { '0-30 días': 0, '31-60 días': 0, '61-90 días': 0, '90+ días': 0 };
-    const filas = (lotes || []).map(l => {
+    const filas = (lotes || [])
+      // Excluir lotes de productos del almacén de insumos.
+      .filter(l => !esInsumo((prodMap.get(l.codigo) as any)?.almacen_id))
+      .map(l => {
       const dias = Math.floor((ahora - new Date(l.fecha_compra).getTime()) / 86400000);
       const prod = prodMap.get(l.codigo);
       const valor = l.cantidad_disponible * (l.costo_unitario || 0);
@@ -1739,6 +1761,7 @@ export default function ReportsEnterprise() {
 
     const porMes: Record<string, { mes: string; inversion: number; entradas: number; almacen: string }> = {};
     (data || []).forEach((m: any) => {
+      if (esInsumo(m.producto?.almacen_id)) return; // excluir insumos
       const almNombre = m.producto?.almacen?.nombre || 'Sin almacén';
       if (filtros.almacenId && m.producto?.almacen_id !== filtros.almacenId) return;
       const mes = m.created_at.substring(0, 7);
@@ -1774,11 +1797,12 @@ export default function ReportsEnterprise() {
 
   // MOVIMIENTOS POR ALMACÉN
   const generarReporteMovPorAlmacen = async (): Promise<DatosReporte> => {
-    const { data } = await supabase.from('movimientos').select('tipo, cantidad, created_at, producto:productos(almacen:almacenes(nombre))')
+    const { data } = await supabase.from('movimientos').select('tipo, cantidad, created_at, producto:productos(almacen_id, almacen:almacenes(nombre))')
       .gte('created_at', filtros.fechaInicio).lte('created_at', `${filtros.fechaFin}T23:59:59`);
 
     const porAlmacen: Record<string, { entradas: number; salidas: number; movimientos: number }> = {};
     (data || []).forEach((m: any) => {
+      if (esInsumo(m.producto?.almacen_id)) return; // excluir insumos
       const alm = m.producto?.almacen?.nombre || 'Sin almacén';
       if (!porAlmacen[alm]) porAlmacen[alm] = { entradas: 0, salidas: 0, movimientos: 0 };
       porAlmacen[alm].movimientos++;
@@ -1806,11 +1830,13 @@ export default function ReportsEnterprise() {
 
   // TRANSFERENCIAS
   const generarReporteTransferencias = async (): Promise<DatosReporte> => {
-    const { data } = await supabase.from('movimientos').select('*, producto:productos(descripcion)')
+    const { data } = await supabase.from('movimientos').select('*, producto:productos(descripcion, almacen_id)')
       .eq('tipo', 'transferencia').gte('created_at', filtros.fechaInicio).lte('created_at', `${filtros.fechaFin}T23:59:59`)
       .order('created_at', { ascending: false });
 
-    const filas = (data || []).map((m: any) => ({
+    const filas = (data || [])
+      .filter((m: any) => !esInsumo(m.producto?.almacen_id))
+      .map((m: any) => ({
       fecha: m.created_at, codigo: m.codigo, descripcion: m.producto?.descripcion || m.codigo,
       cantidad: m.cantidad, usuario: m.usuario_email || '-', notas: m.notas || '-',
     }));
@@ -1830,12 +1856,14 @@ export default function ReportsEnterprise() {
 
   // ANÁLISIS DE COSTOS
   const generarReporteCostos = async (): Promise<DatosReporte> => {
-    const { data } = await supabase.from('movimientos').select('codigo, costo_compra, cantidad, created_at, producto:productos(descripcion, costo_promedio)')
+    const { data } = await supabase.from('movimientos').select('codigo, costo_compra, cantidad, created_at, producto:productos(descripcion, costo_promedio, almacen_id)')
       .eq('tipo', 'entrada').not('costo_compra', 'is', null)
       .gte('created_at', filtros.fechaInicio).lte('created_at', `${filtros.fechaFin}T23:59:59`)
       .order('created_at', { ascending: false });
 
-    const filas = (data || []).map((m: any) => ({
+    const filas = (data || [])
+      .filter((m: any) => !esInsumo(m.producto?.almacen_id))
+      .map((m: any) => ({
       fecha: m.created_at, codigo: m.codigo, descripcion: m.producto?.descripcion || m.codigo,
       cantidad: m.cantidad, costoUnitario: parseFloat(m.costo_compra) || 0,
       costoTotal: (parseFloat(m.costo_compra) || 0) * m.cantidad,
