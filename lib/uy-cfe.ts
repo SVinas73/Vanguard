@@ -337,6 +337,65 @@ export async function facturarOrdenVenta(
 }
 
 // =====================================================
+// PDF DE FACTURA
+// =====================================================
+
+const TIPO_CFE_LABEL: Record<number, string> = {
+  101: 'e-Ticket', 102: 'e-Ticket NC', 103: 'e-Ticket ND',
+  111: 'e-Factura', 112: 'e-Factura NC', 113: 'e-Factura ND',
+  121: 'e-Factura Exportación', 124: 'e-Remito', 181: 'Comprobante',
+};
+
+/**
+ * Carga un CFE con sus líneas y el emisor, y abre/descarga el PDF.
+ * `accion`: 'abrir' (pestaña nueva) | 'descargar'.
+ */
+export async function generarPDFFactura(cfeId: string, accion: 'abrir' | 'descargar' = 'abrir'): Promise<boolean> {
+  const { data: cfe } = await supabase.from('cfe_uy').select('*').eq('id', cfeId).maybeSingle();
+  if (!cfe) return false;
+
+  const { data: lineas } = await supabase
+    .from('cfe_uy_lineas')
+    .select('descripcion, cantidad, precio_unitario, iva_tasa, subtotal')
+    .eq('cfe_id', cfeId)
+    .order('numero_linea');
+
+  const emisor = await getEmisor();
+
+  const { abrirFacturaPDF, descargarFacturaPDF } = await import('@/lib/factura-pdf');
+  const data = {
+    emisorNombre: (emisor as any)?.razon_social || 'Vanguard',
+    emisorRut: emisor?.rut,
+    tipoLabel: TIPO_CFE_LABEL[(cfe as any).tipo_cfe] || 'Comprobante',
+    serie: (cfe as any).serie,
+    numero: (cfe as any).numero,
+    fecha: (cfe as any).fecha_emision || (cfe as any).created_at,
+    estado: (cfe as any).estado,
+    cae: (cfe as any).cae,
+    receptorNombre: (cfe as any).receptor_nombre,
+    receptorDoc: (cfe as any).receptor_documento,
+    receptorDireccion: (cfe as any).receptor_direccion,
+    origenCodigo: (cfe as any).origen_codigo,
+    moneda: (cfe as any).moneda || 'UYU',
+    lineas: (lineas || []).map((l: any) => ({
+      descripcion: l.descripcion,
+      cantidad: Number(l.cantidad) || 0,
+      precio_unitario: Number(l.precio_unitario) || 0,
+      iva_tasa: Number(l.iva_tasa) ?? 22,
+      subtotal: Number(l.subtotal) || 0,
+    })),
+    montoNeto: Number((cfe as any).monto_neto) || 0,
+    montoIva: Number((cfe as any).monto_iva) || 0,
+    montoTotal: Number((cfe as any).monto_total) || 0,
+    notas: (cfe as any).notas,
+  };
+
+  if (accion === 'descargar') descargarFacturaPDF(data);
+  else abrirFacturaPDF(data);
+  return true;
+}
+
+// =====================================================
 // FIRMA (skeleton — la real se hace server-side con cert)
 // =====================================================
 

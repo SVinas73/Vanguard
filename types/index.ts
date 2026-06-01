@@ -164,7 +164,7 @@ export interface StatsData {
   todayMovements: number;
 }
 
-export type TabType = 'inicio' | 'dashboard' | 'executive' | 'pricing' | 'replenishment' | 'customer_risk' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes' | 'proyectos' | 'comercial' | 'finanzas' | 'taller' | 'qms' | 'wms' | 'demand' | 'chat' | 'aprobaciones' | 'facturacion' | 'tickets' | 'garantias' | 'clientes_360' | 'rrhh' | 'ayuda' | 'configuracion' | 'empresas' | 'gestion_clientes';
+export type TabType = 'inicio' | 'dashboard' | 'executive' | 'pricing' | 'replenishment' | 'customer_risk' | 'stock' | 'movimientos' | 'analytics' | 'reportes' | 'costos' | 'auditoria' | 'compras' | 'ventas' | 'integraciones' | 'almacenes' | 'seriales' | 'trazabilidad' | 'rma' | 'bom' | 'ensamblajes' | 'proyectos' | 'comercial' | 'finanzas' | 'taller' | 'qms' | 'wms' | 'distribucion' | 'demand' | 'chat' | 'aprobaciones' | 'facturacion' | 'tickets' | 'garantias' | 'clientes_360' | 'rrhh' | 'ayuda' | 'configuracion' | 'empresas' | 'gestion_clientes';
 
 export interface ModalState {
   showNewProduct: boolean;
