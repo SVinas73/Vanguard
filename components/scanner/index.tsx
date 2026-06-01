@@ -21,33 +21,54 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
   useEffect(() => {
     let stream: MediaStream | null = null;
+    let raf = 0;
+    let cancelled = false;
+    // BarcodeDetector nativo (Chrome/Android/Edge). Si no existe, queda el
+    // ingreso manual / lector USB. No requiere librerías externas.
+    const Detector = (window as any).BarcodeDetector;
+    const detector = Detector
+      ? new Detector({ formats: ['ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e', 'qr_code'] })
+      : null;
+
+    const tick = async () => {
+      if (cancelled || !detector || !videoRef.current) return;
+      try {
+        const codes = await detector.detect(videoRef.current);
+        if (codes && codes.length > 0 && codes[0].rawValue) {
+          onScan(String(codes[0].rawValue).trim().toUpperCase());
+          return; // el padre cierra el scanner
+        }
+      } catch { /* frame sin código */ }
+      raf = requestAnimationFrame(tick);
+    };
 
     const startCamera = async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' } // Cámara trasera en móviles
         });
-        
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           setScanning(true);
+          if (detector) raf = requestAnimationFrame(tick);
         }
       } catch (err) {
-        setError('No se pudo acceder a la cámara. Usá el ingreso manual.');
+        setError('No se pudo acceder a la cámara. Usá el lector o el ingreso manual.');
       }
     };
 
     startCamera();
 
     return () => {
+      cancelled = true;
+      if (raf) cancelAnimationFrame(raf);
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Función para detectar código de barras (simplificada)
-  // En producción usarías una librería como @zxing/browser
   const handleManualSubmit = () => {
     if (manualCode.trim()) {
       onScan(manualCode.trim().toUpperCase());
