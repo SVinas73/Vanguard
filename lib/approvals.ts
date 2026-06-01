@@ -18,7 +18,8 @@ export type OrigenAprobacion =
   | 'ajuste_stock'
   | 'orden_compra'
   | 'cotizacion'
-  | 'reposicion_grande';
+  | 'reposicion_grande'
+  | 'habilitacion_cliente';
 
 export type Prioridad = 'baja' | 'normal' | 'alta' | 'critica';
 
@@ -149,7 +150,7 @@ export async function crearAprobacion(a: NuevaAprobacion): Promise<Aprobacion | 
 
 export async function aprobar(id: string, comentario: string, usuario: string): Promise<boolean> {
   const { data: prev } = await supabase
-    .from('aprobaciones').select('numero, estado').eq('id', id).maybeSingle();
+    .from('aprobaciones').select('numero, estado, origen_tipo, origen_id').eq('id', id).maybeSingle();
   if (!prev || prev.estado !== 'pendiente') return false;
 
   const { error } = await supabase.from('aprobaciones').update({
@@ -160,6 +161,17 @@ export async function aprobar(id: string, comentario: string, usuario: string): 
   }).eq('id', id);
   if (error) return false;
 
+  // Efecto post-aprobación: si era una habilitación de cliente, la orden
+  // retenida sigue sola (se libera al picking).
+  if ((prev as any).origen_tipo === 'habilitacion_cliente' && (prev as any).origen_id) {
+    try {
+      const { liberarOrdenRetenida } = await import('@/lib/order-release');
+      await liberarOrdenRetenida((prev as any).origen_id, usuario);
+    } catch (e) {
+      console.error('No se pudo liberar la orden tras aprobar habilitación:', e);
+    }
+  }
+
   await registrarAuditoria(
     'aprobaciones', 'APROBAR', prev.numero,
     { estado: prev.estado }, { estado: 'aprobada', comentario }, usuario
@@ -169,7 +181,7 @@ export async function aprobar(id: string, comentario: string, usuario: string): 
 
 export async function rechazar(id: string, motivo: string, usuario: string): Promise<boolean> {
   const { data: prev } = await supabase
-    .from('aprobaciones').select('numero, estado').eq('id', id).maybeSingle();
+    .from('aprobaciones').select('numero, estado, origen_tipo, origen_id').eq('id', id).maybeSingle();
   if (!prev || prev.estado !== 'pendiente') return false;
 
   const { error } = await supabase.from('aprobaciones').update({
@@ -179,6 +191,14 @@ export async function rechazar(id: string, motivo: string, usuario: string): Pro
     fecha_resolucion: new Date().toISOString(),
   }).eq('id', id);
   if (error) return false;
+
+  // Si se rechaza la habilitación, la orden retenida se cancela.
+  if ((prev as any).origen_tipo === 'habilitacion_cliente' && (prev as any).origen_id) {
+    await supabase.from('ordenes_venta')
+      .update({ estado: 'cancelada', updated_at: new Date().toISOString() })
+      .eq('id', (prev as any).origen_id)
+      .eq('estado', 'retenida');
+  }
 
   await registrarAuditoria(
     'aprobaciones', 'RECHAZAR', prev.numero,

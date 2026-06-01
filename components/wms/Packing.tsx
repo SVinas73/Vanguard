@@ -8,6 +8,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
 import { facturarOrdenVenta } from '@/lib/uy-cfe';
+import { VerificacionEmpaque } from './VerificacionEmpaque';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import { cn } from '@/lib/utils';
@@ -59,7 +60,8 @@ export default function Packing() {
   const [loading, setLoading] = useState(true);
   const [paquetes, setPaquetes] = useState<Paquete[]>([]);
   const [ordenesListas, setOrdenesListas] = useState<OrdenListaParaPack[]>([]);
-  const [vista, setVista] = useState<'lista' | 'nuevo' | 'detalle'>('lista');
+  const [vista, setVista] = useState<'lista' | 'verificar' | 'nuevo' | 'detalle'>('lista');
+  const [verificandoOrden, setVerificandoOrden] = useState<{ id: string; numero: string; cliente?: string } | null>(null);
   const [selected, setSelected] = useState<Paquete | null>(null);
   const [filtroEstado, setFiltroEstado] = useState<EstadoPaquete | 'todos'>('todos');
   const [search, setSearch] = useState('');
@@ -136,7 +138,10 @@ export default function Packing() {
       transportista: '', tracking_numero: '',
       servicio: 'estandar', notas: '',
     });
-    setVista('nuevo');
+    // Con orden seleccionada, primero verificamos por escaneo; si no, va directo
+    // al form (paquete manual sin orden de picking).
+    setVerificandoOrden(orden ? { id: orden.id, numero: orden.numero, cliente: orden.cliente_nombre } : null);
+    setVista(orden ? 'verificar' : 'nuevo');
   };
 
   const guardar = async () => {
@@ -445,6 +450,24 @@ export default function Packing() {
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ========== VERIFICACIÓN POR ESCANEO ==========
+  if (vista === 'verificar' && verificandoOrden) {
+    return (
+      <div className="space-y-6">
+        <toast.Toast />
+        <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-5">
+          <VerificacionEmpaque
+            ordenPickingId={verificandoOrden.id}
+            ordenNumero={verificandoOrden.numero}
+            clienteNombre={verificandoOrden.cliente}
+            onCancelar={() => { setVerificandoOrden(null); setVista('lista'); }}
+            onConfirmar={() => { setVista('nuevo'); }}
+          />
         </div>
       </div>
     );
