@@ -10,6 +10,8 @@ import { supabase } from '@/lib/supabase';
 import { cn, formatCurrency } from '@/lib/utils';
 import { registrarAuditoria } from '@/lib/audit';
 import { crearPickingWmsDesdeVenta } from '@/lib/wms-bridge';
+import { evaluarHabilitacionCliente } from '@/lib/customer-eligibility';
+import { crearAprobacion, getAprobacionPorOrigen } from '@/lib/approvals';
 import { emitirEvento } from '@/lib/api-gateway/webhooks';
 import { Product } from '@/types';
 
@@ -46,7 +48,7 @@ interface OrdenVenta {
   numero: string;
   clienteId: string;
   cliente?: Cliente;
-  estado: 'borrador' | 'confirmada' | 'en_proceso' | 'enviada' | 'entregada' | 'cancelada';
+  estado: 'borrador' | 'retenida' | 'confirmada' | 'en_proceso' | 'enviada' | 'entregada' | 'cancelada';
   estadoPago: 'pendiente' | 'parcial' | 'pagado' | 'vencido';
   fechaOrden: string;
   fechaEntregaEsperada?: string;
@@ -143,6 +145,7 @@ function useToast() {
 const getEstadoOrdenConfig = (estado: OrdenVenta['estado']) => {
   const configs = {
     borrador: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Borrador' },
+    retenida: { color: 'text-amber-400', bg: 'bg-amber-500/15', label: 'Retenida (Admin)' },
     confirmada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Confirmada' },
     en_proceso: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'En Proceso' },
     enviada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Enviada' },
@@ -540,6 +543,48 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
       
       if (nuevoEstado === 'entregada') {
         updateData.fecha_entregada = new Date().toISOString().split('T')[0];
+      }
+
+      // GATE DE ADMINISTRACIÓN: al confirmar, evaluar si el cliente está
+      // habilitado. Si está OK pasa de largo; si no, la orden queda RETENIDA
+      // y le llega una tarea de revisión a Administración (no se prepara).
+      if (nuevoEstado === 'confirmada') {
+        const elig = await evaluarHabilitacionCliente({
+          clienteId: orden.clienteId,
+          montoOrden: orden.total,
+        });
+        if (!elig.habilitado) {
+          await supabase.from('ordenes_venta')
+            .update({ estado: 'retenida', updated_at: new Date().toISOString() })
+            .eq('id', orden.id);
+
+          // Tarea a Administración (idempotente por orden).
+          const yaExiste = await getAprobacionPorOrigen('habilitacion_cliente', orden.id);
+          if (!yaExiste) {
+            await crearAprobacion({
+              origenTipo: 'habilitacion_cliente',
+              origenId: orden.id,
+              origenCodigo: orden.numero,
+              titulo: `Revisar habilitación: ${orden.cliente?.nombre || 'cliente'} — ${orden.numero}`,
+              descripcion: elig.resumen,
+              monto: orden.total,
+              moneda: 'UYU',
+              prioridad: elig.motivos.some(m => m.motivo === 'bloqueado' || m.motivo === 'deuda_vencida') ? 'alta' : 'normal',
+              payload: { motivos: elig.motivos, cliente_id: orden.clienteId, orden_numero: orden.numero },
+              solicitadoPor: userEmail,
+            });
+          }
+          await registrarAuditoria('ordenes_venta', 'RETENIDA_HABILITACION', orden.numero,
+            { estado: orden.estado }, { motivos: elig.motivos }, userEmail);
+
+          toast.warning(
+            'Orden retenida para revisión',
+            `${orden.cliente?.nombre || 'El cliente'} requiere revisión de Administración: ${elig.resumen}`
+          );
+          setProcesando(null);
+          loadData();
+          return;
+        }
       }
 
       // Si se confirma, descontar stock
