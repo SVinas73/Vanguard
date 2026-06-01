@@ -63,8 +63,14 @@ export default function DistribucionModule() {
   const [filtroAgencia, setFiltroAgencia] = useState<string>('todas');
   const [search, setSearch] = useState('');
 
+  // Paquetes despachados por el empaquetador y aún NO registrados en distribución.
+  const [paquetesDespachados, setPaquetesDespachados] = useState<Array<{
+    id: string; numero: string; cliente_nombre?: string | null; tracking_numero?: string | null;
+    orden_venta_id?: string | null; peso_kg?: number | null;
+  }>>([]);
+
   const [despForm, setDespForm] = useState({
-    agencia_id: '', paquete_numero: '', orden_venta_numero: '', cliente_nombre: '',
+    agencia_id: '', paquete_id: '', paquete_numero: '', orden_venta_numero: '', cliente_nombre: '',
     tracking_numero: '', bultos: 1, peso_kg: '', notas: '',
   });
   const [agForm, setAgForm] = useState({
@@ -74,12 +80,22 @@ export default function DistribucionModule() {
 
   const cargar = async () => {
     setLoading(true);
-    const [agRes, depRes] = await Promise.all([
+    const [agRes, depRes, pkgRes] = await Promise.all([
       supabase.from('agencias_distribucion').select('*').order('nombre'),
       supabase.from('distribucion_despachos').select('*').order('fecha_registro', { ascending: false }).limit(300),
+      // Paquetes despachados por el empaquetador (listos para distribuir).
+      supabase.from('wms_paquetes')
+        .select('id, numero, cliente_nombre, tracking_numero, orden_venta_id, peso_kg')
+        .eq('estado', 'despachado')
+        .order('fecha_despacho', { ascending: false })
+        .limit(200),
     ]);
     setAgencias((agRes.data as any) || []);
-    setDespachos((depRes.data as any) || []);
+    const deps = (depRes.data as any) || [];
+    setDespachos(deps);
+    // Excluir los paquetes que ya se registraron en distribución.
+    const yaRegistrados = new Set(deps.map((d: Despacho) => d.paquete_numero).filter(Boolean));
+    setPaquetesDespachados(((pkgRes.data as any) || []).filter((p: any) => !yaRegistrados.has(p.numero)));
     setLoading(false);
   };
   useEffect(() => { cargar(); }, []);
@@ -113,12 +129,15 @@ export default function DistribucionModule() {
     setSaving(true);
     try {
       const agencia = agencias.find(a => a.id === despForm.agencia_id);
+      const pkg = paquetesDespachados.find(p => p.id === despForm.paquete_id);
       const numero = `DSP-${new Date().getFullYear()}${String(Date.now()).slice(-6)}`;
       const { error } = await supabase.from('distribucion_despachos').insert({
         numero,
         agencia_id: despForm.agencia_id,
         agencia_nombre: agencia?.nombre || null,
+        paquete_id: despForm.paquete_id || null,
         paquete_numero: despForm.paquete_numero || null,
+        orden_venta_id: pkg?.orden_venta_id || null,
         orden_venta_numero: despForm.orden_venta_numero || null,
         cliente_nombre: despForm.cliente_nombre || null,
         tracking_numero: despForm.tracking_numero || null,
@@ -129,9 +148,9 @@ export default function DistribucionModule() {
         registrado_por: user?.email || null,
       });
       if (error) { alert(error.message); return; }
-      await registrarAuditoria('distribucion_despachos', 'REGISTRAR', numero, null, { agencia: agencia?.nombre }, user?.email || '');
+      await registrarAuditoria('distribucion_despachos', 'REGISTRAR', numero, null, { agencia: agencia?.nombre, paquete: despForm.paquete_numero }, user?.email || '');
       setModal(null);
-      setDespForm({ agencia_id: '', paquete_numero: '', orden_venta_numero: '', cliente_nombre: '', tracking_numero: '', bultos: 1, peso_kg: '', notas: '' });
+      setDespForm({ agencia_id: '', paquete_id: '', paquete_numero: '', orden_venta_numero: '', cliente_nombre: '', tracking_numero: '', bultos: 1, peso_kg: '', notas: '' });
       cargar();
     } finally { setSaving(false); }
   };
@@ -227,9 +246,22 @@ export default function DistribucionModule() {
         </button>
       </div>
 
+      {/* Aviso: paquetes que el empaquetador despachó y esperan registro */}
+      {paquetesDespachados.length > 0 && (
+        <button onClick={() => setModal('despacho')}
+          className="w-full flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-left hover:border-amber-500/50 transition-colors">
+          <PackageCheck className="h-5 w-5 text-amber-400 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="text-sm font-medium text-amber-300">{paquetesDespachados.length} paquete(s) despachado(s) esperando registro</div>
+            <div className="text-xs text-slate-400">El empaquetador los despachó. Registralos en la agencia/cadetería que los reparte.</div>
+          </div>
+          <Plus className="h-4 w-4 text-amber-400" />
+        </button>
+      )}
+
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card icon={PackageCheck} label="Despachos hoy" value={stats.hoy} color="text-emerald-400" />
+        <Card icon={PackageCheck} label="Por registrar" value={paquetesDespachados.length} color={paquetesDespachados.length > 0 ? 'text-amber-400' : 'text-slate-100'} />
         <Card icon={Clock} label="Pendientes / en ruta" value={stats.enRuta} color="text-blue-400" />
         <Card icon={Truck} label="Total despachos" value={stats.total} />
         <Card icon={Building2} label="Agencias activas" value={stats.agencias} />
@@ -367,6 +399,36 @@ export default function DistribucionModule() {
               <button onClick={() => setModal(null)} className="text-slate-500 hover:text-slate-200"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-3">
+              {/* Elegir un paquete despachado por el empaquetador (autocompleta). */}
+              {paquetesDespachados.length > 0 && (
+                <div className="rounded-xl border border-blue-500/25 bg-blue-500/5 p-3">
+                  <label className="block text-sm text-blue-300 mb-1">Paquete despachado por el empaquetador</label>
+                  <select
+                    value={despForm.paquete_id}
+                    onChange={e => {
+                      const pkg = paquetesDespachados.find(p => p.id === e.target.value);
+                      if (pkg) {
+                        setDespForm(f => ({
+                          ...f,
+                          paquete_id: pkg.id,
+                          paquete_numero: pkg.numero,
+                          cliente_nombre: pkg.cliente_nombre || '',
+                          tracking_numero: pkg.tracking_numero || '',
+                          peso_kg: pkg.peso_kg ? String(pkg.peso_kg) : '',
+                        }));
+                      } else {
+                        setDespForm(f => ({ ...f, paquete_id: '', paquete_numero: '', cliente_nombre: '', tracking_numero: '', peso_kg: '' }));
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    <option value="">Elegir paquete despachado…</option>
+                    {paquetesDespachados.map(p => (
+                      <option key={p.id} value={p.id}>{p.numero}{p.cliente_nombre ? ` · ${p.cliente_nombre}` : ''}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-slate-500 mt-1">O cargá los datos manualmente abajo si el paquete no figura.</p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Agencia / cadetería *</label>
                 <select value={despForm.agencia_id} onChange={e => setDespForm({ ...despForm, agencia_id: e.target.value })}
