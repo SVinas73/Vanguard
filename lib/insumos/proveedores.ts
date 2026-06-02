@@ -31,23 +31,36 @@ export const PROVEEDOR_OTRO = 'OTRO';
 // (Gonzalo todavía no tiene cuenta; queda seteado para cuando se cree.)
 export const APROBADOR_GONZALO = 'gdecia@ingcotools.com.uy';
 
-// Proveedores cuya aprobación es EXCLUSIVA de un email puntual.
-export const APROBADOR_EXCLUSIVO: Record<string, string> = {
-  'MERCADO LIBRE': APROBADOR_GONZALO,
-  'YNTER INDUSTRIAL': APROBADOR_GONZALO,
+// Emails de PRUEBA que también pueden aprobar como Gonzalo (para testear el
+// flujo antes de que Gonzalo use su cuenta). Quitar cuando ya no haga falta.
+export const APROBADORES_PRUEBA = ['santi231194@hotmail.com'];
+
+// Proveedores cuya aprobación es EXCLUSIVA de un conjunto puntual de emails.
+export const APROBADORES_EXCLUSIVOS: Record<string, string[]> = {
+  'MERCADO LIBRE': [APROBADOR_GONZALO, ...APROBADORES_PRUEBA],
+  'YNTER INDUSTRIAL': [APROBADOR_GONZALO, ...APROBADORES_PRUEBA],
 };
 
-/** Email exigido para aprobar este proveedor, o null si lo aprueba cualquiera. */
-export function aprobadorRequerido(proveedor?: string | null): string | null {
+/** Lista de emails habilitados para aprobar este proveedor, o null si lo aprueba cualquiera. */
+export function aprobadoresRequeridos(proveedor?: string | null): string[] | null {
   if (!proveedor) return null;
-  return APROBADOR_EXCLUSIVO[proveedor] ?? null;
+  return APROBADORES_EXCLUSIVOS[proveedor] ?? null;
+}
+
+/** Texto legible del/los aprobador(es) requerido(s), o null si lo aprueba cualquiera. */
+export function aprobadorRequerido(proveedor?: string | null): string | null {
+  const lista = aprobadoresRequeridos(proveedor);
+  if (!lista || lista.length === 0) return null;
+  // Mostramos el aprobador "oficial" (Gonzalo); los de prueba son internos.
+  return lista[0];
 }
 
 /** ¿Este email puede APROBAR (pendiente→en_gestion) una solicitud de este proveedor? */
 export function puedeAprobarProveedor(proveedor: string | null | undefined, email: string | null | undefined): boolean {
-  const requerido = aprobadorRequerido(proveedor);
-  if (!requerido) return true; // cualquiera
-  return (email || '').trim().toLowerCase() === requerido.toLowerCase();
+  const requeridos = aprobadoresRequeridos(proveedor);
+  if (!requeridos) return true; // cualquiera
+  const e = (email || '').trim().toLowerCase();
+  return requeridos.some(r => r.toLowerCase() === e);
 }
 
 /** Etiqueta legible del proveedor (usa el nombre libre si es OTRO). */

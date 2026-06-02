@@ -145,10 +145,16 @@ export const editarSolicitudInsumoSchema = z.object({
   observaciones: z.string().max(2000).nullable().optional(),
   items: z.array(z.object({
     id: z.number(),
+    producto_codigo: z.string().max(64).nullable().optional(),
     descripcion: z.string().min(1).max(500),
     cantidad: z.number().positive(),
     unidad: z.string().max(32).optional(),
     observaciones: z.string().max(500).nullable().optional(),
+    costo_estimado: z.number().nonnegative().nullable().optional(),
+    es_nuevo: z.boolean().optional().default(false),
+    nuevo_codigo: z.string().max(64).nullable().optional(),
+    nuevo_stock_minimo: z.number().int().nonnegative().nullable().optional(),
+    nuevo_categoria: z.string().max(64).nullable().optional(),
   })).max(100).optional(),
 });
 

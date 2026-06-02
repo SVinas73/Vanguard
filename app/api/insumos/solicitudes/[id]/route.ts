@@ -343,10 +343,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 });
     }
 
-    // Solo editable antes de comprar (evita inconsistencias con stock/lotes).
-    if (!['pendiente', 'en_gestion'].includes(actual.estado)) {
+    // Solo editable ANTES de aprobar (en 'pendiente'). Una vez aprobada o más
+    // avanzada, no se puede cambiar nada.
+    if (actual.estado !== 'pendiente') {
       return NextResponse.json(
-        { error: `No se puede editar una solicitud en estado "${actual.estado}". Solo pendiente o aprobada.` },
+        { error: `No se puede editar una solicitud en estado "${actual.estado}". Solo se edita antes de aprobar.` },
         { status: 400 },
       );
     }
@@ -380,10 +381,16 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         await supabase
           .from('solicitudes_insumos_items')
           .update({
+            producto_codigo: it.producto_codigo || null,
             descripcion: it.descripcion,
             cantidad: it.cantidad,
             unidad: it.unidad || 'unidad',
             observaciones: it.observaciones || null,
+            costo_estimado: it.costo_estimado ?? null,
+            es_nuevo: it.es_nuevo || false,
+            nuevo_codigo: it.es_nuevo ? (it.nuevo_codigo || null) : null,
+            nuevo_stock_minimo: it.es_nuevo ? (it.nuevo_stock_minimo ?? null) : null,
+            nuevo_categoria: it.es_nuevo ? (it.nuevo_categoria || null) : null,
           })
           .eq('id', it.id)
           .eq('solicitud_id', params.id);
