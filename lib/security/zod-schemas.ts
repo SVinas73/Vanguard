@@ -115,6 +115,7 @@ export const crearSolicitudInsumoSchema = z.object({
     nuevo_codigo: z.string().max(64).nullable().optional(),
     nuevo_stock_minimo: z.number().int().nonnegative().nullable().optional(),
     nuevo_categoria: z.string().max(64).nullable().optional(),
+    costo_estimado: z.number().nonnegative().nullable().optional(),
   })).min(1, 'Al menos un item'),
 });
 
@@ -126,6 +127,9 @@ export const cambiarEstadoSolicitudSchema = z.object({
   items_recibidos: z.array(z.object({
     item_id: z.number(),
     cantidad_recibida: z.number().nonnegative(),
+    // Costo unitario confirmado al recibir (opcional). Si viene, actualiza
+    // costo_promedio, el lote y el historial de costos del producto.
+    costo_unitario: z.number().nonnegative().nullable().optional(),
   })).optional(),
 });
 

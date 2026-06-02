@@ -137,9 +137,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
             : `INS-${actual.numero}-${item.id}`.toUpperCase();
         }
 
+        // Costo unitario confirmado al recibir (opcional).
+        const costoUnit = (ir.costo_unitario != null && ir.costo_unitario > 0)
+          ? Number(ir.costo_unitario)
+          : null;
+
         let { data: prod } = await supabase
           .from('productos')
-          .select('id, stock')
+          .select('id, stock, costo_promedio')
           .eq('codigo', codigoProducto)
           .maybeSingle();
 
@@ -173,7 +178,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
               actualizado_por: auth.user.email,
               actualizado_at: new Date().toISOString(),
             })
-            .select('id, stock')
+            .select('id, stock, costo_promedio')
             .single();
 
           if (errCrear || !creado) {
@@ -196,7 +201,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           codigo: codigoProducto,
           tipo: 'entrada',
           cantidad: ir.cantidad_recibida,
-          costo_compra: null,
+          costo_compra: costoUnit,
           moneda_costo: 'UYU',
           notas: `Ingreso por solicitud de insumo ${actual.numero}`,
           usuario_email: auth.user.email,
@@ -208,12 +213,40 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           .update({ stock: (prod.stock ?? 0) + Number(ir.cantidad_recibida) })
           .eq('codigo', codigoProducto);
 
+        // d.2) costo: si se confirmó un costo unitario al recibir, actualizar
+        //      costo_promedio ponderado + último costo y registrar el historial
+        //      de costos (igual criterio que la recepción de compras).
+        if (costoUnit != null) {
+          const stockPrevio = Number(prod.stock) || 0;
+          const costoPrevio = Number(prod.costo_promedio) || 0;
+          const stockNuevo = stockPrevio + Number(ir.cantidad_recibida);
+          const nuevoCosto = stockNuevo > 0
+            ? ((stockPrevio * costoPrevio) + (Number(ir.cantidad_recibida) * costoUnit)) / stockNuevo
+            : costoUnit;
+          const nuevoCostoRedondeado = Math.round(nuevoCosto * 100) / 100;
+
+          await supabase
+            .from('productos')
+            .update({ costo_promedio: nuevoCostoRedondeado, costo_ultima_compra: costoUnit })
+            .eq('codigo', codigoProducto);
+
+          await supabase.from('historial_costos').insert({
+            producto_id: prod.id,
+            codigo: codigoProducto,
+            costo_anterior: costoPrevio,
+            costo_nuevo: nuevoCostoRedondeado,
+            cantidad: ir.cantidad_recibida,
+            fecha: update.fecha_ingreso || new Date().toISOString().split('T')[0],
+            usuario: auth.user.email,
+          });
+        }
+
         // e) lote para valuación FIFO
         await supabase.from('lotes').insert({
           codigo: codigoProducto,
           cantidad_inicial: ir.cantidad_recibida,
           cantidad_disponible: ir.cantidad_recibida,
-          costo_unitario: 0,           // placeholder, editable después
+          costo_unitario: costoUnit ?? 0,
           moneda: 'UYU',
           usuario: auth.user.email,
           notas: `Solicitud ${actual.numero}`,

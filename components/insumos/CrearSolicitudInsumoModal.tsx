@@ -12,6 +12,7 @@ interface Product {
   stock?: number;
   categoria?: string;
   almacen_id?: string | null;
+  costo_promedio?: number | null;
 }
 
 interface Almacen {
@@ -28,6 +29,10 @@ interface ItemForm {
   cantidad: string;
   unidad: string;
   observaciones: string;
+  // Costo unitario estimado al solicitar (opcional; se confirma al recibir)
+  costo_estimado: string;
+  // Último costo conocido del producto existente (referencia; no se envía)
+  costo_actual: number | null;
   // Artículo nuevo (todavía no existe en Stock; se crea al recibir la compra)
   es_nuevo: boolean;
   nuevo_codigo: string;
@@ -55,6 +60,8 @@ function emptyItem(): ItemForm {
     cantidad: '1',
     unidad: 'unidad',
     observaciones: '',
+    costo_estimado: '',
+    costo_actual: null,
     es_nuevo: false,
     nuevo_codigo: '',
     nuevo_stock_minimo: null,
@@ -82,7 +89,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
   useEffect(() => {
     supabase
       .from('productos')
-      .select('codigo, descripcion, stock, categoria, almacen_id')
+      .select('codigo, descripcion, stock, categoria, almacen_id, costo_promedio')
       .order('descripcion')
       .limit(2000)
       .then(({ data }) => setProductos((data as Product[]) || []));
@@ -99,7 +106,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
   const refetchProductos = async () => {
     const { data } = await supabase
       .from('productos')
-      .select('codigo, descripcion, stock, categoria, almacen_id')
+      .select('codigo, descripcion, stock, categoria, almacen_id, costo_promedio')
       .order('descripcion')
       .limit(2000);
     setProductos((data as Product[]) || []);
@@ -146,6 +153,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
       producto_codigo: p.codigo,
       descripcion: p.descripcion,
       stock_actual: p.stock ?? null,
+      costo_actual: p.costo_promedio ?? null,
       es_nuevo: false,
       nuevo_codigo: '',
       nuevo_stock_minimo: null,
@@ -215,6 +223,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
             cantidad: parseFloat(it.cantidad),
             unidad: it.unidad,
             observaciones: it.observaciones.trim() || null,
+            costo_estimado: it.costo_estimado.trim() ? parseFloat(it.costo_estimado) : null,
             es_nuevo: it.es_nuevo,
             nuevo_codigo: it.es_nuevo ? (it.nuevo_codigo.trim() || null) : null,
             nuevo_stock_minimo: it.es_nuevo ? it.nuevo_stock_minimo : null,
@@ -437,7 +446,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                             </button>
                           )}
                           <button
-                            onClick={() => setItem(it.id, { producto_codigo: '', descripcion: '', stock_actual: null, es_nuevo: false, nuevo_codigo: '', nuevo_stock_minimo: null, nuevo_categoria: '' })}
+                            onClick={() => setItem(it.id, { producto_codigo: '', descripcion: '', stock_actual: null, costo_actual: null, es_nuevo: false, nuevo_codigo: '', nuevo_stock_minimo: null, nuevo_categoria: '' })}
                             className="text-xs text-slate-500 hover:text-slate-300 whitespace-nowrap"
                           >
                             cambiar
@@ -454,7 +463,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                               className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded text-sm text-slate-200"
                             />
                           </div>
-                          <div className="col-span-3">
+                          <div className="col-span-2">
                             <label className="block text-[11px] text-slate-500 mb-0.5">Unidad</label>
                             <select
                               value={it.unidad}
@@ -470,16 +479,41 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                               <option value="rollo">rollo</option>
                             </select>
                           </div>
-                          <div className="col-span-6">
+                          <div className="col-span-3">
+                            <label className="block text-[11px] text-slate-500 mb-0.5">
+                              {it.producto_codigo ? 'Costo unit. (si cambió)' : 'Costo unit. estimado'}
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={it.costo_estimado}
+                              onChange={e => setItem(it.id, { costo_estimado: e.target.value })}
+                              placeholder={it.costo_actual != null ? String(it.costo_actual) : '0.00'}
+                              className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded text-sm text-slate-200"
+                            />
+                          </div>
+                          <div className="col-span-4">
                             <label className="block text-[11px] text-slate-500 mb-0.5">Observaciones (opcional)</label>
                             <input
                               value={it.observaciones}
                               onChange={e => setItem(it.id, { observaciones: e.target.value })}
-                              placeholder="Detalle, color, marca preferida..."
+                              placeholder="Detalle, color, marca..."
                               className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded text-sm text-slate-300"
                             />
                           </div>
                         </div>
+                        {/* Referencia de costo para artículos existentes: avisamos
+                            el último costo y si el estimado ingresado es distinto. */}
+                        {it.producto_codigo && (
+                          <div className="text-[11px] text-slate-500 flex items-center gap-2">
+                            <span>Último costo: <strong className="text-slate-300">{it.costo_actual != null ? it.costo_actual.toFixed(2) : '—'}</strong></span>
+                            {it.costo_estimado.trim() && it.costo_actual != null && parseFloat(it.costo_estimado) !== it.costo_actual && (
+                              <span className="px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300">precio nuevo</span>
+                            )}
+                            <span className="text-slate-600">· se confirma al recibir</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

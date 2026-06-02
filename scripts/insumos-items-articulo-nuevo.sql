@@ -13,7 +13,11 @@ ALTER TABLE solicitudes_insumos_items
   ADD COLUMN IF NOT EXISTS es_nuevo            boolean NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS nuevo_codigo        text,
   ADD COLUMN IF NOT EXISTS nuevo_stock_minimo  integer,
-  ADD COLUMN IF NOT EXISTS nuevo_categoria     text;
+  ADD COLUMN IF NOT EXISTS nuevo_categoria     text,
+  -- Costo unitario ESTIMADO al solicitar (opcional). Se confirma/corrige al
+  -- recibir; ese costo confirmado es el que actualiza costo_promedio, el lote
+  -- y el historial de costos.
+  ADD COLUMN IF NOT EXISTS costo_estimado      numeric;
 
 COMMENT ON COLUMN solicitudes_insumos_items.es_nuevo IS
   'true = artículo que no existe en Stock; se crea al recibir la compra.';
@@ -23,3 +27,5 @@ COMMENT ON COLUMN solicitudes_insumos_items.nuevo_stock_minimo IS
   'Stock mínimo del artículo nuevo (se aplica al autocrear).';
 COMMENT ON COLUMN solicitudes_insumos_items.nuevo_categoria IS
   'Categoría del artículo nuevo (se aplica al autocrear; default Insumos).';
+COMMENT ON COLUMN solicitudes_insumos_items.costo_estimado IS
+  'Costo unitario estimado al solicitar (opcional); se confirma al recibir.';
