@@ -485,9 +485,26 @@ export default function ComprasEnterprisePanel({ products, userEmail }: ComprasE
             ? ((stockPrevio * costoPrevio) + (item.cantidadRecibida * (ordenItem.costoUnitario || 0))) / nuevoStock
             : costoPrevio;
 
+          const nuevoCostoRedondeado = Math.round(nuevoCosto * 100) / 100;
           await supabase.from('productos')
-            .update({ stock: nuevoStock, costo_promedio: Math.round(nuevoCosto * 100) / 100 })
+            .update({ stock: nuevoStock, costo_promedio: nuevoCostoRedondeado, costo_ultima_compra: ordenItem.costoUnitario })
             .eq('codigo', ordenItem.productoCodigo);
+
+          // Historial de costos: registramos el cambio para que quede trazable
+          // en la columna "Último costo" del módulo Stock.
+          if ((ordenItem.costoUnitario || 0) > 0) {
+            await supabase.from('historial_costos').insert({
+              producto_id: prod.id,
+              codigo: ordenItem.productoCodigo,
+              costo_anterior: costoPrevio,
+              costo_nuevo: nuevoCostoRedondeado,
+              cantidad: item.cantidadRecibida,
+              proveedor_id: selectedOrden.proveedorId || null,
+              numero_factura: recepcionForm.documentoProveedor || null,
+              fecha: new Date().toISOString().split('T')[0],
+              usuario: userEmail,
+            });
+          }
 
           // Movimiento de entrada
           await supabase.from('movimientos').insert({

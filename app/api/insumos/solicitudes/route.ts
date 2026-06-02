@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
       nuevo_codigo: it.es_nuevo ? (it.nuevo_codigo || null) : null,
       nuevo_stock_minimo: it.es_nuevo ? (it.nuevo_stock_minimo ?? null) : null,
       nuevo_categoria: it.es_nuevo ? (it.nuevo_categoria || null) : null,
+      costo_estimado: it.costo_estimado ?? null,
     }));
     const { error: itemsError } = await supabase
       .from('solicitudes_insumos_items')

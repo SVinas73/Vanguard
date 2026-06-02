@@ -11,6 +11,7 @@ import {
   DollarSign, Package, AlertCircle, ArrowLeftRight,
 } from 'lucide-react';
 import { ProductThumbnail } from './product-image';
+import HistorialCostoModal from './HistorialCostoModal';
 import { formatMoney, convertir } from '@/lib/currency';
 import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valuation';
 import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
@@ -163,6 +164,8 @@ export function ProductTable({
   const [sortCol, setSortCol] = useState<SortCol>('codigo');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Producto cuyo historial de costos se está mostrando (modal).
+  const [historialProducto, setHistorialProducto] = useState<Product | null>(null);
 
   const handleSort = useCallback((col: SortCol) => {
     if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -432,11 +435,15 @@ export function ProductTable({
                       </td>
                     )}
                     <td className="px-3 py-2.5 text-right">
-                      <span className="font-mono text-sm text-slate-400" title="Costo promedio ponderado (se actualiza con cada compra)">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setHistorialProducto(product); }}
+                        title="Ver historial de costos"
+                        className="font-mono text-sm text-slate-400 hover:text-amber-300 hover:underline decoration-dotted underline-offset-2 transition-colors"
+                      >
                         {product.costoPromedio
                           ? formatMoney(product.costoPromedio, product.moneda ?? 'UYU', { minimumFractionDigits: 2 })
                           : '—'}
-                      </span>
+                      </button>
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex justify-center">
@@ -497,6 +504,16 @@ export function ProductTable({
           </div>
         )}
       </div>
+
+      {historialProducto && (
+        <HistorialCostoModal
+          codigo={historialProducto.codigo}
+          descripcion={historialProducto.descripcion}
+          moneda={historialProducto.moneda ?? 'UYU'}
+          costoActual={historialProducto.costoPromedio ?? null}
+          onClose={() => setHistorialProducto(null)}
+        />
+      )}
     </div>
   );
 }

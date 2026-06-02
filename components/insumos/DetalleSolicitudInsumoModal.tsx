@@ -12,6 +12,7 @@ interface ItemSolicitud {
   unidad?: string;
   observaciones?: string | null;
   cantidad_recibida?: number | null;
+  costo_estimado?: number | null;
 }
 
 interface Solicitud {
@@ -69,6 +70,14 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
     }
     return m;
   });
+  // Costo unitario confirmado al recibir, prellenado con el estimado de la solicitud.
+  const [costosUnitarios, setCostosUnitarios] = useState<Record<number, string>>(() => {
+    const m: Record<number, string> = {};
+    for (const it of solicitud.items) {
+      m[it.id] = it.costo_estimado != null ? String(it.costo_estimado) : '';
+    }
+    return m;
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,6 +95,7 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
         body.items_recibidos = solicitud.items.map(it => ({
           item_id: it.id,
           cantidad_recibida: parseFloat(itemsRecibidos[it.id] || '0'),
+          costo_unitario: costosUnitarios[it.id]?.trim() ? parseFloat(costosUnitarios[it.id]) : null,
         }));
       }
       const resp = await fetch(`/api/insumos/solicitudes/${solicitud.id}`, {
@@ -254,31 +264,46 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
                       </div>
                       <div>
                         <label className="block text-xs text-slate-400 mb-1">
-                          Cantidades recibidas — editá cada cantidad antes de confirmar.
-                          Los items con producto vinculado generan entrada al stock automática.
+                          Cantidades y costo unitario recibidos — confirmá o corregí antes
+                          de cerrar. El costo actualiza el promedio ponderado y el historial.
                         </label>
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {solicitud.items.map(it => (
-                            <div key={it.id} className="flex items-center gap-2 text-sm">
+                            <div key={it.id} className="flex items-end gap-2 text-sm">
                               <div className="flex-1 min-w-0">
                                 <div className="text-slate-300 truncate">{it.descripcion}</div>
                                 <div className="text-[11px] text-slate-500">
                                   Solicitado: {it.cantidad} {it.unidad}
                                   {it.producto_codigo
                                     ? <span className="ml-2 text-emerald-400">→ entra a stock ({it.producto_codigo})</span>
-                                    : <span className="ml-2 text-amber-400">→ sin producto vinculado</span>
+                                    : <span className="ml-2 text-amber-400">→ se crea al recibir</span>
                                   }
                                 </div>
                               </div>
-                              <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={itemsRecibidos[it.id]}
-                                onChange={e => setItemsRecibidos(m => ({ ...m, [it.id]: e.target.value }))}
-                                className="w-24 px-2 py-1 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200 text-right"
-                              />
-                              <span className="text-xs text-slate-500 w-12">{it.unidad}</span>
+                              <div>
+                                <div className="text-[10px] text-slate-500 mb-0.5">Cantidad</div>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={itemsRecibidos[it.id]}
+                                  onChange={e => setItemsRecibidos(m => ({ ...m, [it.id]: e.target.value }))}
+                                  className="w-20 px-2 py-1 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200 text-right"
+                                />
+                              </div>
+                              <div>
+                                <div className="text-[10px] text-slate-500 mb-0.5">Costo unit.</div>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={costosUnitarios[it.id] ?? ''}
+                                  onChange={e => setCostosUnitarios(m => ({ ...m, [it.id]: e.target.value }))}
+                                  placeholder="0.00"
+                                  className="w-24 px-2 py-1 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200 text-right"
+                                />
+                              </div>
+                              <span className="text-xs text-slate-500 w-10 pb-1.5">{it.unidad}</span>
                             </div>
                           ))}
                         </div>
