@@ -15,6 +15,10 @@ interface ItemSolicitud {
   observaciones?: string | null;
   cantidad_recibida?: number | null;
   costo_estimado?: number | null;
+  es_nuevo?: boolean | null;
+  nuevo_codigo?: string | null;
+  nuevo_stock_minimo?: number | null;
+  nuevo_categoria?: string | null;
 }
 
 interface Solicitud {
@@ -73,8 +77,8 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
   const [showEditar, setShowEditar] = useState(false);
   // ¿Este usuario puede aprobar (pendiente→en_gestion) según el proveedor?
   const puedeAprobar = puedeAprobarProveedor(solicitud.proveedor, currentUserEmail);
-  // La edición solo aplica antes de comprar.
-  const editable = isAdmin && (solicitud.estado === 'pendiente' || solicitud.estado === 'en_gestion');
+  // La edición solo aplica ANTES de aprobar (estado pendiente).
+  const editable = isAdmin && solicitud.estado === 'pendiente';
   const [accion, setAccion] = useState<Solicitud['estado'] | ''>('');
   const [motivo, setMotivo] = useState('');
   const [fechaIngreso, setFechaIngreso] = useState(solicitud.fecha_ingreso || new Date().toISOString().split('T')[0]);
@@ -413,10 +417,16 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
             observaciones: solicitud.observaciones,
             items: solicitud.items.map(it => ({
               id: it.id,
+              producto_codigo: it.producto_codigo,
               descripcion: it.descripcion,
               cantidad: it.cantidad,
               unidad: it.unidad,
               observaciones: it.observaciones,
+              costo_estimado: it.costo_estimado,
+              es_nuevo: it.es_nuevo,
+              nuevo_codigo: it.nuevo_codigo,
+              nuevo_stock_minimo: it.nuevo_stock_minimo,
+              nuevo_categoria: it.nuevo_categoria,
             })),
           }}
           onClose={() => setShowEditar(false)}

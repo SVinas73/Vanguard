@@ -30,7 +30,7 @@ import {
 
 type CategoriaReporte =
   | 'inventario' | 'movimientos' | 'compras' | 'ventas'
-  | 'pickeadores' | 'rma' | 'financiero';
+  | 'pickeadores' | 'rma' | 'financiero' | 'insumos';
 
 type TipoReporte =
   // Inventario
@@ -46,7 +46,9 @@ type TipoReporte =
   // RMA
   | 'rma_periodo' | 'rma_motivos' | 'rma_costos' | 'rma_tiempo_resolucion'
   // Financiero
-  | 'fin_cuentas_cobrar' | 'fin_cuentas_pagar' | 'fin_flujo_caja';
+  | 'fin_cuentas_cobrar' | 'fin_cuentas_pagar' | 'fin_flujo_caja'
+  // Insumos (ÚNICO reporte que mira el almacén de insumos)
+  | 'ins_gastos';
 
 type FormatoExport = 'pdf' | 'excel' | 'csv';
 
@@ -378,6 +380,16 @@ const REPORTES_CONFIG: ConfigReporte[] = [
     filtrosDisponibles: ['fechas'],
     tieneGrafico: true,
   },
+  // INSUMOS — único reporte que mira el almacén de insumos
+  {
+    id: 'ins_gastos',
+    nombre: 'Gastos de Insumos',
+    descripcion: 'Informe mensual de gastos en insumos (y consumo) por artículo y categoría',
+    icono: <PackageCheck className="h-5 w-5" />,
+    categoria: 'insumos',
+    filtrosDisponibles: ['fechas', 'categoria'],
+    tieneGrafico: true,
+  },
 ];
 
 const CATEGORIAS_CONFIG: Record<CategoriaReporte, { nombre: string; icono: React.ReactNode; color: string }> = {
@@ -388,6 +400,7 @@ const CATEGORIAS_CONFIG: Record<CategoriaReporte, { nombre: string; icono: React
   pickeadores: { nombre: 'Pickeadores', icono: <Target className="h-5 w-5" />, color: 'amber' },
   rma: { nombre: 'Devoluciones', icono: <RotateCcw className="h-5 w-5" />, color: 'red' },
   financiero: { nombre: 'Financiero', icono: <DollarSign className="h-5 w-5" />, color: 'indigo' },
+  insumos: { nombre: 'Insumos', icono: <PackageCheck className="h-5 w-5" />, color: 'amber' },
 };
 
 const COLORS_CHART = ['#9ec9b1', '#4a7fb5', '#6b5488', '#d6b97a', '#dfa6a6', '#b5547a', '#4a7fb5', '#3d8f82'];
@@ -735,6 +748,11 @@ export default function ReportsEnterprise() {
           break;
         case 'fin_flujo_caja':
           datos = await generarReporteFlujoCaja();
+          break;
+
+        // INSUMOS
+        case 'ins_gastos':
+          datos = await generarReporteGastosInsumos();
           break;
 
         default:
@@ -1791,6 +1809,112 @@ export default function ReportsEnterprise() {
         { label: 'Inversión Total', valor: formatCurrency(totalInversion), color: 'emerald' },
         { label: 'Meses', valor: Object.keys(porMesGrafico).length, color: 'cyan' },
         { label: 'Unidades Ingresadas', valor: formatNumber(filas.reduce((s, f) => s + f.entradas, 0)), color: 'purple' },
+      ],
+    };
+  };
+
+  // GASTOS DE INSUMOS — ÚNICO reporte que mira el almacén de insumos.
+  // "Informe de gastos": cuánto se gastó comprando insumos en el período,
+  // más cuánto se consumió (salidas). Pensado para el informe mensual.
+  const generarReporteGastosInsumos = async (): Promise<DatosReporte> => {
+    const desde = filtros.fechaInicio;
+    const hasta = `${filtros.fechaFin}T23:59:59`;
+
+    // Entradas (compras/recepciones de insumos) con costo.
+    const { data: entradas } = await supabase
+      .from('movimientos')
+      .select('codigo, tipo, cantidad, costo_compra, created_at, producto:productos(descripcion, categoria, almacen_id)')
+      .eq('tipo', 'entrada')
+      .gte('created_at', desde).lte('created_at', hasta)
+      .order('created_at', { ascending: true });
+
+    // Salidas (consumo de insumos) en el mismo período.
+    const { data: salidas } = await supabase
+      .from('movimientos')
+      .select('codigo, cantidad, producto:productos(almacen_id)')
+      .eq('tipo', 'salida')
+      .gte('created_at', desde).lte('created_at', hasta);
+
+    // Consumo por código (solo insumos).
+    const usadoPorCodigo: Record<string, number> = {};
+    (salidas || []).forEach((m: any) => {
+      if (!esInsumo(m.producto?.almacen_id)) return;
+      usadoPorCodigo[m.codigo] = (usadoPorCodigo[m.codigo] || 0) + (m.cantidad || 0);
+    });
+
+    // Agregado por artículo + acumulado por mes y por categoría (solo insumos).
+    const porArticulo: Record<string, {
+      codigo: string; descripcion: string; categoria: string;
+      cantidad: number; gasto: number;
+    }> = {};
+    const porMes: Record<string, number> = {};
+    const porCategoria: Record<string, number> = {};
+
+    (entradas || []).forEach((m: any) => {
+      if (!esInsumo(m.producto?.almacen_id)) return; // SOLO insumos
+      const categoria = m.producto?.categoria || 'Sin categoría';
+      if (filtros.categoriaProducto && categoria !== filtros.categoriaProducto) return;
+      const gasto = (m.cantidad || 0) * (parseFloat(m.costo_compra) || 0);
+      if (!porArticulo[m.codigo]) {
+        porArticulo[m.codigo] = {
+          codigo: m.codigo,
+          descripcion: m.producto?.descripcion || m.codigo,
+          categoria,
+          cantidad: 0,
+          gasto: 0,
+        };
+      }
+      porArticulo[m.codigo].cantidad += m.cantidad || 0;
+      porArticulo[m.codigo].gasto += gasto;
+      const mes = (m.created_at || '').substring(0, 7);
+      if (mes) porMes[mes] = (porMes[mes] || 0) + gasto;
+      porCategoria[categoria] = (porCategoria[categoria] || 0) + gasto;
+    });
+
+    const filas = Object.values(porArticulo)
+      .map(a => ({
+        codigo: a.codigo,
+        descripcion: a.descripcion,
+        categoria: a.categoria,
+        comprado: a.cantidad,
+        usado: usadoPorCodigo[a.codigo] || 0,
+        costoUnitario: a.cantidad > 0 ? a.gasto / a.cantidad : 0,
+        gasto: a.gasto,
+      }))
+      .sort((a, b) => b.gasto - a.gasto);
+
+    const gastoTotal = filas.reduce((s, f) => s + f.gasto, 0);
+    const meses = Object.keys(porMes).length;
+
+    // Gráfico: gasto por mes (línea de tiempo del informe mensual).
+    const graficoData = Object.entries(porMes)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([name, value]) => ({ name, value }));
+
+    // Categoría con mayor gasto (para KPI).
+    const topCategoria = Object.entries(porCategoria).sort((a, b) => b[1] - a[1])[0];
+
+    return {
+      titulo: 'Gastos de Insumos',
+      subtitulo: `${formatDate(filtros.fechaInicio)} — ${formatDate(filtros.fechaFin)}`,
+      columnas: [
+        { key: 'codigo', label: 'Código' },
+        { key: 'descripcion', label: 'Insumo' },
+        { key: 'categoria', label: 'Categoría' },
+        { key: 'comprado', label: 'Comprado', tipo: 'numero' },
+        { key: 'usado', label: 'Usado', tipo: 'numero' },
+        { key: 'costoUnitario', label: 'Costo Unit.', tipo: 'moneda' },
+        { key: 'gasto', label: 'Gasto', tipo: 'moneda' },
+      ],
+      filas,
+      totales: { gasto: gastoTotal },
+      graficoData,
+      graficoTipo: 'bar',
+      kpis: [
+        { label: 'Gasto Total', valor: formatCurrency(gastoTotal), color: 'amber' },
+        { label: 'Insumos distintos', valor: filas.length, color: 'cyan' },
+        { label: 'Meses', valor: meses, color: 'purple' },
+        { label: 'Categoría top', valor: topCategoria ? `${topCategoria[0]}` : '—', color: 'emerald' },
       ],
     };
   };
