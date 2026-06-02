@@ -101,6 +101,8 @@ export const crearOrdenCompraSchema = z.object({
 export const crearSolicitudInsumoSchema = z.object({
   organizacion_id: z.string().uuid().nullable().optional(),
   categoria: z.string().min(1, 'Categoría requerida').max(64),
+  proveedor: z.string().max(64).nullable().optional(),
+  proveedor_nombre: z.string().max(128).nullable().optional(),
   emails_notificar: z.array(z.string().email()).max(20).optional().default([]),
   fecha_limite: z.string().nullable().optional(),
   observaciones: z.string().max(2000).nullable().optional(),
@@ -131,6 +133,23 @@ export const cambiarEstadoSolicitudSchema = z.object({
     // costo_promedio, el lote y el historial de costos del producto.
     costo_unitario: z.number().nonnegative().nullable().optional(),
   })).optional(),
+});
+
+// Edición de una solicitud ya creada (EXCLUSIVO de admins). Permite corregir
+// el encabezado y las cantidades/descripciones de los items existentes.
+export const editarSolicitudInsumoSchema = z.object({
+  proveedor: z.string().max(64).nullable().optional(),
+  proveedor_nombre: z.string().max(128).nullable().optional(),
+  categoria: z.string().min(1).max(64).optional(),
+  fecha_limite: z.string().nullable().optional(),
+  observaciones: z.string().max(2000).nullable().optional(),
+  items: z.array(z.object({
+    id: z.number(),
+    descripcion: z.string().min(1).max(500),
+    cantidad: z.number().positive(),
+    unidad: z.string().max(32).optional(),
+    observaciones: z.string().max(500).nullable().optional(),
+  })).max(100).optional(),
 });
 
 export const upsertRoutingInsumosSchema = z.object({

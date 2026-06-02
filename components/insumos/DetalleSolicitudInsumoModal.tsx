@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, AlertCircle, Loader2, Calendar, User, Tag, ClipboardList, FileDown } from 'lucide-react';
+import { X, AlertCircle, Loader2, Calendar, User, Tag, ClipboardList, FileDown, Building2, Pencil, History } from 'lucide-react';
 import { LinkifiedText } from '@/components/ui/LinkifiedText';
+import { puedeAprobarProveedor, aprobadorRequerido, labelProveedor } from '@/lib/insumos/proveedores';
+import EditarSolicitudInsumoModal from './EditarSolicitudInsumoModal';
 
 interface ItemSolicitud {
   id: number;
@@ -27,6 +29,10 @@ interface Solicitud {
   estado_motivo?: string | null;
   gestor_asignado?: string | null;
   observaciones?: string | null;
+  proveedor?: string | null;
+  proveedor_nombre?: string | null;
+  modificado_por?: string | null;
+  modificado_at?: string | null;
   items: ItemSolicitud[];
 }
 
@@ -55,11 +61,20 @@ const TRANSICIONES: Record<Solicitud['estado'], Solicitud['estado'][]> = {
 interface Props {
   solicitud: Solicitud;
   puedeGestionar: boolean;
+  /** Email del usuario actual (para el gate de aprobación por proveedor). */
+  currentUserEmail?: string | null;
+  /** Solo los admins pueden EDITAR el contenido de la solicitud. */
+  isAdmin?: boolean;
   onClose: () => void;
   onChanged: () => void;
 }
 
-export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar, onClose, onChanged }: Props) {
+export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar, currentUserEmail, isAdmin, onClose, onChanged }: Props) {
+  const [showEditar, setShowEditar] = useState(false);
+  // ¿Este usuario puede aprobar (pendiente→en_gestion) según el proveedor?
+  const puedeAprobar = puedeAprobarProveedor(solicitud.proveedor, currentUserEmail);
+  // La edición solo aplica antes de comprar.
+  const editable = isAdmin && (solicitud.estado === 'pendiente' || solicitud.estado === 'en_gestion');
   const [accion, setAccion] = useState<Solicitud['estado'] | ''>('');
   const [motivo, setMotivo] = useState('');
   const [fechaIngreso, setFechaIngreso] = useState(solicitud.fecha_ingreso || new Date().toISOString().split('T')[0]);
@@ -133,21 +148,37 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
             <div className="font-mono text-xs text-slate-500">{solicitud.numero}</div>
             <h3 className="font-semibold text-slate-100">Solicitud de insumo</h3>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-200">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {editable && (
+              <button
+                onClick={() => setShowEditar(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-sm text-slate-200"
+                title="Editar solicitud (solo admins)"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Editar
+              </button>
+            )}
+            <button onClick={onClose} className="text-slate-500 hover:text-slate-200">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="p-5 overflow-y-auto space-y-4">
           {/* Metadata */}
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <div className="text-xs text-slate-500 mb-0.5 flex items-center gap-1"><Tag className="w-3 h-3" /> Categoría</div>
-              <div className="text-slate-200 font-medium">{solicitud.categoria}</div>
+              <div className="text-xs text-slate-500 mb-0.5 flex items-center gap-1"><Building2 className="w-3 h-3" /> Proveedor</div>
+              <div className="text-slate-200 font-medium">{labelProveedor(solicitud.proveedor, solicitud.proveedor_nombre)}</div>
             </div>
             <div>
               <div className="text-xs text-slate-500 mb-0.5">Estado actual</div>
               <div className="text-slate-200 font-medium">{ESTADO_LABEL[solicitud.estado]}</div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500 mb-0.5 flex items-center gap-1"><Tag className="w-3 h-3" /> Categoría</div>
+              <div className="text-slate-200 font-medium">{solicitud.categoria}</div>
             </div>
             <div>
               <div className="text-xs text-slate-500 mb-0.5 flex items-center gap-1"><User className="w-3 h-3" /> Solicitante</div>
@@ -173,6 +204,15 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
               <div className="col-span-2">
                 <div className="text-xs text-slate-500 mb-0.5">Gestor asignado</div>
                 <div className="text-slate-200">{solicitud.gestor_asignado}</div>
+              </div>
+            )}
+            {solicitud.modificado_por && (
+              <div className="col-span-2">
+                <div className="text-xs text-slate-500 mb-0.5 flex items-center gap-1"><History className="w-3 h-3" /> Última modificación</div>
+                <div className="text-slate-300 text-xs">
+                  {solicitud.modificado_por}
+                  {solicitud.modificado_at && <span className="text-slate-500"> · {new Date(solicitud.modificado_at).toLocaleString('es-UY')}</span>}
+                </div>
               </div>
             )}
           </div>
@@ -225,20 +265,34 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
             <div className="mt-4 p-4 bg-slate-950 border border-slate-700 rounded-lg">
               <div className="text-sm font-medium text-slate-200 mb-2">Cambiar estado</div>
               <div className="flex flex-wrap gap-2 mb-3">
-                {transicionesPosibles.map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setAccion(t)}
-                    className={`px-3 py-1.5 rounded text-sm transition border ${
-                      accion === t
-                        ? 'bg-blue-600 border-blue-500 text-white'
-                        : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                    }`}
-                  >
-                    → {ESTADO_LABEL[t]}
-                  </button>
-                ))}
+                {transicionesPosibles.map(t => {
+                  // Aprobación (pendiente→en_gestion) bloqueada si el proveedor
+                  // exige un aprobador puntual y no es el usuario actual.
+                  const bloqueadoPorProveedor = t === 'en_gestion' && !puedeAprobar;
+                  return (
+                    <button
+                      key={t}
+                      disabled={bloqueadoPorProveedor}
+                      onClick={() => !bloqueadoPorProveedor && setAccion(t)}
+                      title={bloqueadoPorProveedor ? `Solo ${aprobadorRequerido(solicitud.proveedor)} puede aprobar este proveedor` : undefined}
+                      className={`px-3 py-1.5 rounded text-sm transition border ${
+                        bloqueadoPorProveedor
+                          ? 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed'
+                          : accion === t
+                            ? 'bg-blue-600 border-blue-500 text-white'
+                            : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      → {ESTADO_LABEL[t]}
+                    </button>
+                  );
+                })}
               </div>
+              {!puedeAprobar && aprobadorRequerido(solicitud.proveedor) && solicitud.estado === 'pendiente' && (
+                <div className="text-[11px] text-amber-400 mb-2">
+                  La aprobación de este proveedor es exclusiva de {aprobadorRequerido(solicitud.proveedor)}.
+                </div>
+              )}
 
               {accion && (
                 <div className="space-y-3">
@@ -346,6 +400,29 @@ export default function DetalleSolicitudInsumoModal({ solicitud, puedeGestionar,
           </button>
         </div>
       </div>
+
+      {showEditar && (
+        <EditarSolicitudInsumoModal
+          solicitud={{
+            id: solicitud.id,
+            numero: solicitud.numero,
+            categoria: solicitud.categoria,
+            proveedor: solicitud.proveedor,
+            proveedor_nombre: solicitud.proveedor_nombre,
+            fecha_limite: solicitud.fecha_limite,
+            observaciones: solicitud.observaciones,
+            items: solicitud.items.map(it => ({
+              id: it.id,
+              descripcion: it.descripcion,
+              cantidad: it.cantidad,
+              unidad: it.unidad,
+              observaciones: it.observaciones,
+            })),
+          }}
+          onClose={() => setShowEditar(false)}
+          onSaved={() => { setShowEditar(false); onChanged(); }}
+        />
+      )}
     </div>
   );
 }
