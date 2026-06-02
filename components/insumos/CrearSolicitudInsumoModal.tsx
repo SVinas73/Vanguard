@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { X, Plus, Trash2, Save, AlertCircle, Loader2, Search, Package, PackagePlus } from 'lucide-react';
+import { X, Plus, Trash2, Save, AlertCircle, Loader2, Search, Package, PackagePlus, Pencil } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import NuevoArticuloInsumoModal, { NuevoArticuloInsumoData } from './NuevoArticuloInsumoModal';
 
 interface Product {
   codigo: string;
@@ -27,6 +28,11 @@ interface ItemForm {
   cantidad: string;
   unidad: string;
   observaciones: string;
+  // Artículo nuevo (todavía no existe en Stock; se crea al recibir la compra)
+  es_nuevo: boolean;
+  nuevo_codigo: string;
+  nuevo_stock_minimo: number | null;
+  nuevo_categoria: string;
 }
 
 
@@ -49,6 +55,10 @@ function emptyItem(): ItemForm {
     cantidad: '1',
     unidad: 'unidad',
     observaciones: '',
+    es_nuevo: false,
+    nuevo_codigo: '',
+    nuevo_stock_minimo: null,
+    nuevo_categoria: '',
   };
 }
 
@@ -65,6 +75,9 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
   const [error, setError] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState<string | null>(null); // item.id que está buscando
   const [search, setSearch] = useState('');
+  // item.id que está definiendo un artículo nuevo (abre NuevoArticuloInsumoModal)
+  const [nuevoArticuloItemId, setNuevoArticuloItemId] = useState<string | null>(null);
+  const [nuevoArticuloPrefill, setNuevoArticuloPrefill] = useState('');
 
   useEffect(() => {
     supabase
@@ -133,9 +146,39 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
       producto_codigo: p.codigo,
       descripcion: p.descripcion,
       stock_actual: p.stock ?? null,
+      es_nuevo: false,
+      nuevo_codigo: '',
+      nuevo_stock_minimo: null,
+      nuevo_categoria: '',
     } : x));
     setSearchOpen(null);
     setSearch('');
+  };
+
+  // Abre el form de artículo nuevo para un item concreto (funciona en
+  // cualquier posición de la lista: principio, medio o final).
+  const abrirNuevoArticulo = (itemId: string, prefill: string) => {
+    setNuevoArticuloItemId(itemId);
+    setNuevoArticuloPrefill(prefill);
+    setSearchOpen(null);
+    setSearch('');
+  };
+
+  // Aplica los datos del artículo nuevo al item. NO crea nada en la BD:
+  // se persiste en el item y el producto se crea recién al recibir la compra.
+  const aplicarNuevoArticulo = (data: NuevoArticuloInsumoData) => {
+    if (!nuevoArticuloItemId) return;
+    setItem(nuevoArticuloItemId, {
+      es_nuevo: true,
+      producto_codigo: '',
+      nuevo_codigo: data.codigo,
+      descripcion: data.descripcion,
+      nuevo_stock_minimo: data.stock_minimo,
+      nuevo_categoria: data.categoria,
+      stock_actual: null,
+    });
+    setNuevoArticuloItemId(null);
+    setNuevoArticuloPrefill('');
   };
 
   const addItem = () => setItems(xs => [...xs, emptyItem()]);
@@ -172,6 +215,10 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
             cantidad: parseFloat(it.cantidad),
             unidad: it.unidad,
             observaciones: it.observaciones.trim() || null,
+            es_nuevo: it.es_nuevo,
+            nuevo_codigo: it.es_nuevo ? (it.nuevo_codigo.trim() || null) : null,
+            nuevo_stock_minimo: it.es_nuevo ? it.nuevo_stock_minimo : null,
+            nuevo_categoria: it.es_nuevo ? (it.nuevo_categoria || null) : null,
           })),
         }),
       });
@@ -290,6 +337,11 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                           {it.producto_codigo} · stock: {it.stock_actual ?? '?'}
                         </span>
                       )}
+                      {it.es_nuevo && (
+                        <span className="px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/30 rounded text-[10px] text-blue-300 font-mono">
+                          {it.nuevo_codigo || 'nuevo'} · artículo nuevo
+                        </span>
+                      )}
                       {items.length > 1 && (
                         <button onClick={() => removeItem(it.id)} className="ml-auto text-slate-500 hover:text-red-400">
                           <Trash2 className="w-3.5 h-3.5" />
@@ -297,16 +349,16 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                       )}
                     </div>
 
-                    {!it.producto_codigo && !(it.descripcion.trim() && searchOpen !== it.id) ? (
-                      // Selector de producto (buscando o ítem vacío)
+                    {!it.producto_codigo && !it.es_nuevo ? (
+                      // Selector de producto: buscar existente o crear artículo nuevo
                       <div>
                         <div className="relative">
                           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                           <input
                             type="text"
                             placeholder="Buscar producto por código o nombre..."
-                            value={searchOpen === it.id ? search : it.descripcion}
-                            onChange={e => { setSearchOpen(it.id); setSearch(e.target.value); setItem(it.id, { descripcion: e.target.value }); }}
+                            value={searchOpen === it.id ? search : ''}
+                            onChange={e => { setSearchOpen(it.id); setSearch(e.target.value); }}
                             onFocus={() => setSearchOpen(it.id)}
                             className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-slate-200 focus:outline-none focus:border-blue-500"
                           />
@@ -317,10 +369,10 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                               <div className="p-3 text-sm text-slate-500 text-center">
                                 Sin resultados.
                                 <button
-                                  onClick={() => { setItem(it.id, { descripcion: search.trim() || it.descripcion, producto_codigo: '' }); setSearchOpen(null); }}
-                                  className="block w-full mt-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs"
+                                  onClick={() => abrirNuevoArticulo(it.id, search.trim())}
+                                  className="block w-full mt-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs"
                                 >
-                                  + Solicitar como artículo nuevo
+                                  + Crear artículo nuevo
                                 </button>
                               </div>
                             ) : (
@@ -343,11 +395,11 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                                   </button>
                                 ))}
                                 <button
-                                  onClick={() => { setItem(it.id, { descripcion: search.trim() || it.descripcion, producto_codigo: '' }); setSearchOpen(null); }}
-                                  className="w-full text-left px-3 py-2 hover:bg-emerald-500/10 border-t border-slate-700 text-sm text-emerald-400 flex items-center gap-2"
+                                  onClick={() => abrirNuevoArticulo(it.id, search.trim())}
+                                  className="w-full text-left px-3 py-2 hover:bg-blue-500/10 border-t border-slate-700 text-sm text-blue-300 flex items-center gap-2"
                                 >
                                   <PackagePlus className="w-4 h-4" />
-                                  ¿No lo encontrás? Solicitarlo como artículo nuevo
+                                  ¿No lo encontrás? Crear artículo nuevo
                                 </button>
                               </>
                             )}
@@ -371,11 +423,21 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                             <div className="text-xs text-slate-500 font-mono">
                               {it.producto_codigo
                                 ? `${it.producto_codigo} · stock actual: ${it.stock_actual ?? 0}`
-                                : 'Se creará al recibir la compra'}
+                                : `${it.nuevo_codigo || '(sin código)'} · se creará al recibir la compra`}
                             </div>
                           </div>
+                          {it.es_nuevo && (
+                            <button
+                              onClick={() => abrirNuevoArticulo(it.id, it.descripcion)}
+                              className="text-xs text-blue-400 hover:text-blue-300 whitespace-nowrap flex items-center gap-1"
+                              title="Editar artículo nuevo"
+                            >
+                              <Pencil className="w-3 h-3" />
+                              editar
+                            </button>
+                          )}
                           <button
-                            onClick={() => setItem(it.id, { producto_codigo: '', descripcion: '', stock_actual: null })}
+                            onClick={() => setItem(it.id, { producto_codigo: '', descripcion: '', stock_actual: null, es_nuevo: false, nuevo_codigo: '', nuevo_stock_minimo: null, nuevo_categoria: '' })}
                             className="text-xs text-slate-500 hover:text-slate-300 whitespace-nowrap"
                           >
                             cambiar
@@ -470,6 +532,20 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
           </div>
         </div>
       </div>
+
+      {nuevoArticuloItemId && (() => {
+        const editing = items.find(i => i.id === nuevoArticuloItemId);
+        return (
+          <NuevoArticuloInsumoModal
+            onClose={() => { setNuevoArticuloItemId(null); setNuevoArticuloPrefill(''); }}
+            onConfirm={aplicarNuevoArticulo}
+            codigoInicial={editing?.nuevo_codigo || ''}
+            descripcionInicial={editing?.es_nuevo ? editing.descripcion : nuevoArticuloPrefill}
+            stockMinimoInicial={editing?.nuevo_stock_minimo ?? null}
+            categoriaInicial={editing?.nuevo_categoria || ''}
+          />
+        );
+      })()}
     </>
   );
 }

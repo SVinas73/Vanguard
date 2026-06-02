@@ -130,6 +130,11 @@ export async function POST(request: NextRequest) {
       cantidad: it.cantidad,
       unidad: it.unidad || 'unidad',
       observaciones: it.observaciones || null,
+      // Artículo nuevo: estos datos se usan al RECIBIR para autocrear el producto.
+      es_nuevo: it.es_nuevo || false,
+      nuevo_codigo: it.es_nuevo ? (it.nuevo_codigo || null) : null,
+      nuevo_stock_minimo: it.es_nuevo ? (it.nuevo_stock_minimo ?? null) : null,
+      nuevo_categoria: it.es_nuevo ? (it.nuevo_categoria || null) : null,
     }));
     const { error: itemsError } = await supabase
       .from('solicitudes_insumos_items')
