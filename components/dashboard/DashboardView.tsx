@@ -59,6 +59,7 @@ export function DashboardView({
   flowSource = 'orders',
 }: DashboardViewProps) {
   const { t } = useTranslation();
+  const esMovimientos = flowSource === 'movements';
 
   // Período → días / etiqueta (misma lógica que vivía en page.tsx)
   const periodDays = period === '7d' ? 7
@@ -132,7 +133,9 @@ export function DashboardView({
         value: avgRotation > 0 ? `${avgRotation}d` : '—',
         icon: <TrendingUp size={24} />,
         color: 'cyan',
-        subtitle: dailyAvgSales > 0 ? `${dailyAvgSales.toFixed(1)} unid/día (${periodLabel})` : `Sin ventas en ${periodLabel}`,
+        subtitle: dailyAvgSales > 0
+          ? `${dailyAvgSales.toFixed(1)} unid/día (${periodLabel})`
+          : (esMovimientos ? `Sin consumo en ${periodLabel}` : `Sin ventas en ${periodLabel}`),
       },
       {
         label: t('dashboard.lowStock', 'Stock Bajo'),
@@ -149,7 +152,7 @@ export function DashboardView({
         trend: movementTrend,
       },
     ];
-  }, [products, movements, t, periodDays, periodLabel]);
+  }, [products, movements, t, periodDays, periodLabel, esMovimientos]);
 
   return (
     <div className="space-y-5">

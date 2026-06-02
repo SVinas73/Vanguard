@@ -86,8 +86,12 @@ const PUBLIC_BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://vanguard-be
 
 function escudoVanguardImg(size = 48): string {
   const w = size;
-  const h = Math.round(size * 76 / 64);
-  return `<img src="${PUBLIC_BASE_URL}/vang.png" width="${w}" height="${h}" alt="Vanguard" style="display:block;border:0;outline:none;text-decoration:none;width:${w}px;height:${h}px;" />`;
+  const h = size;
+  // Escudo Vanguard embebido en base64 (PNG ~560 bytes). Va inline en el email
+  // así NO depende de una URL externa (Gmail/Outlook no cargan imágenes
+  // pesadas o de dominios no confiables) ni del valor de NEXT_PUBLIC_APP_URL.
+  const VANG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAB9UlEQVR4nO2a21EDMRAEB9IhGWIgMGIgGeKBLx5F8fJptTtz7v53Wbc9I53KlgAAAAAAAAAAAAAAAAAAAGALN0c+dPfw9FK9kDPw/Hh/8Txvu77o7BydySEBUMdhAbTgg5VZ0IBhlgTQgvUZ0IBhihK8+lo62aSVtVes26IBU/cKh/tMiYBrPAuqnrmsAasL6k6jQ/olky0ojcrGlwpIaYFL+iUacDHV5125APcWTL92foUGDLNFgGsL3NIvGTegWoLTwfuZbQLOdDnb+SxbG+CyFbmmXzLeglzY3eTtAqZb4Jx+iQb8Ssc51iJgqgXu6ZdowI90vcW1CehuQUL6pbAG/HeoST+RtgpIuJx1r7G9Abu3opSt542oLWg3Ew0dEbCrBWnpl2jAO1Pn05iA6hYkpl+iAZJm385GBVS1IDX90gkakHTp+o5xAdMDmGZcgDQnwUG+hYAJHIYvGQlwGUg3NgI6cZJtJcBpMF1YCejATbKdALcB7cZOwE4c5VoKcBzULiwFSPUSXKXaCrgWrAVUpdY1/ZK5gGvAXsBqep3TLwUIWMF9+FKIgIRBHiVCwBFSpMUISBnopcQIkP4vIUlWlIAzEifgr3QnpV8KFHA2IgX8lPK09EuhAs5ErICvaU9MvxQsAExI/mMuAAAAAAAAAEAzr5i9xsEnIuzAAAAAAElFTkSuQmCC';
+  return `<img src="data:image/png;base64,${VANG_B64}" width="${w}" height="${h}" alt="Vanguard" style="display:block;border:0;outline:none;text-decoration:none;width:${w}px;height:${h}px;" />`;
 }
 
 // =====================================================
