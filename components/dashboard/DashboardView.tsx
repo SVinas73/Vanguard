@@ -222,9 +222,12 @@ export function DashboardView({
 
       {/* Paneles de IA — predicciones, anomalías, asociaciones */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <AIPredictionsPanel products={products} movements={movements} predictions={predictions} onRefresh={onRefresh} />
-        <AIAnomaliesPanel products={products} movements={movements} onRefresh={onRefresh} />
-        <AIAssociationsPanel products={products} movements={movements} onRefresh={onRefresh} />
+        {/* En modo 'movements' (Análisis de Insumos) los datos ya vienen
+            filtrados por almacén → los paneles usan SOLO cálculo local para no
+            mezclar con datos globales del backend. */}
+        <AIPredictionsPanel products={products} movements={movements} predictions={predictions} onRefresh={onRefresh} localOnly={esMovimientos} />
+        <AIAnomaliesPanel products={products} movements={movements} onRefresh={onRefresh} localOnly={esMovimientos} />
+        <AIAssociationsPanel products={products} movements={movements} onRefresh={onRefresh} localOnly={esMovimientos} />
       </div>
     </div>
   );
