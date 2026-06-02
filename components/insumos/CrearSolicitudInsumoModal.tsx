@@ -4,7 +4,6 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { X, Plus, Trash2, Save, AlertCircle, Loader2, Search, Package, PackagePlus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
-import NuevoProductoModal from '@/components/productos/NuevoProductoModal';
 
 interface Product {
   codigo: string;
@@ -66,7 +65,6 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
   const [error, setError] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState<string | null>(null); // item.id que está buscando
   const [search, setSearch] = useState('');
-  const [showNuevoProducto, setShowNuevoProducto] = useState<string | null>(null); // item.id que va a recibir el producto nuevo
 
   useEffect(() => {
     supabase
@@ -299,8 +297,8 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                       )}
                     </div>
 
-                    {!it.producto_codigo ? (
-                      // Selector de producto
+                    {!it.producto_codigo && !(it.descripcion.trim() && searchOpen !== it.id) ? (
+                      // Selector de producto (buscando o ítem vacío)
                       <div>
                         <div className="relative">
                           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -319,10 +317,10 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                               <div className="p-3 text-sm text-slate-500 text-center">
                                 Sin resultados.
                                 <button
-                                  onClick={() => { setShowNuevoProducto(it.id); setSearchOpen(null); }}
+                                  onClick={() => { setItem(it.id, { descripcion: search.trim() || it.descripcion, producto_codigo: '' }); setSearchOpen(null); }}
                                   className="block w-full mt-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs"
                                 >
-                                  + Crear nuevo artículo
+                                  + Solicitar como artículo nuevo
                                 </button>
                               </div>
                             ) : (
@@ -345,11 +343,11 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                                   </button>
                                 ))}
                                 <button
-                                  onClick={() => { setShowNuevoProducto(it.id); setSearchOpen(null); }}
+                                  onClick={() => { setItem(it.id, { descripcion: search.trim() || it.descripcion, producto_codigo: '' }); setSearchOpen(null); }}
                                   className="w-full text-left px-3 py-2 hover:bg-emerald-500/10 border-t border-slate-700 text-sm text-emerald-400 flex items-center gap-2"
                                 >
                                   <PackagePlus className="w-4 h-4" />
-                                  ¿No lo encontrás? Crear nuevo artículo
+                                  ¿No lo encontrás? Solicitarlo como artículo nuevo
                                 </button>
                               </>
                             )}
@@ -357,13 +355,24 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                         )}
                       </div>
                     ) : (
-                      // Producto seleccionado
+                      // Ítem confirmado: producto existente o artículo nuevo
                       <div className="space-y-2">
-                        <div className="flex items-start gap-2 px-3 py-2 bg-slate-900 border border-emerald-500/30 rounded">
-                          <Package className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                        <div className={`flex items-start gap-2 px-3 py-2 bg-slate-900 border rounded ${it.producto_codigo ? 'border-emerald-500/30' : 'border-blue-500/30'}`}>
+                          {it.producto_codigo
+                            ? <Package className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                            : <PackagePlus className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />}
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm text-slate-200">{it.descripcion}</div>
-                            <div className="text-xs text-slate-500 font-mono">{it.producto_codigo} · stock actual: {it.stock_actual ?? 0}</div>
+                            <div className="text-sm text-slate-200 flex items-center gap-2">
+                              {it.descripcion}
+                              {!it.producto_codigo && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300 whitespace-nowrap">Artículo nuevo</span>
+                              )}
+                            </div>
+                            <div className="text-xs text-slate-500 font-mono">
+                              {it.producto_codigo
+                                ? `${it.producto_codigo} · stock actual: ${it.stock_actual ?? 0}`
+                                : 'Se creará al recibir la compra'}
+                            </div>
                           </div>
                           <button
                             onClick={() => setItem(it.id, { producto_codigo: '', descripcion: '', stock_actual: null })}
@@ -461,33 +470,6 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
           </div>
         </div>
       </div>
-
-      {showNuevoProducto && (
-        <NuevoProductoModal
-          userEmail={user?.email || ''}
-          descripcionInicial={search}
-          almacenIdInicial={almacenesInsumos[0]?.id || ''}
-          ocultarPrecio
-
-          onClose={() => setShowNuevoProducto(null)}
-          onCreated={(producto) => {
-            // Capturamos el item ID ANTES de cualquier async para evitar
-            // race conditions con setState.
-            const itemTarget = showNuevoProducto;
-            // Asignar inmediatamente al item con el objeto que devolvió
-            // el modal. SIN re-fetch (no depende de timing de la DB).
-            if (itemTarget) {
-              seleccionarProducto(itemTarget, producto as Product);
-            }
-            // Actualizar la lista local de productos para que aparezca en
-            // futuras búsquedas también (best-effort, no bloquea).
-            setProductos(prev => [...prev, producto as Product]);
-            // Cerrar modal y limpiar búsqueda.
-            setShowNuevoProducto(null);
-            setSearch('');
-          }}
-        />
-      )}
     </>
   );
 }
