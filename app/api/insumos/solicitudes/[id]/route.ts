@@ -126,11 +126,15 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         if (!item) continue;
 
         // b) resolver producto (existente o autocreado)
+        //   - producto_codigo  → producto existente vinculado.
+        //   - nuevo_codigo     → artículo nuevo con el código que eligió el usuario.
+        //   - fallback         → código autogenerado por item.
         let codigoProducto = item.producto_codigo as string | null;
 
         if (!codigoProducto) {
-          // Autogeneramos un código predecible y único por item.
-          codigoProducto = `INS-${actual.numero}-${item.id}`.toUpperCase();
+          codigoProducto = (item.nuevo_codigo && String(item.nuevo_codigo).trim())
+            ? String(item.nuevo_codigo).trim().toUpperCase()
+            : `INS-${actual.numero}-${item.id}`.toUpperCase();
         }
 
         let { data: prod } = await supabase
@@ -159,9 +163,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
               descripcion: item.descripcion ?? codigoProducto,
               precio: 0,              // placeholder, editable después en Stock
               moneda: 'UYU',
-              categoria: 'Insumos',
+              categoria: item.nuevo_categoria || 'Insumos',
               stock: 0,               // se suma abajo
-              stock_minimo: 5,
+              stock_minimo: item.nuevo_stock_minimo ?? 5,
               costo_promedio: 0,
               almacen_id: almacenPrincipal?.id ?? null,
               creado_por: auth.user.email,

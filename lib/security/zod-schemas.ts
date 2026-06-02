@@ -110,6 +110,11 @@ export const crearSolicitudInsumoSchema = z.object({
     cantidad: z.number().positive(),
     unidad: z.string().max(32).optional(),
     observaciones: z.string().max(500).nullable().optional(),
+    // Artículo nuevo: se crea en Stock recién al recibir la compra.
+    es_nuevo: z.boolean().optional().default(false),
+    nuevo_codigo: z.string().max(64).nullable().optional(),
+    nuevo_stock_minimo: z.number().int().nonnegative().nullable().optional(),
+    nuevo_categoria: z.string().max(64).nullable().optional(),
   })).min(1, 'Al menos un item'),
 });
 
