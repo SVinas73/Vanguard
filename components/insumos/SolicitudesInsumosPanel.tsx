@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import CrearSolicitudInsumoModal from './CrearSolicitudInsumoModal';
 import DetalleSolicitudInsumoModal from './DetalleSolicitudInsumoModal';
 import { estadoEfectivo, ESTADO_LABEL as LABEL_EFECTIVO, ESTADO_COLOR as COLOR_EFECTIVO, diasParaLimite } from '@/lib/insumos/estado';
+import { labelProveedor } from '@/lib/insumos/proveedores';
 
 interface ItemSolicitud {
   id: number;
@@ -30,6 +31,10 @@ interface Solicitud {
   estado_motivo?: string | null;
   gestor_asignado?: string | null;
   observaciones?: string | null;
+  proveedor?: string | null;
+  proveedor_nombre?: string | null;
+  modificado_por?: string | null;
+  modificado_at?: string | null;
   items: ItemSolicitud[];
   organizacion_id?: string | null;
   created_at: string;
@@ -177,6 +182,12 @@ export default function SolicitudesInsumosPanel() {
                           <Tag className="w-3 h-3" />
                           {s.categoria}
                         </span>
+                        {s.proveedor && (
+                          <span className="inline-flex items-center gap-1 text-xs text-cyan-400">
+                            <Building2 className="w-3 h-3" />
+                            {labelProveedor(s.proveedor, s.proveedor_nombre)}
+                          </span>
+                        )}
                       </div>
                     );
                   })()}
@@ -225,7 +236,9 @@ export default function SolicitudesInsumosPanel() {
       {showDetalle && (
         <DetalleSolicitudInsumoModal
           solicitud={showDetalle}
-          puedeGestionar={user?.email === showDetalle.gestor_asignado || user?.rol === 'admin'}
+          puedeGestionar={!!user}
+          currentUserEmail={user?.email}
+          isAdmin={user?.rol === 'admin'}
           onClose={() => setShowDetalle(null)}
           onChanged={() => { setShowDetalle(null); fetchSolicitudes(); }}
         />

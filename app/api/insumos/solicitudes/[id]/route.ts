@@ -8,7 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from '@/lib/security/permissions';
-import { parseSafe, cambiarEstadoSolicitudSchema } from '@/lib/security/zod-schemas';
+import { parseSafe, cambiarEstadoSolicitudSchema, editarSolicitudInsumoSchema } from '@/lib/security/zod-schemas';
+import { puedeAprobarProveedor, aprobadorRequerido } from '@/lib/insumos/proveedores';
 import { registrarAuditoriaSegura, extraerContextoAudit } from '@/lib/security/audit-enhanced';
 import { crearNotificacion } from '@/lib/notifications';
 import { reportarError } from '@/lib/security/error-reporting';
@@ -72,10 +73,26 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       );
     }
 
+    // 2.b Gate de aprobación por proveedor: la aprobación (pendiente → en_gestion)
+    //     de ciertos proveedores (Mercado Libre / Ynter Industrial) es exclusiva
+    //     de un email puntual (Gonzalo). El resto lo aprueba cualquiera.
+    if (actual.estado === 'pendiente' && parsed.data.estado === 'en_gestion') {
+      if (!puedeAprobarProveedor(actual.proveedor, auth.user.email)) {
+        const requerido = aprobadorRequerido(actual.proveedor);
+        return NextResponse.json(
+          { error: `Solo ${requerido} puede aprobar solicitudes de este proveedor.` },
+          { status: 403 },
+        );
+      }
+    }
+
     // 3. Update
     const update: any = {
       estado: parsed.data.estado,
       estado_motivo: parsed.data.motivo || null,
+      // Trazabilidad: quién y cuándo tocó la solicitud por última vez.
+      modificado_por: auth.user.email,
+      modificado_at: new Date().toISOString(),
     };
     if (parsed.data.estado === 'en_gestion' && !actual.gestor_asignado) {
       update.gestor_asignado = auth.user.email;
@@ -287,6 +304,116 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     return NextResponse.json({ ok: true, estado: parsed.data.estado });
   } catch (err: any) {
     reportarError(err, { modulo: 'insumos', accion: 'cambiar-estado', extra: { solicitudId: params.id } });
+    return NextResponse.json({ error: err?.message || 'Error inesperado' }, { status: 500 });
+  }
+}
+
+// =====================================================
+// PUT → EDITAR una solicitud ya creada (EXCLUSIVO de admins)
+// =====================================================
+// Permite corregir encabezado (proveedor, categoría, fecha límite,
+// observaciones) y los items (descripción/cantidad/unidad/obs) mientras la
+// solicitud esté en 'pendiente' o 'en_gestion'. Deja trazabilidad.
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  const auth = await requireAuth();
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
+  // Solo admins pueden EDITAR el contenido de una solicitud.
+  if (auth.user.rol !== 'admin') {
+    return NextResponse.json(
+      { error: 'Solo los usuarios administradores pueden editar solicitudes.' },
+      { status: 403 },
+    );
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const parsed = parseSafe(editarSolicitudInsumoSchema, body);
+  if (!parsed.ok) return NextResponse.json(parsed, { status: 400 });
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  try {
+    const { data: actual, error: errGet } = await supabase
+      .from('solicitudes_insumos')
+      .select('*, items:solicitudes_insumos_items(*)')
+      .eq('id', params.id)
+      .maybeSingle();
+
+    if (errGet || !actual) {
+      return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 });
+    }
+
+    // Solo editable antes de comprar (evita inconsistencias con stock/lotes).
+    if (!['pendiente', 'en_gestion'].includes(actual.estado)) {
+      return NextResponse.json(
+        { error: `No se puede editar una solicitud en estado "${actual.estado}". Solo pendiente o aprobada.` },
+        { status: 400 },
+      );
+    }
+
+    // 1. Encabezado
+    const headerUpdate: any = {
+      modificado_por: auth.user.email,
+      modificado_at: new Date().toISOString(),
+    };
+    if (parsed.data.proveedor !== undefined) {
+      headerUpdate.proveedor = parsed.data.proveedor || null;
+      headerUpdate.proveedor_nombre = parsed.data.proveedor === 'OTRO'
+        ? (parsed.data.proveedor_nombre || null)
+        : null;
+    }
+    if (parsed.data.categoria !== undefined) headerUpdate.categoria = parsed.data.categoria;
+    if (parsed.data.fecha_limite !== undefined) headerUpdate.fecha_limite = parsed.data.fecha_limite || null;
+    if (parsed.data.observaciones !== undefined) headerUpdate.observaciones = parsed.data.observaciones || null;
+
+    const { error: errUpd } = await supabase
+      .from('solicitudes_insumos')
+      .update(headerUpdate)
+      .eq('id', params.id);
+    if (errUpd) return NextResponse.json({ error: errUpd.message }, { status: 500 });
+
+    // 2. Items (solo los que pertenecen a esta solicitud)
+    if (parsed.data.items?.length) {
+      const idsValidos = new Set(actual.items.map((i: any) => i.id));
+      for (const it of parsed.data.items) {
+        if (!idsValidos.has(it.id)) continue;
+        await supabase
+          .from('solicitudes_insumos_items')
+          .update({
+            descripcion: it.descripcion,
+            cantidad: it.cantidad,
+            unidad: it.unidad || 'unidad',
+            observaciones: it.observaciones || null,
+          })
+          .eq('id', it.id)
+          .eq('solicitud_id', params.id);
+      }
+    }
+
+    // 3. Audit
+    await registrarAuditoriaSegura({
+      tabla: 'solicitudes_insumos',
+      accion: 'EDITAR',
+      codigo: actual.numero,
+      datosAnteriores: {
+        proveedor: actual.proveedor,
+        categoria: actual.categoria,
+        fecha_limite: actual.fecha_limite,
+        items: actual.items.map((i: any) => ({ id: i.id, descripcion: i.descripcion, cantidad: i.cantidad })),
+      },
+      datosNuevos: {
+        proveedor: headerUpdate.proveedor ?? actual.proveedor,
+        categoria: headerUpdate.categoria ?? actual.categoria,
+        fecha_limite: headerUpdate.fecha_limite ?? actual.fecha_limite,
+        items: parsed.data.items || undefined,
+      },
+      usuarioEmail: auth.user.email,
+      contexto: extraerContextoAudit(request),
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    reportarError(err, { modulo: 'insumos', accion: 'editar-solicitud', extra: { solicitudId: params.id } });
     return NextResponse.json({ error: err?.message || 'Error inesperado' }, { status: 500 });
   }
 }

@@ -5,6 +5,7 @@ import { X, Plus, Trash2, Save, AlertCircle, Loader2, Search, Package, PackagePl
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import NuevoArticuloInsumoModal, { NuevoArticuloInsumoData } from './NuevoArticuloInsumoModal';
+import { PROVEEDORES_INSUMO, PROVEEDOR_OTRO, aprobadorRequerido } from '@/lib/insumos/proveedores';
 
 interface Product {
   codigo: string;
@@ -74,6 +75,8 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
   const [productos, setProductos] = useState<Product[]>([]);
   const [almacenesInsumos, setAlmacenesInsumos] = useState<Almacen[]>([]);
   const [fechaLimite, setFechaLimite] = useState('');
+  const [proveedor, setProveedor] = useState('');
+  const [proveedorNombre, setProveedorNombre] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [emailsNotificar, setEmailsNotificar] = useState<string[]>([]);
   const [nuevoEmail, setNuevoEmail] = useState('');
@@ -197,6 +200,8 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
 
   const guardar = async () => {
     setError(null);
+    if (!proveedor) return setError('Elegí un proveedor');
+    if (proveedor === PROVEEDOR_OTRO && !proveedorNombre.trim()) return setError('Indicá el nombre del proveedor');
     if (items.length === 0) return setError('Al menos un item');
     for (const it of items) {
       if (!it.descripcion.trim()) return setError('Todos los items necesitan producto o descripción');
@@ -214,6 +219,8 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
         body: JSON.stringify({
           organizacion_id: organizacionId,
           categoria: categoriaFinal,
+          proveedor: proveedor || null,
+          proveedor_nombre: proveedor === PROVEEDOR_OTRO ? (proveedorNombre.trim() || null) : null,
           emails_notificar: emailsNotificar,
           fecha_limite: fechaLimite || null,
           observaciones: observaciones.trim() || null,
@@ -276,6 +283,40 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                   className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200"
                 />
               </div>
+            </div>
+
+            {/* Proveedor */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">Proveedor *</label>
+                <select
+                  value={proveedor}
+                  onChange={e => setProveedor(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200"
+                >
+                  <option value="">— elegir proveedor —</option>
+                  {PROVEEDORES_INSUMO.map(p => (
+                    <option key={p.value} value={p.value}>{p.label}</option>
+                  ))}
+                </select>
+                {aprobadorRequerido(proveedor) && (
+                  <p className="text-[11px] text-amber-400 mt-1">
+                    La aprobación de este proveedor es exclusiva de {aprobadorRequerido(proveedor)}.
+                  </p>
+                )}
+              </div>
+              {proveedor === PROVEEDOR_OTRO && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Nombre del proveedor *</label>
+                  <input
+                    type="text"
+                    value={proveedorNombre}
+                    onChange={e => setProveedorNombre(e.target.value)}
+                    placeholder="Escribí el nombre del proveedor"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Emails a notificar */}

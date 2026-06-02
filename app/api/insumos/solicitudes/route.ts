@@ -101,6 +101,8 @@ export async function POST(request: NextRequest) {
         numero,
         organizacion_id: orgId,
         categoria: parsed.data.categoria,
+        proveedor: parsed.data.proveedor || null,
+        proveedor_nombre: parsed.data.proveedor === 'OTRO' ? (parsed.data.proveedor_nombre || null) : null,
         solicitado_por: auth.user.email,
         fecha_limite: parsed.data.fecha_limite || null,
         observaciones: parsed.data.observaciones || null,
