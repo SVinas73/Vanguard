@@ -1,44 +1,45 @@
 -- =====================================================================
--- Borrar solicitudes de insumos de categoría "Artículos de Prueba"
+-- Borrar solicitudes de insumos de PRUEBA
 -- =====================================================================
--- Elimina las solicitudes de prueba y sus items. La categoría puede haberse
--- guardado de varias formas; el LIKE cubre variantes ("Articulos de Prueba",
--- "Artículos de Prueba", etc.).
+-- Los artículos de prueba se identifican por la DESCRIPCIÓN del item
+-- (ej. "ARTICULO PRUEBA", "ARTICULO PRUEBA 2"), no por la categoría.
+-- Este script borra las solicitudes que tienen algún item cuya descripción
+-- contiene "prueba", junto con sus items.
 --
 -- COMO EJECUTAR: pegá en Supabase -> SQL Editor.
--- 1) Corré el primer SELECT para VER qué se va a borrar.
+-- 1) Corré el primer SELECT para VER qué solicitudes se van a borrar.
 -- 2) Si estás conforme, corré el bloque BEGIN...COMMIT.
 -- =====================================================================
 
--- 1) PREVISUALIZAR lo que se borraría
-SELECT id, numero, categoria, solicitado_por, fecha_solicitud, estado
-  FROM solicitudes_insumos
- WHERE categoria ILIKE '%art%culos de prueba%'
-    OR categoria ILIKE '%articulos de prueba%'
-    OR categoria ILIKE '%prueba%';
+-- 1) PREVISUALIZAR: solicitudes que tienen items "de prueba"
+SELECT DISTINCT s.id, s.numero, s.categoria, s.solicitado_por, s.estado, s.fecha_solicitud
+  FROM solicitudes_insumos s
+  JOIN solicitudes_insumos_items i ON i.solicitud_id = s.id
+ WHERE i.descripcion ILIKE '%prueba%'
+ ORDER BY s.fecha_solicitud DESC;
 
 -- 2) BORRAR (revisá el SELECT de arriba antes de correr esto)
 BEGIN;
 
--- Borrar items de esas solicitudes (por si no hay ON DELETE CASCADE)
+-- Guardar los ids de solicitudes con items de prueba
+CREATE TEMP TABLE _solicitudes_prueba ON COMMIT DROP AS
+  SELECT DISTINCT s.id
+    FROM solicitudes_insumos s
+    JOIN solicitudes_insumos_items i ON i.solicitud_id = s.id
+   WHERE i.descripcion ILIKE '%prueba%';
+
+-- Borrar items de esas solicitudes
 DELETE FROM solicitudes_insumos_items
- WHERE solicitud_id IN (
-   SELECT id FROM solicitudes_insumos
-    WHERE categoria ILIKE '%art%culos de prueba%'
-       OR categoria ILIKE '%articulos de prueba%'
-       OR categoria ILIKE '%prueba%'
- );
+ WHERE solicitud_id IN (SELECT id FROM _solicitudes_prueba);
 
 -- Borrar las solicitudes
 DELETE FROM solicitudes_insumos
- WHERE categoria ILIKE '%art%culos de prueba%'
-    OR categoria ILIKE '%articulos de prueba%'
-    OR categoria ILIKE '%prueba%';
+ WHERE id IN (SELECT id FROM _solicitudes_prueba);
 
--- Verificación: debería devolver 0 filas
-SELECT count(*) AS quedan
-  FROM solicitudes_insumos
- WHERE categoria ILIKE '%prueba%';
+-- Verificación: debería devolver 0
+SELECT count(*) AS items_prueba_restantes
+  FROM solicitudes_insumos_items
+ WHERE descripcion ILIKE '%prueba%';
 
 COMMIT;
 -- Si algo no cuadra, en vez de COMMIT ejecutá:  ROLLBACK;

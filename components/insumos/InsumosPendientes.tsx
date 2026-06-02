@@ -2,7 +2,9 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useOrganizacion } from '@/hooks/useOrganizacion';
-import { Package, RefreshCw, Search, Clock, AlertTriangle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import DetalleSolicitudInsumoModal from './DetalleSolicitudInsumoModal';
+import { Package, RefreshCw, Search, Clock, AlertTriangle, ChevronRight } from 'lucide-react';
 
 // =====================================================
 // Insumos pendientes de aprobación (desglose por item)
@@ -27,11 +29,16 @@ interface Solicitud {
   solicitado_por: string;
   fecha_solicitud: string;
   fecha_limite?: string | null;
-  estado: string;
+  fecha_ingreso?: string | null;
+  estado: 'pendiente' | 'en_gestion' | 'comprada' | 'recibida' | 'cerrada' | 'cancelada';
+  estado_motivo?: string | null;
+  gestor_asignado?: string | null;
+  observaciones?: string | null;
   items: ItemSolicitud[];
 }
 
 interface ItemPendiente extends ItemSolicitud {
+  solicitud: Solicitud;
   solicitudNumero: string;
   solicitante: string;
   categoria: string;
@@ -41,7 +48,9 @@ interface ItemPendiente extends ItemSolicitud {
 
 export default function InsumosPendientes() {
   const { orgActivaId } = useOrganizacion();
+  const { user } = useAuth(false);
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
+  const [detalle, setDetalle] = useState<Solicitud | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -74,6 +83,7 @@ export default function InsumosPendientes() {
       for (const it of s.items || []) {
         out.push({
           ...it,
+          solicitud: s,
           solicitudNumero: s.numero,
           solicitante: s.solicitado_por,
           categoria: s.categoria,
@@ -165,11 +175,17 @@ export default function InsumosPendientes() {
                 <th className="px-4 py-2 text-left">Solicitante</th>
                 <th className="px-4 py-2 text-left">Categoría</th>
                 <th className="px-4 py-2 text-left">Fecha límite</th>
+                <th className="px-4 py-2 text-right">Solicitud</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
               {filtrados.map((i) => (
-                <tr key={`${i.solicitudNumero}-${i.id}`} className="hover:bg-slate-800/30">
+                <tr
+                  key={`${i.solicitudNumero}-${i.id}`}
+                  className="hover:bg-slate-800/30 cursor-pointer"
+                  onClick={() => setDetalle(i.solicitud)}
+                  title="Ver la solicitud de origen"
+                >
                   <td className="px-4 py-2.5">
                     <div className="text-slate-200">{i.descripcion}</div>
                     {i.observaciones && <div className="text-[11px] text-slate-500">{i.observaciones}</div>}
@@ -179,12 +195,25 @@ export default function InsumosPendientes() {
                   <td className="px-4 py-2.5 text-slate-400">{i.solicitante}</td>
                   <td className="px-4 py-2.5 text-slate-400">{i.categoria}</td>
                   <td className={`px-4 py-2.5 ${vencida(i.fechaLimite) ? 'text-red-400' : 'text-slate-400'}`}>{fmtFecha(i.fechaLimite)}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span className="inline-flex items-center gap-1 text-xs text-blue-400">Ver <ChevronRight className="h-3.5 w-3.5" /></span>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {/* Detalle de la solicitud de origen */}
+      {detalle && (
+        <DetalleSolicitudInsumoModal
+          solicitud={detalle as any}
+          puedeGestionar={user?.email === detalle.gestor_asignado || (user as any)?.rol === 'admin'}
+          onClose={() => setDetalle(null)}
+          onChanged={() => { setDetalle(null); cargar(); }}
+        />
+      )}
     </div>
   );
 }
