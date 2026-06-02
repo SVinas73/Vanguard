@@ -214,6 +214,7 @@ function useHybridData<T>(
   fetchBackend: () => Promise<T>,
   computeLocal: () => T,
   deps: React.DependencyList,
+  localOnly = false,
 ): { data: T; source: DataSource; loading: boolean; refresh: () => void } {
   const [data, setData] = useState<T>(() => computeLocal());
   const [source, setSource] = useState<DataSource>('loading');
@@ -228,6 +229,19 @@ function useHybridData<T>(
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+
+    // localOnly: no consultar el backend (datos pre-filtrados por almacén).
+    if (localOnly) {
+      // pequeño tick para que el spinner sea visible al refrescar.
+      const id = setTimeout(() => {
+        if (cancelled) return;
+        setData(localFn());
+        setSource('local');
+        setLoading(false);
+      }, 120);
+      return () => { cancelled = true; clearTimeout(id); };
+    }
+
     backendFn()
       .then((res) => {
         if (cancelled) return;
@@ -245,7 +259,7 @@ function useHybridData<T>(
     return () => {
       cancelled = true;
     };
-  }, [backendFn, localFn, nonce]);
+  }, [backendFn, localFn, nonce, localOnly]);
 
   const refresh = useCallback(() => setNonce((n) => n + 1), []);
   return { data, source, loading, refresh };
@@ -298,9 +312,16 @@ interface AIPanelDataProps {
   predictions?: Record<string, StockPrediction>;
   /** Refresca los datos de origen (productos/movimientos) en el padre. */
   onRefresh?: () => void;
+  /**
+   * Si es true, el panel usa SOLO el cálculo local sobre los products/movements
+   * recibidos (no consulta el backend global). Necesario cuando los datos están
+   * pre-filtrados por almacén (ej: Análisis de Insumos), porque el backend de
+   * IA no filtra por almacén y mezclaría productos de venta con insumos.
+   */
+  localOnly?: boolean;
 }
 
-export function AIPredictionsPanel({ products = [], movements = [], predictions = {}, onRefresh }: AIPanelDataProps) {
+export function AIPredictionsPanel({ products = [], movements = [], predictions = {}, onRefresh, localOnly = false }: AIPanelDataProps) {
   const { t } = useTranslation();
 
   // Fallback local: predictor client-side que ya corre en la app.
@@ -342,7 +363,7 @@ export function AIPredictionsPanel({ products = [], movements = [], predictions 
   }, []);
 
   const { data, source, loading, refresh } = useHybridData(
-    fetchBackend, computeLocal, [products, predictions],
+    fetchBackend, computeLocal, [products, predictions], localOnly,
   );
   const error = null;
   // Refresca SOLO este card (no recarga toda la página).
@@ -469,7 +490,7 @@ interface AnomaliesData {
   total_anomalias: number;
 }
 
-export function AIAnomaliesPanel({ products = [], movements = [], onRefresh }: AIPanelDataProps) {
+export function AIAnomaliesPanel({ products = [], movements = [], onRefresh, localOnly = false }: AIPanelDataProps) {
   const { t } = useTranslation();
 
   // Fallback local: detección Z-score sobre el historial.
@@ -522,7 +543,7 @@ export function AIAnomaliesPanel({ products = [], movements = [], onRefresh }: A
   }, [movements.length]);
 
   const { data, source, loading, refresh } = useHybridData(
-    fetchBackend, computeLocal, [products, movements],
+    fetchBackend, computeLocal, [products, movements], localOnly,
   );
   const error = null;
   // Refresca SOLO este card (no recarga toda la página).
@@ -642,7 +663,7 @@ interface AssociationsData {
   total_transacciones: number;
 }
 
-export function AIAssociationsPanel({ products = [], movements = [], onRefresh }: AIPanelDataProps) {
+export function AIAssociationsPanel({ products = [], movements = [], onRefresh, localOnly = false }: AIPanelDataProps) {
   const { t } = useTranslation();
 
   // Fallback local: Apriori simplificado client-side (salidas del mismo día).
@@ -706,7 +727,7 @@ export function AIAssociationsPanel({ products = [], movements = [], onRefresh }
   }, []);
 
   const { data, source, loading, refresh } = useHybridData(
-    fetchBackend, computeLocal, [products, movements],
+    fetchBackend, computeLocal, [products, movements], localOnly,
   );
   const error = null;
   // Refresca SOLO este card (no recarga toda la página).

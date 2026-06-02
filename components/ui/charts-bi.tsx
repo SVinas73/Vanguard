@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   PieChart, Pie, Cell, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -64,30 +64,71 @@ export function Donut({
   valueFormatter?: (v: number) => string;
 }) {
   const total = useMemo(() => data.reduce((s, d) => s + d.value, 0), [data]);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  // Color de cada segmento (paleta o color propio del item).
+  const colorAt = (d: DonutDataItem, i: number) => d.color ?? CHART_COLORS[i % CHART_COLORS.length];
 
   return (
     <div className="relative inline-block" style={{ width: size, height: size }}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
+          <defs>
+            {/* Gradiente radial por segmento: da profundidad (más claro al
+                borde interno, más saturado al externo). */}
+            {data.map((d, i) => {
+              const c = colorAt(d, i);
+              return (
+                <radialGradient key={i} id={`donutGrad-${i}`} cx="50%" cy="50%" r="65%">
+                  <stop offset="55%" stopColor={c} stopOpacity={0.78} />
+                  <stop offset="100%" stopColor={c} stopOpacity={1} />
+                </radialGradient>
+              );
+            })}
+            {/* Sombra suave para separar el anillo del fondo. */}
+            <filter id="donutShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000" floodOpacity="0.35" />
+            </filter>
+          </defs>
           <Pie
             data={data}
-            innerRadius={size * 0.32}
-            outerRadius={size * 0.45}
-            paddingAngle={2}
+            innerRadius={size * 0.30}
+            outerRadius={size * 0.46}
+            paddingAngle={3}
+            cornerRadius={6}
             dataKey="value"
-            stroke="none"
+            stroke="rgba(15,23,42,0.6)"
+            strokeWidth={1}
+            startAngle={90}
+            endAngle={-270}
+            isAnimationActive
+            animationDuration={650}
+            onMouseEnter={(_, i) => setActiveIndex(i)}
+            onMouseLeave={() => setActiveIndex(null)}
+            style={{ filter: 'url(#donutShadow)' }}
           >
             {data.map((d, i) => (
-              <Cell key={i} fill={d.color ?? CHART_COLORS[i % CHART_COLORS.length]} />
+              <Cell
+                key={i}
+                fill={`url(#donutGrad-${i})`}
+                // Resaltar el segmento activo: un poco más opaco y elevado.
+                opacity={activeIndex === null || activeIndex === i ? 1 : 0.45}
+                style={{
+                  transition: 'opacity 160ms ease, transform 160ms ease',
+                  transformOrigin: 'center',
+                  transform: activeIndex === i ? 'scale(1.04)' : 'scale(1)',
+                }}
+              />
             ))}
           </Pie>
           <Tooltip
             {...TooltipStyle}
-            // Pin arriba del donut: así el tooltip nunca se superpone con el
-            // texto central (TOTAL / valor). zIndex alto para quedar por encima.
             position={{ y: -12 }}
             wrapperStyle={{ zIndex: 50 }}
-            formatter={(v: number) => [valueFormatter ? valueFormatter(v) : v.toLocaleString('es-UY'), '']}
+            formatter={(v: number, name: string) => {
+              const pct = total > 0 ? ` · ${((v / total) * 100).toFixed(1)}%` : '';
+              return [(valueFormatter ? valueFormatter(v) : v.toLocaleString('es-UY')) + pct, name];
+            }}
           />
         </PieChart>
       </ResponsiveContainer>
