@@ -52,7 +52,7 @@ export default function ComercialModule({
   const [insumosPeriod, setInsumosPeriod] = useState('30d');
 
   // Datos del store para el "Análisis de insumos"
-  const { products: allProducts, movements: allMovements, predictions } = useInventoryStore();
+  const { products: allProducts, movements: allMovements, predictions, fetchProducts, fetchMovements } = useInventoryStore();
 
   // Lista de almacenes para identificar cuáles son de insumos (nombre contiene "insumo")
   const [almacenes, setAlmacenes] = useState<Array<{ id: string; nombre: string }>>([]);
@@ -227,7 +227,7 @@ export default function ComercialModule({
               period={insumosPeriod}
               onPeriodChange={setInsumosPeriod}
               onNavigate={() => {}}
-              onRefresh={() => {}}
+              onRefresh={() => { fetchProducts(); fetchMovements(); }}
               flowSource="movements"
             />
           )}
