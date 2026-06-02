@@ -20,16 +20,26 @@ import { reportarError } from '@/lib/security/error-reporting';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-async function generarNumero(supabase: any, orgId: string | null): Promise<string> {
-  const año = new Date().getFullYear();
-  const q = supabase
+// Número de solicitud SI-AAAA-NNNN. Calculado a partir del MÁXIMO sufijo
+// existente del año (no del conteo), GLOBAL a todas las organizaciones, porque
+// la constraint única `uq_solicitudes_insumos_numero` es global. Usar el conteo
+// rompía cuando había huecos (solicitudes borradas) o varias organizaciones:
+// generaba un número ya usado → duplicate key. El máximo+1 soporta solicitudes
+// infinitas y es resistente a borrados.
+async function generarNumero(supabase: any, año: number): Promise<string> {
+  const { data } = await supabase
     .from('solicitudes_insumos')
-    .select('id', { count: 'exact', head: true })
-    .gte('created_at', `${año}-01-01`);
-  const { count } = orgId
-    ? await q.eq('organizacion_id', orgId)
-    : await q.is('organizacion_id', null);
-  return `SI-${año}-${String((count || 0) + 1).padStart(4, '0')}`;
+    .select('numero')
+    .like('numero', `SI-${año}-%`);
+  let max = 0;
+  for (const r of (data || []) as Array<{ numero: string | null }>) {
+    const m = /^SI-\d{4}-(\d+)$/.exec(r.numero || '');
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (Number.isFinite(n) && n > max) max = n;
+    }
+  }
+  return `SI-${año}-${String(max + 1).padStart(4, '0')}`;
 }
 
 export async function GET(request: NextRequest) {
@@ -92,24 +102,39 @@ export async function POST(request: NextRequest) {
     const destinatarios = parsed.data.emails_notificar || [];
     const categoriaLabel = parsed.data.categoria;
 
-    // 2. Generar número y crear solicitud
-    const numero = await generarNumero(supabase, orgId);
-
-    const { data: solicitud, error: solError } = await supabase
-      .from('solicitudes_insumos')
-      .insert({
-        numero,
-        organizacion_id: orgId,
-        categoria: parsed.data.categoria,
-        proveedor: parsed.data.proveedor || null,
-        proveedor_nombre: parsed.data.proveedor === 'OTRO' ? (parsed.data.proveedor_nombre || null) : null,
-        solicitado_por: auth.user.email,
-        fecha_limite: parsed.data.fecha_limite || null,
-        observaciones: parsed.data.observaciones || null,
-        estado: 'pendiente',
-      })
-      .select()
-      .single();
+    // 2. Generar número y crear solicitud. Reintentamos ante una colisión de
+    //    número (código 23505 = unique_violation): si dos solicitudes se crean
+    //    casi a la vez pueden calcular el mismo número; en ese caso recalculamos
+    //    el máximo y volvemos a intentar. Soporta solicitudes infinitas.
+    const año = new Date().getFullYear();
+    let numero = '';
+    let solicitud: any = null;
+    let solError: any = null;
+    for (let intento = 0; intento < 6; intento++) {
+      numero = await generarNumero(supabase, año);
+      const res = await supabase
+        .from('solicitudes_insumos')
+        .insert({
+          numero,
+          organizacion_id: orgId,
+          categoria: parsed.data.categoria,
+          proveedor: parsed.data.proveedor || null,
+          proveedor_nombre: parsed.data.proveedor === 'OTRO' ? (parsed.data.proveedor_nombre || null) : null,
+          solicitado_por: auth.user.email,
+          fecha_limite: parsed.data.fecha_limite || null,
+          observaciones: parsed.data.observaciones || null,
+          estado: 'pendiente',
+        })
+        .select()
+        .single();
+      solicitud = res.data;
+      solError = res.error;
+      if (!solError && solicitud) break;
+      // Solo reintentamos si fue colisión de número; otro error → abortar.
+      if ((solError as any)?.code !== '23505') break;
+      // pequeño respiro antes de recalcular el máximo
+      await new Promise(r => setTimeout(r, 40 * (intento + 1)));
+    }
 
     if (solError || !solicitud) {
       reportarError(new Error(`Insert solicitud falló: ${solError?.message}`), {
