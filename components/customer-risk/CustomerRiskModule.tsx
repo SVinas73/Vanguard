@@ -70,7 +70,7 @@ export function CustomerRiskModule() {
     const back = await checkAiBackends();
     setBackends(back);
     if (!back.vanguardIA && !back.postsale) {
-      setErrorMsg('Ningún backend de IA está disponible. Configurá NEXT_PUBLIC_VANGUARD_IA_URL y/o NEXT_PUBLIC_POSTSALE_URL.');
+      setErrorMsg('El análisis con IA no está disponible por ahora.');
       setLoading(false);
       return;
     }
@@ -270,14 +270,6 @@ export function CustomerRiskModule() {
       {seleccionado && (
         <DetalleCliente score={seleccionado} postsale={enriquecerConPostsale(seleccionado)} onClose={() => setSeleccionado(null)} />
       )}
-
-      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2">
-        <span className="flex items-center gap-1.5">
-          <Sparkles size={11} />
-          Modelo: XGBoost (sklearn) entrenado con 13 features de Supabase + LLM postsale-mvp
-        </span>
-        <span>Diferencial vs SAP/Odoo — no lo tienen out-of-the-box.</span>
-      </div>
     </div>
   );
 }
