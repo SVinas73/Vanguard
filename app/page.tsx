@@ -71,7 +71,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { TabType, CategorySuggestion, AnomalyResult, Product, Almacen } from '@/types';
 import { useInventoryStore } from '@/store';
 import { recordModuleVisit } from '@/lib/home/routine';
-import { CATEGORIA_NOMBRES } from '@/lib/constants';
+import { CATEGORIAS_VENTA } from '@/lib/constants';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 import {
   semanticSearch,
@@ -416,8 +416,10 @@ export default function HomePage() {
   }, [products, predictions]);
 
   // Options for selects
+  // Categorías del DEPÓSITO DE VENTAS (separadas de insumos; editar en
+  // lib/constants.ts → CATEGORIAS_VENTA).
   const categoryOptions = useMemo(() => {
-    return CATEGORIA_NOMBRES.map((c) => ({ value: c, label: c }));
+    return CATEGORIAS_VENTA.map((c) => ({ value: c, label: c }));
   }, []);
   
   const productOptions = useMemo(() => {

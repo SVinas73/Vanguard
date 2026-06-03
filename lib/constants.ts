@@ -17,6 +17,22 @@ export const CATEGORIAS: Category[] = [
 export const CATEGORIA_NOMBRES = CATEGORIAS.map((c) => c.nombre);
 
 // ============================================
+// CATEGORÍAS DEL DEPÓSITO DE VENTAS
+// ============================================
+// Categorías que se ofrecen al crear un producto en el depósito de ventas.
+// Está SEPARADA de las categorías de insumos a propósito.
+// 👉 EDITÁ ESTA LISTA con las categorías reales del depósito de ventas cuando
+//    las tengas definidas. Por ahora quedan las líneas comerciales actuales.
+export const CATEGORIAS_VENTA: string[] = [
+  'Estación de Servicio',
+  'Ferretería',
+  'Edintor',
+  'Papelería',
+  'Oficina',
+  'Embalaje',
+];
+
+// ============================================
 // COLORES POR CATEGORÍA (para badges)
 // ============================================
 
