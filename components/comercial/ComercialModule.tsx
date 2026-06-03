@@ -226,7 +226,7 @@ export default function ComercialModule({
               userName={userEmail?.split('@')[0]}
               period={insumosPeriod}
               onPeriodChange={setInsumosPeriod}
-              onNavigate={() => {}}
+              onNavigate={() => setInsumosSubTab('solicitud')}
               onRefresh={() => { fetchProducts(); fetchMovements(); }}
               flowSource="movements"
             />
