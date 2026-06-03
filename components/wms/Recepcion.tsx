@@ -554,6 +554,14 @@ export default function Recepcion() {
     const tarea = tareasPutaway.find(t => t.id === tareaId);
     if (!tarea) return;
 
+    // Guard: sin ubicación destino válida NO se completa. De lo contrario la
+    // tarea quedaba "completada" pero el stock nunca entraba a la ubicación
+    // (dead-end silencioso). El operador debe asignar ubicación primero.
+    if (!tarea.ubicacion_destino_id || !tarea.ubicacion_destino_codigo || tarea.ubicacion_destino_codigo === 'PENDIENTE-ASIGNAR') {
+      toast.warning('Asigná una ubicación de destino válida antes de completar el put-away.');
+      return;
+    }
+
     const fechaCompletado = new Date().toISOString();
 
     // 1. Persistir el cierre de la tarea
