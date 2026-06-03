@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
+import { sincronizarStockProducto } from '@/lib/wms-stock-sync';
 
 // =====================================================
 // Reposición automática pick-from-bulk
@@ -136,27 +137,33 @@ export async function ejecutarReposicion(
     .maybeSingle();
   if (!tarea) return false;
 
-  const cantidad = Math.min(cantidadReal, parseFloat(tarea.cantidad_sugerida));
-  if (cantidad <= 0) return false;
+  const cantidadSugerida = Math.min(cantidadReal, parseFloat(tarea.cantidad_sugerida));
+  if (cantidadSugerida <= 0) return false;
 
-  // Decrementar origen
-  if (tarea.ubicacion_origen_id) {
-    const { data: stockOrigen } = await supabase
-      .from('wms_stock_ubicacion')
-      .select('id, cantidad')
-      .eq('ubicacion_id', tarea.ubicacion_origen_id)
-      .eq('producto_codigo', tarea.producto_codigo)
-      .maybeSingle();
-    if (stockOrigen) {
-      await supabase
-        .from('wms_stock_ubicacion')
-        .update({
-          cantidad: Math.max(0, parseFloat((stockOrigen as any).cantidad) - cantidad),
-          ultimo_movimiento: new Date().toISOString(),
-        })
-        .eq('id', (stockOrigen as any).id);
-    }
+  // La reposición MUEVE stock (bulk → picking): NO crea unidades. Por eso
+  // exige un origen con stock y acota la cantidad a lo realmente disponible.
+  // Sin esto, mover sin origen (o más que el origen) inflaba productos.stock.
+  if (!tarea.ubicacion_origen_id) {
+    return false; // sin origen no se puede mover
   }
+  const { data: stockOrigen } = await supabase
+    .from('wms_stock_ubicacion')
+    .select('id, cantidad')
+    .eq('ubicacion_id', tarea.ubicacion_origen_id)
+    .eq('producto_codigo', tarea.producto_codigo)
+    .maybeSingle();
+  const origenDisponible = stockOrigen ? (parseFloat((stockOrigen as any).cantidad) || 0) : 0;
+  const cantidad = Math.min(cantidadSugerida, origenDisponible);
+  if (cantidad <= 0) return false; // nada que mover
+
+  // Decrementar origen por la cantidad realmente movida.
+  await supabase
+    .from('wms_stock_ubicacion')
+    .update({
+      cantidad: origenDisponible - cantidad,
+      ultimo_movimiento: new Date().toISOString(),
+    })
+    .eq('id', (stockOrigen as any).id);
 
   // Incrementar destino
   const { data: stockDestino } = await supabase
@@ -184,6 +191,10 @@ export async function ejecutarReposicion(
       ultimo_movimiento: new Date().toISOString(),
     });
   }
+
+  // productos.stock = suma de ubicaciones (consistencia; el total no cambia
+  // porque la reposición solo mueve entre ubicaciones).
+  await sincronizarStockProducto(tarea.producto_codigo);
 
   // Cerrar tarea
   await supabase
