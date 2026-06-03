@@ -10,8 +10,8 @@ import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
 import { CommandPalette, useCommandPalette, type CommandAction } from '@/components/ui/command-palette';
-import { useFocusMode, FocusModeToggle, FocusModeBanner } from '@/components/ui/focus-mode';
-import { useCalmMode, CalmMode, CalmModeToggle, type CalmFoco } from '@/components/ui/CalmMode';
+import { useFocusMode, FocusModeBanner } from '@/components/ui/focus-mode';
+import { useCalmMode, CalmMode, type CalmFoco } from '@/components/ui/CalmMode';
 import { useStressDetector, setDeteccionStressDeshabilitada } from '@/hooks/useStressDetector';
 import StressPrompt from '@/components/ui/StressPrompt';
 import MiDia from '@/components/dashboard/MiDia';
@@ -85,7 +85,7 @@ import { Sidebar } from '@/components/layout';
 import { Breadcrumbs } from '@/components/layout/breadcrumbs';
 import { Button, Input, Select, SearchableSelect, Modal, Card, AIAlert } from '@/components/ui';
 import { NotificationBell } from '@/components/ui/notifications';
-import { ShortcutsHelp } from '@/components/ui/shortcuts-help';
+import { ShortcutsModal } from '@/components/ui/shortcuts-help';
 import { OnboardingTour } from '@/components/ui/onboarding-tour';
 import { ProductTable } from '@/components/productos';
 import { MovementList, MovementTypeSelector, TransferenciasDashboard } from '@/components/movimientos';
@@ -173,6 +173,9 @@ export default function HomePage() {
     setFocusEnabled(true);
     marcarComoMostrado();
   }, [setFocusEnabled, marcarComoMostrado]);
+
+  // Atajos de teclado (modal abierto desde Configuración del sidebar)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // ===== Modo Calma (anti-estrés visual, activado por el usuario) =====
   const calm = useCalmMode();
@@ -667,6 +670,11 @@ export default function HomePage() {
           canViewQMS: hasPermission('canViewQMS'),
           canExportData: hasPermission('canExportData'),
         }}
+        onOpenShortcuts={() => setShortcutsOpen(true)}
+        focusEnabled={focusEnabled}
+        onToggleFocus={toggleFocus}
+        onOpenCalm={() => calm.setOpen(true)}
+        calmAmbient={calm.ambient}
       />
 
       <main className="ml-0 lg:ml-[260px] transition-all duration-300 min-h-screen">
@@ -1327,9 +1335,8 @@ export default function HomePage() {
         onClose={() => setPaletteOpen(false)}
         onAction={handleCommand}
       />
-      <FocusModeToggle enabled={focusEnabled} onToggle={toggleFocus} />
+      {/* Focus / Calma / Atajos viven en Configuración del sidebar (no flotantes). */}
       <FocusModeBanner enabled={focusEnabled} />
-      <CalmModeToggle onOpen={() => calm.setOpen(true)} ambient={calm.ambient} />
       <CalmMode
         open={calm.open}
         onClose={() => calm.setOpen(false)}
@@ -1360,8 +1367,8 @@ export default function HomePage() {
         onSelectProduct={(product) => handleOpenEdit(product)}
       />
 
-      {/* Atajos de teclado */}
-      <ShortcutsHelp />
+      {/* Atajos de teclado (se abre desde Configuración → Preferencias) */}
+      <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
 
       {/* Tour de onboarding */}
       <OnboardingTour />

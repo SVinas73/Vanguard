@@ -44,7 +44,10 @@ import {
   Send,
   ShieldAlert,
   Building2,
-  Home
+  Home,
+  HelpCircle,
+  Focus,
+  Wind,
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -78,6 +81,12 @@ interface SidebarProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   permissions: SidebarPermissions;
+  // Herramientas de la app (antes botones flotantes, ahora en Configuración)
+  onOpenShortcuts?: () => void;
+  focusEnabled?: boolean;
+  onToggleFocus?: () => void;
+  onOpenCalm?: () => void;
+  calmAmbient?: boolean;
 }
 
 type PermissionName = keyof SidebarPermissions;
@@ -101,7 +110,7 @@ interface NavSection {
 // SIDEBAR COMPONENT
 // ============================================
 
-export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, permissions, onOpenShortcuts, focusEnabled, onToggleFocus, onOpenCalm, calmAmbient }: SidebarProps) {
   const { t } = useTranslation();
   const { user, signOut, rol } = useAuth(false);
   const { theme, toggleTheme } = useTheme();
@@ -110,6 +119,7 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
   const esLite = moduleConfig.preset === 'lite';
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [prefsOpen, setPrefsOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     main: false,
     operations: false,
@@ -397,6 +407,60 @@ export function Sidebar({ activeTab, onTabChange, permissions }: SidebarProps) {
         'border-t border-[#1A1A1A] p-2 space-y-0.5',
         collapsed && 'px-1.5'
       )}>
+        {/* Preferencias / Herramientas — desplegable (antes botones flotantes) */}
+        {(onOpenShortcuts || onToggleFocus || onOpenCalm) && !collapsed && (
+          <div>
+            <button
+              onClick={() => setPrefsOpen(v => !v)}
+              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded text-[#A0A0A0] hover:text-[#F1F1F1] hover:bg-[#1A1A1A]/60 transition-colors"
+            >
+              <Sparkles size={15} strokeWidth={1.5} />
+              <span className="text-[12px] font-medium">Preferencias</span>
+              <ChevronDown size={13} className={cn('ml-auto transition-transform', prefsOpen && 'rotate-180')} />
+            </button>
+            {prefsOpen && (
+              <div className="mt-0.5 ml-1 pl-2 border-l border-[#1A1A1A] space-y-0.5">
+                {onOpenCalm && (
+                  <button
+                    onClick={onOpenCalm}
+                    className={cn(
+                      'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded transition-colors',
+                      calmAmbient ? 'text-cyan-300 hover:bg-[#1A1A1A]/60' : 'text-[#A0A0A0] hover:text-[#F1F1F1] hover:bg-[#1A1A1A]/60',
+                    )}
+                    title="Modo Calma — respirá y enfocate"
+                  >
+                    <Wind size={15} strokeWidth={1.5} />
+                    <span className="text-[12px] font-medium">Modo Calma</span>
+                  </button>
+                )}
+                {onToggleFocus && (
+                  <button
+                    onClick={onToggleFocus}
+                    className={cn(
+                      'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded transition-colors',
+                      focusEnabled ? 'text-purple-300 hover:bg-[#1A1A1A]/60' : 'text-[#A0A0A0] hover:text-[#F1F1F1] hover:bg-[#1A1A1A]/60',
+                    )}
+                    title="Focus Mode — oculta lo accesorio (tecla F)"
+                  >
+                    <Focus size={15} strokeWidth={1.5} />
+                    <span className="text-[12px] font-medium">{focusEnabled ? 'Salir de Focus' : 'Focus Mode'}</span>
+                  </button>
+                )}
+                {onOpenShortcuts && (
+                  <button
+                    onClick={onOpenShortcuts}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded text-[#A0A0A0] hover:text-[#F1F1F1] hover:bg-[#1A1A1A]/60 transition-colors"
+                    title="Atajos de teclado"
+                  >
+                    <HelpCircle size={15} strokeWidth={1.5} />
+                    <span className="text-[12px] font-medium">Atajos de teclado</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         <button
           onClick={toggleTheme}
           className={cn(
