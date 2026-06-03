@@ -37,7 +37,7 @@ const fmtMoney = (v: number, compact = false) => {
 
 export function PricingRecommender() {
   const { t } = useTranslation();
-  const { almacenes, almacenId, setAlmacenId, filtrarPorAlmacen } = useAlmacenes();
+  const { almacenes, almacenId, setAlmacenId, filtrarPorAlmacen } = useAlmacenes({ soloVenta: true });
   const [recomendaciones, setRecomendaciones] = useState<Recomendacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<Filtro>('todos');

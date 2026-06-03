@@ -344,7 +344,7 @@ export default function SerialManagement({ productoCodigo }: SerialManagementPro
           { label: 'Valor Disp.', value: `$${stats.valorDisponible.toLocaleString()}`, color: 'purple' },
         ].map((stat, i) => (
           <div key={i} className={`bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 border-l-4 border-l-${stat.color}-500`}>
-            <div className={`text-2xl font-bold text-${stat.color}-400`}>{stat.value}</div>
+            <div className="text-2xl font-bold text-slate-100">{stat.value}</div>
             <div className="text-sm text-slate-500">{stat.label}</div>
           </div>
         ))}
