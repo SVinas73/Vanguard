@@ -21,12 +21,16 @@ interface Cliente {
   telefono?: string | null;
   direccion?: string | null;
   limite_credito?: number | null;
+  dias_credito?: number | null;
   bloqueado?: boolean;
   activo?: boolean;
 }
 
+// Plazo de crédito disponible (días). Contado = 1 día.
+const PLAZOS_CREDITO = [1, 30, 60, 90];
+
 const FORM_VACIO = {
-  codigo: '', tipo: 'persona', nombre: '', rut: '', email: '', telefono: '', direccion: '', limiteCredito: 0, bloqueado: false,
+  codigo: '', tipo: 'persona', nombre: '', rut: '', email: '', telefono: '', direccion: '', diasCredito: 30, bloqueado: false,
 };
 
 export function GestionClientes({ userEmail }: { userEmail?: string }) {
@@ -63,7 +67,7 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
     setForm({
       codigo: c.codigo || '', tipo: c.tipo || 'persona', nombre: c.nombre || '',
       rut: c.rut || '', email: c.email || '', telefono: c.telefono || '',
-      direccion: c.direccion || '', limiteCredito: Number(c.limite_credito) || 0,
+      direccion: c.direccion || '', diasCredito: Number(c.dias_credito) || 30,
       bloqueado: c.bloqueado === true,
     });
     setError(null);
@@ -85,7 +89,7 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
       email: form.email || null,
       telefono: form.telefono || null,
       direccion: form.direccion || null,
-      limite_credito: form.limiteCredito || 0,
+      dias_credito: form.diasCredito || 30,
       bloqueado: form.bloqueado,
     };
     const res = editando
@@ -203,11 +207,14 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200" />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Límite de crédito</label>
-                  <input type="number" value={form.limiteCredito} onChange={e => setForm({ ...form, limiteCredito: parseFloat(e.target.value) || 0 })}
-                    min="0" step="100" placeholder="0 = sin límite"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200" />
-                  <p className="text-[11px] text-slate-500 mt-1">0 = sin límite. Se valida al crear pedidos.</p>
+                  <label className="block text-xs text-slate-400 mb-1">Plazo de crédito</label>
+                  <select value={form.diasCredito} onChange={e => setForm({ ...form, diasCredito: parseInt(e.target.value) || 1 })}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200">
+                    {PLAZOS_CREDITO.map(d => (
+                      <option key={d} value={d}>{d === 1 ? 'Contado (1 día)' : `${d} días`}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-slate-500 mt-1">Plazo de pago acordado con el cliente.</p>
                 </div>
               </div>
               <label className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded cursor-pointer">

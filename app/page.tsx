@@ -531,6 +531,12 @@ export default function HomePage() {
       : precioCompra;
     const userEmail = user?.email || 'Sistema';
 
+    // El almacén es IMPLÍCITO: el depósito de ventas actual (no se elige).
+    // Si el dashboard está en "todos", usamos el primer almacén de venta.
+    const almacenImplicito = (dashboardAlmacenId && dashboardAlmacenId !== 'todos')
+      ? dashboardAlmacenId
+      : (almacenesVenta[0]?.id ?? null);
+
     // 1. INSERT directo (no usamos addProduct del store: silencia errores).
     const productoData = {
       codigo: codigoFinal,
@@ -541,7 +547,7 @@ export default function HomePage() {
       stock: 0,
       stock_minimo: parseInt(newProduct.stockMinimo) || 10,
       costo_promedio: 0,
-      almacen_id: newProduct.almacenId || null,
+      almacen_id: almacenImplicito,
       creado_por: userEmail,
       creado_at: new Date().toISOString(),
       actualizado_por: userEmail,
@@ -1147,14 +1153,7 @@ export default function HomePage() {
             options={categoryOptions}
             placeholder={t('stock.selectCategory')}
           />
-
-          <Select
-            label={t('stock.warehouse')}
-            value={newProduct.almacenId}
-            onChange={(e) => setNewProduct({ ...newProduct, almacenId: e.target.value })}
-            options={almacenOptions}
-            placeholder={t('common.select')}
-          />
+          {/* El almacén es implícito (depósito de ventas actual); no se elige. */}
         </div>
 
         <div className="flex gap-3 mt-6">
