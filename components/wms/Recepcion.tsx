@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
 import { sincronizarStockProducto } from '@/lib/wms-stock-sync';
+import { getWmsConfig, WMS_CONFIG_DEFAULT, type WmsConfig } from '@/lib/wms-config';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import {
@@ -159,6 +160,7 @@ export default function Recepcion() {
   const [ordenes, setOrdenes] = useState<OrdenRecepcion[]>([]);
   const [tareasPutaway, setTareasPutaway] = useState<TareaPutaway[]>([]);
   const [almacenes, setAlmacenes] = useState<Array<{ id: string; nombre: string }>>([]);
+  const [wmsConfig, setWmsConfig] = useState<WmsConfig>(WMS_CONFIG_DEFAULT);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<string>('activas');
@@ -192,6 +194,9 @@ export default function Recepcion() {
   const loadData = async () => {
     setLoading(true);
     try {
+      // Configuración WMS (estrategia de put-away).
+      getWmsConfig().then(setWmsConfig).catch(() => {});
+
       // Cargar órdenes de recepción
       const { data: ordenesData } = await supabase
         .from('wms_ordenes_recepcion')
@@ -478,6 +483,21 @@ export default function Recepcion() {
     cantidad: number,
     fechaVencimiento?: string | null
   ): Promise<UbicacionSugerida> => {
+    const estrategia = wmsConfig.estrategia_putaway;
+
+    // ESTRATEGIA 'manual': no auto-sugerimos; el operador asigna la ubicación.
+    if (estrategia === 'manual') {
+      void fechaVencimiento;
+      return {
+        ubicacion_id: '',
+        ubicacion_codigo: 'PENDIENTE-ASIGNAR',
+        zona_nombre: '',
+        razon: 'Estrategia manual — el operador asigna la ubicación',
+        score: 0,
+        disponible: 0,
+      };
+    }
+
     // 1) Buscar ubicaciones donde ya está el producto
     const { data: stockExistente } = await supabase
       .from('wms_stock_ubicacion')
@@ -517,7 +537,38 @@ export default function Recepcion() {
       .eq('estado', 'disponible')
       .limit(50);
 
+    // ESTRATEGIA 'familia': preferimos zonas que YA tienen productos de la
+    // misma categoría (agrupar familias). Calculamos esas zonas una vez.
+    const zonasFamilia = new Set<string>();
+    if (estrategia === 'familia') {
+      const { data: prodCat } = await supabase
+        .from('productos').select('categoria').eq('codigo', productoCodigo).maybeSingle();
+      const categoria = (prodCat as any)?.categoria;
+      if (categoria) {
+        const { data: prods } = await supabase
+          .from('productos').select('codigo').eq('categoria', categoria).limit(500);
+        const codigos = (prods || []).map((p: any) => p.codigo);
+        if (codigos.length > 0) {
+          const { data: su } = await supabase
+            .from('wms_stock_ubicacion')
+            .select('wms_ubicaciones!inner(zona_id)')
+            .in('producto_codigo', codigos)
+            .gt('cantidad', 0);
+          for (const r of (su || []) as any[]) {
+            const z = r.wms_ubicaciones?.zona_id;
+            if (z) zonasFamilia.add(z);
+          }
+        }
+      }
+    }
+
+    // Orden: (familia: misma categoría primero) → prioridad_picking (cerca de despacho).
     const ubicsOrdenadas = (ubicaciones || []).slice().sort((a: any, b: any) => {
+      if (estrategia === 'familia') {
+        const fa = zonasFamilia.has(a.wms_zonas?.id) ? 0 : 1;
+        const fb = zonasFamilia.has(b.wms_zonas?.id) ? 0 : 1;
+        if (fa !== fb) return fa - fb;
+      }
       const pa = a.wms_zonas?.prioridad_picking ?? 99;
       const pb = b.wms_zonas?.prioridad_picking ?? 99;
       return pa - pb;

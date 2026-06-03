@@ -588,8 +588,21 @@ export default function Picking() {
     toast.success('Wave liberada — órdenes listas para picker');
   };
 
+  // Orden de recorrido de las líneas según la estrategia configurada.
+  // 'ruta_optima' agrupa por ubicación (recorrido más corto). Las estrategias
+  // de lote (fefo/fifo/lifo) se aplican al asignar el lote en la creación de la
+  // orden, así que acá se respeta el orden solicitado.
+  const ordenarLineasPorEstrategia = (lineas: LineaPicking[]): LineaPicking[] => {
+    if (wmsConfig.estrategia_picking === 'ruta_optima') {
+      return [...lineas].sort((a, b) =>
+        (a.ubicacion_codigo || '').localeCompare(b.ubicacion_codigo || ''));
+    }
+    return lineas;
+  };
+
   const handleIniciarPicking = async (orden: OrdenPicking) => {
     const fechaInicio = new Date().toISOString();
+    const lineasOrdenadas = ordenarLineasPorEstrategia(orden.lineas || []);
 
     // Persistir el inicio
     await supabase.from('wms_ordenes_picking')
@@ -609,7 +622,7 @@ export default function Picking() {
       user?.email || ''
     );
 
-    setOrdenSeleccionada({ ...orden, estado: 'en_proceso', fecha_inicio: fechaInicio, picker_asignado: orden.picker_asignado || user?.email });
+    setOrdenSeleccionada({ ...orden, lineas: lineasOrdenadas, estado: 'en_proceso', fecha_inicio: fechaInicio, picker_asignado: orden.picker_asignado || user?.email });
     setLineaActual(0);
     setCantidadPickeada(0);
     setVistaActiva('picking_activo');
