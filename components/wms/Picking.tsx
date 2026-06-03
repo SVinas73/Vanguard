@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
 import { sincronizarStockProducto } from '@/lib/wms-stock-sync';
+import { getWmsConfig, WMS_CONFIG_DEFAULT, type WmsConfig } from '@/lib/wms-config';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import {
@@ -217,6 +218,7 @@ export default function Picking() {
   const { user } = useAuth(false);
   const toast = useWmsToast();
   const [loading, setLoading] = useState(true);
+  const [wmsConfig, setWmsConfig] = useState<WmsConfig>(WMS_CONFIG_DEFAULT);
   const [vistaActiva, setVistaActiva] = useState<VistaActiva>('ordenes');
   const [waveSeleccionada, setWaveSeleccionada] = useState<WavePicking | null>(null);
   const [ordenSeleccionada, setOrdenSeleccionada] = useState<OrdenPicking | null>(null);
@@ -253,6 +255,9 @@ export default function Picking() {
   const loadData = async () => {
     setLoading(true);
     try {
+      // Configuración WMS (estrategias / políticas de picking).
+      getWmsConfig().then(setWmsConfig).catch(() => {});
+
       // Lista de pickeadores (para asignación manual desde la lista de órdenes)
       cargarMetricasPickers().then(setPickerMetricas).catch(() => {});
 
@@ -620,8 +625,28 @@ export default function Picking() {
     const lineas = ordenSeleccionada.lineas;
     const lineaActualData = lineas[lineaActual];
 
+    // QC GATE: no se puede pickear un producto con una No Conformidad ABIERTA
+    // (control de calidad sin liberar). Frena hasta que QC la cierre.
+    const { data: ncAbierta } = await supabase
+      .from('wms_no_conformidades')
+      .select('numero')
+      .eq('producto_codigo', lineaActualData.producto_codigo)
+      .neq('estado', 'cerrada')
+      .limit(1)
+      .maybeSingle();
+    if (ncAbierta) {
+      toast.error(`Producto con control de calidad pendiente (${(ncAbierta as any).numero}). No se puede pickear hasta liberarlo.`);
+      return;
+    }
+
     const cantidad = cantidadPickeada || lineaActualData.cantidad_solicitada;
     const esShortPick = cantidad < lineaActualData.cantidad_solicitada;
+
+    // POLÍTICA (Configuración WMS): si no se permiten short-picks, frenar.
+    if (esShortPick && !wmsConfig.permitir_short_pick) {
+      toast.error(`La política del depósito no permite short-picks. Solicitado: ${lineaActualData.cantidad_solicitada}, intentado: ${cantidad}.`);
+      return;
+    }
 
     const nuevoEstadoLinea: EstadoLineaPicking = esShortPick ? 'short_pick' : 'completada';
 
