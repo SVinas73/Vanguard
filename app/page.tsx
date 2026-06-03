@@ -179,15 +179,32 @@ export default function HomePage() {
 
   // ===== Modo Calma (anti-estrés visual, activado por el usuario) =====
   const calm = useCalmMode();
-  // Focos = las señales de carga detectadas, mostradas de a una para no abrumar.
+  // Focos = SOLO señales reales del sistema (no comportamiento), mostradas de a
+  // una y con acción para ir a resolverlas. Las conductuales (frenesí, hora,
+  // etc.) no son "focos" accionables, así que se excluyen.
   const calmFocos = useMemo<CalmFoco[]>(() => {
     if (!stressScore) return [];
-    return [...stressScore.componentes]
-      .filter(c => c.valor > 0)
+    const FOCO_NAV: Record<string, { tab: TabType; label: string }> = {
+      'Aprobaciones pendientes': { tab: 'aprobaciones' as TabType, label: 'Ver aprobaciones' },
+      'Tickets con SLA vencido': { tab: 'taller' as TabType, label: 'Ver tickets' },
+      'Productos agotados':      { tab: 'stock' as TabType, label: 'Ver stock' },
+      'CxC vencidas':            { tab: 'finanzas' as TabType, label: 'Ver finanzas' },
+      'Picking sin asignar':     { tab: 'wms' as TabType, label: 'Ver picking' },
+    };
+    const SISTEMA = new Set([...Object.keys(FOCO_NAV), 'Notificaciones críticas']);
+    return stressScore.componentes
+      .filter(c => SISTEMA.has(c.fuente) && c.valor > 0)
       .sort((a, b) => (b.valor * b.peso) - (a.valor * a.peso))
-      .slice(0, 5)
-      .map(c => ({ titulo: c.fuente, detalle: c.descripcion }));
-  }, [stressScore]);
+      .map(c => {
+        const nav = FOCO_NAV[c.fuente];
+        return {
+          titulo: c.fuente,
+          detalle: c.descripcion,
+          accion: nav ? () => { calm.setOpen(false); handleTabChange(nav.tab); } : undefined,
+          accionLabel: nav?.label,
+        };
+      });
+  }, [stressScore, calm, handleTabChange]);
 
   const askAI = useCallback((prompt: string) => {
     // Disparamos un evento custom que el ChatbotWidget escucha:

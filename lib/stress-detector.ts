@@ -220,11 +220,15 @@ export async function loadSystemSignals(opts: LoadOptions): Promise<Partial<Stre
   const result: Partial<StressSignals> = {};
 
   try {
-    // Notificaciones críticas activas (no descartadas)
+    // Notificaciones críticas activas (no descartadas) VISIBLES para el usuario.
+    // Antes contaba TODAS las del sistema (de todos los usuarios) → daba números
+    // inflados (ej. "111") que el usuario no veía. Ahora se limita a las globales
+    // (usuario_email NULL) o las propias.
     const { count: notifs } = await supabase
       .from('notificaciones')
       .select('id', { count: 'exact', head: true })
       .eq('descartada', false)
+      .or(`usuario_email.is.null,usuario_email.eq.${opts.usuarioEmail}`)
       .in('severidad', ['error', 'warning']);
     result.notificacionesCriticas = notifs ?? 0;
   } catch { result.notificacionesCriticas = 0; }

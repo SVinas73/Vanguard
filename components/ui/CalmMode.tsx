@@ -23,6 +23,9 @@ const AMBIENT_KEY = 'vanguard-calm-ambient';
 export interface CalmFoco {
   titulo: string;
   detalle?: string;
+  /** Acción para ir a resolver el foco (navega y cierra el Modo Calma). */
+  accion?: () => void;
+  accionLabel?: string;
 }
 export interface CalmRespaldo {
   label: string;
@@ -174,12 +177,21 @@ export function CalmMode({ open, onClose, userName, focos = [], respaldo = [], a
                 <div className="text-sm text-slate-400 mt-1">{focoActual.detalle}</div>
               )}
               <div className="flex items-center gap-2 mt-4">
-                <button
-                  onClick={marcarHecho}
-                  className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium"
-                >
-                  <Check className="h-4 w-4" /> Listo
-                </button>
+                {focoActual.accion ? (
+                  <button
+                    onClick={() => { focoActual.accion?.(); }}
+                    className="flex items-center gap-2 px-3 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-medium"
+                  >
+                    {focoActual.accionLabel || 'Ir a resolver'} <ChevronRight className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={marcarHecho}
+                    className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium"
+                  >
+                    <Check className="h-4 w-4" /> Entendido
+                  </button>
+                )}
                 {pendientes.length > 1 && (
                   <button
                     onClick={siguiente}
@@ -214,23 +226,37 @@ export function CalmMode({ open, onClose, userName, focos = [], respaldo = [], a
           </div>
         </div>
 
-        {/* Ambiente adaptativo (opcional, lo elige el usuario) */}
-        <button
-          onClick={onToggleAmbient}
-          className={cn(
-            'mt-8 flex items-center gap-2 px-4 py-2 rounded-full border text-sm transition-colors',
-            ambient
-              ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-200'
-              : 'bg-slate-900/60 border-slate-700/60 text-slate-300 hover:bg-slate-800',
-          )}
-          title="Cuando salgas del Modo Calma, la app sigue más serena (menos saturación, más aire)."
-        >
-          <Moon className="h-4 w-4" />
-          {ambient ? 'Ambiente sereno activado' : 'Mantener la app serena al salir'}
-        </button>
-        <p className="text-[11px] text-slate-500 mt-2 max-w-xs text-center">
-          El ambiente sereno es opcional y solo lo activás vos. Lo podés apagar cuando quieras.
-        </p>
+        {/* Ambiente sereno (opcional, lo elige el usuario) */}
+        <div className="mt-8 w-full max-w-md rounded-2xl bg-slate-900/50 border border-slate-800/60 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-slate-100 flex items-center gap-2">
+                <Moon className="h-4 w-4 text-cyan-300" /> Ambiente sereno
+              </div>
+              <p className="text-[12px] text-slate-400 mt-1 leading-snug">
+                Suaviza <strong>toda la app</strong> al salir: baja la intensidad de los colores
+                y hace las transiciones más lentas, para reducir el ruido visual. Opcional —
+                lo prendés y apagás cuando quieras.
+              </p>
+            </div>
+            {/* Switch */}
+            <button
+              onClick={onToggleAmbient}
+              role="switch"
+              aria-checked={ambient}
+              className={cn(
+                'relative shrink-0 w-11 h-6 rounded-full transition-colors',
+                ambient ? 'bg-cyan-500' : 'bg-slate-700',
+              )}
+              title={ambient ? 'Desactivar ambiente sereno' : 'Activar ambiente sereno'}
+            >
+              <span className={cn(
+                'absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform',
+                ambient && 'translate-x-5',
+              )} />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
