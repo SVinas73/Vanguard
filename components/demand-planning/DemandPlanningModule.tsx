@@ -97,7 +97,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
 
 export default function DemandPlanningModule() {
   const [moduloActivo, setModuloActivo] = useState<ModuloDemand>('dashboard');
-  const { almacenes, almacenId, setAlmacenId } = useAlmacenes();
+  const { almacenes, almacenId, setAlmacenId } = useAlmacenes({ soloVenta: true });
 
   const moduloConfig = MENU_ITEMS.find(m => m.id === moduloActivo);
 

@@ -117,7 +117,7 @@ const ABC_COLORS = {
 
 export function AnalyticsDashboard({ products: allProducts, movements: allMovements, predictions }: AnalyticsDashboardProps) {
   const { t } = useTranslation();
-  const { almacenes, almacenId, setAlmacenId, filtrarPorAlmacen } = useAlmacenes();
+  const { almacenes, almacenId, setAlmacenId, filtrarPorAlmacen } = useAlmacenes({ soloVenta: true });
   // Filtrar por el almacén elegido (misma lógica que el resto de módulos).
   // Todo el dashboard usa `products`/`movements` ya filtrados.
   const products = useMemo(() => filtrarPorAlmacen(allProducts), [allProducts, almacenId]);

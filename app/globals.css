@@ -752,6 +752,53 @@ tr:hover td {
 }
 
 /* ============================================
+   MODO CALMA (anti-estrés)
+   ============================================ */
+
+/* Respiración guiada: el círculo se expande (inhalar) y contrae (exhalar)
+   en un ciclo lento de 11s (4s inhalar · 2s sostener · 5s exhalar aprox). */
+@keyframes calmBreath {
+  0%   { transform: scale(0.72); opacity: 0.55; }
+  36%  { transform: scale(1.0);  opacity: 1; }     /* fin inhalar */
+  55%  { transform: scale(1.0);  opacity: 1; }     /* sostener */
+  100% { transform: scale(0.72); opacity: 0.55; }  /* exhalar */
+}
+.calm-breath {
+  animation: calmBreath 11s ease-in-out infinite;
+}
+@keyframes calmHalo {
+  0%   { transform: scale(0.8);  opacity: 0.35; }
+  36%  { transform: scale(1.15); opacity: 0.12; }
+  100% { transform: scale(0.8);  opacity: 0.35; }
+}
+.calm-halo {
+  animation: calmHalo 11s ease-in-out infinite;
+}
+.calm-enter {
+  animation: calmEnter 320ms ease-out;
+}
+@keyframes calmEnter {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .calm-breath, .calm-halo { animation: none; }
+}
+
+/* Ambiente adaptativo OPCIONAL — lo activa el usuario. Baja el ruido visual
+   de toda la app: menos saturación, más aire, transiciones suaves. */
+.calm-ambient {
+  filter: saturate(0.82);
+  transition: filter 600ms ease;
+}
+.calm-ambient * {
+  transition-duration: 260ms !important;
+}
+.calm-ambient .text-slate-500 {
+  color: rgba(120, 130, 145, 0.75);
+}
+
+/* ============================================
    MICRO-INTERACTIONS
    ============================================ */
 
