@@ -548,34 +548,43 @@ async function scanOrdenesSinEntregar(): Promise<void> {
 export async function escanearStock(productos: Array<{ codigo: string; descripcion: string; stock: number; stockMinimo: number }>): Promise<void> {
   const keysVigentes = new Set<string>();
 
-  for (const p of productos) {
-    if (p.stock === 0) {
-      const key = `sin_stock:${p.codigo}`;
-      keysVigentes.add(key);
-      await crearNotificacion({
-        tipo: 'sin_stock',
-        severidad: 'error',
-        titulo: 'Sin stock',
-        mensaje: `${p.descripcion} (${p.codigo}): agotado`,
-        entidadTipo: 'producto',
-        entidadId: p.codigo,
-        entidadCodigo: p.codigo,
-        dedupKey: key,
-      });
-    } else if (p.stock <= p.stockMinimo) {
-      const key = `stock_bajo:${p.codigo}`;
-      keysVigentes.add(key);
-      await crearNotificacion({
-        tipo: 'stock_bajo',
-        severidad: 'warning',
-        titulo: 'Stock bajo',
-        mensaje: `${p.descripcion} (${p.codigo}): ${p.stock} uds (mín: ${p.stockMinimo})`,
-        entidadTipo: 'producto',
-        entidadId: p.codigo,
-        entidadCodigo: p.codigo,
-        dedupKey: key,
-      });
-    }
+  // Agregamos en UN resumen por categoría (en vez de una notif por producto)
+  // para no inundar la campanita. La key incluye el conteo: si cambia, se
+  // cierra el resumen viejo y se crea el nuevo (cerrarNotificacionesObsoletas
+  // también limpia las notifs por-producto del esquema anterior).
+  const sinStock = productos.filter(p => p.stock === 0);
+  const bajos = productos.filter(p => p.stock > 0 && p.stockMinimo > 0 && p.stock <= p.stockMinimo);
+
+  if (sinStock.length > 0) {
+    const key = `sin_stock:resumen:${sinStock.length}`;
+    keysVigentes.add(key);
+    const muestra = sinStock.slice(0, 6).map(p => p.descripcion).join(', ');
+    await crearNotificacion({
+      tipo: 'sin_stock',
+      severidad: 'error',
+      titulo: `${sinStock.length} producto${sinStock.length === 1 ? '' : 's'} sin stock`,
+      mensaje: muestra + (sinStock.length > 6 ? `, y ${sinStock.length - 6} más` : ''),
+      entidadTipo: 'producto',
+      entidadId: 'resumen',
+      dedupKey: key,
+      metadata: { codigos: sinStock.map(p => p.codigo) },
+    });
+  }
+
+  if (bajos.length > 0) {
+    const key = `stock_bajo:resumen:${bajos.length}`;
+    keysVigentes.add(key);
+    const muestra = bajos.slice(0, 6).map(p => `${p.descripcion} (${p.stock})`).join(', ');
+    await crearNotificacion({
+      tipo: 'stock_bajo',
+      severidad: 'warning',
+      titulo: `${bajos.length} producto${bajos.length === 1 ? '' : 's'} con stock bajo`,
+      mensaje: muestra + (bajos.length > 6 ? `, y ${bajos.length - 6} más` : ''),
+      entidadTipo: 'producto',
+      entidadId: 'resumen',
+      dedupKey: key,
+      metadata: { codigos: bajos.map(p => p.codigo) },
+    });
   }
 
   await cerrarNotificacionesObsoletas('sin_stock:', keysVigentes);
