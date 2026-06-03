@@ -22,7 +22,8 @@ import { cn } from '@/lib/utils';
 
 const STORAGE_KEY = 'vanguard-focus-mode';
 
-export function useFocusMode() {
+export function useFocusMode(opts: { shortcut?: boolean } = {}) {
+  const { shortcut = true } = opts;
   const [enabled, setEnabled] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
@@ -42,8 +43,9 @@ export function useFocusMode() {
     }
   }, [enabled, hydrated]);
 
-  // Atajo "F" para toggle (solo si no se está tipeando)
+  // Atajo "F" para toggle (solo si no se está tipeando). Se puede desactivar.
   useEffect(() => {
+    if (!shortcut) return;
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       const tag = target?.tagName?.toLowerCase();
@@ -57,7 +59,7 @@ export function useFocusMode() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [shortcut]);
 
   const toggle = useCallback(() => setEnabled(v => !v), []);
 

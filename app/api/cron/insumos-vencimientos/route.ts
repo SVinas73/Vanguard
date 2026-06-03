@@ -3,9 +3,10 @@
 // =====================================================
 // Job idempotente que corre 1x al día (o más).
 // Para cada solicitud activa (pendiente/en_gestion/comprada) con
-// fecha_limite definida:
-//   - Si fecha_limite es en 3 días o menos (futuro) → notif "por vencer"
+// fecha_limite definida (NO recibida/cerrada/cancelada):
+//   - Avisos previos en hitos 5, 3, 2 y 1 día antes (y "vence hoy") → "por vencer"
 //   - Si fecha_limite ya pasó → notif "vencida" + email a gestores
+// La alerta aplica también cuando la solicitud sigue SIN APROBAR (pendiente).
 //
 // Idempotencia: dedupKey en notificaciones evita duplicados.
 // Para emails usamos email_outbox.entidad_id como tracker.
@@ -24,7 +25,9 @@ import { reportarError } from '@/lib/security/error-reporting';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const DIAS_AVISO_PREVIO = 3;
+const DIAS_AVISO_PREVIO = 5;
+// Hitos exactos de aviso previo (días antes de la fecha límite). 0 = vence hoy.
+const HITOS_AVISO = new Set([5, 3, 2, 1, 0]);
 
 interface Solicitud {
   id: string;
@@ -164,21 +167,24 @@ export async function GET(request: NextRequest) {
           }
         }
       } else {
-        // Por vencer (≤ DIAS_AVISO_PREVIO días)
-        porVencer++;
+        // Por vencer: avisamos SOLO en los hitos 5, 3, 2, 1 y el día que vence
+        // (0). Se omiten los días intermedios (ej. 4) para no spamear.
         const dias = Math.round((limite.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
-        const fechaKey = hoy.toISOString().split('T')[0];
+        if (!HITOS_AVISO.has(dias)) continue;
+        porVencer++;
+        const cuando = dias === 0 ? 'vence hoy' : `vence en ${dias} ${dias === 1 ? 'día' : 'días'}`;
         for (const email of destinatariosInApp) {
           await crearNotificacion({
             tipo: 'solicitud_insumo_estado',
-            severidad: 'warning',
-            titulo: `Solicitud ${s.numero} por vencer`,
-            mensaje: `La solicitud "${s.numero}" vence en ${dias} ${dias === 1 ? 'día' : 'días'} (${new Date(s.fecha_limite).toLocaleDateString('es-UY')}).`,
+            severidad: dias <= 1 ? 'error' : 'warning',
+            titulo: `Solicitud ${s.numero} ${dias === 0 ? 'vence hoy' : 'por vencer'}`,
+            mensaje: `La solicitud "${s.numero}" ${cuando} (${new Date(s.fecha_limite).toLocaleDateString('es-UY')}). Estado: ${s.estado === 'pendiente' ? 'sin aprobar' : s.estado}.`,
             entidadTipo: 'solicitudes_insumos',
             entidadId: s.id,
             entidadCodigo: s.numero,
             usuarioEmail: email,
-            dedupKey: `solicitud_porvencer:${s.id}:${email}:${fechaKey}`,
+            // Key por HITO (no por día) → un aviso por cada hito 5/3/2/1/0.
+            dedupKey: `solicitud_porvencer:${s.id}:${email}:${dias}`,
             metadata: { estado: s.estado, fecha_limite: s.fecha_limite, dias_restantes: dias },
           });
         }

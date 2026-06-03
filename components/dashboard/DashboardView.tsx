@@ -216,6 +216,7 @@ export function DashboardView({
             movements={movements}
             predictions={predictions}
             onNavigate={onNavigate}
+            flowSource={flowSource}
           />
         </div>
       </div>
