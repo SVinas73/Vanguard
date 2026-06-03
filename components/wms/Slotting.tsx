@@ -218,31 +218,33 @@ export default function Slotting() {
 
       const idsInsumos = new Set(
         (almacenesData || [])
-          .filter((a: any) => (a.nombre || '').toLowerCase().includes('insumo'))
+          .filter((a: any) => a.es_insumos === true || (a.nombre || '').toLowerCase().includes('insumo'))
           .map((a: any) => a.id)
       );
 
-      // Cargar productos (excluyendo los del almacén de insumos)
-      const { data: productosData } = await supabase
+      // Cargar productos y EXCLUIR los del almacén de insumos. Usamos esta misma
+      // lista filtrada tanto para la grilla como para el análisis ABC y las
+      // recomendaciones (antes el análisis usaba la lista SIN filtrar → metía
+      // insumos en el slotting).
+      const { data: productosRaw } = await supabase
         .from('productos')
         .select('*')
         .order('descripcion');
 
-      if (productosData) {
-        const productosVenta = productosData.filter(
-          (p: any) => !p.almacen_id || !idsInsumos.has(p.almacen_id)
-        );
-        setProductos(productosVenta.map(p => ({
-          codigo: p.codigo,
-          descripcion: p.descripcion,
-          precio: p.precio,
-          categoria: p.categoria,
-          stock: p.stock,
-          stockMinimo: p.stock_minimo,
-          costoPromedio: p.costo_promedio,
-          almacenId: p.almacen_id,
-        })));
-      }
+      const productosData = (productosRaw || []).filter(
+        (p: any) => !p.almacen_id || !idsInsumos.has(p.almacen_id)
+      );
+
+      setProductos(productosData.map(p => ({
+        codigo: p.codigo,
+        descripcion: p.descripcion,
+        precio: p.precio,
+        categoria: p.categoria,
+        stock: p.stock,
+        stockMinimo: p.stock_minimo,
+        costoPromedio: p.costo_promedio,
+        almacenId: p.almacen_id,
+      })));
 
       if (almacenesData) {
         setAlmacenes(almacenesData.map(a => ({

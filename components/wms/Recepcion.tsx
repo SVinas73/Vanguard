@@ -213,13 +213,17 @@ export default function Recepcion() {
         .order('prioridad', { ascending: true });
       setTareasPutaway(putawayData || []);
 
-      // Cargar almacenes (para asignar la recepción al almacén correcto)
+      // Cargar almacenes (para asignar la recepción al almacén correcto).
+      // WMS NO opera el almacén de insumos: lo excluimos de la lista.
       const { data: almData } = await supabase
         .from('almacenes')
-        .select('id, nombre')
+        .select('id, nombre, es_insumos')
         .eq('activo', true)
         .order('es_principal', { ascending: false });
-      setAlmacenes(almData || []);
+      const almSinInsumos = (almData || [])
+        .filter((a: any) => a.es_insumos !== true && !(a.nombre || '').toLowerCase().includes('insumo'))
+        .map((a: any) => ({ id: a.id, nombre: a.nombre }));
+      setAlmacenes(almSinInsumos);
     } finally {
       setLoading(false);
     }
