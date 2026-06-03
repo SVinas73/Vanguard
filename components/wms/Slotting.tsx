@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Product, Almacen } from '@/types';
 import { registrarAuditoria } from '@/lib/audit';
+import { sincronizarStockProducto } from '@/lib/wms-stock-sync';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import {
@@ -616,34 +617,102 @@ export default function Slotting() {
     setSaving(true);
     try {
       const rec = recomendaciones.find(r => r.id === recId);
+      if (!rec) return;
       const fecha = new Date().toISOString();
-      // Trazabilidad: registrar la reubicación como movimiento interno.
-      if (rec) {
-        await supabase.from('wms_movimientos').insert({
-          numero: `SLT-${Date.now()}`,
-          tipo: 'transferencia',
-          estado: 'completado',
-          producto_codigo: rec.producto_codigo,
-          cantidad: 0,
-          ubicacion_origen_codigo: rec.ubicacion_origen || null,
-          ubicacion_destino_codigo: rec.ubicacion_destino || null,
-          motivo: 'reubicacion_slotting',
-          documento_tipo: 'slotting',
-          ejecutado_por: user?.email || null,
-          fecha_solicitud: fecha,
-          fecha_ejecucion: fecha,
-        }).then(({ error }) => {
-          if (error) console.warn('[slotting] no se pudo registrar movimiento:', error.message);
-        });
-        await persistirRecomendacion(rec, {
-          estado: 'ejecutada', ejecutado_por: user?.email || null, fecha_ejecucion: fecha,
-        });
+
+      // 1. Stock del producto en la ubicación ORIGEN.
+      const { data: origen } = await supabase
+        .from('wms_stock_ubicacion')
+        .select('id, ubicacion_id, ubicacion_codigo, cantidad, cantidad_reservada, lote_numero')
+        .eq('producto_codigo', rec.producto_codigo)
+        .eq('ubicacion_codigo', rec.ubicacion_origen)
+        .gt('cantidad', 0)
+        .maybeSingle();
+
+      if (!origen) {
+        toast.warning(`Sin stock en la ubicación origen (${rec.ubicacion_origen}). No hay nada que reubicar.`);
+        return;
       }
+      // Guard: no mover stock reservado (podría estar comprometido en un picking).
+      if ((Number((origen as any).cantidad_reservada) || 0) > 0) {
+        toast.warning('La ubicación origen tiene stock reservado. Resolvé el picking antes de reubicar.');
+        return;
+      }
+
+      // 2. Resolver una ubicación DESTINO libre en la zona objetivo.
+      const { data: zonaDest } = await supabase
+        .from('wms_zonas').select('id').eq('nombre', rec.zona_destino || '').maybeSingle();
+      if (!zonaDest) {
+        toast.warning(`No se encontró la zona destino "${rec.zona_destino}".`);
+        return;
+      }
+      const { data: ubicLibre } = await supabase
+        .from('wms_ubicaciones')
+        .select('id, codigo, codigo_completo')
+        .eq('zona_id', (zonaDest as any).id)
+        .eq('estado', 'disponible')
+        .limit(1)
+        .maybeSingle();
+      if (!ubicLibre) {
+        toast.warning(`No hay ubicación libre en la zona "${rec.zona_destino}". Liberá una antes de reubicar.`);
+        return;
+      }
+      const destCodigo = (ubicLibre as any).codigo_completo || (ubicLibre as any).codigo;
+      const cant = Number((origen as any).cantidad) || 0;
+
+      // 3. Mover stock: crear destino, vaciar origen.
+      await supabase.from('wms_stock_ubicacion').insert({
+        ubicacion_id: (ubicLibre as any).id,
+        ubicacion_codigo: destCodigo,
+        producto_codigo: rec.producto_codigo,
+        cantidad: cant,
+        cantidad_reservada: 0,
+        cantidad_disponible: cant,
+        lote_numero: (origen as any).lote_numero || null,
+        ultimo_movimiento: fecha,
+      });
+      await supabase.from('wms_stock_ubicacion')
+        .update({ cantidad: 0, cantidad_disponible: 0, ultimo_movimiento: fecha })
+        .eq('id', (origen as any).id);
+
+      // 4. Estados de ubicaciones (destino ocupada, origen libre).
+      await supabase.from('wms_ubicaciones').update({ estado: 'ocupada' }).eq('id', (ubicLibre as any).id);
+      if ((origen as any).ubicacion_id) {
+        await supabase.from('wms_ubicaciones').update({ estado: 'disponible' }).eq('id', (origen as any).ubicacion_id);
+      }
+
+      // 5. productos.stock = suma de ubicaciones (el total no cambia, pero
+      //    mantenemos la consistencia ante cualquier diferencia).
+      await sincronizarStockProducto(rec.producto_codigo);
+
+      // 6. Trazabilidad: movimiento con cantidad y destino REALES.
+      await supabase.from('wms_movimientos').insert({
+        numero: `SLT-${Date.now()}`,
+        tipo: 'transferencia',
+        estado: 'completado',
+        producto_codigo: rec.producto_codigo,
+        cantidad: cant,
+        ubicacion_origen_codigo: rec.ubicacion_origen || null,
+        ubicacion_destino_codigo: destCodigo,
+        motivo: 'reubicacion_slotting',
+        documento_tipo: 'slotting',
+        ejecutado_por: user?.email || null,
+        fecha_solicitud: fecha,
+        fecha_ejecucion: fecha,
+      });
+
+      // 7. Persistir la recomendación como ejecutada con el destino real.
+      await persistirRecomendacion(rec, {
+        estado: 'ejecutada', ubicacion_destino: destCodigo,
+        ejecutado_por: user?.email || null, fecha_ejecucion: fecha,
+      });
+
       setRecomendaciones(prev => prev.map(r =>
         r.id === recId
-          ? { ...r, estado: 'ejecutada' as EstadoRecomendacion, fecha_ejecucion: fecha, ejecutado_por: user?.email || 'usuario' }
+          ? { ...r, estado: 'ejecutada' as EstadoRecomendacion, ubicacion_destino: destCodigo, fecha_ejecucion: fecha, ejecutado_por: user?.email || 'usuario' }
           : r
       ));
+      toast.success(`Reubicado ${cant} uds de ${rec.producto_codigo} a ${destCodigo}`);
     } finally {
       setSaving(false);
     }
