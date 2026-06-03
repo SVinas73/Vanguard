@@ -11,6 +11,7 @@ import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
 import { CommandPalette, useCommandPalette, type CommandAction } from '@/components/ui/command-palette';
 import { useFocusMode, FocusModeToggle, FocusModeBanner } from '@/components/ui/focus-mode';
+import { useCalmMode, CalmMode, CalmModeToggle, type CalmFoco } from '@/components/ui/CalmMode';
 import { useStressDetector, setDeteccionStressDeshabilitada } from '@/hooks/useStressDetector';
 import StressPrompt from '@/components/ui/StressPrompt';
 import MiDia from '@/components/dashboard/MiDia';
@@ -172,6 +173,18 @@ export default function HomePage() {
     setFocusEnabled(true);
     marcarComoMostrado();
   }, [setFocusEnabled, marcarComoMostrado]);
+
+  // ===== Modo Calma (anti-estrés visual, activado por el usuario) =====
+  const calm = useCalmMode();
+  // Focos = las señales de carga detectadas, mostradas de a una para no abrumar.
+  const calmFocos = useMemo<CalmFoco[]>(() => {
+    if (!stressScore) return [];
+    return [...stressScore.componentes]
+      .filter(c => c.valor > 0)
+      .sort((a, b) => (b.valor * b.peso) - (a.valor * a.peso))
+      .slice(0, 5)
+      .map(c => ({ titulo: c.fuente, detalle: c.descripcion }));
+  }, [stressScore]);
 
   const askAI = useCallback((prompt: string) => {
     // Disparamos un evento custom que el ChatbotWidget escucha:
@@ -1316,6 +1329,15 @@ export default function HomePage() {
       />
       <FocusModeToggle enabled={focusEnabled} onToggle={toggleFocus} />
       <FocusModeBanner enabled={focusEnabled} />
+      <CalmModeToggle onOpen={() => calm.setOpen(true)} ambient={calm.ambient} />
+      <CalmMode
+        open={calm.open}
+        onClose={() => calm.setOpen(false)}
+        userName={user?.nombre || user?.email?.split('@')[0]}
+        focos={calmFocos}
+        ambient={calm.ambient}
+        onToggleAmbient={calm.toggleAmbient}
+      />
       {stressScore && (
         <StressPrompt
           score={stressScore}
