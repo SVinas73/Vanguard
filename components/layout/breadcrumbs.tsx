@@ -43,7 +43,7 @@ export function Breadcrumbs({ activeTab, onNavigate }: BreadcrumbsProps) {
   return (
     <div className="flex items-center gap-1.5 text-sm text-slate-500 mb-4">
       <button
-        onClick={() => onNavigate('dashboard')}
+        onClick={() => onNavigate('inicio')}
         className="flex items-center gap-1 hover:text-slate-300 transition-colors"
       >
         <Home size={14} />
@@ -55,7 +55,7 @@ export function Breadcrumbs({ activeTab, onNavigate }: BreadcrumbsProps) {
           <span className="text-slate-600">{tabInfo.parent}</span>
         </>
       )}
-      {activeTab !== 'dashboard' && (
+      {activeTab !== 'inicio' && (
         <>
           <ChevronRight size={14} className="text-slate-600" />
           <span className="text-slate-300 font-medium">{tabInfo.label}</span>

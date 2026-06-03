@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HelpCircle, X } from 'lucide-react';
 
-export function ShortcutsHelp() {
+// Modal de atajos controlado desde afuera (para abrirlo desde el menú de
+// configuración del sidebar, no como botón flotante).
+export function ShortcutsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
-  const [isOpen, setIsOpen] = useState(false);
 
   const SHORTCUTS = [
     { keys: 'Ctrl + K', description: t('shortcuts.globalSearch') },
@@ -14,6 +15,53 @@ export function ShortcutsHelp() {
     { keys: 'Ctrl + M', description: t('shortcuts.newMovement') },
     { keys: 'Esc', description: t('shortcuts.closeModal') },
   ];
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-slate-900 border border-slate-700 rounded-xl p-6 w-full max-w-md shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-semibold text-slate-200">{t('shortcuts.title')}</h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {SHORTCUTS.map((shortcut) => (
+            <div
+              key={shortcut.keys}
+              className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-800/50"
+            >
+              <span className="text-sm text-slate-300">{shortcut.description}</span>
+              <kbd className="px-2.5 py-1 text-xs font-mono rounded bg-slate-700 border border-slate-600 text-slate-300">
+                {shortcut.keys}
+              </kbd>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-4 text-xs text-slate-500 text-center">
+          {t('shortcuts.pressEscToClose')}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function ShortcutsHelp() {
+  const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
@@ -27,47 +75,7 @@ export function ShortcutsHelp() {
       >
         <HelpCircle size={18} />
       </button>
-
-      {/* Modal overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setIsOpen(false)}
-        >
-          <div
-            className="bg-slate-900 border border-slate-700 rounded-xl p-6 w-full max-w-md shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-slate-200">{t('shortcuts.title')}</h2>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {SHORTCUTS.map((shortcut) => (
-                <div
-                  key={shortcut.keys}
-                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-800/50"
-                >
-                  <span className="text-sm text-slate-300">{shortcut.description}</span>
-                  <kbd className="px-2.5 py-1 text-xs font-mono rounded bg-slate-700 border border-slate-600 text-slate-300">
-                    {shortcut.keys}
-                  </kbd>
-                </div>
-              ))}
-            </div>
-
-            <p className="mt-4 text-xs text-slate-500 text-center">
-              {t('shortcuts.pressEscToClose')}
-            </p>
-          </div>
-        </div>
-      )}
+      <ShortcutsModal open={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }
