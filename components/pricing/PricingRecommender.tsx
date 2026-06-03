@@ -274,15 +274,6 @@ export function PricingRecommender() {
       {seleccionada && (
         <DetalleRecomendacion rec={seleccionada} onClose={() => setSeleccionada(null)} />
       )}
-
-      {/* Footer */}
-      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2">
-        <span className="flex items-center gap-1.5">
-          <BarChart3 size={11} />
-          {t('pricing.methodFooter') || 'Modelo: regresión log-log de demanda · óptimo de monopolio con costos lineales'}
-        </span>
-        <span>{t('pricing.confidentialNote') || 'Las sugerencias no se aplican automáticamente — siempre revisá antes de cambiar precios.'}</span>
-      </div>
     </div>
   );
 }
