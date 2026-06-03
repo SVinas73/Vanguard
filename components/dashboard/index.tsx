@@ -436,6 +436,8 @@ interface InsightsPanelProps {
   movements: Movement[];
   predictions: Record<string, StockPrediction>;
   onNavigate?: (tab: string) => void;
+  /** 'movements' = inventario de insumos (no se vende; consumo en vez de ventas). */
+  flowSource?: 'orders' | 'movements';
 }
 
 export function InsightsPanel({
@@ -443,8 +445,11 @@ export function InsightsPanel({
   movements,
   predictions,
   onNavigate,
+  flowSource = 'orders',
 }: InsightsPanelProps) {
   const { t } = useTranslation();
+  // En insumos nada se vende: hablamos de consumo / operación, no de ventas.
+  const esInsumos = flowSource === 'movements';
 
   const insights = useMemo(() => {
     const result: Insight[] = [];
@@ -454,12 +459,11 @@ export function InsightsPanel({
     if (outOfStock.length > 0) {
       result.push({
         tipo: 'urgente',
-        titulo: `${outOfStock.length} ${t('insights.productsNoStock', 'productos sin stock')}`,
-        descripcion: t(
-          'insights.outOfStockDesc',
-          'Requieren reposición inmediata para evitar pérdida de ventas.'
-        ),
-        accion: t('insights.createPO', 'Crear orden de compra'),
+        titulo: `${outOfStock.length} ${esInsumos ? 'insumos agotados' : t('insights.productsNoStock', 'productos sin stock')}`,
+        descripcion: esInsumos
+          ? 'Reponé pronto para no frenar la operación.'
+          : t('insights.outOfStockDesc', 'Requieren reposición inmediata para evitar pérdida de ventas.'),
+        accion: esInsumos ? 'Solicitar reposición' : t('insights.createPO', 'Crear orden de compra'),
         metric: `${outOfStock.length}`,
       });
     }
@@ -523,11 +527,10 @@ export function InsightsPanel({
     if (topGrowthProduct && topGrowthPct > 15) {
       result.push({
         tipo: 'tendencia',
-        titulo: `${(topGrowthProduct as Product).descripcion} creció +${Math.round(topGrowthPct)}%`,
-        descripcion: t(
-          'insights.demandAccelerated',
-          'La demanda aceleró vs. el mes anterior. Asegurar stock.'
-        ),
+        titulo: `${(topGrowthProduct as Product).descripcion} ${esInsumos ? 'se consume +' : 'creció +'}${Math.round(topGrowthPct)}%`,
+        descripcion: esInsumos
+          ? 'El consumo aceleró vs. el mes anterior. Asegurá stock.'
+          : t('insights.demandAccelerated', 'La demanda aceleró vs. el mes anterior. Asegurar stock.'),
         accion: t('insights.viewDetail', 'Ver detalle'),
       });
     }
@@ -577,18 +580,17 @@ export function InsightsPanel({
       if (velocityIncrease > 5) {
         result.push({
           tipo: 'oportunidad',
-          titulo: `${t('insights.velocityUp', 'Velocidad de salida')} +${velocityIncrease}%`,
-          descripcion: t(
-            'insights.velocityDesc',
-            'El flujo de salidas aumentó vs. el mes anterior. Buen ritmo operativo.'
-          ),
+          titulo: `${esInsumos ? 'Ritmo de consumo' : t('insights.velocityUp', 'Velocidad de salida')} +${velocityIncrease}%`,
+          descripcion: esInsumos
+            ? 'El consumo aumentó vs. el mes anterior. Buen ritmo operativo.'
+            : t('insights.velocityDesc', 'El flujo de salidas aumentó vs. el mes anterior. Buen ritmo operativo.'),
           accion: t('insights.viewAnalytics', 'Ver analytics'),
         });
       }
     }
 
     return result.slice(0, 6);
-  }, [products, movements, predictions, t]);
+  }, [products, movements, predictions, t, esInsumos]);
 
   // Solo color en el ícono — fila compacta, sin cards con fondo
   const typeTone: Record<InsightType, { text: string; Icon: typeof Flame }> = {

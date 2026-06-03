@@ -149,9 +149,13 @@ export default function HomePage() {
     recordModuleVisit(user?.email || 'anon', tab);
   }, [user?.email]);
 
+  // Bienestar (Modo Calma + Focus Mode + detector de estrés): OCULTO por ahora.
+  // Poner en true para reactivarlo en el futuro.
+  const BIENESTAR_HABILITADO = false;
+
   // ===== Sprint D: Command Palette + Focus Mode =====
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
-  const { enabled: focusEnabled, toggle: toggleFocus, setEnabled: setFocusEnabled } = useFocusMode();
+  const { enabled: focusEnabled, toggle: toggleFocus, setEnabled: setFocusEnabled } = useFocusMode({ shortcut: BIENESTAR_HABILITADO });
 
   // ===== Modo anti-estrés inteligente =====
   // Detecta sobrecarga (notificaciones, aprobaciones, tickets
@@ -165,8 +169,8 @@ export default function HomePage() {
   } = useStressDetector({
     usuarioEmail: user?.email || '',
     rol: user?.rol || '',
-    // Si Focus Mode YA está activo, no insistimos
-    habilitado: !!user?.email && !focusEnabled,
+    // Si Focus Mode YA está activo, no insistimos. Apagado mientras BIENESTAR off.
+    habilitado: BIENESTAR_HABILITADO && !!user?.email && !focusEnabled,
   });
 
   const activarFocusDesdeStress = useCallback(() => {
@@ -689,8 +693,8 @@ export default function HomePage() {
         }}
         onOpenShortcuts={() => setShortcutsOpen(true)}
         focusEnabled={focusEnabled}
-        onToggleFocus={toggleFocus}
-        onOpenCalm={() => calm.setOpen(true)}
+        onToggleFocus={BIENESTAR_HABILITADO ? toggleFocus : undefined}
+        onOpenCalm={BIENESTAR_HABILITADO ? () => calm.setOpen(true) : undefined}
         calmAmbient={calm.ambient}
       />
 
@@ -1352,17 +1356,21 @@ export default function HomePage() {
         onClose={() => setPaletteOpen(false)}
         onAction={handleCommand}
       />
-      {/* Focus / Calma / Atajos viven en Configuración del sidebar (no flotantes). */}
-      <FocusModeBanner enabled={focusEnabled} />
-      <CalmMode
-        open={calm.open}
-        onClose={() => calm.setOpen(false)}
-        userName={user?.nombre || user?.email?.split('@')[0]}
-        focos={calmFocos}
-        ambient={calm.ambient}
-        onToggleAmbient={calm.toggleAmbient}
-      />
-      {stressScore && (
+      {/* Bienestar (Focus / Calma) oculto por ahora — se reactiva con BIENESTAR_HABILITADO. */}
+      {BIENESTAR_HABILITADO && (
+        <>
+          <FocusModeBanner enabled={focusEnabled} />
+          <CalmMode
+            open={calm.open}
+            onClose={() => calm.setOpen(false)}
+            userName={user?.nombre || user?.email?.split('@')[0]}
+            focos={calmFocos}
+            ambient={calm.ambient}
+            onToggleAmbient={calm.toggleAmbient}
+          />
+        </>
+      )}
+      {BIENESTAR_HABILITADO && stressScore && (
         <StressPrompt
           score={stressScore}
           visible={mostrarStressPrompt}
