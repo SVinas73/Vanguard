@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
+import { sincronizarStockProducto } from '@/lib/wms-stock-sync';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import { cn } from '@/lib/utils';
@@ -185,34 +186,61 @@ export default function ControlCalidad() {
     if (error) { toast.error(error.message); return; }
 
     // Efecto sobre stock: rechazar o devolver al proveedor saca la cantidad
-    // afectada del inventario disponible (productos.stock es la fuente de verdad).
+    // afectada del inventario. Para NO descuadrar, descontamos de las
+    // UBICACIONES WMS reales (wms_stock_ubicacion) y luego sincronizamos
+    // productos.stock = suma de ubicaciones. Si el producto no está gestionado
+    // por WMS (sin ubicaciones), baja directa de productos.stock.
     const sacaStock = accionForm.accion === 'rechazar' || accionForm.accion === 'devolver_proveedor';
     if (sacaStock && nc.producto_codigo && (nc.cantidad_afectada || 0) > 0) {
-      const { data: prod } = await supabase
-        .from('productos').select('stock').eq('codigo', nc.producto_codigo).maybeSingle();
-      if (prod) {
-        const nuevoStock = Math.max(0, (Number((prod as any).stock) || 0) - (nc.cantidad_afectada || 0));
-        const { error: errStock } = await supabase
-          .from('productos').update({ stock: nuevoStock }).eq('codigo', nc.producto_codigo);
-        if (errStock) {
-          toast.warning(`NC cerrada, pero no se pudo ajustar el stock: ${errStock.message}`);
-        } else {
-          // Trazabilidad de la baja por calidad.
-          await supabase.from('wms_movimientos').insert({
-            numero: `QC-${Date.now()}`,
-            tipo: 'salida',
-            estado: 'completado',
-            producto_codigo: nc.producto_codigo,
-            cantidad: nc.cantidad_afectada,
-            documento_referencia: nc.numero,
-            documento_tipo: 'no_conformidad',
-            motivo: accionForm.accion,
-            ejecutado_por: user?.email || null,
-            fecha_solicitud: new Date().toISOString(),
-            fecha_ejecucion: new Date().toISOString(),
-          });
+      const codigo = nc.producto_codigo;
+      const afectada = nc.cantidad_afectada || 0;
+      let restante = afectada;
+
+      const { data: ubic } = await supabase
+        .from('wms_stock_ubicacion')
+        .select('id, cantidad')
+        .eq('producto_codigo', codigo)
+        .gt('cantidad', 0)
+        .order('cantidad', { ascending: false });
+
+      if (ubic && ubic.length > 0) {
+        for (const u of ubic as any[]) {
+          if (restante <= 0) break;
+          const disp = Number(u.cantidad) || 0;
+          const quita = Math.min(disp, restante);
+          await supabase.from('wms_stock_ubicacion')
+            .update({ cantidad: disp - quita })
+            .eq('id', u.id);
+          restante -= quita;
+        }
+        // productos.stock = suma de ubicaciones (fuente de verdad WMS).
+        await sincronizarStockProducto(codigo);
+      } else {
+        // Producto sin ubicaciones WMS → baja directa.
+        const { data: prod } = await supabase
+          .from('productos').select('stock').eq('codigo', codigo).maybeSingle();
+        if (prod) {
+          const nuevoStock = Math.max(0, (Number((prod as any).stock) || 0) - afectada);
+          const { error: errStock } = await supabase
+            .from('productos').update({ stock: nuevoStock }).eq('codigo', codigo);
+          if (errStock) toast.warning(`NC cerrada, pero no se pudo ajustar el stock: ${errStock.message}`);
         }
       }
+
+      // Trazabilidad de la baja por calidad.
+      await supabase.from('wms_movimientos').insert({
+        numero: `QC-${Date.now()}`,
+        tipo: 'salida',
+        estado: 'completado',
+        producto_codigo: codigo,
+        cantidad: afectada,
+        documento_referencia: nc.numero,
+        documento_tipo: 'no_conformidad',
+        motivo: accionForm.accion,
+        ejecutado_por: user?.email || null,
+        fecha_solicitud: new Date().toISOString(),
+        fecha_ejecucion: new Date().toISOString(),
+      });
     }
 
     await registrarAuditoria('wms_no_conformidades', 'CERRAR', nc.numero,

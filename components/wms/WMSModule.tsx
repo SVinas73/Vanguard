@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import {
-  Warehouse, MapPin, Truck, Target, ArrowRight,
+  Warehouse, MapPin, Truck, Target,
   Package, BarChart3, Layers, Settings,
-  ChevronRight, RefreshCw, ClipboardCheck,
+  ChevronRight,
   ShieldCheck, Repeat,
 } from 'lucide-react';
 
@@ -16,7 +16,6 @@ import ControlCalidad from './ControlCalidad';
 import Picking from './Picking';
 import Packing from './Packing';
 import Inventario from './Inventario';
-import Movimientos from './Movimientos';
 import Reposicion from './Reposicion';
 import Slotting from './Slotting';
 import Reportes from './Reportes';
@@ -34,7 +33,6 @@ type ModuloWMS =
   | 'picking'
   | 'packing'
   | 'inventario'
-  | 'movimientos'
   | 'reposicion'
   | 'slotting'
   | 'reportes'
@@ -111,14 +109,6 @@ const MENU_ITEMS: MenuItemConfig[] = [
     disponible: true,
   },
   {
-    id: 'movimientos',
-    label: 'Transacciones de Movimientos',
-    icon: ArrowRight,
-    color: 'text-slate-300',
-    descripcion: 'Transferencias y ajustes',
-    disponible: true,
-  },
-  {
     id: 'reposicion',
     label: 'Reposición',
     icon: Repeat,
@@ -178,8 +168,6 @@ export default function WMSModule() {
         return <Packing />;
       case 'inventario':
         return <Inventario />;
-      case 'movimientos':
-        return <Movimientos />;
       case 'reposicion':
         return <Reposicion />;
       case 'slotting':
