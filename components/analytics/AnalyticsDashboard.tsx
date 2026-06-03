@@ -11,6 +11,7 @@ import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
 import { useTiposCambio } from '@/hooks/useTiposCambio';
 import { useAlmacenes } from '@/hooks/useAlmacenes';
 import { AlmacenSelector } from '@/components/common/AlmacenSelector';
+import { Donut, CHART_COLORS } from '@/components/ui/charts-bi';
 import {
   AreaChart,
   Area,
@@ -639,33 +640,28 @@ export function AnalyticsDashboard({ products: allProducts, movements: allMoveme
                 Valor por Categoría
               </h3>
             </div>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS.chart[index % COLORS.chart.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{
-                      backgroundColor: '#1e293b',
-                      border: '1px solid #334155',
-                      borderRadius: '12px',
-                    }}
+            <div className="h-[300px] flex flex-col items-center justify-center">
+              {categoryData.length > 0 ? (
+                <>
+                  <Donut
+                    data={categoryData.map(c => ({ name: c.name, value: c.value }))}
+                    size={210}
+                    centerLabel="Categorías"
+                    centerValue={String(categoryData.length)}
+                    valueFormatter={formatCurrency}
                   />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-3 text-xs">
+                    {categoryData.slice(0, 6).map((d, i) => (
+                      <div key={d.name} className="flex items-center gap-2 min-w-0">
+                        <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                        <span className="text-slate-300 truncate">{d.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="text-sm text-slate-500">Sin datos para mostrar</div>
+              )}
             </div>
           </Card>
 

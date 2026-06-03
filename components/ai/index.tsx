@@ -367,7 +367,10 @@ export function AIPredictionsPanel({ products = [], movements = [], predictions 
   );
   const error = null;
   // Refresca SOLO este card (no recarga toda la página).
-  const fetchData = () => { refresh(); if (localOnly) onRefresh?.(); };
+  // El refresh recalcula SOLO esta card en vivo (no recarga la página).
+  // En modo localOnly recomputa sobre los datos ya filtrados; en modo backend
+  // vuelve a consultar la IA. Nunca dispara onRefresh global (evita el reload).
+  const fetchData = () => { refresh(); };
 
   const accentColor = '#836ba0'; // violet
 
@@ -547,7 +550,10 @@ export function AIAnomaliesPanel({ products = [], movements = [], onRefresh, loc
   );
   const error = null;
   // Refresca SOLO este card (no recarga toda la página).
-  const fetchData = () => { refresh(); if (localOnly) onRefresh?.(); };
+  // El refresh recalcula SOLO esta card en vivo (no recarga la página).
+  // En modo localOnly recomputa sobre los datos ya filtrados; en modo backend
+  // vuelve a consultar la IA. Nunca dispara onRefresh global (evita el reload).
+  const fetchData = () => { refresh(); };
 
   const accentColor = '#dfa6a6'; // rose
 
@@ -731,7 +737,10 @@ export function AIAssociationsPanel({ products = [], movements = [], onRefresh, 
   );
   const error = null;
   // Refresca SOLO este card (no recarga toda la página).
-  const fetchData = () => { refresh(); if (localOnly) onRefresh?.(); };
+  // El refresh recalcula SOLO esta card en vivo (no recarga la página).
+  // En modo localOnly recomputa sobre los datos ya filtrados; en modo backend
+  // vuelve a consultar la IA. Nunca dispara onRefresh global (evita el reload).
+  const fetchData = () => { refresh(); };
 
   const accentColor = '#4a7fb5'; // cyan
 
