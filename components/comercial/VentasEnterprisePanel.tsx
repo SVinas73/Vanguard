@@ -530,7 +530,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
       setOrdenForm({ clienteId: '', vendedorEmail: '', fechaEntrega: '', direccionEnvio: '', notas: '', items: [] });
       loadData();
     } catch (error: any) {
-      toast.error('Error', error.message);
+      toast.error('No se pudo crear la orden', error?.message || error?.hint || 'Error desconocido (¿permisos de la base?).');
     } finally {
       setProcesando(null);
     }

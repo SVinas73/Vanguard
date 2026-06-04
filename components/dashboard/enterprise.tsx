@@ -809,6 +809,9 @@ export function InventoryValueCard({ products, movements, onCategoryClick, perio
   // Valuación unificada: FIFO sobre lotes (fuente de verdad) + fallback
   // a costo promedio. Misma lógica que el Centro de Costos.
   const [valuacion, setValuacion] = useState<ResultadoValuacion | null>(null);
+  // Tasas para normalizar productos en distintas monedas (USD/UYU) a UYU antes
+  // de sumar. Así el valor de inventario contempla los precios en USD.
+  const { rates: ratesValuacion } = useTiposCambio();
   useEffect(() => {
     let cancelled = false;
     valuarInventario({
@@ -819,12 +822,15 @@ export function InventoryValueCard({ products, movements, onCategoryClick, perio
         stockMinimo: p.stockMinimo,
         costoPromedio: p.costoPromedio || 0,
         categoria: p.categoria,
+        moneda: p.moneda,
         almacenId: p.almacenId,
         almacen: p.almacen,
       })),
+      rates: ratesValuacion,
+      monedaBase: 'UYU',
     }).then(r => { if (!cancelled) setValuacion(r); });
     return () => { cancelled = true; };
-  }, [products]);
+  }, [products, ratesValuacion]);
 
   const data = useMemo(() => {
     const CATEGORY_COLORS: Record<string, string> = {
