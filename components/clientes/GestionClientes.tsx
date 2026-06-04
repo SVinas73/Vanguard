@@ -30,7 +30,8 @@ interface Cliente {
 const PLAZOS_CREDITO = [1, 30, 60, 90];
 
 const FORM_VACIO = {
-  codigo: '', tipo: 'persona', nombre: '', rut: '', email: '', telefono: '', direccion: '', diasCredito: 30, bloqueado: false,
+  codigo: '', tipo: 'persona', nombre: '', razonSocial: '', nombreFantasia: '',
+  rut: '', email: '', telefono: '', direccion: '', vendedor: '', diasCredito: 30, bloqueado: false,
 };
 
 export function GestionClientes({ userEmail }: { userEmail?: string }) {
@@ -66,8 +67,10 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
     setEditando(c);
     setForm({
       codigo: c.codigo || '', tipo: c.tipo || 'persona', nombre: c.nombre || '',
+      razonSocial: (c as any).razon_social || '', nombreFantasia: (c as any).nombre_fantasia || '',
       rut: c.rut || '', email: c.email || '', telefono: c.telefono || '',
-      direccion: c.direccion || '', diasCredito: Number(c.dias_credito) || 30,
+      direccion: c.direccion || '', vendedor: (c as any).vendedor || '',
+      diasCredito: Number(c.dias_credito) || 30,
       bloqueado: c.bloqueado === true,
     });
     setError(null);
@@ -85,10 +88,13 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
       codigo: form.codigo.toUpperCase().trim(),
       tipo: form.tipo,
       nombre: form.nombre.trim(),
+      razon_social: form.razonSocial || null,
+      nombre_fantasia: form.nombreFantasia || null,
       rut: form.rut || null,
       email: form.email || null,
       telefono: form.telefono || null,
       direccion: form.direccion || null,
+      vendedor: form.vendedor || null,
       dias_credito: form.diasCredito || 30,
       bloqueado: form.bloqueado,
     };
@@ -196,8 +202,26 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Nombre / Razón social *</label>
+                <label className="block text-xs text-slate-400 mb-1">Nombre *</label>
                 <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">Razón social</label>
+                  <input value={form.razonSocial} onChange={e => setForm({ ...form, razonSocial: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200" />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">Nombre fantasía</label>
+                  <input value={form.nombreFantasia} onChange={e => setForm({ ...form, nombreFantasia: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Vendedor (email)</label>
+                <input value={form.vendedor} onChange={e => setForm({ ...form, vendedor: e.target.value })}
+                  placeholder="vendedor@empresa.com — se autocarga en la orden de venta"
                   className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200" />
               </div>
               <div className="grid grid-cols-2 gap-3">
