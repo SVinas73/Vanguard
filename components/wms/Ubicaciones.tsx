@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
+import { sincronizarStockProducto } from '@/lib/wms-stock-sync';
+import { getAlmacenesInsumoIds } from '@/lib/wms-insumos-filter';
 import { useAuth } from '@/hooks/useAuth';
 import { useWmsToast } from './useWmsToast';
 import {
@@ -97,6 +99,11 @@ export default function Ubicaciones() {
   
   const [zonas, setZonas] = useState<Zona[]>([]);
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
+  // Asignar artículos del Depósito de Ventas a una ubicación + prioridad.
+  const [productosVenta, setProductosVenta] = useState<Array<{ codigo: string; descripcion: string }>>([]);
+  const [stockEnUbic, setStockEnUbic] = useState<Array<{ id: string; producto_codigo: string; cantidad: number }>>([]);
+  const [asignarForm, setAsignarForm] = useState({ codigo: '', cantidad: '' });
+  const [prioridadEdit, setPrioridadEdit] = useState<number>(50);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroZona, setFiltroZona] = useState<string>('todos');
@@ -141,9 +148,86 @@ export default function Ubicaciones() {
         .order('codigo_completo')
         .limit(500);
       setUbicaciones(ubicacionesData || []);
+
+      // Productos del DEPÓSITO DE VENTAS (excluye insumos) para asignar a ubicaciones.
+      const idsInsumos = await getAlmacenesInsumoIds();
+      const { data: prods } = await supabase
+        .from('productos')
+        .select('codigo, descripcion, almacen_id')
+        .order('descripcion')
+        .limit(3000);
+      setProductosVenta(
+        (prods || [])
+          .filter((p: any) => !p.almacen_id || !idsInsumos.has(p.almacen_id))
+          .map((p: any) => ({ codigo: p.codigo, descripcion: p.descripcion })),
+      );
     } finally {
       setLoading(false);
     }
+  };
+
+  const cargarStockUbic = async (ubicacionId: string) => {
+    const { data } = await supabase
+      .from('wms_stock_ubicacion')
+      .select('id, producto_codigo, cantidad')
+      .eq('ubicacion_id', ubicacionId)
+      .gt('cantidad', 0);
+    setStockEnUbic((data as any[]) || []);
+  };
+
+  // Coloca un artículo (del depósito de ventas) en la ubicación: crea/actualiza
+  // wms_stock_ubicacion y sincroniza productos.stock. Así el picker lo ve.
+  const handleAsignarProducto = async () => {
+    const ub = ubicacionSeleccionada;
+    if (!ub) return;
+    if (!asignarForm.codigo) { toast.warning('Elegí un producto'); return; }
+    const cant = parseFloat(asignarForm.cantidad) || 0;
+    if (cant <= 0) { toast.warning('Ingresá una cantidad válida'); return; }
+    const ahora = new Date().toISOString();
+
+    const { data: existente } = await supabase
+      .from('wms_stock_ubicacion')
+      .select('id, cantidad, cantidad_reservada')
+      .eq('ubicacion_id', ub.id)
+      .eq('producto_codigo', asignarForm.codigo)
+      .maybeSingle();
+
+    if (existente) {
+      const nueva = (Number((existente as any).cantidad) || 0) + cant;
+      const reservada = Number((existente as any).cantidad_reservada) || 0;
+      await supabase.from('wms_stock_ubicacion')
+        .update({ cantidad: nueva, cantidad_disponible: Math.max(0, nueva - reservada), ultimo_movimiento: ahora })
+        .eq('id', (existente as any).id);
+    } else {
+      await supabase.from('wms_stock_ubicacion').insert({
+        ubicacion_id: ub.id,
+        ubicacion_codigo: ub.codigo_completo,
+        producto_codigo: asignarForm.codigo,
+        cantidad: cant,
+        cantidad_reservada: 0,
+        cantidad_disponible: cant,
+        ultimo_movimiento: ahora,
+      });
+    }
+
+    await supabase.from('wms_ubicaciones').update({ estado: 'ocupada' }).eq('id', ub.id);
+    await sincronizarStockProducto(asignarForm.codigo);
+    await registrarAuditoria('wms_stock_ubicacion', 'ASIGNAR', ub.codigo_completo,
+      null, { producto: asignarForm.codigo, cantidad: cant }, user?.email || '');
+
+    toast.success(`Colocado: ${cant} uds de ${asignarForm.codigo} en ${ub.codigo_completo}`);
+    setAsignarForm({ codigo: '', cantidad: '' });
+    setUbicaciones(p => p.map(u => u.id === ub.id ? { ...u, estado: 'ocupada' as EstadoUbicacion } : u));
+    cargarStockUbic(ub.id);
+  };
+
+  const handleGuardarPrioridad = async () => {
+    const ub = ubicacionSeleccionada;
+    if (!ub) return;
+    const { error } = await supabase.from('wms_ubicaciones')
+      .update({ prioridad_picking: prioridadEdit }).eq('id', ub.id);
+    if (error) { toast.error(`No se pudo guardar la prioridad: ${error.message}`); return; }
+    toast.success(`Prioridad guardada — ${ub.codigo_completo}: ${prioridadEdit}`);
   };
 
   // ============================================
@@ -200,6 +284,9 @@ export default function Ubicaciones() {
   const handleVerDetalle = (ub: Ubicacion) => {
     setUbicacionSeleccionada(ub);
     setVistaActiva('detalle');
+    setAsignarForm({ codigo: '', cantidad: '' });
+    setPrioridadEdit((ub as any).prioridad_picking ?? 50);
+    cargarStockUbic(ub.id);
   };
 
   const handleCambiarEstado = async (id: string, nuevoEstado: EstadoUbicacion) => {
@@ -706,6 +793,55 @@ export default function Ubicaciones() {
                     </button>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Asignar artículos (Depósito de Ventas) + prioridad de picking */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+              <h4 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                <Package className="h-5 w-5 text-slate-300" /> Artículos en esta ubicación
+              </h4>
+              {stockEnUbic.length === 0 ? (
+                <p className="text-sm text-slate-500 mb-3">Sin artículos. Colocá uno abajo para que el picker lo vea.</p>
+              ) : (
+                <div className="space-y-1.5 mb-3">
+                  {stockEnUbic.map(s => (
+                    <div key={s.id} className="flex items-center justify-between px-3 py-2 bg-slate-800/50 rounded text-sm">
+                      <span className="font-mono text-slate-300">{s.producto_codigo}</span>
+                      <span className="text-slate-200">{s.cantidad} u.</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="grid grid-cols-12 gap-2 items-end">
+                <div className="col-span-7">
+                  <label className="block text-xs text-slate-400 mb-1">Artículo (Depósito de Ventas)</label>
+                  <select value={asignarForm.codigo} onChange={e => setAsignarForm(f => ({ ...f, codigo: e.target.value }))}
+                    className="w-full px-2 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200">
+                    <option value="">Elegir...</option>
+                    {productosVenta.map(p => <option key={p.codigo} value={p.codigo}>{p.codigo} — {p.descripcion}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-3">
+                  <label className="block text-xs text-slate-400 mb-1">Cantidad</label>
+                  <input type="number" min="0" value={asignarForm.cantidad} onChange={e => setAsignarForm(f => ({ ...f, cantidad: e.target.value }))}
+                    className="w-full px-2 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200" />
+                </div>
+                <div className="col-span-2">
+                  <button onClick={handleAsignarProducto} className="w-full px-2 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm">Colocar</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4">
+              <h4 className="font-semibold text-slate-200 text-sm mb-2">Prioridad de picking</h4>
+              <p className="text-[11px] text-slate-500 mb-3">Menor número = se pickea primero. El picker recorre las ubicaciones del pedido en este orden.</p>
+              <div className="flex items-center gap-2">
+                <input type="number" min="1" max="99" value={prioridadEdit} onChange={e => setPrioridadEdit(parseInt(e.target.value) || 50)}
+                  className="w-24 px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200" />
+                <button onClick={handleGuardarPrioridad} className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-sm">Guardar prioridad</button>
               </div>
             </div>
           </div>
