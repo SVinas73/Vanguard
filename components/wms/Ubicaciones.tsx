@@ -104,6 +104,10 @@ export default function Ubicaciones() {
   const [stockEnUbic, setStockEnUbic] = useState<Array<{ id: string; producto_codigo: string; cantidad: number }>>([]);
   const [asignarForm, setAsignarForm] = useState({ codigo: '', cantidad: '' });
   const [prioridadEdit, setPrioridadEdit] = useState<number>(50);
+  // Crear zona (sin zona no se pueden generar ubicaciones)
+  const [almacenesVenta, setAlmacenesVenta] = useState<Array<{ id: string; nombre: string }>>([]);
+  const [showCrearZona, setShowCrearZona] = useState(false);
+  const [zonaForm, setZonaForm] = useState({ nombre: '', codigo: '', almacen_id: '', tipo: 'almacenamiento' as TipoZona, prioridad_picking: 50 });
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroZona, setFiltroZona] = useState<string>('todos');
@@ -140,6 +144,12 @@ export default function Ubicaciones() {
         .eq('activo', true)
         .order('codigo');
       setZonas(zonasData || []);
+
+      // Almacenes de venta (WMS no opera insumos) para crear zonas.
+      const idsIns = await getAlmacenesInsumoIds();
+      const { data: almData } = await supabase
+        .from('almacenes').select('id, nombre').eq('activo', true).order('es_principal', { ascending: false });
+      setAlmacenesVenta((almData || []).filter((a: any) => !idsIns.has(a.id)).map((a: any) => ({ id: a.id, nombre: a.nombre })));
 
       // Cargar ubicaciones
       const { data: ubicacionesData } = await supabase
@@ -228,6 +238,25 @@ export default function Ubicaciones() {
       .update({ prioridad_picking: prioridadEdit }).eq('id', ub.id);
     if (error) { toast.error(`No se pudo guardar la prioridad: ${error.message}`); return; }
     toast.success(`Prioridad guardada — ${ub.codigo_completo}: ${prioridadEdit}`);
+  };
+
+  const handleCrearZona = async () => {
+    if (!zonaForm.nombre.trim()) { toast.warning('Poné un nombre de zona'); return; }
+    if (!zonaForm.almacen_id) { toast.warning('Elegí un almacén'); return; }
+    const codigo = (zonaForm.codigo.trim() || zonaForm.nombre.trim().slice(0, 3)).toUpperCase();
+    const { error } = await supabase.from('wms_zonas').insert({
+      nombre: zonaForm.nombre.trim(),
+      codigo,
+      almacen_id: zonaForm.almacen_id,
+      tipo: zonaForm.tipo,
+      prioridad_picking: zonaForm.prioridad_picking,
+      activo: true,
+    });
+    if (error) { toast.error(`No se pudo crear la zona: ${error.message}`); return; }
+    toast.success(`Zona "${zonaForm.nombre}" creada`);
+    setShowCrearZona(false);
+    setZonaForm({ nombre: '', codigo: '', almacen_id: '', tipo: 'almacenamiento', prioridad_picking: 50 });
+    loadData();
   };
 
   // ============================================
@@ -634,7 +663,12 @@ export default function Ubicaciones() {
 
           <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Zona *</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-slate-300">Zona *</label>
+                <button onClick={() => setShowCrearZona(v => !v)} className="text-xs text-blue-400 hover:text-blue-300">
+                  {showCrearZona ? 'Cancelar' : '+ Crear zona'}
+                </button>
+              </div>
               <select
                 value={generarData.zona_id}
                 onChange={(e) => setGenerarData(p => ({ ...p, zona_id: e.target.value }))}
@@ -643,6 +677,45 @@ export default function Ubicaciones() {
                 <option value="">Seleccionar...</option>
                 {zonas.map(z => <option key={z.id} value={z.id}>{z.nombre}</option>)}
               </select>
+              {zonas.length === 0 && !showCrearZona && (
+                <p className="text-[11px] text-amber-400 mt-1">No hay zonas. Creá una primero con "+ Crear zona".</p>
+              )}
+
+              {showCrearZona && (
+                <div className="mt-3 p-3 bg-slate-800/50 border border-slate-700 rounded-xl space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Nombre *</label>
+                      <input value={zonaForm.nombre} onChange={e => setZonaForm(f => ({ ...f, nombre: e.target.value }))}
+                        placeholder="Ej: Almacén principal" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-slate-200" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Código (opcional)</label>
+                      <input value={zonaForm.codigo} onChange={e => setZonaForm(f => ({ ...f, codigo: e.target.value.toUpperCase() }))}
+                        placeholder="Ej: ALM" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-slate-200 font-mono" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-2">
+                      <label className="block text-xs text-slate-400 mb-1">Almacén *</label>
+                      <select value={zonaForm.almacen_id} onChange={e => setZonaForm(f => ({ ...f, almacen_id: e.target.value }))}
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-slate-200">
+                        <option value="">Elegir...</option>
+                        {almacenesVenta.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Prioridad</label>
+                      <input type="number" min="1" max="99" value={zonaForm.prioridad_picking}
+                        onChange={e => setZonaForm(f => ({ ...f, prioridad_picking: parseInt(e.target.value) || 50 }))}
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-slate-200" />
+                    </div>
+                  </div>
+                  <button onClick={handleCrearZona} className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm">
+                    Crear zona
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>
