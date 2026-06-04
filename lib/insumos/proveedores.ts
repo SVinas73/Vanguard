@@ -21,6 +21,7 @@ export const PROVEEDORES_INSUMO: ProveedorInsumo[] = [
   { value: 'TYT DE MARTINI', label: 'TyT De Martini' },
   { value: 'YNTER INDUSTRIAL', label: 'Ynter Industrial' },
   { value: 'MERCADO LIBRE', label: 'Mercado Libre' },
+  { value: 'EDINTOR', label: 'Edintor' },
   { value: 'ESTACION HOGAR', label: 'Estación Hogar' },
   { value: 'OTRO', label: 'Otro proveedor' },
 ];
@@ -35,10 +36,14 @@ export const APROBADOR_GONZALO = 'gdecia@ingcotools.com.uy';
 // flujo antes de que Gonzalo use su cuenta). Quitar cuando ya no haga falta.
 export const APROBADORES_PRUEBA = ['santi231194@hotmail.com'];
 
-// Proveedores cuya aprobación es EXCLUSIVA de un conjunto puntual de emails.
+// Proveedores cuya aprobación es EXCLUSIVA de un conjunto puntual de emails
+// (Gonzalo). Mercado Libre, Ynter, Edintor y "Otro proveedor" solo los aprueba
+// Gonzalo; TyT De Martini y Estación Hogar los puede aprobar cualquiera.
 export const APROBADORES_EXCLUSIVOS: Record<string, string[]> = {
   'MERCADO LIBRE': [APROBADOR_GONZALO, ...APROBADORES_PRUEBA],
   'YNTER INDUSTRIAL': [APROBADOR_GONZALO, ...APROBADORES_PRUEBA],
+  'EDINTOR': [APROBADOR_GONZALO, ...APROBADORES_PRUEBA],
+  'OTRO': [APROBADOR_GONZALO, ...APROBADORES_PRUEBA],
 };
 
 /** Lista de emails habilitados para aprobar este proveedor, o null si lo aprueba cualquiera. */
