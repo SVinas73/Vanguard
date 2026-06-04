@@ -271,6 +271,7 @@ export default function HomePage() {
     descripcion: '',
     precio: '',
     moneda: 'UYU' as 'USD' | 'UYU',
+    unidad: 'unidad',     // unidad de medida: unidad/litro/paquete/kg/metro
     categoria: '',
     stockMinimo: '10',
     almacenId: '',
@@ -518,8 +519,8 @@ export default function HomePage() {
   // Add product handler - INSERT directo a Supabase (sin store) para que los
   // errores no se silencien. Mismo patrón que usó PR #63 en NuevoProductoModal.
   const handleAddProduct = async () => {
-    if (!newProduct.codigo || !newProduct.descripcion || !newProduct.precio || !newProduct.categoria) {
-      alert('Completá código, descripción, precio y categoría.');
+    if (!newProduct.codigo || !newProduct.descripcion || !newProduct.categoria) {
+      alert('Completá código, descripción y categoría.');
       return;
     }
 
@@ -543,8 +544,11 @@ export default function HomePage() {
     const productoData = {
       codigo: codigoFinal,
       descripcion: newProduct.descripcion.trim(),
-      precio: parseFloat(newProduct.precio),
+      // El precio de VENTA no se define en el alta (solo precio de compra/costo);
+      // se configura después. Queda en 0 al crear.
+      precio: 0,
       moneda: newProduct.moneda,
+      unidad: newProduct.unidad,
       categoria: newProduct.categoria,
       stock: 0,
       stock_minimo: parseInt(newProduct.stockMinimo) || 10,
@@ -614,6 +618,7 @@ export default function HomePage() {
       descripcion: '',
       precio: '',
       moneda: 'UYU',
+      unidad: 'unidad',
       categoria: '',
       stockMinimo: '10',
       almacenId: '',
@@ -1062,13 +1067,17 @@ export default function HomePage() {
           )}
 
           <div className="grid grid-cols-3 gap-4">
-            <Input
-              label={t('stock.salePrice')}
-              type="number"
-              step="0.01"
-              value={newProduct.precio}
-              onChange={(e) => setNewProduct({ ...newProduct, precio: e.target.value })}
-              placeholder="0.00"
+            <Select
+              label="Unidad"
+              value={newProduct.unidad}
+              onChange={(e) => setNewProduct({ ...newProduct, unidad: e.target.value })}
+              options={[
+                { value: 'unidad', label: 'Por unidad' },
+                { value: 'litro', label: 'Por litro' },
+                { value: 'paquete', label: 'Por paquete' },
+                { value: 'kg', label: 'Por kg' },
+                { value: 'metro', label: 'Por metro' },
+              ]}
             />
             <Select
               label="Moneda"

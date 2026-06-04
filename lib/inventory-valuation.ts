@@ -1,4 +1,6 @@
 import { supabase } from '@/lib/supabase';
+import { convertir, type RatesTable } from '@/lib/currency';
+import type { Moneda } from '@/types';
 
 // =====================================================
 // Inventory Valuation — fuente única de verdad
@@ -27,6 +29,14 @@ export interface ProductoMinimo {
   categoria?: string;
   almacenId?: string | null;
   almacen?: { id: string; codigo: string; nombre: string } | null;
+  /** Moneda en la que está expresado el costo del producto (default UYU). */
+  moneda?: Moneda;
+}
+
+/** Opciones de valuación: convierte el valor de cada producto a `monedaBase`. */
+export interface ValuacionOpts {
+  rates?: RatesTable;
+  monedaBase?: Moneda; // default 'UYU'
 }
 
 export interface LoteMinimo {
@@ -80,7 +90,18 @@ const SIN_ALMACEN_KEY = '__sin_almacen__';
 export function valuarInventarioSync(
   productos: ProductoMinimo[],
   lotes: LoteMinimo[],
+  opts?: ValuacionOpts,
 ): ResultadoValuacion {
+  const monedaBase: Moneda = opts?.monedaBase ?? 'UYU';
+  const rates = opts?.rates;
+  // Normaliza un valor desde la moneda del producto a la moneda base, para que
+  // todo se sume en la misma moneda (productos en USD + en UYU). Si no hay
+  // tasa, deja el valor como está.
+  const aBase = (valor: number, moneda?: Moneda): number => {
+    if (!valor || !rates || !moneda || moneda === monedaBase) return valor;
+    const conv = convertir(valor, moneda, monedaBase, rates);
+    return conv == null ? valor : conv;
+  };
   // Agrupar lotes por codigo de producto
   const lotesByCodigo = new Map<string, { unidades: number; valor: number }>();
   for (const l of lotes) {
@@ -106,6 +127,9 @@ export function valuarInventarioSync(
       valor = valorPromedio;
       fuente = 'promedio';
     }
+    // Normalizamos a la moneda base (ej. todo a UYU) para sumar correctamente
+    // inventario en distintas monedas.
+    valor = aBase(valor, p.moneda);
 
     // ¿Desincronizado? Si tiene lotes pero el stock de productos
     // no coincide con la suma de lotes (puede ser por ajustes
@@ -171,6 +195,8 @@ export function valuarInventarioSync(
 export async function valuarInventario(input?: {
   productos?: ProductoMinimo[];
   lotes?: LoteMinimo[];
+  rates?: RatesTable;
+  monedaBase?: Moneda;
 }): Promise<ResultadoValuacion> {
   let productos = input?.productos;
   let lotes     = input?.lotes;
@@ -179,7 +205,7 @@ export async function valuarInventario(input?: {
     const { data } = await supabase
       .from('productos')
       .select(`
-        codigo, descripcion, stock, stock_minimo, costo_promedio, categoria,
+        codigo, descripcion, stock, stock_minimo, costo_promedio, categoria, moneda,
         almacen_id, almacen:almacenes(id, codigo, nombre)
       `)
       .is('deleted_at', null);
@@ -190,6 +216,7 @@ export async function valuarInventario(input?: {
       stockMinimo: p.stock_minimo || 0,
       costoPromedio: parseFloat(p.costo_promedio) || 0,
       categoria: p.categoria,
+      moneda: p.moneda,
       almacenId: p.almacen_id,
       almacen: p.almacen,
     }));
@@ -207,5 +234,5 @@ export async function valuarInventario(input?: {
     }));
   }
 
-  return valuarInventarioSync(productos, lotes);
+  return valuarInventarioSync(productos, lotes, { rates: input?.rates, monedaBase: input?.monedaBase });
 }
