@@ -29,6 +29,7 @@ interface Cliente {
   email?: string;
   telefono?: string;
   direccion?: string;
+  vendedor?: string;
   limiteCredito: number;
   saldoPendiente: number;
   bloqueado: boolean;
@@ -362,6 +363,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
           email: c.email,
           telefono: c.telefono,
           direccion: c.direccion,
+          vendedor: c.vendedor,
           limiteCredito: parseFloat(c.limite_credito) || 0,
           saldoPendiente: parseFloat(c.saldo_pendiente) || 0,
           bloqueado: c.bloqueado === true,
@@ -1434,7 +1436,17 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                   <label className="block text-sm text-slate-400 mb-1">Cliente *</label>
                   <select
                     value={ordenForm.clienteId}
-                    onChange={(e) => setOrdenForm({ ...ordenForm, clienteId: e.target.value })}
+                    onChange={(e) => {
+                      // Al elegir el cliente, autocompletamos sus datos desde el
+                      // módulo Clientes (dirección, vendedor). El usuario no los reescribe.
+                      const c = clientes.find(x => x.id === e.target.value);
+                      setOrdenForm({
+                        ...ordenForm,
+                        clienteId: e.target.value,
+                        direccionEnvio: c?.direccion || ordenForm.direccionEnvio || '',
+                        vendedorEmail: c?.vendedor || ordenForm.vendedorEmail || '',
+                      });
+                    }}
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100"
                   >
                     <option value="">Seleccionar...</option>
