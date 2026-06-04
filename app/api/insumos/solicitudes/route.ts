@@ -61,7 +61,11 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false })
     .limit(limit);
 
-  if (orgId) q = q.eq('organizacion_id', orgId);
+  // Filtra por organización pero INCLUYE las solicitudes sin organización
+  // (legacy / creadas sin org). Antes filtraba estricto por org → las
+  // solicitudes con org distinta o nula "aparecían y desaparecían" según
+  // cuándo cargaba la org activa.
+  if (orgId) q = q.or(`organizacion_id.eq.${orgId},organizacion_id.is.null`);
   if (estado) q = q.eq('estado', estado);
   if (categoria) q = q.eq('categoria', categoria);
 
