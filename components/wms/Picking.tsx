@@ -588,21 +588,32 @@ export default function Picking() {
     toast.success('Wave liberada — órdenes listas para picker');
   };
 
-  // Orden de recorrido de las líneas según la estrategia configurada.
-  // 'ruta_optima' agrupa por ubicación (recorrido más corto). Las estrategias
-  // de lote (fefo/fifo/lifo) se aplican al asignar el lote en la creación de la
-  // orden, así que acá se respeta el orden solicitado.
-  const ordenarLineasPorEstrategia = (lineas: LineaPicking[]): LineaPicking[] => {
-    if (wmsConfig.estrategia_picking === 'ruta_optima') {
-      return [...lineas].sort((a, b) =>
-        (a.ubicacion_codigo || '').localeCompare(b.ubicacion_codigo || ''));
+  // Ordena las líneas por la PRIORIDAD de su ubicación (la que se setea en
+  // WMS → Ubicaciones). Menor número = se pickea primero. Empate → por código
+  // de ubicación (recorrido). Así el picker recorre el pedido en ese orden.
+  const ordenarLineasPorPrioridad = async (lineas: LineaPicking[]): Promise<LineaPicking[]> => {
+    const codigos = Array.from(new Set(lineas.map(l => l.ubicacion_codigo).filter(Boolean)));
+    const prioridadPorCodigo = new Map<string, number>();
+    if (codigos.length > 0) {
+      const { data } = await supabase
+        .from('wms_ubicaciones')
+        .select('codigo_completo, prioridad_picking')
+        .in('codigo_completo', codigos as string[]);
+      for (const u of (data || []) as any[]) {
+        prioridadPorCodigo.set(u.codigo_completo, u.prioridad_picking ?? 50);
+      }
     }
-    return lineas;
+    return [...lineas].sort((a, b) => {
+      const pa = prioridadPorCodigo.get(a.ubicacion_codigo || '') ?? 50;
+      const pb = prioridadPorCodigo.get(b.ubicacion_codigo || '') ?? 50;
+      if (pa !== pb) return pa - pb;
+      return (a.ubicacion_codigo || '').localeCompare(b.ubicacion_codigo || '');
+    });
   };
 
   const handleIniciarPicking = async (orden: OrdenPicking) => {
     const fechaInicio = new Date().toISOString();
-    const lineasOrdenadas = ordenarLineasPorEstrategia(orden.lineas || []);
+    const lineasOrdenadas = await ordenarLineasPorPrioridad(orden.lineas || []);
 
     // Persistir el inicio
     await supabase.from('wms_ordenes_picking')
