@@ -59,9 +59,9 @@ export default function InsumosPendientes() {
     setLoading(true);
     setError(null);
     try {
-      // Solo solicitudes PENDIENTES de aprobación.
+      // Solo solicitudes PENDIENTES de aprobación. No filtramos por
+      // organización (una sola empresa) para que no se oculten solicitudes.
       const params = new URLSearchParams({ limit: '200', estado: 'pendiente' });
-      if (orgActivaId) params.set('organizacion_id', orgActivaId);
       const resp = await fetch(`/api/insumos/solicitudes?${params}`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
