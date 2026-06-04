@@ -56,7 +56,9 @@ export default function SolicitudesInsumosPanel() {
     setError(null);
     try {
       const params = new URLSearchParams({ limit: '100' });
-      if (orgActivaId) params.set('organizacion_id', orgActivaId);
+      // NO filtramos por organización: son una sola empresa. Filtrar por org
+      // hacía que solicitudes con otra org (o sin org) "aparecieran y
+      // desaparecieran". Mostramos todas.
       if (filtroEstado) params.set('estado', filtroEstado);
       if (filtroCategoria) params.set('categoria', filtroCategoria);
       const resp = await fetch(`/api/insumos/solicitudes?${params}`);
