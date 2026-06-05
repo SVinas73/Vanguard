@@ -56,9 +56,10 @@ export default function SolicitudesInsumosPanel() {
     setError(null);
     try {
       const params = new URLSearchParams({ limit: '100' });
-      // NO filtramos por organización: son una sola empresa. Filtrar por org
-      // hacía que solicitudes con otra org (o sin org) "aparecieran y
-      // desaparecieran". Mostramos todas.
+      // Filtramos por la organización activa (la API también incluye las
+      // solicitudes sin organización). La migración de usuarios/solicitudes a
+      // una sola org garantiza que se vea todo dentro de la empresa.
+      if (orgActivaId) params.set('organizacion_id', orgActivaId);
       if (filtroEstado) params.set('estado', filtroEstado);
       if (filtroCategoria) params.set('categoria', filtroCategoria);
       const resp = await fetch(`/api/insumos/solicitudes?${params}`);
