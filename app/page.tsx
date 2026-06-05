@@ -264,6 +264,7 @@ export default function HomePage() {
 
   // Almacenes State
   const [almacenes, setAlmacenes] = useState<Array<{ id: string; nombre: string }>>([]);
+  const [ubicaciones, setUbicaciones] = useState<Array<{ id: string; codigo_completo: string }>>([]);
 
   // Form State - New Product (UPDATED: added stockInicial and costoInicial)
   const [newProduct, setNewProduct] = useState({
@@ -272,6 +273,7 @@ export default function HomePage() {
     precio: '',
     moneda: 'UYU' as 'USD' | 'UYU',
     unidad: 'unidad',     // unidad de medida: unidad/litro/paquete/kg/metro
+    ubicacionId: '',      // ubicación WMS opcional (donde colocar el stock inicial)
     categoria: '',
     stockMinimo: '10',
     almacenId: '',
@@ -326,6 +328,15 @@ export default function HomePage() {
     
     if (user) {
       fetchAlmacenes();
+      // Ubicaciones disponibles (para asignar al crear un producto).
+      (async () => {
+        const { data } = await supabase
+          .from('wms_ubicaciones')
+          .select('id, codigo_completo')
+          .order('codigo_completo')
+          .limit(1000);
+        if (data) setUbicaciones(data as Array<{ id: string; codigo_completo: string }>);
+      })();
     }
   }, [user, isInitialized, fetchProducts, fetchMovements]);
 
@@ -600,6 +611,21 @@ export default function HomePage() {
             .from('productos')
             .update({ stock: stockInicial })
             .eq('codigo', codigoFinal);
+          // Si se eligió una ubicación, colocamos ahí el stock inicial para que
+          // el picker lo vea (mantiene productos.stock = lo de la ubicación).
+          if (newProduct.ubicacionId) {
+            const ub = ubicaciones.find(u => u.id === newProduct.ubicacionId);
+            await supabase.from('wms_stock_ubicacion').insert({
+              ubicacion_id: newProduct.ubicacionId,
+              ubicacion_codigo: ub?.codigo_completo || '',
+              producto_codigo: codigoFinal,
+              cantidad: stockInicial,
+              cantidad_reservada: 0,
+              cantidad_disponible: stockInicial,
+              ultimo_movimiento: new Date().toISOString(),
+            });
+            await supabase.from('wms_ubicaciones').update({ estado: 'ocupada' }).eq('id', newProduct.ubicacionId);
+          }
         }
       }
     }
@@ -619,6 +645,7 @@ export default function HomePage() {
       precio: '',
       moneda: 'UYU',
       unidad: 'unidad',
+      ubicacionId: '',
       categoria: '',
       stockMinimo: '10',
       almacenId: '',
@@ -1164,6 +1191,18 @@ export default function HomePage() {
             options={categoryOptions}
             placeholder={t('stock.selectCategory')}
           />
+
+          {/* Ubicación WMS (opcional): si cargás stock inicial, lo coloca ahí
+              para que el picker lo vea. Las ubicaciones se crean en WMS. */}
+          {ubicaciones.length > 0 && (
+            <Select
+              label="Ubicación (opcional — coloca el stock inicial ahí)"
+              value={newProduct.ubicacionId}
+              onChange={(e) => setNewProduct({ ...newProduct, ubicacionId: e.target.value })}
+              options={ubicaciones.map(u => ({ value: u.id, label: u.codigo_completo }))}
+              placeholder="Sin ubicación"
+            />
+          )}
           {/* El almacén es implícito (depósito de ventas actual); no se elige. */}
         </div>
 
