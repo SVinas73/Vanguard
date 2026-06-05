@@ -354,8 +354,9 @@ export default function Ubicaciones() {
           for (let n = 1; n <= generarData.niveles_por_rack; n++) {
             for (let p = 1; p <= generarData.posiciones_por_nivel; p++) {
               const codigo = `${pasillo}-${r.toString().padStart(2, '0')}-${n.toString().padStart(2, '0')}-${p.toString().padStart(2, '0')}`;
+              // Solo columnas reales de wms_ubicaciones (el stock vive en
+              // wms_stock_ubicacion, no acá; tampoco hay almacen_id).
               nuevas.push({
-                almacen_id: zona.almacen_id,
                 zona_id: zona.id,
                 codigo,
                 codigo_completo: `${zona.codigo}-${codigo}`,
@@ -364,12 +365,6 @@ export default function Ubicaciones() {
                 nivel: n.toString(),
                 posicion: p.toString(),
                 estado: 'disponible',
-                cantidad: 0,
-                cantidad_reservada: 0,
-                cantidad_disponible: 0,
-                pickeable: true,
-                es_ubicacion_picking: zona.tipo === 'picking',
-                frecuencia_picks: 0,
               });
             }
           }
