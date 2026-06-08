@@ -406,6 +406,16 @@ export default function HomePage() {
     [almacenes]
   );
 
+  // Almacén destino implícito del alta de producto (el depósito de ventas
+  // actual). Si por algún motivo fuera de insumos, NO se ofrece ubicación.
+  const esInsumoImplicito = useMemo(() => {
+    const id = (dashboardAlmacenId && dashboardAlmacenId !== 'todos')
+      ? dashboardAlmacenId
+      : (almacenesVenta[0]?.id ?? '');
+    const alm = almacenes.find(a => a.id === id);
+    return !!alm && (alm.nombre || '').toLowerCase().includes('insumo');
+  }, [dashboardAlmacenId, almacenesVenta, almacenes]);
+
   // Productos / movimientos filtrados por almacén — usados en cards del dashboard
   const dashboardProducts = useMemo(() => {
     if (dashboardAlmacenId === 'todos') return products;
@@ -611,9 +621,9 @@ export default function HomePage() {
             .from('productos')
             .update({ stock: stockInicial })
             .eq('codigo', codigoFinal);
-          // Si se eligió una ubicación, colocamos ahí el stock inicial para que
-          // el picker lo vea (mantiene productos.stock = lo de la ubicación).
-          if (newProduct.ubicacionId) {
+          // Si se eligió una ubicación (solo Depósito de Ventas), colocamos ahí
+          // el stock inicial para que el picker lo vea.
+          if (newProduct.ubicacionId && !esInsumoImplicito) {
             const ub = ubicaciones.find(u => u.id === newProduct.ubicacionId);
             await supabase.from('wms_stock_ubicacion').insert({
               ubicacion_id: newProduct.ubicacionId,
@@ -1192,9 +1202,9 @@ export default function HomePage() {
             placeholder={t('stock.selectCategory')}
           />
 
-          {/* Ubicación WMS (opcional): si cargás stock inicial, lo coloca ahí
-              para que el picker lo vea. Las ubicaciones se crean en WMS. */}
-          {ubicaciones.length > 0 && (
+          {/* Ubicación WMS (opcional): SOLO para Depósito de Ventas. Los
+              insumos NO llevan ubicación. Si cargás stock inicial, lo coloca ahí. */}
+          {ubicaciones.length > 0 && !esInsumoImplicito && (
             <Select
               label="Ubicación (opcional — coloca el stock inicial ahí)"
               value={newProduct.ubicacionId}
