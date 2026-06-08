@@ -581,9 +581,25 @@ export default function HomePage() {
       actualizado_at: new Date().toISOString(),
     };
 
-    const { error: insertError } = await supabase
+    let { error: insertError } = await supabase
       .from('productos')
       .insert(productoData);
+
+    // Si la BD no tiene alguna columna opcional (ej. 'unidad' no migrada aún),
+    // reintentamos SIN esa columna para que el producto igual se cree.
+    if (insertError && (
+      (insertError as any).code === 'PGRST204' ||
+      /Could not find the '?\w+'? column/i.test(insertError.message || '')
+    )) {
+      const { unidad: _u, moneda: _m, ...base } = productoData as any;
+      // Reintento 1: sin 'unidad'.
+      let retry = await supabase.from('productos').insert({ ...base, moneda: productoData.moneda });
+      // Reintento 2: sin 'unidad' ni 'moneda' (por si tampoco existe moneda).
+      if (retry.error && (retry.error as any).code === 'PGRST204') {
+        retry = await supabase.from('productos').insert(base);
+      }
+      insertError = retry.error;
+    }
 
     if (insertError) {
       const code = (insertError as any).code ?? '';
