@@ -202,14 +202,16 @@ export default function Ubicaciones() {
       .eq('producto_codigo', asignarForm.codigo)
       .maybeSingle();
 
+    let errColocar: any = null;
     if (existente) {
       const nueva = (Number((existente as any).cantidad) || 0) + cant;
       const reservada = Number((existente as any).cantidad_reservada) || 0;
-      await supabase.from('wms_stock_ubicacion')
+      const { error } = await supabase.from('wms_stock_ubicacion')
         .update({ cantidad: nueva, cantidad_disponible: Math.max(0, nueva - reservada), ultimo_movimiento: ahora })
         .eq('id', (existente as any).id);
+      errColocar = error;
     } else {
-      await supabase.from('wms_stock_ubicacion').insert({
+      const { error } = await supabase.from('wms_stock_ubicacion').insert({
         ubicacion_id: ub.id,
         ubicacion_codigo: ub.codigo_completo,
         producto_codigo: asignarForm.codigo,
@@ -218,6 +220,13 @@ export default function Ubicaciones() {
         cantidad_disponible: cant,
         ultimo_movimiento: ahora,
       });
+      errColocar = error;
+    }
+
+    // Si el insert/update falló (ej. RLS o columna faltante), NO mentimos.
+    if (errColocar) {
+      toast.error(`No se pudo colocar: ${errColocar.message}`);
+      return;
     }
 
     await supabase.from('wms_ubicaciones').update({ estado: 'ocupada' }).eq('id', ub.id);
