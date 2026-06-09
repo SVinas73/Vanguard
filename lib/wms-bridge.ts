@@ -28,6 +28,38 @@ async function getConfig(): Promise<WmsConfig> {
   };
 }
 
+// Inserta una fila descartando columnas que la BD rechace por inexistentes
+// (PGRST204 / "Could not find the 'X' column") o generadas ("cannot insert a
+// non-DEFAULT value into column 'X'"), reintentando. Devuelve { data, error }.
+// Algunas instalaciones tienen tablas WMS con un esquema reducido respecto de
+// las migraciones; esto evita romper por una columna faltante.
+async function insertResiliente(
+  tabla: string,
+  payload: Record<string, any>,
+  select?: string,
+): Promise<{ data: any; error: any }> {
+  let data = { ...payload };
+  for (let intento = 0; intento < 8; intento++) {
+    let q: any = supabase.from(tabla).insert(data);
+    if (select) q = q.select(select).single();
+    const { data: res, error } = await q;
+    if (!error) return { data: res, error: null };
+    const msg = error.message || '';
+    const m = msg.match(/column ['"]?(\w+)['"]?/i);
+    const col = m?.[1];
+    const recuperable =
+      error.code === 'PGRST204' ||
+      /Could not find the/i.test(msg) ||
+      /cannot insert a non-DEFAULT value/i.test(msg);
+    if (recuperable && col && col in data) {
+      delete data[col];
+      continue;
+    }
+    return { data: null, error };
+  }
+  return { data: null, error: { message: 'No se pudo insertar tras varios reintentos' } };
+}
+
 // =====================================================
 // Recepción WMS desde una orden de compra
 // =====================================================
@@ -66,25 +98,21 @@ export async function crearRecepcionWmsDesdeCompra(args: CrearRecepcionWmsArgs):
   const numeroRecepcion = `REC-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
   const totalUnidades = args.items.reduce((s, i) => s + (i.cantidadEsperada || 0), 0);
 
-  const { data: orden, error } = await supabase
-    .from('wms_ordenes_recepcion')
-    .insert({
-      numero: numeroRecepcion,
-      tipo_origen: 'compra',
-      orden_compra_id: args.ordenCompraId,
-      orden_compra_numero: args.ordenCompraNumero,
-      proveedor_nombre: args.proveedorNombre || null,
-      almacen_id: args.almacenId || null,
-      estado: 'pendiente',
-      lineas_totales: args.items.length,
-      lineas_recibidas: 0,
-      unidades_esperadas: totalUnidades,
-      unidades_recibidas: 0,
-      requiere_inspeccion: false,
-      creado_por: args.creadoPor || null,
-    })
-    .select('id')
-    .single();
+  const { data: orden, error } = await insertResiliente('wms_ordenes_recepcion', {
+    numero: numeroRecepcion,
+    tipo_origen: 'compra',
+    orden_compra_id: args.ordenCompraId,
+    orden_compra_numero: args.ordenCompraNumero,
+    proveedor_nombre: args.proveedorNombre || null,
+    almacen_id: args.almacenId || null,
+    estado: 'pendiente',
+    lineas_totales: args.items.length,
+    lineas_recibidas: 0,
+    unidades_esperadas: totalUnidades,
+    unidades_recibidas: 0,
+    requiere_inspeccion: false,
+    creado_por: args.creadoPor || null,
+  }, 'id');
 
   if (error || !orden) {
     console.error('Error creando recepción WMS:', error);
@@ -92,20 +120,18 @@ export async function crearRecepcionWmsDesdeCompra(args: CrearRecepcionWmsArgs):
   }
 
   // Insertar líneas
-  if (args.items.length > 0) {
-    await supabase.from('wms_ordenes_recepcion_lineas').insert(
-      args.items.map(i => ({
-        orden_recepcion_id: orden.id,
-        producto_codigo: i.productoCodigo,
-        producto_nombre: i.productoNombre,
-        cantidad_esperada: i.cantidadEsperada,
-        cantidad_recibida: 0,
-        cantidad_rechazada: 0,
-        unidad_medida: i.unidadMedida || 'UND',
-        estado: 'pendiente',
-        putaway_completado: false,
-      }))
-    );
+  for (const i of args.items) {
+    await insertResiliente('wms_ordenes_recepcion_lineas', {
+      orden_recepcion_id: orden.id,
+      producto_codigo: i.productoCodigo,
+      producto_nombre: i.productoNombre,
+      cantidad_esperada: i.cantidadEsperada,
+      cantidad_recibida: 0,
+      cantidad_rechazada: 0,
+      unidad_medida: i.unidadMedida || 'UND',
+      estado: 'pendiente',
+      putaway_completado: false,
+    });
   }
 
   return orden.id;
@@ -155,26 +181,22 @@ export async function crearPickingWmsDesdeVenta(args: CrearPickingWmsArgs): Prom
   const numeroPick = `PICK-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
   const totalUnidades = args.items.reduce((s, i) => s + (i.cantidadSolicitada || 0), 0);
 
-  const { data: orden, error } = await supabase
-    .from('wms_ordenes_picking')
-    .insert({
-      numero: numeroPick,
-      tipo_origen: 'venta',
-      orden_venta_id: args.ordenVentaId,
-      orden_venta_numero: args.ordenVentaNumero,
-      cliente_nombre: args.clienteNombre || null,
-      almacen_id: args.almacenId || null,
-      fecha_requerida: args.fechaRequerida || null,
-      estado: 'pendiente',
-      lineas_totales: args.items.length,
-      lineas_completadas: 0,
-      unidades_totales: totalUnidades,
-      unidades_pickeadas: 0,
-      prioridad: 2,
-      creado_por: args.creadoPor || null,
-    })
-    .select('id')
-    .single();
+  const { data: orden, error } = await insertResiliente('wms_ordenes_picking', {
+    numero: numeroPick,
+    tipo_origen: 'venta',
+    orden_venta_id: args.ordenVentaId,
+    orden_venta_numero: args.ordenVentaNumero,
+    cliente_nombre: args.clienteNombre || null,
+    almacen_id: args.almacenId || null,
+    fecha_requerida: args.fechaRequerida || null,
+    estado: 'pendiente',
+    lineas_totales: args.items.length,
+    lineas_completadas: 0,
+    unidades_totales: totalUnidades,
+    unidades_pickeadas: 0,
+    prioridad: 2,
+    creado_por: args.creadoPor || null,
+  }, 'id');
 
   if (error || !orden) {
     console.error('Error creando picking WMS:', error);
@@ -182,8 +204,10 @@ export async function crearPickingWmsDesdeVenta(args: CrearPickingWmsArgs): Prom
   }
 
   if (args.items.length > 0) {
-    const { error: errLineas } = await supabase.from('wms_ordenes_picking_lineas').insert(
-      args.items.map((i, idx) => ({
+    let errLineas: any = null;
+    for (let idx = 0; idx < args.items.length; idx++) {
+      const i = args.items[idx];
+      const { error: e } = await insertResiliente('wms_ordenes_picking_lineas', {
         orden_picking_id: orden.id,
         producto_codigo: i.productoCodigo,
         producto_nombre: i.productoNombre,
@@ -193,8 +217,9 @@ export async function crearPickingWmsDesdeVenta(args: CrearPickingWmsArgs): Prom
         unidad_medida: i.unidadMedida || 'UND',
         estado: 'pendiente',
         secuencia: idx + 1,
-      }))
-    );
+      });
+      if (e) { errLineas = e; break; }
+    }
     if (errLineas) {
       console.error('Error creando líneas de picking WMS:', errLineas);
       return { id: orden.id, error: `Orden creada pero fallaron las líneas: ${errLineas.message}`, skipped: false };
