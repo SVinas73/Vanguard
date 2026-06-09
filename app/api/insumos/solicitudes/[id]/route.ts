@@ -137,10 +137,19 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           .update({ cantidad_recibida: ir.cantidad_recibida })
           .eq('id', ir.item_id);
 
-        if (!(ir.cantidad_recibida > 0)) continue;
-
         const item = actual.items.find((i: any) => i.id === ir.item_id);
         if (!item) continue;
+
+        // Si no llegó nada de este ítem, no tocamos stock ni creamos productos.
+        // En particular, un ARTÍCULO NUEVO recibido en 0 NO debe crear su código:
+        // sin esto, quedaría un SKU "fantasma" en el catálogo por algo que nunca
+        // entró. Para artículos existentes recibidos en 0, tampoco hacemos nada.
+        if (!(ir.cantidad_recibida > 0)) {
+          if (item.es_nuevo) {
+            console.info(`Artículo nuevo "${item.descripcion ?? item.id}" recibido en 0: no se crea el código.`);
+          }
+          continue;
+        }
 
         // b) resolver producto (existente o autocreado)
         //   - producto_codigo  → producto existente vinculado.

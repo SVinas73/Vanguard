@@ -244,9 +244,10 @@ export default function Ubicaciones() {
         const { error } = await q;
         if (!error) return null;
         const msg = error.message || '';
-        // ¿Qué columna molesta? La sacamos y reintentamos.
-        const m = msg.match(/column ['"]?(\w+)['"]?/i);
-        const col = m?.[1];
+        // ¿Qué columna molesta? La sacamos y reintentamos. Contempla los dos
+        // formatos: "Could not find the 'X' column" y "...into column 'X'".
+        const col = msg.match(/find the ['"]?(\w+)['"]? column/i)?.[1]
+          ?? msg.match(/column ['"]?(\w+)['"]?/i)?.[1];
         const recuperable =
           (error as any).code === 'PGRST204' ||
           /Could not find the/i.test(msg) ||
