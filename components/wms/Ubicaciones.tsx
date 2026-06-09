@@ -211,7 +211,9 @@ export default function Ubicaciones() {
         .eq('id', (existente as any).id);
       errColocar = error;
     } else {
-      const { error } = await supabase.from('wms_stock_ubicacion').insert({
+      // Payload completo; si la BD no tiene alguna columna opcional (ej.
+      // 'ubicacion_codigo' no migrada), reintentamos con lo mínimo imprescindible.
+      const full = {
         ubicacion_id: ub.id,
         ubicacion_codigo: ub.codigo_completo,
         producto_codigo: asignarForm.codigo,
@@ -219,7 +221,16 @@ export default function Ubicaciones() {
         cantidad_reservada: 0,
         cantidad_disponible: cant,
         ultimo_movimiento: ahora,
-      });
+      };
+      let { error } = await supabase.from('wms_stock_ubicacion').insert(full);
+      if (error && (
+        (error as any).code === 'PGRST204' ||
+        /Could not find the '?\w+'? column/i.test(error.message || '')
+      )) {
+        const min = { ubicacion_id: ub.id, producto_codigo: asignarForm.codigo, cantidad: cant };
+        const retry = await supabase.from('wms_stock_ubicacion').insert(min);
+        error = retry.error;
+      }
       errColocar = error;
     }
 
