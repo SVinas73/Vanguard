@@ -72,6 +72,7 @@ interface OrdenPicking {
   id: string;
   numero: string;
   tipo_origen: TipoOrigenPicking;
+  orden_venta_id?: string;
   orden_venta_numero?: string;
   cliente_id?: string;
   cliente_nombre?: string;
@@ -252,6 +253,101 @@ export default function Picking() {
     loadData();
   }, []);
 
+  // Carga las líneas de cada orden, resuelve la ubicación de cada producto
+  // (desde wms_stock_ubicacion) y AUTO-REPARA las órdenes que quedaron sin
+  // líneas regenerándolas desde la orden de venta. Devuelve las órdenes con
+  // sus líneas adjuntas y lineas_totales/lineas_completadas coherentes.
+  const prepararOrdenesConLineas = async (ords: OrdenPicking[]): Promise<OrdenPicking[]> => {
+    if (!ords.length) return ords;
+    const ids = ords.map(o => o.id);
+
+    // 1) Líneas existentes
+    const { data: lineasData } = await supabase
+      .from('wms_ordenes_picking_lineas')
+      .select('*')
+      .in('orden_picking_id', ids);
+    const lineasPorOrden = new Map<string, any[]>();
+    for (const l of (lineasData || []) as any[]) {
+      const arr = lineasPorOrden.get(l.orden_picking_id) || [];
+      arr.push(l);
+      lineasPorOrden.set(l.orden_picking_id, arr);
+    }
+
+    // 2) Auto-reparar órdenes sin líneas desde la orden de venta vinculada
+    for (const o of ords) {
+      const tiene = (lineasPorOrden.get(o.id) || []).length > 0;
+      if (tiene || !o.orden_venta_id) continue;
+      const { data: items } = await supabase
+        .from('ordenes_venta_items')
+        .select('producto_codigo, cantidad')
+        .eq('orden_venta_id', o.orden_venta_id);
+      if (!items?.length) continue;
+      const nuevas: any[] = [];
+      for (let idx = 0; idx < items.length; idx++) {
+        const it: any = items[idx];
+        const payload: any = {
+          orden_picking_id: o.id,
+          producto_codigo: it.producto_codigo,
+          producto_nombre: it.producto_codigo,
+          cantidad_solicitada: it.cantidad,
+          cantidad_pickeada: 0,
+          cantidad_short: 0,
+          unidad_medida: 'UND',
+          estado: 'pendiente',
+          secuencia: idx + 1,
+        };
+        const { data: ins } = await supabase
+          .from('wms_ordenes_picking_lineas')
+          .insert(payload)
+          .select('*')
+          .single();
+        nuevas.push(ins || { id: `tmp-${o.id}-${idx}`, ...payload });
+      }
+      if (nuevas.length) {
+        lineasPorOrden.set(o.id, nuevas);
+        await supabase.from('wms_ordenes_picking')
+          .update({ lineas_totales: nuevas.length }).eq('id', o.id);
+      }
+    }
+
+    // 3) Resolver ubicación por producto (para que el picker sepa dónde ir)
+    const codigosProd = Array.from(new Set(
+      Array.from(lineasPorOrden.values()).flat().map((l: any) => l.producto_codigo).filter(Boolean)
+    ));
+    const ubicPorProducto = new Map<string, { id: string; codigo: string }>();
+    if (codigosProd.length) {
+      const { data: stock } = await supabase
+        .from('wms_stock_ubicacion')
+        .select('producto_codigo, ubicacion_id, ubicacion_codigo, cantidad')
+        .in('producto_codigo', codigosProd)
+        .gt('cantidad', 0);
+      for (const s of (stock || []) as any[]) {
+        if (!ubicPorProducto.has(s.producto_codigo)) {
+          ubicPorProducto.set(s.producto_codigo, { id: s.ubicacion_id, codigo: s.ubicacion_codigo || '' });
+        }
+      }
+    }
+
+    // 4) Adjuntar líneas (con ubicación) y recomputar totales
+    return ords.map(o => {
+      const lineas = (lineasPorOrden.get(o.id) || []).map((l: any) => {
+        const ub = ubicPorProducto.get(l.producto_codigo);
+        return {
+          ...l,
+          ubicacion_id: l.ubicacion_id || ub?.id || '',
+          ubicacion_codigo: l.ubicacion_codigo || ub?.codigo || '',
+        } as LineaPicking;
+      });
+      const completadas = lineas.filter(l => ['completada', 'short_pick'].includes(l.estado)).length;
+      return {
+        ...o,
+        lineas,
+        lineas_totales: o.lineas_totales || lineas.length,
+        lineas_completadas: completadas,
+      };
+    });
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -285,7 +381,12 @@ export default function Picking() {
         const fb = b.fecha_requerida || '9999-12-31';
         return fa < fb ? -1 : fa > fb ? 1 : 0;
       });
-      setOrdenes(ordenadas);
+      // Cargar las LÍNEAS de cada orden y adjuntarlas (sin esto orden.lineas
+      // queda vacío y la ejecución del picking no muestra nada). Además
+      // auto-reparamos órdenes que quedaron SIN líneas (cuando el insert de
+      // líneas falló al generar el picking) regenerándolas desde la venta.
+      const conLineas = await prepararOrdenesConLineas(ordenadas);
+      setOrdenes(conLineas);
     } finally {
       setLoading(false);
     }
