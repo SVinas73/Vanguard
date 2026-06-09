@@ -648,9 +648,11 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
       );
 
+      // El lote es un detalle de costeo: si falla (RLS/columnas en 'lotes'),
+      // NO bloqueamos el movimiento. Lo importante es registrar la entrada en
+      // 'movimientos' para que quede en el historial del producto.
       if (loteError) {
-        set({ error: loteError.message, isLoading: false });
-        return;
+        console.warn('No se pudo crear el lote, sigo con el movimiento:', loteError.message);
       }
 
       // Calcular nuevo costo promedio ponderado
@@ -674,9 +676,10 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
       );
 
+      // El descuento FIFO de lotes es secundario: si falla, igual registramos
+      // la salida en 'movimientos' (queda en el historial) y ajustamos el stock.
       if (lotesError) {
-        set({ error: lotesError.message, isLoading: false });
-        return;
+        console.warn('No se pudieron leer los lotes, sigo con el movimiento:', lotesError.message);
       }
 
       // Descontar de cada lote
