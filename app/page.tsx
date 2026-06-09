@@ -578,7 +578,9 @@ export default function HomePage() {
       categoria: newProduct.categoria,
       stock: 0,
       stock_minimo: parseInt(newProduct.stockMinimo) || 10,
-      costo_promedio: 0,
+      // El costo inicial cargado en el alta queda como costo promedio del producto,
+      // así "Último costo" lo refleja de inmediato (no espera a un movimiento aparte).
+      costo_promedio: costoInicial > 0 ? costoInicial : 0,
       almacen_id: almacenImplicito,
       creado_por: userEmail,
       creado_at: new Date().toISOString(),

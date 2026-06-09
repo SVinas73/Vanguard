@@ -8,7 +8,7 @@ import {
   Check, AlertTriangle, Pencil, Trash2, TrendingUp, TrendingDown,
   Minus, Warehouse, ChevronUp, ChevronDown, Download, Plus,
   ArrowDownLeft, ArrowUpRight, Square, CheckSquare, MinusSquare,
-  DollarSign, Package, AlertCircle, ArrowLeftRight,
+  DollarSign, Package, AlertCircle, ArrowLeftRight, History,
 } from 'lucide-react';
 import { ProductThumbnail } from './product-image';
 import HistorialCostoModal from './HistorialCostoModal';
@@ -391,6 +391,9 @@ export function ProductTable({
                 <th className={cn(thClass, 'text-right')} onClick={() => handleSort('costo')}>
                   <span className="flex items-center justify-end gap-1">Último costo <SortIcon active={sortCol === 'costo'} dir={sortDir} /></span>
                 </th>
+                <th className="px-3 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Historial
+                </th>
                 <th className={cn(thClass, 'text-center')} onClick={() => handleSort('stock')}>
                   <span className="flex items-center justify-center gap-1">{t('stock.stockCol')} <SortIcon active={sortCol === 'stock'} dir={sortDir} /></span>
                 </th>
@@ -435,15 +438,23 @@ export function ProductTable({
                       </td>
                     )}
                     <td className="px-3 py-2.5 text-right">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setHistorialProducto(product); }}
-                        title="Ver historial de costos"
-                        className="font-mono text-sm text-slate-400 hover:text-amber-300 hover:underline decoration-dotted underline-offset-2 transition-colors"
-                      >
+                      <span className="font-mono text-sm text-slate-300">
                         {product.costoPromedio
                           ? formatMoney(product.costoPromedio, product.moneda ?? 'UYU', { minimumFractionDigits: 2 })
                           : '—'}
-                      </button>
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex justify-center">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setHistorialProducto(product); }}
+                          title="Ver historial del producto (costos, movimientos y observaciones)"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-700/40 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 text-xs font-medium transition-all"
+                        >
+                          <History size={14} />
+                          Ver historial
+                        </button>
+                      </div>
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex justify-center">
