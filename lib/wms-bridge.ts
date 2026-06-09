@@ -130,20 +130,27 @@ export interface CrearPickingWmsArgs {
   creadoPor?: string;
 }
 
+export interface ResultadoPicking {
+  id: string | null;
+  error: string | null;
+  skipped: boolean; // true si la auto-generación está apagada en config
+}
+
 /**
  * Crea una wms_ordenes_picking + sus líneas a partir de
- * una orden de venta confirmada. Idempotente.
+ * una orden de venta confirmada. Idempotente. Devuelve el motivo si falla,
+ * para que quien lo dispare manualmente pueda mostrarlo.
  */
-export async function crearPickingWmsDesdeVenta(args: CrearPickingWmsArgs): Promise<string | null> {
+export async function crearPickingWmsDesdeVenta(args: CrearPickingWmsArgs): Promise<ResultadoPicking> {
   const cfg = await getConfig();
-  if (!cfg.autogenerar_picking_desde_venta) return null;
+  if (!cfg.autogenerar_picking_desde_venta) return { id: null, error: null, skipped: true };
 
   const { data: existente } = await supabase
     .from('wms_ordenes_picking')
     .select('id')
     .eq('orden_venta_id', args.ordenVentaId)
     .maybeSingle();
-  if (existente) return existente.id;
+  if (existente) return { id: existente.id, error: null, skipped: false };
 
   const numeroPick = `PICK-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
   const totalUnidades = args.items.reduce((s, i) => s + (i.cantidadSolicitada || 0), 0);
@@ -171,7 +178,7 @@ export async function crearPickingWmsDesdeVenta(args: CrearPickingWmsArgs): Prom
 
   if (error || !orden) {
     console.error('Error creando picking WMS:', error);
-    return null;
+    return { id: null, error: error?.message || 'No se pudo crear la orden de picking', skipped: false };
   }
 
   if (args.items.length > 0) {
@@ -188,12 +195,15 @@ export async function crearPickingWmsDesdeVenta(args: CrearPickingWmsArgs): Prom
         secuencia: idx + 1,
       }))
     );
-    if (errLineas) console.error('Error creando líneas de picking WMS:', errLineas);
+    if (errLineas) {
+      console.error('Error creando líneas de picking WMS:', errLineas);
+      return { id: orden.id, error: `Orden creada pero fallaron las líneas: ${errLineas.message}`, skipped: false };
+    }
     // Nota: la confirmación de venta ya descuenta productos.stock
     // y registra el movimiento de salida. Acá no creamos una
     // reserva porque el stock lógico ya bajó. El picking solo
     // mueve la posición física en wms_stock_ubicacion.
   }
 
-  return orden.id;
+  return { id: orden.id, error: null, skipped: false };
 }

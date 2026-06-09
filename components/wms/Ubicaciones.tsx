@@ -157,7 +157,33 @@ export default function Ubicaciones() {
         .select('*')
         .order('codigo_completo')
         .limit(500);
-      setUbicaciones(ubicacionesData || []);
+
+      // Stock real por ubicación (vive en wms_stock_ubicacion, no en
+      // wms_ubicaciones). Lo mergeamos para que cada tarjeta muestre el
+      // artículo y la cantidad, y marque "ocupada" en vez de "Vacía".
+      const { data: stockData } = await supabase
+        .from('wms_stock_ubicacion')
+        .select('ubicacion_id, producto_codigo, cantidad')
+        .gt('cantidad', 0);
+      const stockPorUbic = new Map<string, { producto_codigo: string; cantidad: number }>();
+      (stockData || []).forEach((s: any) => {
+        const prev = stockPorUbic.get(s.ubicacion_id);
+        stockPorUbic.set(s.ubicacion_id, {
+          producto_codigo: s.producto_codigo,
+          cantidad: (prev?.cantidad || 0) + (Number(s.cantidad) || 0),
+        });
+      });
+      setUbicaciones((ubicacionesData || []).map((u: any) => {
+        const st = stockPorUbic.get(u.id);
+        if (!st) return u;
+        return {
+          ...u,
+          producto_codigo: u.producto_codigo || st.producto_codigo,
+          cantidad: st.cantidad,
+          // Si tiene stock pero quedó marcada como disponible, mostrarla ocupada.
+          estado: u.estado === 'disponible' ? 'ocupada' : u.estado,
+        };
+      }));
 
       // Productos del DEPÓSITO DE VENTAS (excluye insumos) para asignar a ubicaciones.
       const idsInsumos = await getAlmacenesInsumoIds();
