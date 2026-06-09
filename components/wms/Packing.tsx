@@ -90,11 +90,14 @@ export default function Packing() {
           .select('*')
           .order('created_at', { ascending: false })
           .limit(100),
+        // select('*') + sin order-by + estados completada/parcial: si la BD
+        // tiene un esquema reducido, un select de columnas puntuales o un
+        // .order() sobre una columna ausente haría fallar la query y no se
+        // vería ninguna orden lista para empaquetar.
         supabase
           .from('wms_ordenes_picking')
-          .select('id, numero, cliente_nombre, unidades_pickeadas, fecha_completada')
-          .eq('estado', 'completada')
-          .order('fecha_completada', { ascending: false })
+          .select('*')
+          .in('estado', ['completada', 'parcial'])
           .limit(50),
       ]);
 
@@ -106,8 +109,13 @@ export default function Packing() {
           .map((p: any) => p.orden_picking_id)
           .filter(Boolean)
       );
+      const ordenadas = (ordenesRes.data || []).slice().sort((a: any, b: any) => {
+        const fa = a.fecha_completada || '';
+        const fb = b.fecha_completada || '';
+        return fa < fb ? 1 : fa > fb ? -1 : 0; // más reciente primero
+      });
       setOrdenesListas(
-        (ordenesRes.data || []).map((o: any) => ({
+        ordenadas.map((o: any) => ({
           ...o,
           paquete_id: idsEmpaquetadas.has(o.id) ? 'sí' : null,
         }))
