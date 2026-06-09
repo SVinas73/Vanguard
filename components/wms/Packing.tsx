@@ -139,7 +139,11 @@ export default function Packing() {
   // Suma 1 a la verificación del producto cuyo código coincide con lo escaneado.
   const procesarScan = (codigoRaw: string) => {
     const codigo = codigoRaw.trim().toUpperCase();
-    if (!codigo) return;
+    if (!codigo) {
+      toast.warning('Escaneá o escribí un código y dale Enter');
+      scanRef.current?.focus();
+      return;
+    }
     const idx = items.findIndex(i => i.producto_codigo.toUpperCase() === codigo);
     if (idx < 0) {
       toast.error(`El código ${codigo} no pertenece a este pedido`);
