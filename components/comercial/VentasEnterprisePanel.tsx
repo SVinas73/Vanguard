@@ -4,7 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plus, Users, ShoppingCart, FileText, Search, Edit, Trash2, Send, CheckCircle,
   XCircle, Clock, ChevronDown, ChevronUp, RefreshCw, Eye, CreditCard,
-  AlertTriangle, Calendar, DollarSign, Building, User, Package, X, ArrowRight, Copy
+  AlertTriangle, Calendar, DollarSign, Building, User, Package, X, ArrowRight, Copy,
+  ClipboardList
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -538,12 +539,41 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
     }
   };
 
+  // Genera (o regenera) la orden de picking en WMS para una venta ya confirmada.
+  // Útil cuando la orden se confirmó/liberó por fuera del flujo (ej. estado
+  // cambiado a mano) y el picking nunca se creó. Es idempotente: si ya existe,
+  // no duplica.
+  const generarPickingManual = async (orden: OrdenVenta) => {
+    if (!orden.items?.length) { toast.warning('La orden no tiene ítems'); return; }
+    try {
+      setProcesando(orden.id);
+      const pickId = await crearPickingWmsDesdeVenta({
+        ordenVentaId: orden.id,
+        ordenVentaNumero: orden.numero,
+        clienteNombre: orden.cliente?.nombre,
+        fechaRequerida: orden.fechaEntregaEsperada,
+        items: orden.items.map(it => ({
+          productoCodigo: it.productoCodigo,
+          productoNombre: it.productoCodigo,
+          cantidadSolicitada: it.cantidad,
+        })),
+        creadoPor: userEmail,
+      });
+      if (pickId) toast.success('Picking generado', `${orden.numero} ya está disponible en WMS → Picking`);
+      else toast.warning('No se generó el picking', 'Verificá que la auto-generación esté activa en WMS y la RLS de wms_ordenes_picking.');
+    } catch (e: any) {
+      toast.error('Error generando picking', e.message);
+    } finally {
+      setProcesando(null);
+    }
+  };
+
   const cambiarEstadoOrden = async (orden: OrdenVenta, nuevoEstado: OrdenVenta['estado']) => {
     try {
       setProcesando(orden.id);
 
       const updateData: any = { estado: nuevoEstado, updated_at: new Date().toISOString() };
-      
+
       if (nuevoEstado === 'entregada') {
         updateData.fecha_entregada = new Date().toISOString().split('T')[0];
       }
@@ -1257,6 +1287,11 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
                               {orden.estado === 'confirmada' && (
                                 <button onClick={() => cambiarEstadoOrden(orden, 'en_proceso')} className="p-1.5 hover:bg-slate-700 rounded-lg" title="En proceso">
                                   <Package className="h-4 w-4 text-slate-300" />
+                                </button>
+                              )}
+                              {['confirmada', 'en_proceso', 'enviada'].includes(orden.estado) && (
+                                <button onClick={() => generarPickingManual(orden)} className="p-1.5 hover:bg-slate-700 rounded-lg" title="Generar picking en WMS">
+                                  <ClipboardList className="h-4 w-4 text-cyan-300" />
                                 </button>
                               )}
                               {orden.estado === 'en_proceso' && (
