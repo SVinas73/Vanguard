@@ -94,10 +94,10 @@ const MENU_ITEMS: MenuItemConfig[] = [
   },
   {
     id: 'packing',
-    label: 'Packing & Despacho',
+    label: 'Factura de pedidos',
     icon: Package,
     color: 'text-slate-300',
-    descripcion: 'Bultos, transportista, tracking',
+    descripcion: 'Verificar por escaneo y facturar',
     disponible: true,
   },
   {
