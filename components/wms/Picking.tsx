@@ -280,7 +280,8 @@ export default function Picking() {
       const { data: items } = await supabase
         .from('ordenes_venta_items')
         .select('producto_codigo, cantidad')
-        .eq('orden_venta_id', o.orden_venta_id);
+        // La FK en ordenes_venta_items se llama 'orden_id' (no 'orden_venta_id').
+        .eq('orden_id', o.orden_venta_id);
       if (!items?.length) continue;
       const nuevas: any[] = [];
       for (let idx = 0; idx < items.length; idx++) {
