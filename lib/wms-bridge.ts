@@ -33,20 +33,30 @@ async function getConfig(): Promise<WmsConfig> {
 // non-DEFAULT value into column 'X'"), reintentando. Devuelve { data, error }.
 // Algunas instalaciones tienen tablas WMS con un esquema reducido respecto de
 // las migraciones; esto evita romper por una columna faltante.
+// Extrae el nombre de columna del mensaje de error, contemplando los dos
+// formatos: "Could not find the 'X' column ..." (la columna va ANTES de la
+// palabra column) y "...into column 'X'" (va DESPUÉS).
+export function columnaDelError(msg: string): string | undefined {
+  const m1 = msg.match(/find the ['"]?(\w+)['"]? column/i);
+  if (m1) return m1[1];
+  const m2 = msg.match(/column ['"]?(\w+)['"]?/i);
+  if (m2) return m2[1];
+  return undefined;
+}
+
 async function insertResiliente(
   tabla: string,
   payload: Record<string, any>,
   select?: string,
 ): Promise<{ data: any; error: any }> {
   let data = { ...payload };
-  for (let intento = 0; intento < 8; intento++) {
+  for (let intento = 0; intento < 12; intento++) {
     let q: any = supabase.from(tabla).insert(data);
     if (select) q = q.select(select).single();
     const { data: res, error } = await q;
     if (!error) return { data: res, error: null };
     const msg = error.message || '';
-    const m = msg.match(/column ['"]?(\w+)['"]?/i);
-    const col = m?.[1];
+    const col = columnaDelError(msg);
     const recuperable =
       error.code === 'PGRST204' ||
       /Could not find the/i.test(msg) ||
