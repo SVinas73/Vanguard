@@ -12,6 +12,9 @@ ALTER TABLE productos ADD COLUMN IF NOT EXISTS unidad text DEFAULT 'unidad';
 
 -- 2) wms_stock_ubicacion: columnas que usa la app.
 ALTER TABLE wms_stock_ubicacion
+  ADD COLUMN IF NOT EXISTS ubicacion_codigo    text,
+  ADD COLUMN IF NOT EXISTS producto_codigo     text,
+  ADD COLUMN IF NOT EXISTS cantidad            numeric DEFAULT 0,
   ADD COLUMN IF NOT EXISTS cantidad_reservada  numeric DEFAULT 0,
   ADD COLUMN IF NOT EXISTS cantidad_disponible numeric DEFAULT 0,
   ADD COLUMN IF NOT EXISTS lote_numero         text,
