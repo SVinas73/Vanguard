@@ -175,7 +175,7 @@ export async function crearPickingWmsDesdeVenta(args: CrearPickingWmsArgs): Prom
   }
 
   if (args.items.length > 0) {
-    await supabase.from('wms_ordenes_picking_lineas').insert(
+    const { error: errLineas } = await supabase.from('wms_ordenes_picking_lineas').insert(
       args.items.map((i, idx) => ({
         orden_picking_id: orden.id,
         producto_codigo: i.productoCodigo,
@@ -188,6 +188,7 @@ export async function crearPickingWmsDesdeVenta(args: CrearPickingWmsArgs): Prom
         secuencia: idx + 1,
       }))
     );
+    if (errLineas) console.error('Error creando líneas de picking WMS:', errLineas);
     // Nota: la confirmación de venta ya descuenta productos.stock
     // y registra el movimiento de salida. Acá no creamos una
     // reserva porque el stock lógico ya bajó. El picking solo
