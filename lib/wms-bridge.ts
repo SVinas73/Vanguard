@@ -191,13 +191,28 @@ export async function crearPickingWmsDesdeVenta(args: CrearPickingWmsArgs): Prom
   const numeroPick = `PICK-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
   const totalUnidades = args.items.reduce((s, i) => s + (i.cantidadSolicitada || 0), 0);
 
+  // Almacén: el picking sale del depósito de ventas. Si no nos pasaron uno,
+  // resolvemos el principal activo (la columna almacen_id suele ser NOT NULL,
+  // y eso no se arregla quitándola: hay que darle un valor real).
+  let almacenId = args.almacenId || null;
+  if (!almacenId) {
+    const { data: alm } = await supabase
+      .from('almacenes')
+      .select('id')
+      .eq('activo', true)
+      .order('es_principal', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    almacenId = alm?.id || null;
+  }
+
   const { data: orden, error } = await insertResiliente('wms_ordenes_picking', {
     numero: numeroPick,
     tipo_origen: 'venta',
     orden_venta_id: args.ordenVentaId,
     orden_venta_numero: args.ordenVentaNumero,
     cliente_nombre: args.clienteNombre || null,
-    almacen_id: args.almacenId || null,
+    almacen_id: almacenId,
     fecha_requerida: args.fechaRequerida || null,
     estado: 'pendiente',
     lineas_totales: args.items.length,
