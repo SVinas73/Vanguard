@@ -107,11 +107,12 @@ export default function Packing() {
     setOrden(o);
     setVista('detalle');
     setScan('');
-    // Cargar ítems de la orden + descripción del producto
+    // Cargar ítems de la orden + descripción del producto.
+    // Ojo: en ordenes_venta_items la FK se llama 'orden_id' (no 'orden_venta_id').
     const { data: itemsData } = await supabase
       .from('ordenes_venta_items')
       .select('producto_codigo, cantidad')
-      .eq('orden_venta_id', o.id);
+      .eq('orden_id', o.id);
     const codigos = Array.from(new Set((itemsData || []).map((i: any) => i.producto_codigo).filter(Boolean)));
     const descPorCodigo = new Map<string, string>();
     if (codigos.length) {
