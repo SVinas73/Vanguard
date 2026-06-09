@@ -406,15 +406,19 @@ export default function HomePage() {
     [almacenes]
   );
 
-  // Almacén destino implícito del alta de producto (el depósito de ventas
-  // actual). Si por algún motivo fuera de insumos, NO se ofrece ubicación.
-  const esInsumoImplicito = useMemo(() => {
-    const id = (dashboardAlmacenId && dashboardAlmacenId !== 'todos')
+  // Almacén destino del alta de producto. Por defecto, el depósito de ventas
+  // actual; pero el usuario puede elegir otro (ej. insumos). La ubicación solo
+  // aplica a Depósito de Ventas (insumos NO lleva ubicación).
+  const almacenDefaultId = useMemo(() => {
+    return (dashboardAlmacenId && dashboardAlmacenId !== 'todos')
       ? dashboardAlmacenId
       : (almacenesVenta[0]?.id ?? '');
-    const alm = almacenes.find(a => a.id === id);
+  }, [dashboardAlmacenId, almacenesVenta]);
+  const almacenSeleccionadoId = newProduct.almacenId || almacenDefaultId;
+  const esInsumoImplicito = useMemo(() => {
+    const alm = almacenes.find(a => a.id === almacenSeleccionadoId);
     return !!alm && (alm.nombre || '').toLowerCase().includes('insumo');
-  }, [dashboardAlmacenId, almacenesVenta, almacenes]);
+  }, [almacenSeleccionadoId, almacenes]);
 
   // Productos / movimientos filtrados por almacén — usados en cards del dashboard
   const dashboardProducts = useMemo(() => {
@@ -555,11 +559,11 @@ export default function HomePage() {
       : precioCompra;
     const userEmail = user?.email || 'Sistema';
 
-    // El almacén es IMPLÍCITO: el depósito de ventas actual (no se elige).
-    // Si el dashboard está en "todos", usamos el primer almacén de venta.
-    const almacenImplicito = (dashboardAlmacenId && dashboardAlmacenId !== 'todos')
-      ? dashboardAlmacenId
-      : (almacenesVenta[0]?.id ?? null);
+    // Almacén destino: el que eligió el usuario, o el de ventas por defecto.
+    const almacenImplicito = newProduct.almacenId || almacenDefaultId || null;
+    // ¿Es de insumos? (los insumos no llevan ubicación).
+    const almSel = almacenes.find(a => a.id === almacenImplicito);
+    const esInsumoDestino = !!almSel && (almSel.nombre || '').toLowerCase().includes('insumo');
 
     // 1. INSERT directo (no usamos addProduct del store: silencia errores).
     const productoData = {
@@ -639,7 +643,7 @@ export default function HomePage() {
             .eq('codigo', codigoFinal);
           // Si se eligió una ubicación (solo Depósito de Ventas), colocamos ahí
           // el stock inicial para que el picker lo vea.
-          if (newProduct.ubicacionId && !esInsumoImplicito) {
+          if (newProduct.ubicacionId && !esInsumoDestino) {
             const ub = ubicaciones.find(u => u.id === newProduct.ubicacionId);
             await supabase.from('wms_stock_ubicacion').insert({
               ubicacion_id: newProduct.ubicacionId,
@@ -682,6 +686,9 @@ export default function HomePage() {
     });
     setShowNewProduct(false);
     setAiSuggestion(null);
+    const dondeNombre = almSel?.nombre || 'el almacén';
+    alert(`Producto ${codigoFinal} creado en ${dondeNombre}.`);
+
   };
 
   // Edit product handler
@@ -1217,6 +1224,17 @@ export default function HomePage() {
             options={categoryOptions}
             placeholder={t('stock.selectCategory')}
           />
+
+          {/* Almacén: por defecto el depósito de ventas; el usuario puede elegir
+              otro (ej. insumos). El producto se crea en este almacén. */}
+          {almacenes.length > 1 && (
+            <Select
+              label="Almacén"
+              value={almacenSeleccionadoId}
+              onChange={(e) => setNewProduct({ ...newProduct, almacenId: e.target.value, ubicacionId: '' })}
+              options={almacenes.map(a => ({ value: a.id, label: a.nombre }))}
+            />
+          )}
 
           {/* Ubicación WMS (opcional): SOLO para Depósito de Ventas. Los
               insumos NO llevan ubicación. Si cargás stock inicial, lo coloca ahí. */}
