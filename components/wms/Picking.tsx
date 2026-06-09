@@ -329,8 +329,13 @@ export default function Picking() {
       }
     }
 
-    // 4) Adjuntar líneas (con ubicación) y recomputar totales
-    return ords.map(o => {
+    // 4) Adjuntar líneas (con ubicación) y recomputar totales.
+    //    AUTO-CIERRE: si todas las líneas ya están completadas/short pero la
+    //    orden quedó 'en_proceso' (p. ej. el update final falló en su momento
+    //    por el trigger de updated_at), la cerramos acá para que el flujo siga
+    //    (dashboard, Factura de pedidos, etc.).
+    const resultado: OrdenPicking[] = [];
+    for (const o of ords) {
       const lineas = (lineasPorOrden.get(o.id) || []).map((l: any) => {
         const ub = ubicPorProducto.get(l.producto_codigo);
         return {
@@ -340,13 +345,35 @@ export default function Picking() {
         } as LineaPicking;
       });
       const completadas = lineas.filter(l => ['completada', 'short_pick'].includes(l.estado)).length;
-      return {
+
+      let estado = o.estado;
+      let fechaCompletado = o.fecha_completado;
+      const todasListas = lineas.length > 0 && completadas === lineas.length;
+      if (todasListas && ['pendiente', 'asignada', 'en_proceso'].includes(o.estado)) {
+        const estadoFinal: EstadoOrdenPicking = lineas.some(l => l.estado === 'short_pick') ? 'parcial' : 'completada';
+        fechaCompletado = fechaCompletado || new Date().toISOString();
+        const { error: errCierre } = await supabase.from('wms_ordenes_picking')
+          .update({
+            estado: estadoFinal,
+            fecha_completada: fechaCompletado,
+            lineas_completadas: completadas,
+            unidades_pickeadas: lineas.reduce((s, l) => s + (Number(l.cantidad_pickeada) || 0), 0),
+          })
+          .eq('id', o.id);
+        if (!errCierre) estado = estadoFinal;
+        else console.error('No se pudo auto-cerrar la orden de picking:', errCierre);
+      }
+
+      resultado.push({
         ...o,
+        estado,
+        fecha_completado: fechaCompletado,
         lineas,
         lineas_totales: o.lineas_totales || lineas.length,
         lineas_completadas: completadas,
-      };
-    });
+      });
+    }
+    return resultado;
   };
 
   const loadData = async () => {

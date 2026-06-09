@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
-  Package, Search, RefreshCw, CheckCircle, X, ScanLine, Receipt, Loader2, ArrowLeft, Plus,
+  Package, Search, RefreshCw, CheckCircle, X, ScanLine, Receipt, Loader2, ArrowLeft, Plus, Printer, FileText,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { registrarAuditoria } from '@/lib/audit';
@@ -33,13 +33,29 @@ interface ItemOrden {
   verificado: number;
 }
 
+interface FacturaEmitida {
+  id: string;
+  serie: string;
+  numero: number;
+  tipo_cfe: number;
+  receptor_nombre: string | null;
+  origen_codigo: string | null;
+  monto_total: number;
+  moneda: Moneda;
+  estado: string;
+  created_at: string;
+}
+
 export default function Packing() {
   const { user } = useAuth(false);
   const toast = useWmsToast();
   const [loading, setLoading] = useState(true);
   const [ordenes, setOrdenes] = useState<OrdenPendiente[]>([]);
+  const [facturas, setFacturas] = useState<FacturaEmitida[]>([]);
   const [search, setSearch] = useState('');
   const [vista, setVista] = useState<'lista' | 'detalle'>('lista');
+  const [tab, setTab] = useState<'pendientes' | 'emitidas'>('pendientes');
+  const [imprimiendo, setImprimiendo] = useState<string | null>(null);
 
   // Detalle / verificación
   const [orden, setOrden] = useState<OrdenPendiente | null>(null);
@@ -90,8 +106,28 @@ export default function Packing() {
         .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
 
       setOrdenes(pendientes);
+
+      // 3) Facturas ya emitidas (para reimprimir cuando haga falta)
+      const { data: emitidas } = await supabase
+        .from('cfe_uy')
+        .select('id, serie, numero, tipo_cfe, receptor_nombre, origen_codigo, monto_total, moneda, estado, created_at')
+        .neq('estado', 'anulado')
+        .limit(200);
+      setFacturas(((emitidas || []) as any[])
+        .map(f => ({ ...f, monto_total: Number(f.monto_total) || 0, moneda: (f.moneda as Moneda) || 'UYU' }))
+        .sort((a, b) => (a.created_at < b.created_at ? 1 : -1)));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const imprimirFactura = async (f: FacturaEmitida) => {
+    setImprimiendo(f.id);
+    try {
+      const ok = await generarPDFFactura(f.id, 'abrir');
+      if (!ok) toast.error('No se pudo generar el PDF de la factura');
+    } finally {
+      setImprimiendo(null);
     }
   };
 
@@ -102,6 +138,16 @@ export default function Packing() {
       o.numero.toLowerCase().includes(s) || o.cliente_nombre.toLowerCase().includes(s)
     );
   }, [ordenes, search]);
+
+  const facturasFiltradas = useMemo(() => {
+    if (!search.trim()) return facturas;
+    const s = search.toLowerCase();
+    return facturas.filter(f =>
+      `${f.serie}-${f.numero}`.toLowerCase().includes(s) ||
+      (f.origen_codigo || '').toLowerCase().includes(s) ||
+      (f.receptor_nombre || '').toLowerCase().includes(s)
+    );
+  }, [facturas, search]);
 
   const abrirDetalle = async (o: OrdenPendiente) => {
     setOrden(o);
@@ -330,16 +376,77 @@ export default function Packing() {
         </button>
       </div>
 
+      {/* Tabs: pendientes / emitidas */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setTab('pendientes')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'pendientes' ? 'bg-slate-800 text-slate-100' : 'bg-slate-900/60 text-slate-400 hover:bg-slate-800/60'}`}
+        >
+          Pendientes de facturar ({ordenes.length})
+        </button>
+        <button
+          onClick={() => setTab('emitidas')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'emitidas' ? 'bg-slate-800 text-slate-100' : 'bg-slate-900/60 text-slate-400 hover:bg-slate-800/60'}`}
+        >
+          Facturas emitidas ({facturas.length})
+        </button>
+      </div>
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar pedido por número o cliente…"
+          placeholder={tab === 'pendientes' ? 'Buscar pedido por número o cliente…' : 'Buscar factura por número, pedido o cliente…'}
           className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 text-sm focus:outline-none focus:border-cyan-600"
         />
       </div>
 
+      {tab === 'emitidas' ? (
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-900 border-b border-slate-800">
+              <tr className="text-left text-xs text-slate-400 uppercase">
+                <th className="px-4 py-3">Factura</th>
+                <th className="px-4 py-3">Pedido</th>
+                <th className="px-4 py-3">Cliente</th>
+                <th className="px-4 py-3">Total</th>
+                <th className="px-4 py-3">Fecha</th>
+                <th className="px-4 py-3 text-right">Imprimir</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {facturasFiltradas.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-12 text-slate-500 text-sm">Sin facturas emitidas todavía.</td></tr>
+              ) : facturasFiltradas.map(f => (
+                <tr key={f.id} className="hover:bg-slate-800/30">
+                  <td className="px-4 py-3 font-mono text-slate-200">
+                    <span className="inline-flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5 text-slate-500" />
+                      {f.serie}-{String(f.numero).padStart(7, '0')}
+                    </span>
+                    <span className="ml-2 text-[10px] text-slate-500">{f.tipo_cfe === 111 ? 'e-Factura' : f.tipo_cfe === 101 ? 'e-Ticket' : `CFE ${f.tipo_cfe}`}</span>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-slate-400">{f.origen_codigo || '—'}</td>
+                  <td className="px-4 py-3 text-slate-300">{f.receptor_nombre || '—'}</td>
+                  <td className="px-4 py-3 text-slate-300 font-mono">{formatMoney(f.monto_total, f.moneda)}</td>
+                  <td className="px-4 py-3 text-xs text-slate-500">{new Date(f.created_at).toLocaleString('es-UY', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => imprimirFactura(f)}
+                      disabled={imprimiendo === f.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg disabled:opacity-50"
+                    >
+                      {imprimiendo === f.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Printer className="h-3.5 w-3.5" />}
+                      Imprimir
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
       <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-900 border-b border-slate-800">
@@ -379,6 +486,7 @@ export default function Packing() {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }
