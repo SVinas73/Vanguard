@@ -196,8 +196,20 @@ export function StockDashboard({
   const { t } = useTranslation();
   
   // State
-  const [viewMode, setViewMode] = useState<ViewMode>('almacenes');
-  const [selectedAlmacen, setSelectedAlmacen] = useState<Almacen | null>(null);
+  // viewMode + selectedAlmacen se persisten en sessionStorage para que, al borrar
+  // un artículo (que provoca un remount del dashboard), el usuario se quede en la
+  // MISMA pantalla en la que estaba y no vuelva al listado de almacenes.
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window === 'undefined') return 'almacenes';
+    return (sessionStorage.getItem('vg:stock:viewMode') as ViewMode) || 'almacenes';
+  });
+  const [selectedAlmacen, setSelectedAlmacen] = useState<Almacen | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = sessionStorage.getItem('vg:stock:selectedAlmacen');
+      return raw ? (JSON.parse(raw) as Almacen) : null;
+    } catch { return null; }
+  });
   const [showSinAlmacen, setShowSinAlmacen] = useState(false);
   const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,6 +243,18 @@ export function StockDashboard({
 
   // Store access
   const addMovement = useInventoryStore((s) => s.addMovement);
+
+  // Persistir la vista actual para sobrevivir remounts (p. ej. al borrar artículo).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    sessionStorage.setItem('vg:stock:viewMode', viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (selectedAlmacen) sessionStorage.setItem('vg:stock:selectedAlmacen', JSON.stringify(selectedAlmacen));
+    else sessionStorage.removeItem('vg:stock:selectedAlmacen');
+  }, [selectedAlmacen]);
 
   // Load almacenes
   useEffect(() => {
