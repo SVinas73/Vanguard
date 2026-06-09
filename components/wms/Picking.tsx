@@ -817,11 +817,15 @@ export default function Picking() {
             })
             .eq('id', (stockUbic as any).id);
           if (errStock) {
-            toast.error(`No se pudo actualizar el stock de la ubicación: ${errStock.message}`);
-            return;
+            // La posición física es secundaria: el stock lógico ya bajó al
+            // confirmar la venta. No frenamos el picking por esto (ej. un
+            // trigger de BD que espera 'updated_at'); avisamos y seguimos.
+            console.warn('No se pudo actualizar el stock de la ubicación:', errStock.message);
+            toast.warning(`Aviso: no se actualizó la posición física (${errStock.message}). El picking continúa.`);
+          } else {
+            // Mantener productos.stock = suma de ubicaciones (fuente de verdad).
+            await sincronizarStockProducto(lineaActualData.producto_codigo);
           }
-          // Mantener productos.stock = suma de ubicaciones (fuente de verdad).
-          await sincronizarStockProducto(lineaActualData.producto_codigo);
         }
       }
 
