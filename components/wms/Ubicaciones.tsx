@@ -202,36 +202,60 @@ export default function Ubicaciones() {
       .eq('producto_codigo', asignarForm.codigo)
       .maybeSingle();
 
+    // Inserta/actualiza descartando columnas que la BD rechace: inexistentes
+    // (PGRST204 / "Could not find the 'X' column") o GENERADAS
+    // ("cannot insert a non-DEFAULT value into column 'X'"), reintentando.
+    const escribirResiliente = async (
+      payload: Record<string, any>,
+      modo: 'insert' | 'update',
+      id?: string,
+    ): Promise<any> => {
+      let data = { ...payload };
+      for (let intento = 0; intento < 6; intento++) {
+        const q = modo === 'insert'
+          ? supabase.from('wms_stock_ubicacion').insert(data)
+          : supabase.from('wms_stock_ubicacion').update(data).eq('id', id!);
+        const { error } = await q;
+        if (!error) return null;
+        const msg = error.message || '';
+        // ¿Qué columna molesta? La sacamos y reintentamos.
+        const m = msg.match(/column ['"]?(\w+)['"]?/i);
+        const col = m?.[1];
+        const recuperable =
+          (error as any).code === 'PGRST204' ||
+          /Could not find the/i.test(msg) ||
+          /cannot insert a non-DEFAULT value/i.test(msg);
+        if (recuperable && col && col in data) {
+          delete data[col];
+          continue;
+        }
+        return error;
+      }
+      return null;
+    };
+
     let errColocar: any = null;
     if (existente) {
       const nueva = (Number((existente as any).cantidad) || 0) + cant;
       const reservada = Number((existente as any).cantidad_reservada) || 0;
-      const { error } = await supabase.from('wms_stock_ubicacion')
-        .update({ cantidad: nueva, cantidad_disponible: Math.max(0, nueva - reservada), ultimo_movimiento: ahora })
-        .eq('id', (existente as any).id);
-      errColocar = error;
+      errColocar = await escribirResiliente(
+        { cantidad: nueva, cantidad_disponible: Math.max(0, nueva - reservada), ultimo_movimiento: ahora },
+        'update',
+        (existente as any).id,
+      );
     } else {
-      // Payload completo; si la BD no tiene alguna columna opcional (ej.
-      // 'ubicacion_codigo' no migrada), reintentamos con lo mínimo imprescindible.
-      const full = {
-        ubicacion_id: ub.id,
-        ubicacion_codigo: ub.codigo_completo,
-        producto_codigo: asignarForm.codigo,
-        cantidad: cant,
-        cantidad_reservada: 0,
-        cantidad_disponible: cant,
-        ultimo_movimiento: ahora,
-      };
-      let { error } = await supabase.from('wms_stock_ubicacion').insert(full);
-      if (error && (
-        (error as any).code === 'PGRST204' ||
-        /Could not find the '?\w+'? column/i.test(error.message || '')
-      )) {
-        const min = { ubicacion_id: ub.id, producto_codigo: asignarForm.codigo, cantidad: cant };
-        const retry = await supabase.from('wms_stock_ubicacion').insert(min);
-        error = retry.error;
-      }
-      errColocar = error;
+      errColocar = await escribirResiliente(
+        {
+          ubicacion_id: ub.id,
+          ubicacion_codigo: ub.codigo_completo,
+          producto_codigo: asignarForm.codigo,
+          cantidad: cant,
+          cantidad_reservada: 0,
+          cantidad_disponible: cant,
+          ultimo_movimiento: ahora,
+        },
+        'insert',
+      );
     }
 
     // Si el insert/update falló (ej. RLS o columna faltante), NO mentimos.
