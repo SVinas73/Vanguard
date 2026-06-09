@@ -281,6 +281,7 @@ export default function HomePage() {
     costoInicial: '',      // precio de compra (por unidad, o por pack si compraPorPack)
     compraPorPack: false,  // si el precio de compra es por pack
     unidadesPorPack: '',   // cuántas unidades trae el pack
+    comentarios: '',       // observaciones (se ven en el historial del producto)
   });
   const [aiSuggestion, setAiSuggestion] = useState<CategorySuggestion | null>(null);
 
@@ -630,7 +631,9 @@ export default function HomePage() {
           cantidad: stockInicial,
           costo_compra: costoInicial > 0 ? costoInicial : null,
           moneda_costo: newProduct.moneda,
-          notas: 'Stock inicial al crear producto',
+          notas: newProduct.comentarios.trim()
+            ? `Alta del producto · ${newProduct.comentarios.trim()}`
+            : 'Stock inicial al crear producto',
           usuario_email: userEmail,
         });
         if (movError) {
@@ -658,6 +661,21 @@ export default function HomePage() {
           }
         }
       }
+    } else if (newProduct.comentarios.trim()) {
+      // Sin stock inicial pero CON observación: la registramos igual para que
+      // aparezca en el historial del producto.
+      const { data: prodRow } = await supabase
+        .from('productos').select('id').eq('codigo', codigoFinal).single();
+      if (prodRow) {
+        await supabase.from('movimientos').insert({
+          producto_id: prodRow.id,
+          codigo: codigoFinal,
+          tipo: 'ajuste',
+          cantidad: 0,
+          notas: `Alta del producto · ${newProduct.comentarios.trim()}`,
+          usuario_email: userEmail,
+        });
+      }
     }
 
     // 3. Refrescar el catálogo en memoria + broadcast a otros módulos
@@ -683,6 +701,7 @@ export default function HomePage() {
       costoInicial: '',
       compraPorPack: false,
       unidadesPorPack: '',
+      comentarios: '',
     });
     setShowNewProduct(false);
     setAiSuggestion(null);
@@ -1224,6 +1243,17 @@ export default function HomePage() {
             options={categoryOptions}
             placeholder={t('stock.selectCategory')}
           />
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Observaciones (opcional)</label>
+            <textarea
+              value={newProduct.comentarios}
+              onChange={(e) => setNewProduct({ ...newProduct, comentarios: e.target.value })}
+              rows={2}
+              placeholder="Notas sobre el producto, motivo del alta, etc. — quedan en el historial."
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200 focus:outline-none focus:border-indigo-500 resize-none"
+            />
+          </div>
 
           {/* Almacén: por defecto el depósito de ventas; el usuario puede elegir
               otro (ej. insumos). El producto se crea en este almacén. */}
