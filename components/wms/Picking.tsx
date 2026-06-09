@@ -269,14 +269,23 @@ export default function Picking() {
         .limit(50);
       setWaves(wavesData || []);
 
-      // Cargar órdenes de picking
-      const { data: ordenesData } = await supabase
+      // Cargar órdenes de picking. Ordenamos en cliente (no en el query) porque
+      // si la BD tiene un esquema reducido y le falta 'prioridad' o
+      // 'fecha_requerida', un .order() sobre esas columnas hace fallar la query
+      // entera y no se vería NINGUNA orden.
+      const { data: ordenesData, error: errOrdenes } = await supabase
         .from('wms_ordenes_picking')
         .select('*')
-        .order('prioridad', { ascending: true })
-        .order('fecha_requerida', { ascending: true })
         .limit(100);
-      setOrdenes(ordenesData || []);
+      if (errOrdenes) console.error('Error cargando órdenes de picking:', errOrdenes);
+      const ordenadas = (ordenesData || []).slice().sort((a: any, b: any) => {
+        const pa = a.prioridad ?? 99, pb = b.prioridad ?? 99;
+        if (pa !== pb) return pa - pb;
+        const fa = a.fecha_requerida || '9999-12-31';
+        const fb = b.fecha_requerida || '9999-12-31';
+        return fa < fb ? -1 : fa > fb ? 1 : 0;
+      });
+      setOrdenes(ordenadas);
     } finally {
       setLoading(false);
     }
