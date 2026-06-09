@@ -547,7 +547,7 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
     if (!orden.items?.length) { toast.warning('La orden no tiene ítems'); return; }
     try {
       setProcesando(orden.id);
-      const pickId = await crearPickingWmsDesdeVenta({
+      const res = await crearPickingWmsDesdeVenta({
         ordenVentaId: orden.id,
         ordenVentaNumero: orden.numero,
         clienteNombre: orden.cliente?.nombre,
@@ -559,8 +559,9 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
         })),
         creadoPor: userEmail,
       });
-      if (pickId) toast.success('Picking generado', `${orden.numero} ya está disponible en WMS → Picking`);
-      else toast.warning('No se generó el picking', 'Verificá que la auto-generación esté activa en WMS y la RLS de wms_ordenes_picking.');
+      if (res.error) toast.error('No se generó el picking', res.error);
+      else if (res.skipped) toast.warning('Auto-generación apagada', 'Activá "autogenerar picking desde venta" en WMS → Configuración.');
+      else toast.success('Picking generado', `${orden.numero} ya está disponible en WMS → Picking`);
     } catch (e: any) {
       toast.error('Error generando picking', e.message);
     } finally {

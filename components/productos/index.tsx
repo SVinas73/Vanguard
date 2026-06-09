@@ -8,10 +8,11 @@ import {
   Check, AlertTriangle, Pencil, Trash2, TrendingUp, TrendingDown,
   Minus, Warehouse, ChevronUp, ChevronDown, Download, Plus,
   ArrowDownLeft, ArrowUpRight, Square, CheckSquare, MinusSquare,
-  DollarSign, Package, AlertCircle, ArrowLeftRight, History,
+  DollarSign, Package, AlertCircle, ArrowLeftRight, History, MapPin,
 } from 'lucide-react';
 import { ProductThumbnail } from './product-image';
 import HistorialCostoModal from './HistorialCostoModal';
+import { supabase } from '@/lib/supabase';
 import { formatMoney, convertir } from '@/lib/currency';
 import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valuation';
 import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
@@ -166,6 +167,34 @@ export function ProductTable({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Producto cuyo historial de costos se está mostrando (modal).
   const [historialProducto, setHistorialProducto] = useState<Product | null>(null);
+  // Ubicación WMS por código de producto (Depósito de Ventas), traída de
+  // wms_stock_ubicacion. Se muestra en una columna "Ubicación".
+  const [ubicacionPorCodigo, setUbicacionPorCodigo] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('wms_stock_ubicacion')
+        .select('producto_codigo, ubicacion_codigo, cantidad')
+        .gt('cantidad', 0);
+      if (cancelled || !data) return;
+      const map: Record<string, string> = {};
+      for (const s of data as any[]) {
+        if (!s.producto_codigo) continue;
+        // Si un producto está en más de una ubicación, listamos la primera y un "+N".
+        if (map[s.producto_codigo]) {
+          map[s.producto_codigo] = map[s.producto_codigo].includes(' +')
+            ? map[s.producto_codigo]
+            : `${map[s.producto_codigo]} +`;
+        } else {
+          map[s.producto_codigo] = s.ubicacion_codigo || '';
+        }
+      }
+      setUbicacionPorCodigo(map);
+    })();
+    return () => { cancelled = true; };
+  }, [products]);
 
   const handleSort = useCallback((col: SortCol) => {
     if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -388,6 +417,9 @@ export function ProductTable({
                     {t('stock.warehouse')}
                   </th>
                 )}
+                <th className="px-3 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Ubicación
+                </th>
                 <th className={cn(thClass, 'text-right')} onClick={() => handleSort('costo')}>
                   <span className="flex items-center justify-end gap-1">Último costo <SortIcon active={sortCol === 'costo'} dir={sortDir} /></span>
                 </th>
@@ -437,6 +469,15 @@ export function ProductTable({
                         <AlmacenBadge almacen={product.almacen} />
                       </td>
                     )}
+                    <td className="px-3 py-2.5">
+                      {ubicacionPorCodigo[product.codigo] ? (
+                        <span className="inline-flex items-center gap-1 font-mono text-xs text-cyan-300">
+                          <MapPin size={12} />{ubicacionPorCodigo[product.codigo]}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-600">—</span>
+                      )}
+                    </td>
                     <td className="px-3 py-2.5 text-right">
                       <span className="font-mono text-sm text-slate-300">
                         {product.costoPromedio
