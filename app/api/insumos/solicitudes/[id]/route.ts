@@ -187,13 +187,17 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
             .limit(1)
             .maybeSingle();
 
+          // Moneda del costo del insumo (UYU/USD): se hereda al producto para que
+          // la valuación (Stock / Análisis) convierta correctamente.
+          const monedaItem = ((item as any).moneda === 'USD') ? 'USD' : 'UYU';
+
           const { data: creado, error: errCrear } = await supabase
             .from('productos')
             .insert({
               codigo: codigoProducto,
               descripcion: item.descripcion ?? codigoProducto,
               precio: 0,              // placeholder, editable después en Stock
-              moneda: 'UYU',
+              moneda: monedaItem,
               categoria: item.nuevo_categoria || 'Insumos',
               stock: 0,               // se suma abajo
               stock_minimo: item.nuevo_stock_minimo ?? 5,
@@ -396,6 +400,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             unidad: it.unidad || 'unidad',
             observaciones: it.observaciones || null,
             costo_estimado: it.costo_estimado ?? null,
+            ...((it as any).moneda ? { moneda: (it as any).moneda } : {}),
             es_nuevo: it.es_nuevo || false,
             nuevo_codigo: it.es_nuevo ? (it.nuevo_codigo || null) : null,
             nuevo_stock_minimo: it.es_nuevo ? (it.nuevo_stock_minimo ?? null) : null,
