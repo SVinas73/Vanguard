@@ -223,7 +223,9 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   y += 3;
 
   const itemsRows = (data.items as any[]).map(it => [
-    it.producto_codigo || '—',
+    // Artículo existente → producto_codigo. Artículo NUEVO → el código elegido
+    // al crearlo vive en nuevo_codigo (producto_codigo queda null hasta recibir).
+    it.producto_codigo || (it.nuevo_codigo ? `${it.nuevo_codigo} (nuevo)` : '—'),
     it.descripcion,
     Number(it.cantidad).toString(),
     it.unidad || '—',
