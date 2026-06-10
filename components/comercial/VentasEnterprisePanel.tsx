@@ -51,7 +51,7 @@ interface OrdenVenta {
   numero: string;
   clienteId: string;
   cliente?: Cliente;
-  estado: 'borrador' | 'retenida' | 'confirmada' | 'en_proceso' | 'enviada' | 'entregada' | 'cancelada';
+  estado: 'borrador' | 'retenida' | 'confirmada' | 'en_proceso' | 'enviada' | 'entregada' | 'finalizada' | 'cancelada';
   estadoPago: 'pendiente' | 'parcial' | 'pagado' | 'vencido';
   fechaOrden: string;
   fechaEntregaEsperada?: string;
@@ -153,9 +153,10 @@ const getEstadoOrdenConfig = (estado: OrdenVenta['estado']) => {
     en_proceso: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'En Proceso' },
     enviada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Enviada' },
     entregada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Entregada' },
+    finalizada: { color: 'text-emerald-400', bg: 'bg-emerald-500/15', label: 'Finalizada' },
     cancelada: { color: 'text-slate-300', bg: 'bg-slate-800/40', label: 'Cancelada' },
   };
-  return configs[estado];
+  return configs[estado] ?? configs.borrador;
 };
 
 const getEstadoPagoConfig = (estado: OrdenVenta['estadoPago']) => {
@@ -1190,10 +1191,13 @@ export default function VentasEnterprisePanel({ products, userEmail }: VentasEnt
             {tabActiva === 'ordenes' ? (
               <>
                 <option value="borrador">Borrador</option>
+                <option value="retenida">Retenida</option>
                 <option value="confirmada">Confirmada</option>
                 <option value="en_proceso">En Proceso</option>
                 <option value="enviada">Enviada</option>
                 <option value="entregada">Entregada</option>
+                <option value="finalizada">Finalizada</option>
+                <option value="cancelada">Cancelada</option>
               </>
             ) : (
               <>

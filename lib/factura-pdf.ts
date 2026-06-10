@@ -173,7 +173,21 @@ export function construirFacturaPDF(data: FacturaPDFData): jsPDF {
 /** Abre el PDF en una pestaña nueva (para imprimir/guardar). */
 export function abrirFacturaPDF(data: FacturaPDFData) {
   const doc = construirFacturaPDF(data);
-  doc.output('dataurlnewwindow');
+  // Usamos Blob URL en vez de 'dataurlnewwindow': los navegadores y algunos
+  // sitios bloquean la navegación a URLs data: ("Este contenido está bloqueado").
+  // El Blob URL no tiene ese problema; si el popup queda bloqueado, descargamos.
+  const blob = doc.output('blob');
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url, '_blank');
+  if (!w) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `factura-${data.serie}-${data.numero}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 /** Descarga el PDF con un nombre de archivo. */
