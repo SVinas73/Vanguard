@@ -32,6 +32,8 @@ interface ItemForm {
   observaciones: string;
   // Costo unitario estimado al solicitar (opcional; se confirma al recibir)
   costo_estimado: string;
+  // Moneda del costo (UYU o USD). Se propaga al producto al recibir.
+  moneda: string;
   // Último costo conocido del producto existente (referencia; no se envía)
   costo_actual: number | null;
   // Artículo nuevo (todavía no existe en Stock; se crea al recibir la compra)
@@ -62,6 +64,7 @@ function emptyItem(): ItemForm {
     unidad: 'unidad',
     observaciones: '',
     costo_estimado: '',
+    moneda: 'UYU',
     costo_actual: null,
     es_nuevo: false,
     nuevo_codigo: '',
@@ -231,6 +234,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
             unidad: it.unidad,
             observaciones: it.observaciones.trim() || null,
             costo_estimado: it.costo_estimado.trim() ? parseFloat(it.costo_estimado) : null,
+            moneda: it.moneda || 'UYU',
             es_nuevo: it.es_nuevo,
             nuevo_codigo: it.es_nuevo ? (it.nuevo_codigo.trim() || null) : null,
             nuevo_stock_minimo: it.es_nuevo ? it.nuevo_stock_minimo : null,
@@ -520,7 +524,7 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                               <option value="rollo">rollo</option>
                             </select>
                           </div>
-                          <div className="col-span-3">
+                          <div className="col-span-2">
                             <label className="block text-[11px] text-slate-500 mb-0.5">
                               {it.producto_codigo ? 'Costo unit. (si cambió)' : 'Costo unit. estimado'}
                             </label>
@@ -534,8 +538,19 @@ export default function CrearSolicitudInsumoModal({ organizacionId, onClose, onC
                               className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded text-sm text-slate-200"
                             />
                           </div>
-                          <div className="col-span-4">
-                            <label className="block text-[11px] text-slate-500 mb-0.5">Observaciones (opcional)</label>
+                          <div className="col-span-2">
+                            <label className="block text-[11px] text-slate-500 mb-0.5">Moneda</label>
+                            <select
+                              value={it.moneda}
+                              onChange={e => setItem(it.id, { moneda: e.target.value })}
+                              className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded text-sm text-slate-200"
+                            >
+                              <option value="UYU">$ (UYU)</option>
+                              <option value="USD">US$ (USD)</option>
+                            </select>
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-[11px] text-slate-500 mb-0.5">Observaciones</label>
                             <input
                               value={it.observaciones}
                               onChange={e => setItem(it.id, { observaciones: e.target.value })}

@@ -167,10 +167,21 @@ export async function POST(request: NextRequest) {
       nuevo_stock_minimo: it.es_nuevo ? (it.nuevo_stock_minimo ?? null) : null,
       nuevo_categoria: it.es_nuevo ? (it.nuevo_categoria || null) : null,
       costo_estimado: it.costo_estimado ?? null,
+      moneda: (it as any).moneda || 'UYU',
     }));
-    const { error: itemsError } = await supabase
+    let { error: itemsError } = await supabase
       .from('solicitudes_insumos_items')
       .insert(itemsInsert);
+
+    // Si la columna 'moneda' todavía no existe en la BD, reintentamos sin ella
+    // para no romper la creación (la migración puede no estar aplicada aún).
+    if (itemsError && (
+      (itemsError as any).code === 'PGRST204' ||
+      /moneda/i.test(itemsError.message || '')
+    )) {
+      const sinMoneda = itemsInsert.map(({ moneda: _m, ...rest }) => rest);
+      itemsError = (await supabase.from('solicitudes_insumos_items').insert(sinMoneda)).error;
+    }
 
     if (itemsError) {
       // Rollback

@@ -118,6 +118,7 @@ export const crearSolicitudInsumoSchema = z.object({
     nuevo_stock_minimo: z.number().int().nonnegative().nullable().optional(),
     nuevo_categoria: z.string().max(64).nullable().optional(),
     costo_estimado: z.number().nonnegative().nullable().optional(),
+    moneda: z.enum(['UYU', 'USD']).optional().default('UYU'),
   })).min(1, 'Al menos un item'),
 });
 
@@ -151,6 +152,7 @@ export const editarSolicitudInsumoSchema = z.object({
     unidad: z.string().max(32).optional(),
     observaciones: z.string().max(500).nullable().optional(),
     costo_estimado: z.number().nonnegative().nullable().optional(),
+    moneda: z.enum(['UYU', 'USD']).optional(),
     es_nuevo: z.boolean().optional().default(false),
     nuevo_codigo: z.string().max(64).nullable().optional(),
     nuevo_stock_minimo: z.number().int().nonnegative().nullable().optional(),

@@ -21,6 +21,7 @@ interface ItemEdit {
   stock_actual: number | null;
   costo_actual: number | null;
   costo_estimado: string;
+  moneda: string;
   cantidad: string;
   unidad: string;
   observaciones: string;
@@ -80,6 +81,7 @@ export default function EditarSolicitudInsumoModal({ solicitud, onClose, onSaved
       stock_actual: null,
       costo_actual: null,
       costo_estimado: it.costo_estimado != null ? String(it.costo_estimado) : '',
+      moneda: (it as any).moneda || 'UYU',
       cantidad: String(it.cantidad),
       unidad: it.unidad || 'unidad',
       observaciones: it.observaciones || '',
@@ -203,6 +205,7 @@ export default function EditarSolicitudInsumoModal({ solicitud, onClose, onSaved
             unidad: it.unidad,
             observaciones: it.observaciones.trim() || null,
             costo_estimado: it.costo_estimado.trim() ? parseFloat(it.costo_estimado) : null,
+            moneda: it.moneda || 'UYU',
             es_nuevo: it.es_nuevo,
             nuevo_codigo: it.es_nuevo ? (it.nuevo_codigo.trim() || null) : null,
             nuevo_stock_minimo: it.es_nuevo ? it.nuevo_stock_minimo : null,
@@ -440,9 +443,9 @@ export default function EditarSolicitudInsumoModal({ solicitud, onClose, onSaved
                             <option value="rollo">rollo</option>
                           </select>
                         </div>
-                        <div className="col-span-3">
+                        <div className="col-span-2">
                           <label className="block text-[11px] text-slate-500 mb-0.5">
-                            {it.producto_codigo ? 'Costo unit. (si cambió)' : 'Costo unit. estimado'}
+                            {it.producto_codigo ? 'Costo (si cambió)' : 'Costo estimado'}
                           </label>
                           <input
                             type="number"
@@ -454,7 +457,18 @@ export default function EditarSolicitudInsumoModal({ solicitud, onClose, onSaved
                             className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded text-sm text-slate-200"
                           />
                         </div>
-                        <div className="col-span-4">
+                        <div className="col-span-2">
+                          <label className="block text-[11px] text-slate-500 mb-0.5">Moneda</label>
+                          <select
+                            value={it.moneda}
+                            onChange={e => setItem(it.id, { moneda: e.target.value })}
+                            className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded text-sm text-slate-200"
+                          >
+                            <option value="UYU">$ (UYU)</option>
+                            <option value="USD">US$ (USD)</option>
+                          </select>
+                        </div>
+                        <div className="col-span-2">
                           <label className="block text-[11px] text-slate-500 mb-0.5">Observaciones</label>
                           <input
                             value={it.observaciones}
