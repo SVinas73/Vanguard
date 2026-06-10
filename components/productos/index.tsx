@@ -270,6 +270,14 @@ export function ProductTable({
   // localmente con `stock × (costoPromedio || precio)`, lo que daba
   // números distintos al Dashboard porque caía al precio de VENTA.
   const [valuacion, setValuacion] = useState<ResultadoValuacion | null>(null);
+  // Tasas + moneda destino arriba: la valuación necesita las tasas para
+  // normalizar productos en USD a UYU antes de sumar (igual que el card de
+  // "Análisis de insumos"). Sin esto, los costos en USD se sumaban mal.
+  const { config: orgConfig } = useModulosHabilitados();
+  const { rates: ratesTable } = useTiposCambio();
+  const monedaBase: Moneda = 'UYU';
+  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
+
   useEffect(() => {
     let cancelled = false;
     valuarInventario({
@@ -280,19 +288,15 @@ export function ProductTable({
         stockMinimo: p.stockMinimo,
         costoPromedio: p.costoPromedio || 0,
         categoria: p.categoria,
+        moneda: p.moneda,
         almacenId: p.almacenId,
         almacen: p.almacen,
       })),
+      rates: ratesTable,
+      monedaBase: 'UYU',
     }).then(r => { if (!cancelled) setValuacion(r); });
     return () => { cancelled = true; };
-  }, [products]);
-
-  // Origen = UYU (hardcoded: así guardan los productos). Destino =
-  // moneda elegida en Configuración. Si destino = UYU no convierte.
-  const { config: orgConfig } = useModulosHabilitados();
-  const { rates: ratesTable } = useTiposCambio();
-  const monedaBase: Moneda = 'UYU';
-  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
+  }, [products, ratesTable]);
 
   const summary = useMemo(() => {
     const critical = products.filter(p => p.stock <= p.stockMinimo).length;
