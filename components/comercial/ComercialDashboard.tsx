@@ -113,7 +113,9 @@ export default function ComercialDashboard({ onNavigate }: ComercialDashboardPro
         supabase
           .from('ordenes_venta')
           .select('id, total')
-          .not('estado', 'in', '(cancelada,entregada)'),
+          // Pendientes = ni cerradas ni canceladas. 'finalizada' (facturada) y
+          // 'entregada' ya están cerradas, no cuentan como pendientes.
+          .not('estado', 'in', '(cancelada,entregada,finalizada)'),
         supabase
           .from('ordenes_venta')
           .select('saldo_pendiente')

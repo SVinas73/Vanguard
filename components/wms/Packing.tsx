@@ -230,8 +230,13 @@ export default function Packing() {
         toast.warning('La orden ya tenía una factura emitida.');
       } else if (res.cfe) {
         toast.success(`Factura ${res.cfe.serie}-${res.cfe.numero} generada. Abriendo PDF…`);
-        await registrarAuditoria('ordenes_venta', 'FACTURADA', orden.numero, null,
-          { cfe: `${res.cfe.serie}-${res.cfe.numero}`, verificado_por: user?.email }, user?.email || '');
+        // La orden queda FINALIZADA: facturada y despachada. Así sale de
+        // "pendientes", deja de figurar "en proceso" en Ventas y los dashboards
+        // (comercial / WMS) la cuentan como cerrada.
+        await supabase.from('ordenes_venta')
+          .update({ estado: 'finalizada' }).eq('id', orden.id);
+        await registrarAuditoria('ordenes_venta', 'FACTURADA', orden.numero, { estado: orden.estado },
+          { estado: 'finalizada', cfe: `${res.cfe.serie}-${res.cfe.numero}`, verificado_por: user?.email }, user?.email || '');
         generarPDFFactura(res.cfe.id, 'abrir').catch(() => {});
         volver();
         loadData();
