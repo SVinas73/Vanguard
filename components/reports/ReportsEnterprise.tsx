@@ -1838,7 +1838,7 @@ export default function ReportsEnterprise() {
     // Entradas (compras/recepciones de insumos) con costo y su moneda.
     const { data: entradas } = await supabase
       .from('movimientos')
-      .select('codigo, tipo, cantidad, costo_compra, moneda_costo, created_at, producto:productos(descripcion, categoria, almacen_id)')
+      .select('codigo, tipo, cantidad, costo_compra, moneda_costo, notas, created_at, producto:productos(descripcion, categoria, almacen_id)')
       .eq('tipo', 'entrada')
       .gte('created_at', desde).lte('created_at', hasta)
       .order('created_at', { ascending: true });
@@ -1861,6 +1861,9 @@ export default function ReportsEnterprise() {
 
     (entradas || []).forEach((m: any) => {
       if (!esInsumo(m.producto?.almacen_id)) return; // SOLO insumos
+      // Las reversas por cancelación de venta son entradas contables, NO
+      // compras: no deben sumar gasto.
+      if (/^reversa por cancelaci/i.test(m.notas || '')) return;
       const categoria = m.producto?.categoria || 'Sin categoría';
       if (filtros.categoriaProducto && categoria !== filtros.categoriaProducto) return;
       // El gasto se normaliza a UYU (los costos pueden venir en USD).

@@ -32,6 +32,7 @@ const PLAZOS_CREDITO = [1, 30, 60, 90];
 const FORM_VACIO = {
   codigo: '', tipo: 'persona', nombre: '', razonSocial: '', nombreFantasia: '',
   rut: '', email: '', telefono: '', direccion: '', vendedor: '', diasCredito: 30, bloqueado: false,
+  agenciaId: '',
 };
 
 export function GestionClientes({ userEmail }: { userEmail?: string }) {
@@ -43,6 +44,8 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
   const [form, setForm] = useState(FORM_VACIO);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Agencias de distribución para asignar al cliente (módulo Distribución).
+  const [agencias, setAgencias] = useState<Array<{ id: string; nombre: string }>>([]);
 
   const cargar = async () => {
     setLoading(true);
@@ -51,6 +54,12 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
       .select('*')
       .order('nombre');
     setClientes((data as Cliente[]) || []);
+    const { data: ags } = await supabase
+      .from('agencias_distribucion')
+      .select('id, nombre')
+      .eq('activo', true)
+      .order('nombre');
+    setAgencias((ags as any[]) || []);
     setLoading(false);
   };
 
@@ -72,6 +81,7 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
       direccion: c.direccion || '', vendedor: (c as any).vendedor || '',
       diasCredito: Number(c.dias_credito) || 30,
       bloqueado: c.bloqueado === true,
+      agenciaId: (c as any).agencia_id || '',
     });
     setError(null);
     setModalOpen(true);
@@ -97,10 +107,19 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
       vendedor: form.vendedor || null,
       dias_credito: form.diasCredito || 30,
       bloqueado: form.bloqueado,
+      agencia_id: form.agenciaId || null,
     };
-    const res = editando
+    let res = editando
       ? await supabase.from('clientes').update(data).eq('id', editando.id)
       : await supabase.from('clientes').insert({ ...data, activo: true });
+    // Si la columna agencia_id no existe todavía (migración pendiente),
+    // reintentamos sin ella para no bloquear el alta del cliente.
+    if (res.error && /agencia_id/i.test(res.error.message || '')) {
+      const { agencia_id: _a, ...sinAgencia } = data as any;
+      res = editando
+        ? await supabase.from('clientes').update(sinAgencia).eq('id', editando.id)
+        : await supabase.from('clientes').insert({ ...sinAgencia, activo: true });
+    }
     setSaving(false);
     if (res.error) { setError(res.error.message); return; }
     setModalOpen(false);
@@ -223,6 +242,15 @@ export function GestionClientes({ userEmail }: { userEmail?: string }) {
                 <input value={form.vendedor} onChange={e => setForm({ ...form, vendedor: e.target.value })}
                   placeholder="vendedor@empresa.com — se autocarga en la orden de venta"
                   className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200" />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Agencia de distribución</label>
+                <select value={form.agenciaId} onChange={e => setForm({ ...form, agenciaId: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-slate-200">
+                  <option value="">Sin agencia asignada</option>
+                  {agencias.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1">Los despachos del cliente se asignan a esta agencia automáticamente.</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

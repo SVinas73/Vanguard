@@ -24,6 +24,7 @@ import FinanzasEnterprise from '@/components/finanzas/FinanzasEnterprise';
 import CostosEnterprise from '@/components/costos/CostosEnterprise';
 import SolicitudesInsumosPanel from '@/components/insumos/SolicitudesInsumosPanel';
 import InsumosPendientes from '@/components/insumos/InsumosPendientes';
+import OrdenInternaInsumos from '@/components/insumos/OrdenInternaInsumos';
 import FacturasElectronicas from '@/components/facturacion/FacturasElectronicas';
 
 export type ComercialSubTab = 'dashboard' | 'compras' | 'ventas' | 'facturacion' | 'finanzas' | 'costos' | 'analytics' | 'condiciones' | 'comisiones' | 'scoring' | 'insumos';
@@ -48,7 +49,7 @@ export default function ComercialModule({
   // Sub-subtabs internos del panel "Solicitudes de insumos":
   // - 'solicitud' → SolicitudesInsumosPanel (lo actual)
   // - 'analisis'  → DashboardView (réplica del Dashboard) filtrado a insumos
-  const [insumosSubTab, setInsumosSubTab] = useState<'solicitud' | 'pendientes' | 'analisis'>('solicitud');
+  const [insumosSubTab, setInsumosSubTab] = useState<'solicitud' | 'orden_interna' | 'pendientes' | 'analisis'>('solicitud');
   const [insumosPeriod, setInsumosPeriod] = useState('30d');
 
   // Datos del store para el "Análisis de insumos"
@@ -193,6 +194,7 @@ export default function ComercialModule({
           <div className="flex items-center gap-1">
             {([
               { id: 'solicitud' as const, label: 'Solicitud de insumos' },
+              { id: 'orden_interna' as const, label: 'Orden Interna' },
               { id: 'pendientes' as const, label: 'Pendientes de aprobación' },
               { id: 'analisis' as const, label: 'Análisis de insumos' },
             ]).map((s) => {
@@ -215,6 +217,8 @@ export default function ComercialModule({
           </div>
 
           {insumosSubTab === 'solicitud' && <SolicitudesInsumosPanel />}
+
+          {insumosSubTab === 'orden_interna' && <OrdenInternaInsumos />}
 
           {insumosSubTab === 'pendientes' && <InsumosPendientes />}
 

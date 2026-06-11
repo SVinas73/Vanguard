@@ -712,20 +712,38 @@ export default function HomePage() {
 
   };
 
+  // ¿El producto que se edita es de un almacén de insumos? (no se venden:
+  // se edita el costo, no el precio de venta)
+  const editEsInsumo = useMemo(() => {
+    if (!editProduct?.almacenId) return false;
+    const alm = almacenes.find(a => a.id === editProduct.almacenId);
+    return !!alm && (alm.nombre || '').toLowerCase().includes('insumo');
+  }, [editProduct?.almacenId, almacenes]);
+
   // Edit product handler
-  const handleEditProduct = () => {
+  const handleEditProduct = async () => {
     if (!editProduct) return;
     const updates: Partial<Product> = {
       descripcion: editProduct.descripcion,
-      precio: editProduct.precio,
       categoria: editProduct.categoria,
       stockMinimo: editProduct.stockMinimo,
       almacenId: editProduct.almacenId,
     };
+    // Insumos: el campo edita el COSTO. Venta: edita el precio de venta.
+    if (editEsInsumo) updates.costoPromedio = editProduct.costoPromedio ?? 0;
+    else updates.precio = editProduct.precio;
     if (isAdmin) {
       updates.stock = editProduct.stock;
     }
-    updateProduct(editProduct.codigo, updates, user?.email || 'Sistema');
+    await updateProduct(editProduct.codigo, updates, user?.email || 'Sistema');
+
+    // El store guarda el error en su estado; si falló, avisamos en vez de
+    // cerrar como si nada ("edito y no pasa nada").
+    const errorGuardar = useInventoryStore.getState().error;
+    if (errorGuardar) {
+      alert(`No se pudo guardar el producto: ${errorGuardar}`);
+      return;
+    }
 
     setEditProduct(null);
     setShowEditProduct(false);
@@ -1340,14 +1358,26 @@ export default function HomePage() {
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label={t('stock.salePrice')}
-                  type="number"
-                  step="0.01"
-                  value={editProduct.precio.toString()}
-                  onChange={(e) => setEditProduct({ ...editProduct, precio: parseFloat(e.target.value) || 0 })}
-                  placeholder="0.00"
-                />
+                {editEsInsumo ? (
+                  /* Insumos: no se venden → se edita el COSTO, no el precio de venta. */
+                  <Input
+                    label="Precio de costo"
+                    type="number"
+                    step="0.01"
+                    value={(editProduct.costoPromedio ?? 0).toString()}
+                    onChange={(e) => setEditProduct({ ...editProduct, costoPromedio: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                ) : (
+                  <Input
+                    label={t('stock.salePrice')}
+                    type="number"
+                    step="0.01"
+                    value={editProduct.precio.toString()}
+                    onChange={(e) => setEditProduct({ ...editProduct, precio: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                )}
                 <Input
                   label={t('stock.minStock')}
                   type="number"

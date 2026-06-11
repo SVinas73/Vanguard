@@ -243,6 +243,24 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           .update({ stock: (prod.stock ?? 0) + Number(ir.cantidad_recibida) })
           .eq('codigo', codigoProducto);
 
+        // d.1) AUDITORÍA: registrar la entrada igual que el "+" de Stock
+        //      (tabla movimientos, acción ENTRADA), para que las compras de
+        //      insumos figuren en el módulo Auditoría como cualquier entrada.
+        await registrarAuditoriaSegura({
+          tabla: 'movimientos',
+          accion: 'ENTRADA',
+          codigo: codigoProducto,
+          datosAnteriores: { stock_anterior: Number(prod.stock) || 0 },
+          datosNuevos: {
+            stock_nuevo: (Number(prod.stock) || 0) + Number(ir.cantidad_recibida),
+            cantidad: Number(ir.cantidad_recibida),
+            costo_compra: costoUnit,
+            origen: `Solicitud de insumos ${actual.numero}`,
+          },
+          usuarioEmail: auth.user.email,
+          contexto: extraerContextoAudit(request),
+        });
+
         // d.2) costo: si se confirmó un costo unitario al recibir, actualizar
         //      costo_promedio ponderado + último costo y registrar el historial
         //      de costos (igual criterio que la recepción de compras).

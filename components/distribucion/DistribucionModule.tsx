@@ -69,6 +69,12 @@ export default function DistribucionModule() {
     orden_venta_id?: string | null; peso_kg?: number | null;
   }>>([]);
 
+  // Pedidos FACTURADOS (Factura de pedidos) aún no asignados a una agencia.
+  // Traen la agencia del cliente para asignarla automáticamente.
+  const [pedidosFacturados, setPedidosFacturados] = useState<Array<{
+    id: string; numero: string; cliente_nombre: string; agencia_id: string | null;
+  }>>([]);
+
   const [despForm, setDespForm] = useState({
     agencia_id: '', paquete_id: '', paquete_numero: '', orden_venta_numero: '', cliente_nombre: '',
     tracking_numero: '', bultos: 1, peso_kg: '', notas: '',
@@ -80,7 +86,7 @@ export default function DistribucionModule() {
 
   const cargar = async () => {
     setLoading(true);
-    const [agRes, depRes, pkgRes] = await Promise.all([
+    const [agRes, depRes, pkgRes, ovRes] = await Promise.all([
       supabase.from('agencias_distribucion').select('*').order('nombre'),
       supabase.from('distribucion_despachos').select('*').order('fecha_registro', { ascending: false }).limit(300),
       // Paquetes despachados por el empaquetador (listos para distribuir).
@@ -89,6 +95,12 @@ export default function DistribucionModule() {
         .eq('estado', 'despachado')
         .order('fecha_despacho', { ascending: false })
         .limit(200),
+      // Pedidos facturados (WMS → Factura de pedidos): listos para asignar a
+      // una agencia. Traemos la agencia del cliente para auto-asignar.
+      supabase.from('ordenes_venta')
+        .select('id, numero, estado, clientes(nombre, agencia_id)')
+        .eq('estado', 'finalizada')
+        .limit(200),
     ]);
     setAgencias((agRes.data as any) || []);
     const deps = (depRes.data as any) || [];
@@ -96,6 +108,16 @@ export default function DistribucionModule() {
     // Excluir los paquetes que ya se registraron en distribución.
     const yaRegistrados = new Set(deps.map((d: Despacho) => d.paquete_numero).filter(Boolean));
     setPaquetesDespachados(((pkgRes.data as any) || []).filter((p: any) => !yaRegistrados.has(p.numero)));
+    // Pedidos facturados aún sin despacho registrado (por número de orden).
+    const ovRegistradas = new Set(deps.map((d: Despacho) => d.orden_venta_numero).filter(Boolean));
+    setPedidosFacturados(((ovRes.data as any) || [])
+      .filter((o: any) => !ovRegistradas.has(o.numero))
+      .map((o: any) => ({
+        id: o.id,
+        numero: o.numero,
+        cliente_nombre: o.clientes?.nombre || 'Sin cliente',
+        agencia_id: o.clientes?.agencia_id || null,
+      })));
     setLoading(false);
   };
   useEffect(() => { cargar(); }, []);
@@ -427,6 +449,37 @@ export default function DistribucionModule() {
                     ))}
                   </select>
                   <p className="text-[11px] text-slate-500 mt-1">O cargá los datos manualmente abajo si el paquete no figura.</p>
+                </div>
+              )}
+              {/* Pedidos facturados (Factura de pedidos) listos para asignar.
+                  Al elegir uno se autocompleta el cliente y se asigna la
+                  AGENCIA DEL CLIENTE automáticamente (editable). */}
+              {pedidosFacturados.length > 0 && (
+                <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3">
+                  <label className="block text-sm text-emerald-300 mb-1">Pedido facturado (sin paquete)</label>
+                  <select
+                    value={despForm.orden_venta_numero}
+                    onChange={e => {
+                      const ped = pedidosFacturados.find(p => p.numero === e.target.value);
+                      if (ped) {
+                        setDespForm(f => ({
+                          ...f,
+                          orden_venta_numero: ped.numero,
+                          cliente_nombre: ped.cliente_nombre,
+                          // Agencia del cliente → asignación automática.
+                          agencia_id: ped.agencia_id || f.agencia_id,
+                        }));
+                      } else {
+                        setDespForm(f => ({ ...f, orden_venta_numero: '' }));
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100">
+                    <option value="">Elegir pedido facturado…</option>
+                    {pedidosFacturados.map(p => (
+                      <option key={p.id} value={p.numero}>{p.numero} · {p.cliente_nombre}{p.agencia_id ? ' (con agencia del cliente)' : ''}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-slate-500 mt-1">Si el cliente tiene agencia asignada, se selecciona sola.</p>
                 </div>
               )}
               <div>

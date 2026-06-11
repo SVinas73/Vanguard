@@ -369,6 +369,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     
     if (updates.descripcion !== undefined) updateData.descripcion = updates.descripcion;
     if (updates.precio !== undefined) updateData.precio = updates.precio;
+    // Insumos: lo que se edita es el costo (no hay precio de venta).
+    if (updates.costoPromedio !== undefined) updateData.costo_promedio = updates.costoPromedio;
     if (updates.categoria !== undefined) updateData.categoria = updates.categoria;
     if (updates.stock !== undefined) updateData.stock = updates.stock;
     if (updates.stockMinimo !== undefined) updateData.stock_minimo = updates.stockMinimo;
