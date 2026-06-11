@@ -457,6 +457,15 @@ export default function HomePage() {
     return almacenes.map((a) => ({ value: a.id, label: a.nombre }));
   }, [almacenes]);
 
+  // ¿El producto que se edita es de un almacén de insumos? (no se venden:
+  // se edita el costo, no el precio de venta). OJO: debe vivir acá arriba,
+  // ANTES de los returns condicionales, o React tira el error #310.
+  const editEsInsumo = useMemo(() => {
+    if (!editProduct?.almacenId) return false;
+    const alm = almacenes.find(a => a.id === editProduct.almacenId);
+    return !!alm && (alm.nombre || '').toLowerCase().includes('insumo');
+  }, [editProduct?.almacenId, almacenes]);
+
   // ============================================
   // RETURNS CONDICIONALES (después de todos los hooks)
   // ============================================
@@ -711,14 +720,6 @@ export default function HomePage() {
     alert(`Producto ${codigoFinal} creado en ${dondeNombre}.`);
 
   };
-
-  // ¿El producto que se edita es de un almacén de insumos? (no se venden:
-  // se edita el costo, no el precio de venta)
-  const editEsInsumo = useMemo(() => {
-    if (!editProduct?.almacenId) return false;
-    const alm = almacenes.find(a => a.id === editProduct.almacenId);
-    return !!alm && (alm.nombre || '').toLowerCase().includes('insumo');
-  }, [editProduct?.almacenId, almacenes]);
 
   // Edit product handler
   const handleEditProduct = async () => {
