@@ -1814,47 +1814,55 @@ export default function ReportsEnterprise() {
   };
 
   // GASTOS DE INSUMOS — ÚNICO reporte que mira el almacén de insumos.
-  // "Informe de gastos": cuánto se gastó comprando insumos en el período,
-  // más cuánto se consumió (salidas). Pensado para el informe mensual.
+  // "Informe de gastos": cuánto se gastó COMPRANDO insumos en el período
+  // (entradas × costo de compra), cotejado contra lo CONSUMIDO (salidas
+  // valuadas al costo). Pensado para el informe mensual.
   const generarReporteGastosInsumos = async (): Promise<DatosReporte> => {
     const desde = filtros.fechaInicio;
     const hasta = `${filtros.fechaFin}T23:59:59`;
 
-    // Entradas (compras/recepciones de insumos) con costo.
+    // Normaliza un monto a UYU según la moneda en que se cargó el costo.
+    const aUYU = (monto: number, moneda?: string | null): number => {
+      if (!monto || !moneda || moneda === 'UYU') return monto;
+      return convertir(monto, moneda as Moneda, 'UYU', RATES) ?? monto;
+    };
+    // Convierte de UYU a la moneda del reporte (para que la gráfica coincida
+    // con los KPIs, que ya se muestran convertidos).
+    const aReporte = (monto: number): number => {
+      if (MONEDA_REPORTE === 'UYU') return monto;
+      return convertir(monto, 'UYU', MONEDA_REPORTE, RATES) ?? monto;
+    };
+
+    // Entradas (compras/recepciones de insumos) con costo y su moneda.
     const { data: entradas } = await supabase
       .from('movimientos')
-      .select('codigo, tipo, cantidad, costo_compra, created_at, producto:productos(descripcion, categoria, almacen_id)')
+      .select('codigo, tipo, cantidad, costo_compra, moneda_costo, created_at, producto:productos(descripcion, categoria, almacen_id)')
       .eq('tipo', 'entrada')
       .gte('created_at', desde).lte('created_at', hasta)
       .order('created_at', { ascending: true });
 
-    // Salidas (consumo de insumos) en el mismo período.
+    // Salidas (consumo de insumos) en el mismo período, con fecha y costo de
+    // referencia del producto para valuarlas.
     const { data: salidas } = await supabase
       .from('movimientos')
-      .select('codigo, cantidad, producto:productos(almacen_id)')
+      .select('codigo, cantidad, created_at, producto:productos(almacen_id, costo_promedio, moneda)')
       .eq('tipo', 'salida')
       .gte('created_at', desde).lte('created_at', hasta);
-
-    // Consumo por código (solo insumos).
-    const usadoPorCodigo: Record<string, number> = {};
-    (salidas || []).forEach((m: any) => {
-      if (!esInsumo(m.producto?.almacen_id)) return;
-      usadoPorCodigo[m.codigo] = (usadoPorCodigo[m.codigo] || 0) + (m.cantidad || 0);
-    });
 
     // Agregado por artículo + acumulado por mes y por categoría (solo insumos).
     const porArticulo: Record<string, {
       codigo: string; descripcion: string; categoria: string;
       cantidad: number; gasto: number;
     }> = {};
-    const porMes: Record<string, number> = {};
+    const compradoPorMes: Record<string, number> = {};
     const porCategoria: Record<string, number> = {};
 
     (entradas || []).forEach((m: any) => {
       if (!esInsumo(m.producto?.almacen_id)) return; // SOLO insumos
       const categoria = m.producto?.categoria || 'Sin categoría';
       if (filtros.categoriaProducto && categoria !== filtros.categoriaProducto) return;
-      const gasto = (m.cantidad || 0) * (parseFloat(m.costo_compra) || 0);
+      // El gasto se normaliza a UYU (los costos pueden venir en USD).
+      const gasto = aUYU((m.cantidad || 0) * (parseFloat(m.costo_compra) || 0), m.moneda_costo);
       if (!porArticulo[m.codigo]) {
         porArticulo[m.codigo] = {
           codigo: m.codigo,
@@ -1867,8 +1875,33 @@ export default function ReportsEnterprise() {
       porArticulo[m.codigo].cantidad += m.cantidad || 0;
       porArticulo[m.codigo].gasto += gasto;
       const mes = (m.created_at || '').substring(0, 7);
-      if (mes) porMes[mes] = (porMes[mes] || 0) + gasto;
+      if (mes) compradoPorMes[mes] = (compradoPorMes[mes] || 0) + gasto;
       porCategoria[categoria] = (porCategoria[categoria] || 0) + gasto;
+    });
+
+    // Costo unitario de referencia por artículo (promedio de las compras del
+    // período) para valuar el consumo.
+    const costoUnitPorCodigo: Record<string, number> = {};
+    Object.values(porArticulo).forEach(a => {
+      if (a.cantidad > 0) costoUnitPorCodigo[a.codigo] = a.gasto / a.cantidad;
+    });
+
+    // Consumo: unidades y valor ($) por código y por mes.
+    const usadoPorCodigo: Record<string, number> = {};
+    const usadoValorPorCodigo: Record<string, number> = {};
+    const usadoPorMes: Record<string, number> = {};
+    (salidas || []).forEach((m: any) => {
+      if (!esInsumo(m.producto?.almacen_id)) return;
+      const cant = m.cantidad || 0;
+      usadoPorCodigo[m.codigo] = (usadoPorCodigo[m.codigo] || 0) + cant;
+      // Costo de referencia: compras del período; si no compró en el período,
+      // cae al costo promedio del producto (normalizado a UYU por su moneda).
+      const costoRef = costoUnitPorCodigo[m.codigo]
+        ?? aUYU(parseFloat(m.producto?.costo_promedio) || 0, m.producto?.moneda);
+      const valor = cant * costoRef;
+      usadoValorPorCodigo[m.codigo] = (usadoValorPorCodigo[m.codigo] || 0) + valor;
+      const mes = (m.created_at || '').substring(0, 7);
+      if (mes) usadoPorMes[mes] = (usadoPorMes[mes] || 0) + valor;
     });
 
     const filas = Object.values(porArticulo)
@@ -1880,40 +1913,47 @@ export default function ReportsEnterprise() {
         usado: usadoPorCodigo[a.codigo] || 0,
         costoUnitario: a.cantidad > 0 ? a.gasto / a.cantidad : 0,
         gasto: a.gasto,
+        consumido: usadoValorPorCodigo[a.codigo] || 0,
       }))
       .sort((a, b) => b.gasto - a.gasto);
 
     const gastoTotal = filas.reduce((s, f) => s + f.gasto, 0);
-    const meses = Object.keys(porMes).length;
+    const consumidoTotal = Object.values(usadoValorPorCodigo).reduce((s, v) => s + v, 0);
 
-    // Gráfico: gasto por mes (línea de tiempo del informe mensual).
-    const graficoData = Object.entries(porMes)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([name, value]) => ({ name, value }));
+    // Gráfico: comprado vs consumido ($) por mes, en la moneda del reporte.
+    const mesesSet = new Set([...Object.keys(compradoPorMes), ...Object.keys(usadoPorMes)]);
+    const graficoData = Array.from(mesesSet)
+      .sort()
+      .map(mes => ({
+        name: mes,
+        comprado: Math.round(aReporte(compradoPorMes[mes] || 0) * 100) / 100,
+        usado: Math.round(aReporte(usadoPorMes[mes] || 0) * 100) / 100,
+      }));
 
     // Categoría con mayor gasto (para KPI).
     const topCategoria = Object.entries(porCategoria).sort((a, b) => b[1] - a[1])[0];
 
     return {
       titulo: 'Gastos de Insumos',
-      subtitulo: `${formatDate(filtros.fechaInicio)} — ${formatDate(filtros.fechaFin)}`,
+      subtitulo: `Comprado vs consumido · ${formatDate(filtros.fechaInicio)} — ${formatDate(filtros.fechaFin)}`,
       columnas: [
         { key: 'codigo', label: 'Código' },
         { key: 'descripcion', label: 'Insumo' },
         { key: 'categoria', label: 'Categoría' },
-        { key: 'comprado', label: 'Comprado', tipo: 'numero' },
-        { key: 'usado', label: 'Usado', tipo: 'numero' },
+        { key: 'comprado', label: 'Comprado (uds)', tipo: 'numero' },
+        { key: 'usado', label: 'Usado (uds)', tipo: 'numero' },
         { key: 'costoUnitario', label: 'Costo Unit.', tipo: 'moneda' },
-        { key: 'gasto', label: 'Gasto', tipo: 'moneda' },
+        { key: 'gasto', label: 'Gasto compra', tipo: 'moneda' },
+        { key: 'consumido', label: 'Consumido ($)', tipo: 'moneda' },
       ],
       filas,
-      totales: { gasto: gastoTotal },
+      totales: { gasto: gastoTotal, consumido: consumidoTotal },
       graficoData,
       graficoTipo: 'bar',
       kpis: [
-        { label: 'Gasto Total', valor: formatCurrency(gastoTotal), color: 'amber' },
-        { label: 'Insumos distintos', valor: filas.length, color: 'cyan' },
-        { label: 'Meses', valor: meses, color: 'purple' },
+        { label: 'Gasto Total (comprado)', valor: formatCurrency(gastoTotal), color: 'amber' },
+        { label: 'Consumido ($)', valor: formatCurrency(consumidoTotal), color: 'cyan' },
+        { label: 'Insumos distintos', valor: filas.length, color: 'purple' },
         { label: 'Categoría top', valor: topCategoria ? `${topCategoria[0]}` : '—', color: 'emerald' },
       ],
     };
@@ -2742,6 +2782,28 @@ export default function ReportsEnterprise() {
                               <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
                               <Area type="monotone" dataKey="value" stroke="#9ec9b1" fill="#9ec9b133" />
                             </AreaChart>
+                          ) : datosReporte.graficoData[0]?.comprado !== undefined ? (
+                            /* Comprado vs consumido ($) por mes — gastos de insumos */
+                            <ComposedChart data={datosReporte.graficoData} barCategoryGap="30%">
+                              <defs>
+                                <linearGradient id="gradComprado" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.95} />
+                                  <stop offset="100%" stopColor="#0369a1" stopOpacity={0.55} />
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                              <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
+                              <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false}
+                                tickFormatter={(v: number) => new Intl.NumberFormat('es-UY', { notation: 'compact' }).format(v)} />
+                              <Tooltip
+                                contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '10px' }}
+                                formatter={(value: number, name: string) => [formatMoney(Number(value) || 0, MONEDA_REPORTE), name]}
+                              />
+                              <Legend />
+                              <Bar dataKey="comprado" name="Comprado ($)" fill="url(#gradComprado)" radius={[8, 8, 0, 0]} maxBarSize={56} />
+                              <Line type="monotone" dataKey="usado" name="Consumido ($)" stroke="#fbbf24" strokeWidth={2.5}
+                                dot={{ r: 4, fill: '#fbbf24', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                            </ComposedChart>
                           ) : (
                             <BarChart data={datosReporte.graficoData}>
                               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
