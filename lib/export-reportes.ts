@@ -1,11 +1,25 @@
 import * as XLSX from 'xlsx';
-import { formatMoney } from '@/lib/currency';
+import { formatMoney, convertir, type RatesTable } from '@/lib/currency';
 import type { Moneda } from '@/types';
 
 // Moneda en la que se exporta. La setea el módulo de reportes
 // según `org.config.display_currency`. Default UYU.
 let MONEDA_EXPORT: Moneda = 'UYU';
+// Moneda en la que vienen los valores de los reportes (base, normalmente UYU)
+// y tasas para convertir a la moneda de export. Sin esto el PDF/Excel mostraban
+// el número crudo en UYU con símbolo de la otra moneda → montos altísimos.
+let MONEDA_ORIGEN_EXPORT: Moneda = 'UYU';
+let RATES_EXPORT: RatesTable = new Map();
 export function setMonedaExport(m: Moneda) { MONEDA_EXPORT = m; }
+export function setMonedaOrigenExport(m: Moneda) { MONEDA_ORIGEN_EXPORT = m; }
+export function setRatesExport(r: RatesTable) { RATES_EXPORT = r; }
+
+// Convierte un valor de la moneda origen a la moneda de export.
+function aExport(n: number): number {
+  if (MONEDA_EXPORT === MONEDA_ORIGEN_EXPORT) return n;
+  const conv = convertir(n, MONEDA_ORIGEN_EXPORT, MONEDA_EXPORT, RATES_EXPORT);
+  return conv == null ? n : conv;
+}
 
 // =====================================================
 // Export para el módulo de Reportes
@@ -28,7 +42,7 @@ export interface ReporteExportable {
 }
 
 function formatCurrencyShort(n: number): string {
-  return formatMoney(n, MONEDA_EXPORT);
+  return formatMoney(aExport(n), MONEDA_EXPORT);
 }
 
 function formatNumberShort(n: number): string {
@@ -48,7 +62,7 @@ function formatDateShort(d: string): string {
 function fmtForExport(valor: any, tipo?: string): any {
   if (valor === null || valor === undefined) return '';
   if (tipo === 'fecha' && valor)        return formatDateShort(valor);
-  if (tipo === 'moneda')                return Number(valor) || 0;       // Excel maneja el formato
+  if (tipo === 'moneda')                return aExport(Number(valor) || 0); // convertido a moneda export
   if (tipo === 'numero')                return Number(valor) || 0;
   if (tipo === 'porcentaje')            return (Number(valor) || 0) / 100;
   return valor;
@@ -129,7 +143,8 @@ export function exportarReporteExcel(reporte: ReporteExportable, filename?: stri
     let idx = reporte.columnas.length - Object.keys(reporte.totales).length;
     Object.values(reporte.totales).forEach(v => {
       if (idx < reporte.columnas.length) {
-        totalRow[idx] = Number(v) || 0;
+        // Los totales son montos en la moneda origen → convertir a export.
+        totalRow[idx] = aExport(Number(v) || 0);
         idx++;
       }
     });
@@ -153,20 +168,31 @@ export async function exportarReportePDF(reporte: ReporteExportable, filename?: 
 
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
+  // Escudo de Vanguard (dos picos en azul, mismo estilo que la factura).
+  const AZUL: [number, number, number] = [43, 98, 176];
+  const s = 16 / 64;
+  doc.setFillColor(...AZUL);
+  doc.lines([[13, 5], [10, 18], [0, 19], [-23, -42]], 14 + 9 * s, 8 + 14 * s, [s, s], 'F', true);
+  doc.lines([[-13, 5], [-10, 18], [0, 19], [23, -42]], 14 + 55 * s, 8 + 14 * s, [s, s], 'F', true);
+  doc.setFillColor(0, 0, 0);
+
+  const xTexto = 32; // deja lugar al escudo
+
   // Encabezado
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text(reporte.titulo, 14, 15);
+  doc.setTextColor(20, 28, 40);
+  doc.text(reporte.titulo, xTexto, 15);
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100);
   if (reporte.subtitulo) {
-    doc.text(reporte.subtitulo, 14, 21);
+    doc.text(reporte.subtitulo, xTexto, 21);
   }
   doc.text(
-    `Generado: ${new Date().toLocaleString('es-UY')}  ·  ${reporte.filas.length} registros`,
-    14, reporte.subtitulo ? 26 : 21
+    `Generado: ${new Date().toLocaleString('es-UY')}  ·  ${reporte.filas.length} registros  ·  Moneda: ${MONEDA_EXPORT}`,
+    xTexto, reporte.subtitulo ? 26 : 21
   );
   doc.setTextColor(0);
 
