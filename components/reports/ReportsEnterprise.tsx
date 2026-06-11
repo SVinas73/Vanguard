@@ -13,7 +13,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { valuarInventarioSync } from '@/lib/inventory-valuation';
-import { exportarReporteExcel, exportarReportePDF, setMonedaExport } from '@/lib/export-reportes';
+import { exportarReporteExcel, exportarReportePDF, setMonedaExport, setMonedaOrigenExport, setRatesExport } from '@/lib/export-reportes';
 import { formatMoney, convertir, type RatesTable } from '@/lib/currency';
 import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
 import { useTiposCambio } from '@/hooks/useTiposCambio';
@@ -539,10 +539,12 @@ export default function ReportsEnterprise() {
     setMonedaReporte(monedaReporte);
     setMonedaOrigen(monedaBase);
     setMonedaExport(monedaReporte);
+    setMonedaOrigenExport(monedaBase);
   }, [monedaReporte, monedaBase]);
 
   useEffect(() => {
     setRatesReporte(ratesTable);
+    setRatesExport(ratesTable);
   }, [ratesTable]);
 
   // Cuando cambia la moneda de la org o llegan nuevas tasas, re-generamos
