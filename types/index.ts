@@ -50,6 +50,7 @@ export interface Movement {
   timestamp: Date;
   notas?: string;
   costoCompra?: number; // Solo para entradas - precio al que se compró
+  monedaCosto?: Moneda; // Moneda del costo de compra (UYU/USD). Default UYU.
 }
 
 export interface MovementFormData {

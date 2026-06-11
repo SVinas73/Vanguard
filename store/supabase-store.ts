@@ -710,6 +710,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         tipo: movementData.tipo,
         cantidad: movementData.cantidad,
         costo_compra: movementData.costoCompra || null,
+        // Moneda del costo (UYU/USD): los reportes la usan para normalizar.
+        moneda_costo: movementData.monedaCosto || 'UYU',
         notas: movementData.notas || null,
         usuario_email: userEmail,
       }),

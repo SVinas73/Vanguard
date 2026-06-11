@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
-import { Product, Almacen, StockPrediction } from '@/types';
+import { Product, Almacen, StockPrediction, Moneda } from '@/types';
 import { Button, Input, Select, Modal } from '@/components/ui';
 import { ProductTable } from '@/components/productos';
 import { ImportCSV } from '@/components/import';
@@ -437,10 +437,11 @@ export function StockDashboard({
     cantidad: number;
     notas: string;
     costoCompra?: number;
+    monedaCosto?: Moneda;
     factura?: string;
   }) => {
     await addMovement(
-      { codigo: data.codigo, tipo: data.tipo, cantidad: data.cantidad, notas: data.notas, costoCompra: data.costoCompra },
+      { codigo: data.codigo, tipo: data.tipo, cantidad: data.cantidad, notas: data.notas, costoCompra: data.costoCompra, monedaCosto: data.monedaCosto },
       userEmail
     );
     onRefreshProducts();
