@@ -167,6 +167,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         const costoUnit = (ir.costo_unitario != null && ir.costo_unitario > 0)
           ? Number(ir.costo_unitario)
           : null;
+        // Moneda del costo (UYU/USD) elegida en la solicitud: se usa para el
+        // producto y para el movimiento, así el reporte de gastos no mezcla
+        // monedas y la valuación convierte bien.
+        const monedaItem = ((item as any).moneda === 'USD') ? 'USD' : 'UYU';
 
         let { data: prod } = await supabase
           .from('productos')
@@ -186,10 +190,6 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
             .order('es_principal', { ascending: false })
             .limit(1)
             .maybeSingle();
-
-          // Moneda del costo del insumo (UYU/USD): se hereda al producto para que
-          // la valuación (Stock / Análisis) convierta correctamente.
-          const monedaItem = ((item as any).moneda === 'USD') ? 'USD' : 'UYU';
 
           const { data: creado, error: errCrear } = await supabase
             .from('productos')
@@ -232,7 +232,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           tipo: 'entrada',
           cantidad: ir.cantidad_recibida,
           costo_compra: costoUnit,
-          moneda_costo: 'UYU',
+          moneda_costo: monedaItem,
           notas: `Ingreso por solicitud de insumo ${actual.numero}`,
           usuario_email: auth.user.email,
         });
