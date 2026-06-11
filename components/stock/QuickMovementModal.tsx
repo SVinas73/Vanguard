@@ -15,6 +15,7 @@ interface QuickMovementModalProps {
     cantidad: number;
     notas: string;
     costoCompra?: number;
+    monedaCosto?: 'UYU' | 'USD';
     factura?: string;
   }) => Promise<void>;
   onClose: () => void;
@@ -24,6 +25,7 @@ export function QuickMovementModal({ product, tipo, userEmail, onSubmit, onClose
   const [cantidad, setCantidad] = useState(1);
   const [notas, setNotas] = useState('');
   const [costoCompra, setCostoCompra] = useState('');
+  const [monedaCosto, setMonedaCosto] = useState<'UYU' | 'USD'>((product.moneda as 'UYU' | 'USD') || 'UYU');
   const [factura, setFactura] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const cantidadRef = useRef<HTMLInputElement>(null);
@@ -53,6 +55,7 @@ export function QuickMovementModal({ product, tipo, userEmail, onSubmit, onClose
         cantidad,
         notas: notasFinal,
         costoCompra: isEntrada && costoCompra ? parseFloat(costoCompra) : undefined,
+        monedaCosto: isEntrada && costoCompra ? monedaCosto : undefined,
         factura: factura || undefined,
       });
       onClose();
@@ -144,14 +147,25 @@ export function QuickMovementModal({ product, tipo, userEmail, onSubmit, onClose
           {isEntrada && (
             <div>
               <label className="text-xs font-medium text-slate-400 mb-2 block">Costo unitario (opcional)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={costoCompra}
-                onChange={(e) => setCostoCompra(e.target.value)}
-                placeholder={product.costoPromedio ? `Último: $${product.costoPromedio.toFixed(2)}` : '0.00'}
-                className="w-full px-3 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={costoCompra}
+                  onChange={(e) => setCostoCompra(e.target.value)}
+                  placeholder={product.costoPromedio ? `Último: ${product.costoPromedio.toFixed(2)}` : '0.00'}
+                  className="flex-1 px-3 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
+                />
+                <select
+                  value={monedaCosto}
+                  onChange={(e) => setMonedaCosto(e.target.value as 'UYU' | 'USD')}
+                  className="px-3 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:border-slate-600"
+                  title="Moneda del costo"
+                >
+                  <option value="UYU">$ UYU</option>
+                  <option value="USD">US$ USD</option>
+                </select>
+              </div>
             </div>
           )}
 
