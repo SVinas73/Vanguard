@@ -5,8 +5,8 @@
 // quién puede APROBAR (pendiente → en_gestion) según el proveedor.
 //
 // Reglas (definidas por negocio):
-//   - MERCADO LIBRE  → solo Gonzalo (gdecia@ingcotools.com.uy).
-//   - YNTER INDUSTRIAL → solo Gonzalo.
+//   - MERCADO LIBRE  → solo Gonzalo (gdecia@ingcotools.com.uy) y M. Bentancourt.
+//   - YNTER INDUSTRIAL → solo Gonzalo y M. Bentancourt.
 //   - TYT DE MARTINI / ESTACION HOGAR / OTRO → cualquier usuario.
 //
 // La GESTIÓN del resto del flujo (comprada/recibida/cerrada/cancelar) no exige
@@ -28,22 +28,25 @@ export const PROVEEDORES_INSUMO: ProveedorInsumo[] = [
 
 export const PROVEEDOR_OTRO = 'OTRO';
 
-// Email del único aprobador permitido para ciertos proveedores.
+// Email del aprobador permitido para ciertos proveedores.
 // (Gonzalo todavía no tiene cuenta; queda seteado para cuando se cree.)
 export const APROBADOR_GONZALO = 'gdecia@ingcotools.com.uy';
+
+// Nuevo aprobador añadido
+export const APROBADOR_BENTANCOURT = 'mbentancourt@ingcotools.com.uy';
 
 // Emails de PRUEBA que también pueden aprobar como Gonzalo (para testear el
 // flujo antes de que Gonzalo use su cuenta). Quitar cuando ya no haga falta.
 export const APROBADORES_PRUEBA = ['santi231194@hotmail.com'];
 
 // Proveedores cuya aprobación es EXCLUSIVA de un conjunto puntual de emails
-// (Gonzalo). Mercado Libre, Ynter, Edintor y "Otro proveedor" solo los aprueba
-// Gonzalo; TyT De Martini y Estación Hogar los puede aprobar cualquiera.
+// (Gonzalo y M. Bentancourt). Mercado Libre, Ynter, Edintor y "Otro proveedor" solo los aprueba
+// Gonzalo o Bentancourt; TyT De Martini y Estación Hogar los puede aprobar cualquiera.
 export const APROBADORES_EXCLUSIVOS: Record<string, string[]> = {
-  'MERCADO LIBRE': [APROBADOR_GONZALO, ...APROBADORES_PRUEBA],
-  'YNTER INDUSTRIAL': [APROBADOR_GONZALO, ...APROBADORES_PRUEBA],
-  'EDINTOR': [APROBADOR_GONZALO, ...APROBADORES_PRUEBA],
-  'OTRO': [APROBADOR_GONZALO, ...APROBADORES_PRUEBA],
+  'MERCADO LIBRE': [APROBADOR_GONZALO, APROBADOR_BENTANCOURT, ...APROBADORES_PRUEBA],
+  'YNTER INDUSTRIAL': [APROBADOR_GONZALO, APROBADOR_BENTANCOURT, ...APROBADORES_PRUEBA],
+  'EDINTOR': [APROBADOR_GONZALO, APROBADOR_BENTANCOURT, ...APROBADORES_PRUEBA],
+  'OTRO': [APROBADOR_GONZALO, APROBADOR_BENTANCOURT, ...APROBADORES_PRUEBA],
 };
 
 /** Lista de emails habilitados para aprobar este proveedor, o null si lo aprueba cualquiera. */
@@ -56,8 +59,10 @@ export function aprobadoresRequeridos(proveedor?: string | null): string[] | nul
 export function aprobadorRequerido(proveedor?: string | null): string | null {
   const lista = aprobadoresRequeridos(proveedor);
   if (!lista || lista.length === 0) return null;
-  // Mostramos el aprobador "oficial" (Gonzalo); los de prueba son internos.
-  return lista[0];
+  // Mostramos los aprobadores oficiales principales (separados por coma si hay más de uno)
+  // excluyendo los correos de prueba de la vista del usuario si se desea.
+  const oficiales = lista.filter(email => !APROBADORES_PRUEBA.includes(email));
+  return oficiales.length > 0 ? oficiales.join(', ') : lista[0];
 }
 
 /** ¿Este email puede APROBAR (pendiente→en_gestion) una solicitud de este proveedor? */
