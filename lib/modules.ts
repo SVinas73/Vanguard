@@ -1,54 +1,8 @@
 // ============================================
-// MÓDULOS HABILITADOS — modo Lite / Full / Custom
+// CONFIGURACIÓN DE LA ORGANIZACIÓN — monedas
 // ============================================
-// Permite que una PYME use sólo lo que necesita,
-// sin perder los datos del resto. Toggle reversible.
-
-import type { TabType } from '@/types';
-
-export type ModulePreset = 'lite' | 'full' | 'custom';
-
-/**
- * Módulos del preset LITE: lo mínimo viable para una PYME.
- * Cubre control de inventario + facturación + reportes básicos.
- */
-export const LITE_MODULES: TabType[] = [
-  'inicio',
-  'dashboard',
-  'stock',
-  'movimientos',
-  'reportes',
-  'facturacion',
-  'configuracion',
-  'empresas',
-];
-
-/**
- * Lista completa de módulos disponibles en el sistema.
- * Espejo de la navegación en components/layout/sidebar.tsx.
- * Si agregás un módulo nuevo al sidebar, agregalo acá también.
- */
-export const ALL_MODULES: TabType[] = [
-  'inicio',
-  'dashboard', 'executive', 'stock', 'movimientos', 'chat',
-  'comercial', 'replenishment', 'proyectos', 'wms', 'distribucion', 'facturacion',
-  'gestion_clientes', 'clientes_360',
-  'taller', 'garantias', 'tickets', 'customer_risk', 'rma',
-  'rrhh',
-  'analytics', 'demand', 'pricing', 'reportes',
-  'aprobaciones', 'seriales', 'trazabilidad', 'qms', 'auditoria',
-  'integraciones', 'configuracion', 'empresas',
-];
-
-/**
- * Módulos que SIEMPRE deben estar visibles, sin importar el preset.
- * (Si no, el usuario podría dejarse sin manera de configurar nada.)
- */
-export const PINNED_MODULES: TabType[] = ['inicio', 'dashboard', 'configuracion', 'empresas'];
 
 export interface ModuleConfig {
-  preset: ModulePreset;
-  enabled_modules: TabType[];
   /** Moneda en la que el sistema almacena precios/costos (base). */
   base_currency?: string;
   /** Moneda en la que se muestran reportes/dashboards (convierte desde la base). */
@@ -56,74 +10,6 @@ export interface ModuleConfig {
 }
 
 export const DEFAULT_CONFIG: ModuleConfig = {
-  preset: 'full',
-  enabled_modules: ALL_MODULES,
   base_currency: 'UYU',
   display_currency: 'UYU',
 };
-
-/**
- * Resuelve la lista efectiva de módulos visibles para una organización.
- * Acepta el JSON `config` de la fila de organizaciones (puede venir null/undefined).
- *
- *   - preset 'full' (o sin config) → todos
- *   - preset 'lite'                → LITE_MODULES
- *   - preset 'custom'              → enabled_modules tal como se guardó
- *
- * Siempre garantiza los PINNED_MODULES.
- */
-export function resolverModulosHabilitados(
-  config: Partial<ModuleConfig> | null | undefined
-): TabType[] {
-  if (!config || !config.preset || config.preset === 'full') {
-    return ALL_MODULES;
-  }
-  const base = config.preset === 'lite'
-    ? LITE_MODULES
-    : (config.enabled_modules ?? LITE_MODULES);
-
-  // Garantizar pinneados sin duplicar
-  const set = new Set<TabType>(base);
-  for (const m of PINNED_MODULES) set.add(m);
-  return ALL_MODULES.filter(m => set.has(m));
-}
-
-/**
- * Etiquetas legibles para mostrar en la pantalla de configuración.
- */
-export const MODULE_LABELS: Record<TabType, string> = {
-  inicio: 'Inicio',
-  dashboard: 'Dashboard',
-  executive: 'Vista Ejecutiva',
-  stock: 'Stock',
-  movimientos: 'Movimientos',
-  chat: 'Mensajes',
-  comercial: 'Comercial',
-  replenishment: 'Reabastecimiento IA',
-  proyectos: 'Proyectos',
-  wms: 'WMS (depósitos)',
-  distribucion: 'Distribución',
-  facturacion: 'Facturación',
-  gestion_clientes: 'Gestión de clientes',
-  clientes_360: 'Clientes 360°',
-  bom: 'BOM (lista de materiales)',
-  ensamblajes: 'Ensamblajes',
-  taller: 'Taller',
-  garantias: 'Garantías',
-  tickets: 'Tickets soporte',
-  customer_risk: 'Clientes en riesgo',
-  rma: 'Devoluciones (RMA)',
-  rrhh: 'RRHH',
-  analytics: 'Analytics IA',
-  demand: 'Demand planning',
-  pricing: 'Precios IA',
-  reportes: 'Reportes',
-  aprobaciones: 'Aprobaciones',
-  seriales: 'Seriales',
-  trazabilidad: 'Trazabilidad',
-  qms: 'Calidad (QMS)',
-  auditoria: 'Auditoría',
-  integraciones: 'Integraciones',
-  configuracion: 'Configuración',
-  empresas: 'Mis empresas',
-} as Record<TabType, string>;

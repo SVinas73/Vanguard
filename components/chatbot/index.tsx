@@ -185,19 +185,19 @@ export function ChatbotWidget() {
         const nombre = user?.nombre?.split(' ')[0] || '';
         const rol = (user?.rol || '').toLowerCase();
         const sugByRol = rol === 'admin'
-          ? ['Resumen ejecutivo de hoy', '¿Qué aprobaciones tengo pendientes?', '¿Hay CxC vencidas?']
+          ? ['Resumen ejecutivo de hoy', '¿Qué productos están críticos?', 'Auditoría reciente']
           : rol === 'vendedor'
-            ? ['¿Cuáles son mis cotizaciones pendientes?', 'Top clientes del mes', '¿Cómo creo una cotización?']
+            ? ['¿Qué productos tienen stock bajo?', '¿Qué RMA están abiertos?', '¿Cómo creo un producto?']
             : rol === 'bodeguero'
-              ? ['¿Qué picking tengo pendiente?', '¿Hay recepciones para hoy?', '¿Cómo recibo mercadería?']
+              ? ['¿Qué productos tienen stock bajo?', 'Recomendaciones de reposición', '¿Cómo creo un producto?']
               : rol === 'operador'
                 ? ['¿Qué OT tengo activas?', 'Presupuestos esperando aprobación', '¿Cómo abro una OT?']
-                : ['¿Qué productos tienen stock bajo?', '¿Cuánto vendimos este mes?', '¿Cómo creo una cotización?'];
+                : ['¿Qué productos tienen stock bajo?', 'Recomendaciones de reposición', '¿Cómo creo un producto?'];
 
         setMessages([{
           id: 'welcome',
           role: 'assistant',
-          content: `¡Hola${nombre ? ` ${nombre}` : ''}! 👋 Soy el Asistente Omnisciente de Vanguard.\n\nPuedo:\n• 📦 Responder sobre cualquier módulo (stock, ventas, finanzas, WMS, taller, calidad, RMA, trazabilidad...)\n• 📍 **Guiarte**: preguntame "¿cómo hago X?" o "¿dónde está Y?"\n• 📊 Resumirte tu día según tu rol\n• ⚡ Crear movimientos y órdenes con tu permiso\n\n¿En qué te ayudo?`,
+          content: `¡Hola${nombre ? ` ${nombre}` : ''}! 👋 Soy el Asistente Omnisciente de Vanguard.\n\nPuedo:\n• 📦 Responder sobre cualquier módulo (stock, reabastecimiento, taller, RMA, trazabilidad, auditoría...)\n• 📍 **Guiarte**: preguntame "¿cómo hago X?" o "¿dónde está Y?"\n• 📊 Resumirte tu día según tu rol\n• ⚡ Crear movimientos de stock con tu permiso\n\n¿En qué te ayudo?`,
           timestamp: new Date(),
           suggestions: sugByRol,
         }]);

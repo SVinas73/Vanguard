@@ -26,24 +26,20 @@ export type RolUsuario = 'admin' | 'vendedor' | 'bodeguero' | 'operador';
 const PERMISSIONS_BY_ROLE: Record<RolUsuario, Set<string>> = {
   admin: new Set([
     'canCreateProducts', 'canEditProducts', 'canDeleteProducts',
-    'canViewCosts', 'canViewAudit', 'canViewReports',
-    'canViewFinanzas', 'canViewTaller', 'canViewWMS',
-    'canViewProyectos', 'canViewComercial', 'canViewDemand',
-    'canViewSeriales', 'canViewRMA', 'canViewBOM', 'canViewQMS',
-    'canExportData', 'canManageUsers', 'canApprove',
-    'canDeleteAuditLogs', 'canConfigureSystem', 'canEmitirCFE',
+    'canViewAudit', 'canViewTaller', 'canViewComercial',
+    'canViewSeriales', 'canViewRMA',
+    'canManageUsers', 'canDeleteAuditLogs', 'canConfigureSystem',
   ]),
   vendedor: new Set([
     'canCreateProducts', 'canEditProducts',
-    'canViewReports', 'canViewComercial', 'canViewDemand',
-    'canViewRMA', 'canExportData',
+    'canViewComercial', 'canViewRMA',
   ]),
   bodeguero: new Set([
-    'canViewWMS', 'canCreateProducts', 'canEditProducts',
+    'canCreateProducts', 'canEditProducts',
     'canViewSeriales',
   ]),
   operador: new Set([
-    'canViewTaller', 'canViewProyectos', 'canViewBOM',
+    'canViewTaller',
   ]),
 };
 
@@ -90,7 +86,7 @@ export function tienePermiso(rol: RolUsuario, permiso: string): boolean {
  * Devuelve { ok, user } o { ok: false, error, status } para
  * usar directo en API routes.
  *
- *   const auth = await requirePermission('canViewFinanzas');
+ *   const auth = await requirePermission('canViewAudit');
  *   if (!auth.ok) return NextResponse.json({error:auth.error}, {status:auth.status});
  *   // ahora podés usar auth.user
  */

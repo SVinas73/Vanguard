@@ -3,15 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useOrganizacion } from '@/hooks/useOrganizacion';
-import {
-  resolverModulosHabilitados,
-  type ModuleConfig,
-  type ModulePreset,
-  DEFAULT_CONFIG,
-  ALL_MODULES,
-  LITE_MODULES,
-} from '@/lib/modules';
-import type { TabType } from '@/types';
+import { type ModuleConfig, DEFAULT_CONFIG } from '@/lib/modules';
 
 const LOCAL_KEY = 'vg:module-config';
 
@@ -22,8 +14,6 @@ function leerLocal(): ModuleConfig | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<ModuleConfig>;
     return {
-      preset: parsed.preset ?? 'full',
-      enabled_modules: parsed.enabled_modules ?? ALL_MODULES,
       display_currency: parsed.display_currency ?? 'UYU',
     };
   } catch {
@@ -31,21 +21,9 @@ function leerLocal(): ModuleConfig | null {
   }
 }
 
-function guardarLocal(c: ModuleConfig) {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(c));
-  } catch { /* quota / disabled */ }
-}
-
 interface State {
-  modulos: TabType[];
   config: ModuleConfig;
   loading: boolean;
-  cambiarPreset: (preset: ModulePreset, custom?: TabType[]) => Promise<void>;
-  setDisplayCurrency: (m: string) => Promise<void>;
-  setBaseCurrency: (m: string) => Promise<void>;
-  recargar: () => Promise<void>;
 }
 
 export function useModulosHabilitados(): State {
@@ -55,7 +33,7 @@ export function useModulosHabilitados(): State {
 
   const cargar = useCallback(async () => {
     setLoading(true);
-    // Single-tenant fallback: si no hay org, leer/escribir en localStorage
+    // Single-tenant fallback: si no hay org, leer de localStorage
     if (!orgActivaId) {
       setConfig(leerLocal() ?? DEFAULT_CONFIG);
       setLoading(false);
@@ -72,8 +50,6 @@ export function useModulosHabilitados(): State {
     // antes de este fix, lo ignoramos: solo display_currency controla cómo
     // se MUESTRA, y la conversión asume siempre origen UYU.
     setConfig({
-      preset: c.preset ?? 'full',
-      enabled_modules: c.enabled_modules ?? ALL_MODULES,
       base_currency: 'UYU',
       display_currency: c.display_currency ?? 'UYU',
     });
@@ -82,62 +58,8 @@ export function useModulosHabilitados(): State {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  // Cuando otra instancia del hook cambia la config, aplicamos el
-  // nuevo valor que viene en el evento directo. Sin re-fetch, sin lag.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as ModuleConfig | undefined;
-      if (detail) setConfig(detail);
-      else cargar();
-    };
-    window.addEventListener('vg:modules-changed', handler);
-    return () => window.removeEventListener('vg:modules-changed', handler);
-  }, [cargar]);
-
-  const guardar = useCallback(async (next: ModuleConfig) => {
-    setConfig(next);
-    if (orgActivaId) {
-      await supabase
-        .from('organizaciones')
-        .update({ config: next })
-        .eq('id', orgActivaId);
-    } else {
-      // Fallback single-tenant: persistir en localStorage
-      guardarLocal(next);
-    }
-    // Avisar a la app para refrescar el sidebar — incluye el nuevo
-    // config en el evento para aplicarlo sin re-fetch
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('vg:modules-changed', { detail: next }));
-    }
-  }, [orgActivaId]);
-
-  const cambiarPreset = useCallback(async (preset: ModulePreset, custom?: TabType[]) => {
-    const enabled =
-      preset === 'full' ? ALL_MODULES
-      : preset === 'lite' ? LITE_MODULES
-      : (custom ?? config.enabled_modules);
-    await guardar({ ...config, preset, enabled_modules: enabled });
-  }, [config, guardar]);
-
-  const setDisplayCurrency = useCallback(async (m: string) => {
-    await guardar({ ...config, display_currency: m });
-  }, [config, guardar]);
-
-  // Deprecada: ya no se ofrece cambiar la moneda base desde la UI. Se deja
-  // como no-op para no romper consumidores existentes durante la transición.
-  const setBaseCurrency = useCallback(async (_m: string) => {
-    // intencionalmente no hacemos nada.
-  }, []);
-
   return {
-    modulos: resolverModulosHabilitados(config),
     config,
     loading,
-    cambiarPreset,
-    setDisplayCurrency,
-    setBaseCurrency,
-    recargar: cargar,
   };
 }

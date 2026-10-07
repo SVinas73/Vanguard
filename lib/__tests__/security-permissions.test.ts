@@ -6,16 +6,16 @@ describe('permissions — tienePermiso', () => {
     expect(tienePermiso('admin', 'canManageUsers')).toBe(true);
   });
 
-  it('admin tiene canViewFinanzas', () => {
-    expect(tienePermiso('admin', 'canViewFinanzas')).toBe(true);
+  it('admin tiene canViewAudit', () => {
+    expect(tienePermiso('admin', 'canViewAudit')).toBe(true);
   });
 
-  it('vendedor NO tiene canViewFinanzas (acceso financiero restringido)', () => {
-    expect(tienePermiso('vendedor', 'canViewFinanzas')).toBe(false);
+  it('vendedor NO tiene canViewAudit (auditoría restringida)', () => {
+    expect(tienePermiso('vendedor', 'canViewAudit')).toBe(false);
   });
 
-  it('bodeguero tiene canViewWMS', () => {
-    expect(tienePermiso('bodeguero', 'canViewWMS')).toBe(true);
+  it('bodeguero tiene canViewSeriales', () => {
+    expect(tienePermiso('bodeguero', 'canViewSeriales')).toBe(true);
   });
 
   it('bodeguero NO tiene canViewComercial', () => {
@@ -43,29 +43,29 @@ describe('permissions — tienePermiso', () => {
     {
       rol: 'admin',
       permisos: {
-        canViewFinanzas: true, canViewAudit: true, canApprove: true,
-        canManageUsers: true, canEmitirCFE: true,
+        canViewAudit: true, canDeleteAuditLogs: true,
+        canManageUsers: true, canViewComercial: true,
       },
     },
     {
       rol: 'vendedor',
       permisos: {
-        canViewFinanzas: false, canViewComercial: true, canViewDemand: true,
+        canViewAudit: false, canViewComercial: true,
         canViewRMA: true, canManageUsers: false,
       },
     },
     {
       rol: 'bodeguero',
       permisos: {
-        canViewWMS: true, canViewSeriales: true,
-        canViewFinanzas: false, canViewComercial: false,
+        canViewSeriales: true,
+        canViewAudit: false, canViewComercial: false,
       },
     },
     {
       rol: 'operador',
       permisos: {
-        canViewTaller: true, canViewProyectos: true, canViewBOM: true,
-        canViewFinanzas: false, canApprove: false,
+        canViewTaller: true,
+        canViewAudit: false, canDeleteAuditLogs: false,
       },
     },
   ];

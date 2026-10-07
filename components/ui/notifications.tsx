@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import {
   Bell, AlertTriangle, X, Check, CheckCheck, Package,
-  FileText, FileWarning, CreditCard, Truck, Info, RefreshCw,
-  Archive, Target, ShoppingCart
+  FileWarning, Info, RefreshCw,
+  ShoppingCart
 } from 'lucide-react';
 import { useInventoryStore } from '@/store';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,16 +24,8 @@ import {
 const TIPO_ICON: Record<TipoNotificacion, React.ElementType> = {
   stock_bajo: AlertTriangle,
   sin_stock: Package,
-  cotizacion_por_vencer: FileText,
-  cotizacion_vencida: FileWarning,
-  cxc_vencida: CreditCard,
-  cxp_vencida: CreditCard,
-  orden_sin_entregar: Truck,
-  orden_compra_creada: ShoppingCart,
   solicitud_insumo_creada: ShoppingCart,
   solicitud_insumo_estado: ShoppingCart,
-  putaway_pendiente: Archive,
-  picking_sin_asignar: Target,
   ticket_sla_breached: AlertTriangle,
   ticket_critico: AlertTriangle,
   garantia_por_vencer: FileWarning,

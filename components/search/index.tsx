@@ -8,23 +8,18 @@ import {
   X, 
   Package, 
   ArrowLeftRight, 
-  Users, 
-  Truck, 
-  ShoppingCart,
-  FileText,
   Command,
   CornerDownLeft,
   Loader2,
-  Warehouse
 } from 'lucide-react';
 import { cn, formatDate, formatCurrency } from '@/lib/utils';
-import { Product, Movement, Cliente, Proveedor, OrdenCompra, OrdenVenta } from '@/types';
+import { Product, Movement } from '@/types';
 
 // ============================================
 // TIPOS
 // ============================================
 
-type SearchResultType = 'product' | 'movement' | 'customer' | 'supplier' | 'purchase' | 'sale';
+type SearchResultType = 'product' | 'movement';
 
 interface SearchResult {
   id: string;
@@ -38,8 +33,6 @@ interface SearchResult {
 interface GlobalSearchProps {
   onSelectProduct?: (product: Product) => void;
   onSelectMovement?: (movement: Movement) => void;
-  onSelectCustomer?: (customer: Cliente) => void;
-  onSelectSupplier?: (supplier: Proveedor) => void;
   onNavigate?: (tab: string) => void;
 }
 
@@ -50,8 +43,6 @@ interface GlobalSearchProps {
 export function GlobalSearch({ 
   onSelectProduct, 
   onSelectMovement,
-  onSelectCustomer,
-  onSelectSupplier,
   onNavigate 
 }: GlobalSearchProps) {
   const { t } = useTranslation();
@@ -160,90 +151,6 @@ export function GlobalSearch({
         });
       }
 
-      // Buscar clientes
-      const { data: clientes } = await supabase
-        .from('clientes')
-        .select('id, codigo, nombre, email, telefono')
-        .or(`codigo.ilike.%${searchQuery}%,nombre.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
-        .eq('activo', true)
-        .limit(5);
-
-      if (clientes) {
-        clientes.forEach(c => {
-          searchResults.push({
-            id: `customer-${c.id}`,
-            type: 'customer',
-            title: c.nombre,
-            subtitle: c.codigo,
-            meta: c.email || c.telefono || '',
-            data: c
-          });
-        });
-      }
-
-      // Buscar proveedores
-      const { data: proveedores } = await supabase
-        .from('proveedores')
-        .select('id, codigo, nombre, email, telefono')
-        .or(`codigo.ilike.%${searchQuery}%,nombre.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
-        .eq('activo', true)
-        .limit(5);
-
-      if (proveedores) {
-        proveedores.forEach(p => {
-          searchResults.push({
-            id: `supplier-${p.id}`,
-            type: 'supplier',
-            title: p.nombre,
-            subtitle: p.codigo,
-            meta: p.email || p.telefono || '',
-            data: p
-          });
-        });
-      }
-
-      // Buscar órdenes de compra
-      const { data: ordenesCompra } = await supabase
-        .from('ordenes_compra')
-        .select('id, numero, estado, total, created_at')
-        .ilike('numero', `%${searchQuery}%`)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (ordenesCompra) {
-        ordenesCompra.forEach(o => {
-          searchResults.push({
-            id: `purchase-${o.id}`,
-            type: 'purchase',
-            title: o.numero,
-            subtitle: t(`purchases.states.${o.estado}`),
-            meta: formatCurrency(o.total),
-            data: o
-          });
-        });
-      }
-
-      // Buscar órdenes de venta
-      const { data: ordenesVenta } = await supabase
-        .from('ordenes_venta')
-        .select('id, numero, estado, total, created_at')
-        .ilike('numero', `%${searchQuery}%`)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (ordenesVenta) {
-        ordenesVenta.forEach(o => {
-          searchResults.push({
-            id: `sale-${o.id}`,
-            type: 'sale',
-            title: o.numero,
-            subtitle: t(`sales.states.${o.estado}`),
-            meta: formatCurrency(o.total),
-            data: o
-          });
-        });
-      }
-
     } catch (error) {
       console.error('Error en búsqueda global:', error);
     }
@@ -277,20 +184,6 @@ export function GlobalSearch({
       case 'movement':
         onNavigate?.('movimientos');
         break;
-      case 'customer':
-        onSelectCustomer?.(result.data);
-        onNavigate?.('ventas');
-        break;
-      case 'supplier':
-        onSelectSupplier?.(result.data);
-        onNavigate?.('compras');
-        break;
-      case 'purchase':
-        onNavigate?.('compras');
-        break;
-      case 'sale':
-        onNavigate?.('ventas');
-        break;
     }
   };
 
@@ -298,10 +191,6 @@ export function GlobalSearch({
     switch (type) {
       case 'product': return <Package size={18} className="text-emerald-400" />;
       case 'movement': return <ArrowLeftRight size={18} className="text-cyan-400" />;
-      case 'customer': return <Users size={18} className="text-purple-400" />;
-      case 'supplier': return <Truck size={18} className="text-amber-400" />;
-      case 'purchase': return <ShoppingCart size={18} className="text-blue-400" />;
-      case 'sale': return <FileText size={18} className="text-pink-400" />;
     }
   };
 
@@ -309,10 +198,6 @@ export function GlobalSearch({
     switch (type) {
       case 'product': return t('stock.title');
       case 'movement': return t('movements.title');
-      case 'customer': return t('sales.customers');
-      case 'supplier': return t('purchases.suppliers');
-      case 'purchase': return t('purchases.purchaseOrders');
-      case 'sale': return t('sales.salesOrders');
     }
   };
 
@@ -321,10 +206,6 @@ export function GlobalSearch({
     const groups: Record<SearchResultType, SearchResult[]> = {
       product: [],
       movement: [],
-      customer: [],
-      supplier: [],
-      purchase: [],
-      sale: [],
     };
     
     results.forEach(r => {
@@ -365,7 +246,7 @@ export function GlobalSearch({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`${t('common.search')} productos, movimientos, clientes, proveedores...`}
+            placeholder={`${t('common.search')} productos, movimientos...`}
             className="flex-1 bg-transparent text-slate-100 placeholder-slate-500 outline-none text-lg"
           />
           <button
@@ -395,8 +276,6 @@ export function GlobalSearch({
                 {[
                   { icon: <Package size={14} />, label: t('stock.title') },
                   { icon: <ArrowLeftRight size={14} />, label: t('movements.title') },
-                  { icon: <Users size={14} />, label: t('sales.customers') },
-                  { icon: <Truck size={14} />, label: t('purchases.suppliers') },
                 ].map((item, i) => (
                   <span key={i} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800/50 text-xs">
                     {item.icon} {item.label}

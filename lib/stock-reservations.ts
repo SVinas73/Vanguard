@@ -328,19 +328,6 @@ export async function getStockReservado(ref: ProductoRef): Promise<number> {
   return (data || []).reduce((s: number, r: any) => s + parseFloat(r.cantidad || 0), 0);
 }
 
-export async function getReservasActivasPorOrigen(
-  origenTipo: OrigenReserva,
-  origenId: string
-): Promise<Reserva[]> {
-  const { data } = await supabase
-    .from('reservas_stock')
-    .select('*')
-    .eq('origen_tipo', origenTipo)
-    .eq('origen_id', origenId)
-    .eq('estado', 'reservado');
-  return (data || []) as Reserva[];
-}
-
 // =====================================================
 // CACHE — productos.stock_reservado
 // =====================================================

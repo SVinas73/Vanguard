@@ -4,11 +4,10 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Search, ArrowUp, ArrowDown, CornerDownLeft, X,
-  Package, ShoppingCart, TrendingUp, Wrench, Warehouse,
-  Kanban, Shield, ShieldCheck, FileText, BarChart3,
-  Plug, MessageCircle, Users, DollarSign, QrCode,
-  GitBranch, RotateCcw, Boxes, Brain, Zap, Sparkles,
-  Settings, LayoutDashboard, Receipt,
+  Package, TrendingUp, Wrench,
+  Shield, ShieldCheck, MessageCircle, DollarSign,
+  GitBranch, RotateCcw, Sparkles,
+  Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TabType } from '@/types';
@@ -26,7 +25,6 @@ import type { TabType } from '@/types';
 
 export type CommandAction =
   | { type: 'navigate'; tab: TabType }
-  | { type: 'navigate-sub'; tab: TabType; subTab: string }
   | { type: 'chat'; prompt: string }
   | { type: 'modal'; modal: string }
   | { type: 'external'; url: string };
@@ -36,7 +34,7 @@ export interface Command {
   label: string;
   hint?: string;
   icon: React.ElementType;
-  category: 'Navegación' | 'Crear' | 'IA' | 'Reportes' | 'Sistema';
+  category: 'Navegación' | 'Crear' | 'IA' | 'Sistema';
   keywords?: string[];
   action: CommandAction;
 }
@@ -53,71 +51,29 @@ interface CommandPaletteProps {
 
 const COMMANDS: Command[] = [
   // ----- Navegación: Principal -----
-  { id: 'nav-dashboard', label: 'Ir al Dashboard', icon: LayoutDashboard, category: 'Navegación',
-    keywords: ['inicio', 'home', 'panel'], action: { type: 'navigate', tab: 'dashboard' } },
   { id: 'nav-stock', label: 'Ir a Stock / Productos', icon: Package, category: 'Navegación',
     keywords: ['inventario', 'productos'], action: { type: 'navigate', tab: 'stock' } },
   { id: 'nav-movimientos', label: 'Ir a Transacciones de Movimientos', icon: TrendingUp, category: 'Navegación',
     keywords: ['movimientos', 'transacciones'], action: { type: 'navigate', tab: 'movimientos' } },
-  { id: 'nav-chat', label: 'Ir a Chat interno', icon: MessageCircle, category: 'Navegación',
-    keywords: ['mensajes', 'conversaciones'], action: { type: 'navigate', tab: 'chat' } },
 
   // ----- Navegación: Operaciones -----
   { id: 'nav-comercial', label: 'Ir a Comercial', icon: DollarSign, category: 'Navegación',
-    keywords: ['ventas', 'compras', 'cotizaciones', 'finanzas'], action: { type: 'navigate', tab: 'comercial' } },
-  { id: 'nav-comercial-ventas', label: 'Comercial → Ventas', icon: TrendingUp, category: 'Navegación',
-    action: { type: 'navigate-sub', tab: 'comercial', subTab: 'ventas' } },
-  { id: 'nav-comercial-compras', label: 'Comercial → Compras', icon: ShoppingCart, category: 'Navegación',
-    action: { type: 'navigate-sub', tab: 'comercial', subTab: 'compras' } },
-  { id: 'nav-comercial-finanzas', label: 'Comercial → Finanzas', icon: DollarSign, category: 'Navegación',
-    keywords: ['cxc', 'cxp', 'notas', 'cheques'], action: { type: 'navigate-sub', tab: 'comercial', subTab: 'finanzas' } },
-  { id: 'nav-comercial-comisiones', label: 'Comercial → Comisiones', icon: DollarSign, category: 'Navegación',
-    action: { type: 'navigate-sub', tab: 'comercial', subTab: 'comisiones' } },
+    keywords: ['insumos', 'solicitudes'], action: { type: 'navigate', tab: 'comercial' } },
 
-  { id: 'nav-proyectos', label: 'Ir a Proyectos', icon: Kanban, category: 'Navegación',
-    action: { type: 'navigate', tab: 'proyectos' } },
   { id: 'nav-taller', label: 'Ir a Taller', icon: Wrench, category: 'Navegación',
     keywords: ['ot', 'orden de trabajo', 'reparacion'], action: { type: 'navigate', tab: 'taller' } },
-  { id: 'nav-wms', label: 'Ir a WMS', icon: Warehouse, category: 'Navegación',
-    keywords: ['picking', 'recepcion', 'almacen', 'putaway', 'packing'], action: { type: 'navigate', tab: 'wms' } },
-  { id: 'nav-facturacion', label: 'Ir a Facturación electrónica', icon: Receipt, category: 'Navegación',
-    keywords: ['cfe', 'dgi', 'factura'], action: { type: 'navigate', tab: 'facturacion' } },
-
-  // ----- Navegación: Análisis -----
-  { id: 'nav-analytics', label: 'Ir a Analytics IA', icon: Brain, category: 'Navegación',
-    action: { type: 'navigate', tab: 'analytics' } },
-  { id: 'nav-demand', label: 'Ir a Demand Planning', icon: Zap, category: 'Navegación',
-    keywords: ['demanda', 'forecast'], action: { type: 'navigate', tab: 'demand' } },
-  { id: 'nav-reportes', label: 'Ir a Reportes', icon: FileText, category: 'Navegación',
-    action: { type: 'navigate', tab: 'reportes' } },
 
   // ----- Navegación: Control -----
-  { id: 'nav-aprobaciones', label: 'Ir a Aprobaciones', icon: Shield, category: 'Navegación',
-    keywords: ['inbox', 'pendientes'], action: { type: 'navigate', tab: 'aprobaciones' } },
   { id: 'nav-tickets', label: 'Ir a Tickets de Soporte', icon: MessageCircle, category: 'Navegación',
     keywords: ['soporte', 'reclamo', 'consulta', 'sla'], action: { type: 'navigate', tab: 'tickets' } },
   { id: 'nav-garantias', label: 'Ir a Garantías', icon: ShieldCheck, category: 'Navegación',
     keywords: ['garantia', 'cobertura'], action: { type: 'navigate', tab: 'garantias' } },
-  { id: 'nav-clientes-360', label: 'Ir a Cliente 360°', icon: Users, category: 'Navegación',
-    keywords: ['historial', 'cliente'], action: { type: 'navigate', tab: 'clientes_360' } },
-  { id: 'nav-seriales', label: 'Ir a Seriales', icon: QrCode, category: 'Navegación',
-    action: { type: 'navigate', tab: 'seriales' } },
   { id: 'nav-trazabilidad', label: 'Ir a Trazabilidad', icon: GitBranch, category: 'Navegación',
     keywords: ['lotes', 'series'], action: { type: 'navigate', tab: 'trazabilidad' } },
   { id: 'nav-rma', label: 'Ir a RMA / Devoluciones', icon: RotateCcw, category: 'Navegación',
     action: { type: 'navigate', tab: 'rma' } },
-  { id: 'nav-qms', label: 'Ir a QMS / Calidad', icon: ShieldCheck, category: 'Navegación',
-    keywords: ['no conformidad', 'certificados'], action: { type: 'navigate', tab: 'qms' } },
-  { id: 'nav-bom', label: 'Ir a BOM', icon: Boxes, category: 'Navegación',
-    keywords: ['bill of materials'], action: { type: 'navigate', tab: 'bom' } },
-  { id: 'nav-ensamblajes', label: 'Ir a Ensamblajes', icon: Wrench, category: 'Navegación',
-    action: { type: 'navigate', tab: 'ensamblajes' } },
   { id: 'nav-auditoria', label: 'Ir a Auditoría', icon: Shield, category: 'Navegación',
     action: { type: 'navigate', tab: 'auditoria' } },
-
-  // ----- Navegación: Configuración -----
-  { id: 'nav-integraciones', label: 'Ir a Integraciones', icon: Plug, category: 'Sistema',
-    action: { type: 'navigate', tab: 'integraciones' } },
 
   // ----- IA / Chatbot -----
   { id: 'ia-resumen-dia', label: 'IA → Resumen ejecutivo de hoy', icon: Sparkles, category: 'IA',
@@ -125,19 +81,8 @@ const COMMANDS: Command[] = [
     action: { type: 'chat', prompt: 'Hacé un resumen ejecutivo de mi día según mi rol' } },
   { id: 'ia-stock-critico', label: 'IA → ¿Qué productos están críticos?', icon: Sparkles, category: 'IA',
     action: { type: 'chat', prompt: '¿Qué productos están con stock crítico o agotado?' } },
-  { id: 'ia-ventas-mes', label: 'IA → ¿Cómo van las ventas del mes?', icon: Sparkles, category: 'IA',
-    action: { type: 'chat', prompt: '¿Cómo vienen las ventas del mes? Comparalas con el mes anterior' } },
-  { id: 'ia-cxc-vencidas', label: 'IA → CxC vencidas', icon: Sparkles, category: 'IA',
-    action: { type: 'chat', prompt: 'Mostrame las cuentas por cobrar vencidas y el total adeudado' } },
-  { id: 'ia-aprobaciones', label: 'IA → ¿Qué tengo pendiente de aprobar?', icon: Sparkles, category: 'IA',
-    action: { type: 'chat', prompt: '¿Qué aprobaciones tengo pendientes ahora mismo?' } },
-  { id: 'ia-picking', label: 'IA → ¿Qué picking tengo pendiente?', icon: Sparkles, category: 'IA',
-    action: { type: 'chat', prompt: '¿Qué órdenes de picking tengo pendientes y cuáles están sin asignar?' } },
   { id: 'ia-recomendaciones', label: 'IA → Recomendaciones de reposición', icon: Sparkles, category: 'IA',
     action: { type: 'chat', prompt: 'Generá recomendaciones de reposición priorizadas por urgencia' } },
-  { id: 'ia-guia', label: 'IA → ¿Cómo hago algo? (guía)', icon: Sparkles, category: 'IA',
-    keywords: ['ayuda', 'tour', 'donde'],
-    action: { type: 'chat', prompt: '¿Cómo hago una cotización paso a paso?' } },
 
   // ----- Sistema -----
   { id: 'sys-focus', label: 'Activar Focus Mode (sin distracciones)', icon: Settings, category: 'Sistema',
@@ -277,7 +222,7 @@ export function CommandPalette({ open, onClose, onAction }: CommandPaletteProps)
             <div className="px-4 py-8 text-center text-sm text-slate-500">
               No hay resultados para <span className="text-slate-300">"{query}"</span>
               <div className="text-xs mt-2">
-                Tip: probá con "ventas", "stock", "facturar", "como hago..."
+                Tip: probá con "stock", "insumos", "taller"...
               </div>
             </div>
           ) : Object.entries(grouped).map(([cat, cmds]) => (

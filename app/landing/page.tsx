@@ -3,9 +3,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  ArrowRight, Sparkles, ShieldCheck, BarChart3, Brain, Warehouse,
-  Wrench, Users, Zap, Globe, Lock, FileText, CheckCircle2,
-  Activity, Boxes, MessageCircle, GitBranch, Truck, ChevronDown,
+  ArrowRight,
+  Sparkles,
+  ShieldCheck,
+  Brain,
+  Warehouse,
+  Wrench,
+  Zap,
+  CheckCircle2,
+  Activity,
+  Boxes,
+  Truck,
+  ChevronDown,
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
@@ -33,48 +42,42 @@ function useReveal() {
 }
 
 const FEATURES = [
-  { icon: Warehouse, title: 'WMS Enterprise',     desc: 'Recepción, picking por olas, pack y dispatch con métricas por operador.',         color: 'blue' },
+  { icon: Boxes,     title: 'Solicitudes de insumos', desc: 'Solicitud, orden interna y aprobación de insumos, con análisis de consumo.',     color: 'blue' },
   { icon: Brain,     title: 'IA omnisciente',     desc: 'Asistente que lee todo el sistema y responde como un experto. Predicciones reales.', color: 'violet' },
   { icon: ShieldCheck, title: 'Seguridad bancaria', desc: 'Rate limiting, hash chain anti-tampering, RBAC granular, auditoría completa.',   color: 'emerald' },
-  { icon: BarChart3, title: 'Reportes ejecutivos', desc: 'Dashboards multi-almacén, KPIs en vivo, exportación a PDF/Excel.',                color: 'cyan' },
+  { icon: Truck,     title: 'Reabastecimiento IA', desc: 'EOQ + punto de reorden conservador: optimiza capital y evita sobre-stock.',      color: 'cyan' },
   { icon: Wrench,    title: 'Post-venta integral',desc: 'Taller, garantías, tickets y RMA conectados con trazabilidad serial.',             color: 'amber' },
-  { icon: Users,     title: 'RRHH integrado',     desc: 'Equipo, asistencia, licencias y vacaciones desde el mismo panel.',                 color: 'pink' },
-  { icon: FileText,  title: 'Facturación electrónica', desc: 'CFE Uruguay incluido. NF-e Brasil, AFIP Argentina via integración.',          color: 'orange' },
-  { icon: Globe,     title: 'API-First & Webhooks',desc: 'REST documentada con OpenAPI 3.1. Webhooks con reintentos exponenciales.',        color: 'sky' },
 ];
 
 const STATS = [
-  { value: '50+',  label: 'módulos integrados' },
+  { value: '11',   label: 'módulos integrados' },
   { value: '13+',  label: 'migraciones de base' },
   { value: '99.9%', label: 'uptime objetivo' },
   { value: '<200ms', label: 'queries promedio' },
 ];
 
 const MODULES = [
-  'Stock & Movimientos', 'WMS Enterprise', 'Comercial (CRM + Ventas)',
-  'Compras & Proveedores', 'Facturación electrónica', 'Taller & Garantías',
-  'Tickets de soporte', 'RMA & Devoluciones', 'Cliente 360°', 'Proyectos',
-  'BOM & Ensamblajes', 'QMS (Calidad)', 'Seriales & Trazabilidad', 'Aprobaciones',
-  'Demand Planning IA', 'Analytics IA', 'Reportes ejecutivos',
-  'RRHH (Equipo, asistencia, licencias)', 'Costos FIFO', 'Auditoría inmutable',
-  'API REST + Webhooks', 'Integraciones eCommerce',
+  'Solicitudes de insumos', 'Transacciones entre almacenes', 'Stock multi-almacén',
+  'Reabastecimiento IA', 'Taller', 'Garantías', 'Tickets de soporte',
+  'RMA & Devoluciones', 'Trazabilidad (lotes y seriales)', 'Auditoría inmutable',
+  'Multi-empresa',
 ];
 
 const PLANS = [
   {
     name: 'Starter', price: 'US$ 149', period: '/mes', highlight: false,
     desc: 'Equipos hasta 10 usuarios',
-    features: ['Stock + Movimientos', 'Ventas + Compras', 'Hasta 2 almacenes', '5GB storage', 'Soporte por email'],
+    features: ['Stock + Movimientos', 'Hasta 2 almacenes', '5GB storage', 'Soporte por email'],
   },
   {
     name: 'Business', price: 'US$ 449', period: '/mes', highlight: true,
     desc: 'Equipos hasta 50 usuarios',
-    features: ['Todo de Starter', 'WMS Enterprise', 'IA & Analytics', 'Almacenes ilimitados', 'Facturación electrónica', 'API REST', 'Soporte prioritario'],
+    features: ['Todo de Starter', 'Reabastecimiento IA', 'Almacenes ilimitados', 'Soporte prioritario'],
   },
   {
     name: 'Enterprise', price: 'A medida', period: '', highlight: false,
     desc: 'Operaciones complejas',
-    features: ['Todo de Business', 'RRHH integrado', 'Webhooks ilimitados', 'SLA 99.9%', 'On-premise opcional', 'Implementación dedicada'],
+    features: ['Todo de Business', 'SLA 99.9%', 'On-premise opcional', 'Implementación dedicada'],
   },
 ];
 
@@ -184,8 +187,8 @@ function Hero() {
         </h1>
 
         <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up animation-delay-200">
-          Inventario, WMS, ventas, post-venta y RRHH en una sola plataforma.
-          Con IA omnisciente, seguridad bancaria y API completa.
+          Insumos, inventario, logística y post-venta en una sola plataforma.
+          Con IA omnisciente y seguridad bancaria.
           Hecha para PyMEs que quieren operar como Fortune 500.
         </p>
 
@@ -326,7 +329,7 @@ function ModulesSection() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold tracking-tighter mb-4">
-            <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">22 módulos</span> integrados
+            <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">{MODULES.length} módulos</span> integrados
           </h2>
           <p className="text-slate-400">Un solo sistema. Una sola base de datos. Cero silos de información.</p>
         </div>
@@ -379,7 +382,7 @@ function Showcase() {
             <span className="text-sm font-semibold text-pink-200">Notamos mucha actividad...</span>
             <span className="ml-auto text-xs px-2 py-0.5 rounded bg-red-500/30 text-red-200 font-bold">87/100</span>
           </div>
-          <p className="text-xs text-slate-400">8 notificaciones críticas · 6 aprobaciones · 180 min sin pausa</p>
+          <p className="text-xs text-slate-400">8 notificaciones críticas · 6 tickets fuera de SLA · 180 min sin pausa</p>
         </div>
       ),
     },

@@ -991,7 +991,7 @@ button.hover\:bg-teal-500:hover, button.hover\:bg-green-500:hover {
 /* =====================================================
    CARDS con hex hardcodeado (componente Card y botones
    secundarios usan bg-[#1A1A1A]). El light-mode solo cubría
-   slate-*, por eso quedaban oscuras en modo claro (ej: Proyectos).
+   slate-*, por eso quedaban oscuras en modo claro.
    ===================================================== */
 .light-mode .bg-\[\#1A1A1A\], .light-mode .bg-\[\#1a1a1a\],
 .light-mode .bg-\[\#171717\], .light-mode .bg-\[\#1c1f26\] { background-color: #ffffff !important; }
