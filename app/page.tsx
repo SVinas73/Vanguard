@@ -1,11 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { ComercialSubTab } from '@/components/comercial';
 
-// Módulos del dashboard que se ven al toque (no se splittean)
-import { WelcomeHeader, StatsGrid, InsightsPanel, CrossModuleSummary, InventoryTrendChart, PeriodSelector, DashboardView } from '@/components/dashboard';
-import { InventoryValueCard, StockAlertsPanel, RecentActivityPanel } from '@/components/dashboard/enterprise';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
@@ -14,8 +10,6 @@ import { useFocusMode, FocusModeBanner } from '@/components/ui/focus-mode';
 import { useCalmMode, CalmMode, type CalmFoco } from '@/components/ui/CalmMode';
 import { useStressDetector, setDeteccionStressDeshabilitada } from '@/hooks/useStressDetector';
 import StressPrompt from '@/components/ui/StressPrompt';
-import MiDia from '@/components/dashboard/MiDia';
-import { AIStatusBadge } from '@/components/ai';
 import { ProductImage } from '@/components/productos';
 
 // Loader compartido para los módulos splitteados
@@ -29,67 +23,37 @@ const ModuleLoader = () => (
 // Módulos pesados: lazy-load con next/dynamic.
 // Esto reduce el bundle inicial dramáticamente.
 const ComercialModule       = dynamic(() => import('@/components/comercial').then(m => ({ default: m.ComercialModule })),       { loading: ModuleLoader });
-const ChatModule            = dynamic(() => import('@/components/chat').then(m => ({ default: m.ChatModule })),                  { loading: ModuleLoader });
-const DemandPlanningModule  = dynamic(() => import('@/components/demand-planning').then(m => ({ default: m.DemandPlanningModule })), { loading: ModuleLoader });
-const WMSModule             = dynamic(() => import('@/components/wms').then(m => ({ default: m.WMSModule })),                    { loading: ModuleLoader });
-const DistribucionModule    = dynamic(() => import('@/components/distribucion/DistribucionModule'),                            { loading: ModuleLoader });
-const QMSModule             = dynamic(() => import('@/components/qms').then(m => ({ default: m.QMSModule })),                    { loading: ModuleLoader });
-const ProyectosDashboard    = dynamic(() => import('@/components/proyectos').then(m => ({ default: m.ProyectosDashboard })),     { loading: ModuleLoader });
 const StockDashboard        = dynamic(() => import('@/components/stock').then(m => ({ default: m.StockDashboard })),             { loading: ModuleLoader });
-const ImportCSV             = dynamic(() => import('@/components/import').then(m => ({ default: m.ImportCSV })),                 { loading: ModuleLoader });
-const IntegracionesDashboard = dynamic(() => import('@/components/integraciones/IntegracionesModule'), { loading: ModuleLoader });
 const TallerEnterprise      = dynamic(() => import('@/components/taller'),                                                       { loading: ModuleLoader });
 const AuditLogPanel         = dynamic(() => import('@/components/audit').then(m => ({ default: m.AuditLogPanel })),              { loading: ModuleLoader });
-const ReportsEnterprise     = dynamic(() => import('@/components/reports').then(m => ({ default: m.ReportsEnterprise })),        { loading: ModuleLoader });
-const AIPredictionsPanel    = dynamic(() => import('@/components/ai').then(m => ({ default: m.AIPredictionsPanel })),            { loading: ModuleLoader });
-const AIAnomaliesPanel      = dynamic(() => import('@/components/ai').then(m => ({ default: m.AIAnomaliesPanel })),              { loading: ModuleLoader });
-const AIAssociationsPanel   = dynamic(() => import('@/components/ai').then(m => ({ default: m.AIAssociationsPanel })),           { loading: ModuleLoader });
-const SerialManagement      = dynamic(() => import('@/components/serialization/SerialManagement'),                               { loading: ModuleLoader });
 const TraceabilityViewer    = dynamic(() => import('@/components/traceability/TraceabilityViewer'),                              { loading: ModuleLoader });
 const RMADashboard          = dynamic(() => import('@/components/rma/RMADashboard'),                                             { loading: ModuleLoader });
-const BOMManager            = dynamic(() => import('@/components/bom/BOMManager'),                                               { loading: ModuleLoader });
-const AssemblyDashboard     = dynamic(() => import('@/components/assembly/AssemblyDashboard'),                                   { loading: ModuleLoader });
-const ApprovalsInbox        = dynamic(() => import('@/components/approvals/ApprovalsInbox'),                                     { loading: ModuleLoader });
-const FacturasElectronicas  = dynamic(() => import('@/components/facturacion/FacturasElectronicas'),                             { loading: ModuleLoader });
 const TicketsModule         = dynamic(() => import('@/components/tickets/TicketsModule'),                                        { loading: ModuleLoader });
 const GarantiasModule       = dynamic(() => import('@/components/garantias/GarantiasModule'),                                    { loading: ModuleLoader });
-const RRHHModule            = dynamic(() => import('@/components/rrhh/RRHHModule'),                                                { loading: ModuleLoader });
-const HistorialCliente      = dynamic(() => import('@/components/clientes/HistorialCliente'),                                    { loading: ModuleLoader });
-const ExecutiveDashboard    = dynamic(() => import('@/components/executive/ExecutiveDashboard'),                                  { loading: ModuleLoader });
-const PricingRecommender    = dynamic(() => import('@/components/pricing/PricingRecommender'),                                    { loading: ModuleLoader });
 const ReplenishmentDashboard = dynamic(() => import('@/components/replenishment/ReplenishmentDashboard'),                          { loading: ModuleLoader });
-const CustomerRiskModule    = dynamic(() => import('@/components/customer-risk/CustomerRiskModule'),                              { loading: ModuleLoader });
-const ConfigModulos         = dynamic(() => import('@/components/configuracion/ConfigModulos').then(m => m.ConfigModulos),         { loading: ModuleLoader });
 const MisEmpresasModule     = dynamic(() => import('@/components/organization/MisEmpresasModule'),                                  { loading: ModuleLoader });
-const InicioHome            = dynamic(() => import('@/components/inicio/InicioHome').then(m => m.InicioHome),                        { loading: ModuleLoader });
-const GestionClientes       = dynamic(() => import('@/components/clientes/GestionClientes').then(m => m.GestionClientes),            { loading: ModuleLoader });
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
-import { Bot, Search, ArrowLeftRight, Plus, Package, User, Clock, DollarSign, TrendingUp, Box, AlertTriangle, RefreshCw, ShoppingCart, FileText, Wrench } from 'lucide-react';
+import { Package, User, Clock, RefreshCw } from 'lucide-react';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { TabType, CategorySuggestion, AnomalyResult, Product, Almacen } from '@/types';
+import { TabType, CategorySuggestion, AnomalyResult, Product } from '@/types';
 import { useInventoryStore } from '@/store';
-import { recordModuleVisit } from '@/lib/home/routine';
 import { CATEGORIAS_VENTA } from '@/lib/constants';
-import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import {
-  semanticSearch,
   suggestCategory,
   checkMovementAnomaly,
-  getStockAlerts,
 } from '@/lib/ai';
 
 // Components
 import { Sidebar } from '@/components/layout';
 import { Breadcrumbs } from '@/components/layout/breadcrumbs';
-import { Button, Input, Select, SearchableSelect, Modal, Card, AIAlert } from '@/components/ui';
+import { Button, Input, Select, SearchableSelect, Modal, AIAlert } from '@/components/ui';
 import { NotificationBell } from '@/components/ui/notifications';
 import { ShortcutsModal } from '@/components/ui/shortcuts-help';
 import { OnboardingTour } from '@/components/ui/onboarding-tour';
-import { ProductTable } from '@/components/productos';
-import { MovementList, MovementTypeSelector, TransferenciasDashboard } from '@/components/movimientos';
-import { AlertList, PredictionCard, ConsumptionChart, AnalyticsDashboard } from '@/components/analytics';
+import { MovementTypeSelector, TransferenciasDashboard } from '@/components/movimientos';
 
 export default function HomePage() {
   // ============================================
@@ -100,8 +64,8 @@ export default function HomePage() {
   const { t } = useTranslation();
   
   // Auth
-  const { user, loading, hasPermission, isAdmin, rol } = useAuth();
-  
+  const { user, loading, hasPermission, isAdmin } = useAuth();
+
   // Store
   const {
     products,
@@ -110,44 +74,24 @@ export default function HomePage() {
     isLoading: storeLoading,
     error: storeError,
     isInitialized,
-    addProduct,
     updateProduct,
-    deleteProduct,
     addMovement,
     fetchProducts,
     fetchMovements,
-    refreshPredictions,
   } = useInventoryStore();
 
   // UI State
-  const [activeTab, setActiveTab] = useState<TabType>('inicio');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [dashboardPeriod, setDashboardPeriod] = useState('30d');
-  const [dashboardAlmacenId, setDashboardAlmacenId] = useState<string>('');
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [comercialSubTab, setComercialSubTab] = useState<ComercialSubTab>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabType>('stock');
 
   const handleTabChange = useCallback((tab: TabType) => {
-    const comercialSubTabs = ['compras', 'ventas', 'finanzas', 'costos'];
-    if (comercialSubTabs.includes(tab)) {
-      setActiveTab('comercial');
-      setComercialSubTab(tab as ComercialSubTab);
-    } else {
-      setActiveTab(tab);
-      if (tab === 'comercial') {
-        setComercialSubTab('dashboard');
-      }
-    }
+    setActiveTab(tab);
     // Emitimos para alimentar el detector de estrés (cuenta
     // cambios de tab en los últimos 5 minutos como señal de
     // frenesí navegando).
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('vg:tab-change', { detail: { tab } }));
     }
-    // Aprendizaje de rutina: registrar qué módulo usa y cuándo (local).
-    recordModuleVisit(user?.email || 'anon', tab);
-  }, [user?.email]);
+  }, []);
 
   // Bienestar (Modo Calma + Focus Mode + detector de estrés): OCULTO por ahora.
   // Poner en true para reactivarlo en el futuro.
@@ -189,11 +133,8 @@ export default function HomePage() {
   const calmFocos = useMemo<CalmFoco[]>(() => {
     if (!stressScore) return [];
     const FOCO_NAV: Record<string, { tab: TabType; label: string }> = {
-      'Aprobaciones pendientes': { tab: 'aprobaciones' as TabType, label: 'Ver aprobaciones' },
       'Tickets con SLA vencido': { tab: 'taller' as TabType, label: 'Ver tickets' },
       'Productos agotados':      { tab: 'stock' as TabType, label: 'Ver stock' },
-      'CxC vencidas':            { tab: 'finanzas' as TabType, label: 'Ver finanzas' },
-      'Picking sin asignar':     { tab: 'wms' as TabType, label: 'Ver picking' },
     };
     const SISTEMA = new Set([...Object.keys(FOCO_NAV), 'Notificaciones críticas']);
     return stressScore.componentes
@@ -223,12 +164,6 @@ export default function HomePage() {
       case 'navigate':
         handleTabChange(action.tab);
         break;
-      case 'navigate-sub':
-        setActiveTab(action.tab);
-        if (action.tab === 'comercial') {
-          setComercialSubTab(action.subTab as ComercialSubTab);
-        }
-        break;
       case 'chat':
         askAI(action.prompt);
         break;
@@ -240,22 +175,6 @@ export default function HomePage() {
         break;
     }
   }, [handleTabChange, askAI, toggleFocus]);
-
-  // Persistent filters
-  useEffect(() => {
-    const saved = localStorage.getItem('vanguard-filters');
-    if (saved) {
-      try {
-        const { searchQuery: sq, selectedCategory: sc } = JSON.parse(saved);
-        if (sq) setSearchQuery(sq);
-        if (sc) setSelectedCategory(sc);
-      } catch {}
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('vanguard-filters', JSON.stringify({ searchQuery, selectedCategory }));
-  }, [searchQuery, selectedCategory]);
 
   // Modal State
   const [showNewProduct, setShowNewProduct] = useState(false);
@@ -316,14 +235,6 @@ export default function HomePage() {
         .order('es_principal', { ascending: false });
       if (data) {
         setAlmacenes(data);
-        // El dashboard principal muestra SOLO almacenes de venta (NO insumos).
-        // Un almacén es de insumos si su nombre contiene "insumo" (case-insensitive).
-        const ventaAlmacenes = data.filter(a => !(a.nombre || '').toLowerCase().includes('insumo'));
-        // El dashboard se filtra siempre por un almacén de venta concreto (sin opción
-        // "todos"). Si el seleccionado no existe en la lista de venta, default al primero.
-        setDashboardAlmacenId(prev =>
-          ventaAlmacenes.some(a => a.id === prev) ? prev : (ventaAlmacenes[0]?.id ?? '')
-        );
       }
     };
     
@@ -347,100 +258,39 @@ export default function HomePage() {
     const interval = setInterval(() => {
       fetchProducts();
       fetchMovements();
-      setLastRefresh(new Date());
     }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [user, isInitialized, fetchProducts, fetchMovements]);
 
-  const handleManualRefresh = useCallback(() => {
-    fetchProducts();
-    fetchMovements();
-    refreshPredictions();
-    setLastRefresh(new Date());
-  }, [fetchProducts, fetchMovements, refreshPredictions]);
-
   // Auto-refresh ante eventos de la app que cambian stock (recepciones de
-  // solicitudes de insumos, recepciones de OC, etc.) — así el módulo Stock
+  // solicitudes de insumos, etc.) — así el módulo Stock
   // queda en vivo sin necesidad de F5.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handler = () => {
       fetchProducts();
       fetchMovements();
-      setLastRefresh(new Date());
     };
     window.addEventListener('vg:stock-changed', handler);
     return () => window.removeEventListener('vg:stock-changed', handler);
   }, [fetchProducts, fetchMovements]);
 
-  // Period days mapping — fuente única de período para todo el dashboard
-  const periodDays = dashboardPeriod === '7d' ? 7
-    : dashboardPeriod === '90d' ? 90
-    : dashboardPeriod === '1a' ? 365
-    : 30;
-  const periodLabel = dashboardPeriod === '7d' ? '7 días'
-    : dashboardPeriod === '90d' ? '90 días'
-    : dashboardPeriod === '1a' ? '1 año'
-    : '30 días';
-
-  // Filtered products with semantic search
-  const filteredProducts = useMemo(() => {
-    let result = products;
-    if (searchQuery.trim()) {
-      result = semanticSearch(searchQuery, products);
-    }
-    if (selectedCategory !== 'all') {
-      result = result.filter((p) => p.categoria === selectedCategory);
-    }
-    return result;
-  }, [products, searchQuery, selectedCategory]);
-
-  // Stock alerts
-  const stockAlerts = useMemo(() => {
-    return getStockAlerts(products, predictions);
-  }, [products, predictions]);
-
-  // Almacenes de venta (NO insumos). El dashboard principal muestra SOLO
-  // artículos de venta; un almacén es de insumos si su nombre contiene "insumo".
+  // Almacenes de venta (NO insumos). Un almacén es de insumos si su nombre
+  // contiene "insumo".
   const almacenesVenta = useMemo(
     () => almacenes.filter(a => !(a.nombre || '').toLowerCase().includes('insumo')),
     [almacenes]
   );
 
-  // Almacén destino del alta de producto. Por defecto, el depósito de ventas
-  // actual; pero el usuario puede elegir otro (ej. insumos). La ubicación solo
+  // Almacén destino del alta de producto. Por defecto, el primer depósito de
+  // ventas; pero el usuario puede elegir otro (ej. insumos). La ubicación solo
   // aplica a Depósito de Ventas (insumos NO lleva ubicación).
-  const almacenDefaultId = useMemo(() => {
-    return (dashboardAlmacenId && dashboardAlmacenId !== 'todos')
-      ? dashboardAlmacenId
-      : (almacenesVenta[0]?.id ?? '');
-  }, [dashboardAlmacenId, almacenesVenta]);
+  const almacenDefaultId = almacenesVenta[0]?.id ?? '';
   const almacenSeleccionadoId = newProduct.almacenId || almacenDefaultId;
   const esInsumoImplicito = useMemo(() => {
     const alm = almacenes.find(a => a.id === almacenSeleccionadoId);
     return !!alm && (alm.nombre || '').toLowerCase().includes('insumo');
   }, [almacenSeleccionadoId, almacenes]);
-
-  // Productos / movimientos filtrados por almacén — usados en cards del dashboard
-  const dashboardProducts = useMemo(() => {
-    if (dashboardAlmacenId === 'todos') return products;
-    return products.filter(p => p.almacenId === dashboardAlmacenId);
-  }, [products, dashboardAlmacenId]);
-
-  const dashboardMovements = useMemo(() => {
-    if (dashboardAlmacenId === 'todos') return movements;
-    const codes = new Set(dashboardProducts.map(p => p.codigo));
-    return movements.filter(m => codes.has(m.codigo));
-  }, [movements, dashboardProducts, dashboardAlmacenId]);
-
-  // Products with predictions for analytics
-  const productsWithPredictions = useMemo(() => {
-    return products
-      .map((p) => ({ product: p, prediction: predictions[p.codigo] }))
-      .filter((p) => p.prediction && p.prediction.days !== null && p.prediction.days !== Infinity)
-      .sort((a, b) => (a.prediction.days || 0) - (b.prediction.days || 0))
-      .slice(0, 8);
-  }, [products, predictions]);
 
   // Options for selects
   // Categorías del DEPÓSITO DE VENTAS (separadas de insumos; editar en
@@ -789,20 +639,11 @@ export default function HomePage() {
         activeTab={activeTab} 
         onTabChange={handleTabChange}
         permissions={{
-          canViewCosts: hasPermission('canViewCosts'),
           canViewAudit: hasPermission('canViewAudit'),
-          canViewReports: hasPermission('canViewReports'),
-          canViewFinanzas: hasPermission('canViewFinanzas'),
           canViewTaller: hasPermission('canViewTaller'),
-          canViewWMS: hasPermission('canViewWMS'),
-          canViewProyectos: hasPermission('canViewProyectos'),
           canViewComercial: hasPermission('canViewComercial'),
-          canViewDemand: hasPermission('canViewDemand'),
           canViewSeriales: hasPermission('canViewSeriales'),
           canViewRMA: hasPermission('canViewRMA'),
-          canViewBOM: hasPermission('canViewBOM'),
-          canViewQMS: hasPermission('canViewQMS'),
-          canExportData: hasPermission('canExportData'),
         }}
         onOpenShortcuts={() => setShortcutsOpen(true)}
         focusEnabled={focusEnabled}
@@ -816,54 +657,9 @@ export default function HomePage() {
 
         {/* Breadcrumbs + Notifications */}
         <div className="flex items-center justify-between mb-2">
-          <Breadcrumbs activeTab={activeTab} onNavigate={handleTabChange} />
+          <Breadcrumbs activeTab={activeTab} />
           <NotificationBell />
         </div>
-
-        {/* ==================== INICIO (escritorio) ==================== */}
-        {activeTab === 'inicio' && (
-          <InicioHome
-            user={user}
-            onTabChange={handleTabChange}
-            products={products}
-            movements={movements}
-            predictions={predictions}
-          />
-        )}
-
-        {/* ==================== DASHBOARD ==================== */}
-        {activeTab === 'dashboard' && (
-          <DashboardView
-            products={dashboardProducts}
-            movements={dashboardMovements}
-            predictions={predictions}
-            userName={user?.nombre || user?.email?.split('@')[0]}
-            period={dashboardPeriod}
-            onPeriodChange={setDashboardPeriod}
-            onNavigate={(tab) => handleTabChange(tab as TabType)}
-            onRefresh={handleManualRefresh}
-            onCategoryClick={(category: string) => {
-              setSelectedCategory(category);
-              handleTabChange('stock');
-            }}
-            headerRight={
-              /* Selector de almacén — lista SOLO almacenes de venta (NO insumos).
-                 El dashboard se filtra por el almacén elegido; default al primero. */
-              almacenesVenta.length > 0 ? (
-                <select
-                  value={dashboardAlmacenId}
-                  onChange={(e) => setDashboardAlmacenId(e.target.value)}
-                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-sm text-slate-200 transition-colors focus:outline-none focus:border-indigo-500"
-                  title="Filtrar dashboard por almacén"
-                >
-                  {almacenesVenta.map(a => (
-                    <option key={a.id} value={a.id}>{a.nombre}</option>
-                  ))}
-                </select>
-              ) : undefined
-            }
-          />
-        )}
 
         {/* ==================== STOCK (con Almacenes embebido) ==================== */}
         {activeTab === 'stock' && (
@@ -922,7 +718,7 @@ export default function HomePage() {
                   }
 
                   // Refresh inmediato + broadcast para que otros módulos
-                  // (Dashboard, Reportes, etc.) también recalculen.
+                  // también recalculen.
                   await fetchProducts();
                   if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('vg:stock-changed', {
@@ -950,13 +746,10 @@ export default function HomePage() {
           />
         )}
 
-        {/* ==================== COMERCIAL (Compras, Ventas, Finanzas, Costos) ==================== */}
+        {/* ==================== COMERCIAL (Solicitudes de insumos) ==================== */}
         {activeTab === 'comercial' && (
           <ComercialModule
-            products={products}
             userEmail={user?.email || ''}
-            activeSubTab={comercialSubTab}
-            onSubTabChange={setComercialSubTab}
           />
         )}
 
@@ -966,50 +759,9 @@ export default function HomePage() {
           </div>
         )}
 
-        {activeTab === 'qms' && (
-          <div className="w-full">
-            <QMSModule />
-          </div>
-        )}
-
-        {activeTab === 'wms' && (
-          <div className="w-full">
-            <WMSModule />
-          </div>
-        )}
-
-        {activeTab === 'distribucion' && (
-          <div className="w-full">
-            <DistribucionModule />
-          </div>
-        )}
-
-        
-
-        {/* ==================== VISTA EJECUTIVA ==================== */}
-        {activeTab === 'executive' && (
-          <ExecutiveDashboard />
-        )}
-
-        {/* ==================== RECOMENDADOR DE PRECIOS ==================== */}
-        {activeTab === 'pricing' && (
-          <PricingRecommender />
-        )}
-
         {/* ==================== REABASTECIMIENTO IA ==================== */}
         {activeTab === 'replenishment' && (
           <ReplenishmentDashboard />
-        )}
-
-        {/* ==================== CLIENTES EN RIESGO ==================== */}
-        {activeTab === 'customer_risk' && (
-          <CustomerRiskModule />
-        )}
-
-
-        {/* ==================== CONFIGURACIÓN MODO LITE/FULL ==================== */}
-        {activeTab === 'configuracion' && (
-          <ConfigModulos />
         )}
 
         {/* ==================== MIS EMPRESAS ==================== */}
@@ -1017,34 +769,9 @@ export default function HomePage() {
           <MisEmpresasModule />
         )}
 
-        {/* ==================== ANALYTICS ==================== */}
-        {activeTab === 'analytics' && (
-          <AnalyticsDashboard
-            products={products}
-            movements={movements}
-            predictions={predictions}
-          />
-        )}
-        
-        {activeTab === 'reportes' && (
-          <div className="w-full">
-            <ReportsEnterprise />
-          </div>
-        )}
-
         {/* ==================== AUDITORÍA ==================== */}
         {activeTab === 'auditoria' && (
           <AuditLogPanel />
-        )}
-
-        {/* ==================== APROBACIONES ==================== */}
-        {activeTab === 'aprobaciones' && (
-          <ApprovalsInbox />
-        )}
-
-        {/* ==================== FACTURACIÓN ELECTRÓNICA ==================== */}
-        {activeTab === 'facturacion' && (
-          <FacturasElectronicas />
         )}
 
         {/* ==================== TICKETS DE SOPORTE ==================== */}
@@ -1055,40 +782,6 @@ export default function HomePage() {
         {/* ==================== GARANTÍAS ==================== */}
         {activeTab === 'garantias' && (
           <GarantiasModule />
-        )}
-
-        {/* ==================== RRHH ==================== */}
-        {activeTab === 'rrhh' && (
-          <RRHHModule />
-        )}
-
-        {/* ==================== HISTORIAL CLIENTE 360 ==================== */}
-        {activeTab === 'clientes_360' && (
-          <HistorialCliente />
-        )}
-
-        {activeTab === 'gestion_clientes' && (
-          <GestionClientes userEmail={user?.email || ''} />
-        )}
-
-        {/* ==================== INTEGRACIONES ==================== */}
-        {activeTab === 'integraciones' && (
-          <div className="max-w-4xl mx-auto">
-            <IntegracionesDashboard />
-          </div>
-        )}
-
-        {activeTab === 'chat' && (
-          <div className="w-full">
-            <ChatModule />
-          </div>
-        )}
-
-        {/* ==================== SERIALES ==================== */}
-        {activeTab === 'seriales' && (
-          <div className="max-w-7xl mx-auto">
-            <SerialManagement />
-          </div>
         )}
 
         {/* ==================== TRAZABILIDAD ==================== */}
@@ -1102,33 +795,6 @@ export default function HomePage() {
         {activeTab === 'rma' && (
           <div className="max-w-7xl mx-auto">
             <RMADashboard />
-          </div>
-        )}
-
-        {/* ==================== BOM ==================== */}
-        {activeTab === 'bom' && (
-          <div className="max-w-7xl mx-auto">
-            <BOMManager />
-          </div>
-        )}
-
-        {/* ==================== ENSAMBLAJES ==================== */}
-        {activeTab === 'ensamblajes' && (
-          <div className="max-w-7xl mx-auto">
-            <AssemblyDashboard />
-          </div>
-        )}
-
-        
-        {activeTab === 'proyectos' && (
-          <div className="w-full">
-            <ProyectosDashboard />
-          </div>
-        )}
-
-        {activeTab === 'demand' && (
-          <div className="w-full">
-            <DemandPlanningModule />
           </div>
         )}
 

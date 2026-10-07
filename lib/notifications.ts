@@ -7,16 +7,8 @@ import { supabase } from '@/lib/supabase';
 export type TipoNotificacion =
   | 'stock_bajo'
   | 'sin_stock'
-  | 'cotizacion_por_vencer'
-  | 'cotizacion_vencida'
-  | 'cxc_vencida'
-  | 'cxp_vencida'
-  | 'orden_sin_entregar'
-  | 'orden_compra_creada'
   | 'solicitud_insumo_creada'
   | 'solicitud_insumo_estado'
-  | 'putaway_pendiente'
-  | 'picking_sin_asignar'
   | 'ticket_sla_breached'
   | 'ticket_critico'
   | 'garantia_por_vencer'
@@ -238,7 +230,7 @@ export async function cerrarNotificacionesObsoletas(
 // ============================================
 
 /**
- * Escanea el estado comercial actual y genera notifs
+ * Escanea el estado actual (post-venta) y genera notifs
  * para condiciones que aún no tienen una notif activa
  * con su dedup_key. Cierra las que ya no aplican.
  *
@@ -247,11 +239,6 @@ export async function cerrarNotificacionesObsoletas(
  */
 export async function escanearAlertasComerciales(): Promise<void> {
   await Promise.all([
-    scanCotizacionesPorVencer(),
-    scanCxcVencidas(),
-    scanOrdenesSinEntregar(),
-    scanWmsPutawayPendiente(),
-    scanWmsPickingSinAsignar(),
     scanTicketsSLABreached(),
     scanTicketsCriticos(),
     scanGarantiasPorVencer(),
@@ -351,194 +338,6 @@ async function scanGarantiasPorVencer(): Promise<void> {
     });
   }
   await cerrarNotificacionesObsoletas('garantia_vencer:', keysVigentes);
-}
-
-// WMS: tareas de putaway que llevan más de 1 día pendientes
-async function scanWmsPutawayPendiente(): Promise<void> {
-  const ayer = new Date(Date.now() - 86400000).toISOString();
-  const hoy = new Date().toISOString();
-  const { data } = await supabase
-    .from('wms_tareas_putaway')
-    .select('id, producto_codigo, producto_nombre, cantidad, ubicacion_destino_codigo, created_at')
-    .eq('estado', 'pendiente')
-    .lte('created_at', ayer)
-    .gte('created_at', new Date(Date.now() - VENTANA_EVENTO_DIAS * 86400000).toISOString());
-
-  const keysVigentes = new Set<string>();
-  for (const t of (data || []) as any[]) {
-    void hoy;
-    const key = `putaway_pendiente:${t.id}`;
-    keysVigentes.add(key);
-    await crearNotificacion({
-      tipo: 'putaway_pendiente',
-      severidad: 'warning',
-      titulo: 'Putaway pendiente',
-      mensaje: `${t.producto_nombre || t.producto_codigo} (${t.cantidad} uds) sin acomodar en ${t.ubicacion_destino_codigo || 'destino'}`,
-      entidadTipo: 'wms_tareas_putaway',
-      entidadId: t.id,
-      dedupKey: key,
-    });
-  }
-  await cerrarNotificacionesObsoletas('putaway_pendiente:', keysVigentes);
-}
-
-// WMS: órdenes de picking sin picker asignado y con más de 4hs
-async function scanWmsPickingSinAsignar(): Promise<void> {
-  const haceCuatroHs = new Date(Date.now() - 4 * 3600 * 1000).toISOString();
-  const { data } = await supabase
-    .from('wms_ordenes_picking')
-    .select('id, numero, cliente_nombre, picker_asignado, estado, created_at, fecha_requerida')
-    .in('estado', ['pendiente'])
-    .is('picker_asignado', null)
-    .lte('created_at', haceCuatroHs)
-    .gte('created_at', new Date(Date.now() - VENTANA_EVENTO_DIAS * 86400000).toISOString());
-
-  const keysVigentes = new Set<string>();
-  for (const o of (data || []) as any[]) {
-    const key = `picking_sin_asignar:${o.id}`;
-    keysVigentes.add(key);
-    await crearNotificacion({
-      tipo: 'picking_sin_asignar',
-      severidad: 'warning',
-      titulo: 'Picking sin asignar',
-      mensaje: `${o.numero} (${o.cliente_nombre || 'Sin cliente'}) sin picker asignado`,
-      entidadTipo: 'wms_ordenes_picking',
-      entidadId: o.id,
-      entidadCodigo: o.numero,
-      dedupKey: key,
-    });
-  }
-  await cerrarNotificacionesObsoletas('picking_sin_asignar:', keysVigentes);
-}
-
-async function scanCotizacionesPorVencer(): Promise<void> {
-  const hoy = new Date();
-  const en3dias = new Date();
-  en3dias.setDate(hoy.getDate() + 3);
-
-  // Cotizaciones aún no convertidas/canceladas con
-  // fecha_validez entre hoy y +3 días
-  const { data: porVencer } = await supabase
-    .from('cotizaciones')
-    .select('id, numero, fecha_validez, total, clientes(nombre)')
-    .in('estado', ['borrador', 'enviada'])
-    .gte('fecha_validez', hoy.toISOString().split('T')[0])
-    .lte('fecha_validez', en3dias.toISOString().split('T')[0]);
-
-  // Ya vencidas y aún en estado abierto
-  const { data: vencidas } = await supabase
-    .from('cotizaciones')
-    .select('id, numero, fecha_validez, total, clientes(nombre)')
-    .in('estado', ['borrador', 'enviada'])
-    .lt('fecha_validez', hoy.toISOString().split('T')[0]);
-
-  const keysVigentes = new Set<string>();
-
-  for (const c of (porVencer || []) as any[]) {
-    const key = `cotizacion_por_vencer:${c.id}`;
-    keysVigentes.add(key);
-    const dias = Math.ceil((new Date(c.fecha_validez).getTime() - hoy.getTime()) / 86400000);
-    await crearNotificacion({
-      tipo: 'cotizacion_por_vencer',
-      severidad: 'warning',
-      titulo: 'Cotización por vencer',
-      mensaje: `${c.numero} (${c.clientes?.nombre || 'Sin cliente'}) vence en ${dias} día(s)`,
-      entidadTipo: 'cotizacion',
-      entidadId: c.id,
-      entidadCodigo: c.numero,
-      dedupKey: key,
-      metadata: { total: c.total, fecha_validez: c.fecha_validez },
-    });
-  }
-
-  for (const c of (vencidas || []) as any[]) {
-    // Solo eventos recientes: cotizaciones que vencieron en
-    // los últimos VENTANA_EVENTO_DIAS días. Las muy viejas se
-    // ignoran (el usuario no quiere saturarse con históricas).
-    const diasDesdeVencimiento = Math.floor(
-      (hoy.getTime() - new Date(c.fecha_validez).getTime()) / 86400000
-    );
-    if (diasDesdeVencimiento > VENTANA_EVENTO_DIAS) continue;
-
-    const key = `cotizacion_vencida:${c.id}`;
-    keysVigentes.add(key);
-    await crearNotificacion({
-      tipo: 'cotizacion_vencida',
-      severidad: 'error',
-      titulo: 'Cotización vencida',
-      mensaje: `${c.numero} (${c.clientes?.nombre || 'Sin cliente'}) venció el ${c.fecha_validez}`,
-      entidadTipo: 'cotizacion',
-      entidadId: c.id,
-      entidadCodigo: c.numero,
-      dedupKey: key,
-      metadata: { total: c.total, fecha_validez: c.fecha_validez },
-    });
-  }
-
-  await cerrarNotificacionesObsoletas('cotizacion_por_vencer:', keysVigentes);
-  await cerrarNotificacionesObsoletas('cotizacion_vencida:', keysVigentes);
-}
-
-async function scanCxcVencidas(): Promise<void> {
-  const hoy = new Date().toISOString().split('T')[0];
-  const { data } = await supabase
-    .from('cuentas_por_cobrar')
-    .select('id, numero, fecha_vencimiento, monto, saldo, clientes(nombre)')
-    .neq('estado', 'pagada')
-    .lt('fecha_vencimiento', hoy);
-
-  const keysVigentes = new Set<string>();
-  for (const cxc of (data || []) as any[]) {
-    if ((cxc.saldo ?? cxc.monto) <= 0) continue;
-    const diasVencido = Math.floor((Date.now() - new Date(cxc.fecha_vencimiento).getTime()) / 86400000);
-    // Solo CxC que vencieron recientemente
-    if (diasVencido > VENTANA_EVENTO_DIAS) continue;
-    const key = `cxc_vencida:${cxc.id}`;
-    keysVigentes.add(key);
-    await crearNotificacion({
-      tipo: 'cxc_vencida',
-      severidad: diasVencido > 30 ? 'error' : 'warning',
-      titulo: 'Cuenta por cobrar vencida',
-      mensaje: `${cxc.numero || 'CxC'} de ${cxc.clientes?.nombre || 'cliente'} vencida hace ${diasVencido} día(s)`,
-      entidadTipo: 'cuenta_por_cobrar',
-      entidadId: cxc.id,
-      entidadCodigo: cxc.numero,
-      dedupKey: key,
-      metadata: { saldo: cxc.saldo, dias_vencido: diasVencido },
-    });
-  }
-  await cerrarNotificacionesObsoletas('cxc_vencida:', keysVigentes);
-}
-
-async function scanOrdenesSinEntregar(): Promise<void> {
-  const hoy = new Date().toISOString().split('T')[0];
-  const { data } = await supabase
-    .from('ordenes_venta')
-    .select('id, numero, fecha_entrega_esperada, total, clientes(nombre)')
-    .in('estado', ['confirmada', 'preparando'])
-    .lt('fecha_entrega_esperada', hoy);
-
-  const keysVigentes = new Set<string>();
-  for (const ov of (data || []) as any[]) {
-    if (!ov.fecha_entrega_esperada) continue;
-    const diasAtraso = Math.floor((Date.now() - new Date(ov.fecha_entrega_esperada).getTime()) / 86400000);
-    // Solo órdenes con atraso reciente
-    if (diasAtraso > VENTANA_EVENTO_DIAS) continue;
-    const key = `orden_sin_entregar:${ov.id}`;
-    keysVigentes.add(key);
-    await crearNotificacion({
-      tipo: 'orden_sin_entregar',
-      severidad: diasAtraso > 7 ? 'error' : 'warning',
-      titulo: 'Orden con entrega atrasada',
-      mensaje: `${ov.numero} (${ov.clientes?.nombre || 'Sin cliente'}) lleva ${diasAtraso} día(s) de atraso`,
-      entidadTipo: 'orden_venta',
-      entidadId: ov.id,
-      entidadCodigo: ov.numero,
-      dedupKey: key,
-      metadata: { total: ov.total, dias_atraso: diasAtraso },
-    });
-  }
-  await cerrarNotificacionesObsoletas('orden_sin_entregar:', keysVigentes);
 }
 
 /**

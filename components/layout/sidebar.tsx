@@ -6,75 +6,45 @@ import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { TabType } from '@/types';
 import {
-  LayoutDashboard,
   Package,
   ArrowLeftRight,
-  Brain,
-  ShoppingCart,
-  TrendingUp,
-  FileText,
   DollarSign,
-  CircleDollarSign,
   Shield,
-  Plug,
   ChevronLeft,
   ChevronRight,
   Lock,
   LogOut,
   LucideIcon,
-  QrCode,
   GitBranch,
   RotateCcw,
-  Landmark,
-  Kanban,
-  Boxes,
-  Warehouse,
   Wrench,
-  Zap,
   ChevronDown,
   MessageCircle,
-  Users,
   Menu,
   X,
   Sun,
   Moon,
-  Briefcase,
   Sparkles,
   Truck,
-  Send,
-  ShieldAlert,
   Building2,
-  Home,
   HelpCircle,
   Focus,
   Wind,
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { LanguageSelector } from '@/components/ui/language-selector';
-import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
 import { Logo } from '@/components/ui/Logo';
-import { ChatBadge } from '@/components/chat';
-import { ApprovalsBadge } from '@/components/approvals/ApprovalsBadge';
 
 // ============================================
 // TIPOS
 // ============================================
 
 interface SidebarPermissions {
-  canViewCosts: boolean;
   canViewAudit: boolean;
-  canViewReports: boolean;
-  canViewFinanzas: boolean;
   canViewTaller: boolean;
-  canViewWMS: boolean;
-  canViewProyectos: boolean;
   canViewComercial: boolean;
-  canViewDemand: boolean;
   canViewSeriales: boolean;
   canViewRMA: boolean;
-  canViewBOM: boolean;
-  canViewQMS: boolean;
-  canExportData: boolean;
 }
 
 interface SidebarProps {
@@ -114,18 +84,12 @@ export function Sidebar({ activeTab, onTabChange, permissions, onOpenShortcuts, 
   const { t } = useTranslation();
   const { user, signOut, rol } = useAuth(false);
   const { theme, toggleTheme } = useTheme();
-  const { modulos: modulosHabilitados, config: moduleConfig } = useModulosHabilitados();
-  const moduloSet = React.useMemo(() => new Set<string>(modulosHabilitados), [modulosHabilitados]);
-  const esLite = moduleConfig.preset === 'lite';
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     main: false,
-    operations: false,
     postSales: false,
-    people: false,
-    analysis: false,
     control: false,
     config: false,
   });
@@ -147,9 +111,6 @@ export function Sidebar({ activeTab, onTabChange, permissions, onOpenShortcuts, 
       title: t('nav.main') || 'Principal',
       defaultOpen: true,
       items: [
-        { id: 'inicio', label: 'Inicio', icon: Home },
-        { id: 'dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
-        { id: 'executive', label: t('nav.executive') || 'Vista Ejecutiva', icon: Briefcase, badge: 'C' },
         { id: 'comercial', label: t('modules.comercial'), icon: DollarSign, permission: 'canViewComercial' },
       ]
     },
@@ -160,20 +121,7 @@ export function Sidebar({ activeTab, onTabChange, permissions, onOpenShortcuts, 
       items: [
         { id: 'movimientos', label: t('nav.movements'), icon: ArrowLeftRight },
         { id: 'stock', label: t('nav.stock'), icon: Package },
-        { id: 'wms', label: t('modules.wms'), icon: Warehouse, permission: 'canViewWMS' },
-        { id: 'distribucion', label: 'Distribución', icon: Send },
         { id: 'replenishment', label: t('nav.replenishment') || 'Reabastecimiento IA', icon: Truck, badge: 'AI' },
-        { id: 'demand', label: t('modules.demandPlanning'), icon: Zap, badge: 'AI', permission: 'canViewDemand' },
-      ]
-    },
-    {
-      key: 'clientes',
-      title: 'Clientes',
-      defaultOpen: false,
-      items: [
-        { id: 'gestion_clientes', label: 'Gestión de clientes', icon: Users },
-        { id: 'clientes_360', label: t('modules.customers360') || 'Cliente 360°', icon: Users },
-        { id: 'customer_risk', label: t('nav.customerRisk') || 'Clientes en riesgo', icon: ShieldAlert, badge: 'AI' },
       ]
     },
     {
@@ -188,34 +136,11 @@ export function Sidebar({ activeTab, onTabChange, permissions, onOpenShortcuts, 
       ]
     },
     {
-      key: 'people',
-      title: t('nav.people') || 'Personal',
-      defaultOpen: true,
-      items: [
-        { id: 'rrhh', label: t('modules.hr') || 'Recursos Humanos', icon: Users },
-        { id: 'proyectos', label: t('modules.projects'), icon: Kanban, permission: 'canViewProyectos' },
-        { id: 'chat', label: t('modules.messages'), icon: MessageCircle },
-      ]
-    },
-    {
-      key: 'analysis',
-      title: t('nav.analysis') || 'Análisis',
-      defaultOpen: true,
-      items: [
-        { id: 'analytics', label: t('nav.analytics'), icon: Brain, badge: 'AI' },
-        { id: 'pricing', label: t('nav.pricing') || 'Precios IA', icon: Sparkles, badge: 'AI' },
-        { id: 'reportes', label: t('nav.reports'), icon: FileText, permission: 'canViewReports' },
-      ]
-    },
-    {
       key: 'control',
       title: t('nav.controlTracking', 'Control & Seguimiento'),
       defaultOpen: false,
       items: [
-        { id: 'aprobaciones', label: t('nav.approvals') || 'Aprobaciones', icon: Shield },
-        { id: 'seriales', label: t('modules.serials'), icon: QrCode, permission: 'canViewSeriales' },
         { id: 'trazabilidad', label: t('modules.traceability'), icon: GitBranch, permission: 'canViewSeriales' },
-        { id: 'qms', label: t('modules.quality'), icon: Shield, permission: 'canViewQMS' },
         { id: 'auditoria', label: t('nav.audit'), icon: Shield, permission: 'canViewAudit' },
       ]
     },
@@ -225,8 +150,6 @@ export function Sidebar({ activeTab, onTabChange, permissions, onOpenShortcuts, 
       defaultOpen: false,
       items: [
         { id: 'empresas', label: 'Mis empresas', icon: Building2 },
-        { id: 'configuracion', label: 'General', icon: Sparkles },
-        { id: 'integraciones', label: t('nav.integrations'), icon: Plug },
       ]
     },
   ];
@@ -239,15 +162,6 @@ export function Sidebar({ activeTab, onTabChange, permissions, onOpenShortcuts, 
     if (!item.permission) return true;
     return permissions[item.permission];
   };
-
-  // Filtramos por módulos habilitados (preset Lite/Custom). Si el preset es 'full',
-  // moduloSet contiene todos y nada se filtra.
-  const navegacionFiltrada = navigation
-    .map(section => ({
-      ...section,
-      items: section.items.filter(it => moduloSet.has(it.id as string)),
-    }))
-    .filter(section => section.items.length > 0);
 
   return (
     <>
@@ -301,13 +215,7 @@ export function Sidebar({ activeTab, onTabChange, permissions, onOpenShortcuts, 
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-2 px-2">
-        {esLite && !collapsed && (
-          <div className="mx-1 mb-2 px-2.5 py-1.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-300 flex items-center justify-between">
-            <span className="font-medium">Modo Lite</span>
-            <span className="text-[10px] text-indigo-400/80">{modulosHabilitados.length} módulos</span>
-          </div>
-        )}
-        {navegacionFiltrada.map((section) => {
+        {navigation.map((section) => {
           const isOpen = openSections[section.key] ?? section.defaultOpen;
 
           return (
@@ -369,9 +277,6 @@ export function Sidebar({ activeTab, onTabChange, permissions, onOpenShortcuts, 
                           <span className="flex-1 text-left text-[12px] font-medium">
                             {item.label}
                           </span>
-
-                          {item.id === 'chat' && <ChatBadge />}
-                          {item.id === 'aprobaciones' && <ApprovalsBadge />}
 
                           {item.badge && (
                             <span className="px-1 py-0.5 text-[9px] font-semibold bg-indigo-500/10 text-indigo-400 rounded">

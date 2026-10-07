@@ -79,22 +79,6 @@ export const crearMovimientoSchema = z.object({
 });
 
 // =====================================================
-// ORDEN DE COMPRA
-// =====================================================
-
-export const crearOrdenCompraSchema = z.object({
-  proveedor_id: uuidSchema,
-  productos: z.array(z.object({
-    codigo: codigoProductoSchema,
-    cantidad: z.number().positive(),
-    precio: z.number().nonnegative(),
-  })).min(1, 'Al menos un producto'),
-  fecha_esperada: z.string().optional().nullable(),
-  notas: z.string().max(1000).optional().nullable(),
-  organizacion_id: z.string().uuid().optional().nullable(),
-});
-
-// =====================================================
 // SOLICITUDES DE INSUMOS (compras internas)
 // =====================================================
 

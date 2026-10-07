@@ -11,8 +11,6 @@
 
 import type { Moneda } from '@/types';
 
-export const MONEDAS_DISPONIBLES: Moneda[] = ['UYU', 'USD'];
-
 /**
  * Formatea un valor en la moneda dada. NO convierte: usa la moneda tal cual.
  * Si querés convertir antes, llamá a `convertir()` y después a `formatMoney`.

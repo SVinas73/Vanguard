@@ -21,22 +21,12 @@ type PermissionKey =
   | 'canCreateMovements'
   | 'canMakeEntradas'
   | 'canMakeSalidas'
-  | 'canViewCosts'
   | 'canViewAudit'
-  | 'canViewReports'
   | 'canManageUsers'
-  | 'canViewQMS'
-  | 'canManageQMS'
-  | 'canViewFinanzas'
   | 'canViewTaller'
-  | 'canViewWMS'
-  | 'canViewProyectos'
   | 'canViewComercial'
-  | 'canViewDemand'
   | 'canViewSeriales'
-  | 'canViewRMA'
-  | 'canViewBOM'
-  | 'canExportData';
+  | 'canViewRMA';
 
 export function useAuth(redirectIfNotAuth: boolean = true) {
   const { data: session, status } = useSession();

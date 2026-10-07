@@ -9,16 +9,13 @@ import type { Product, Movement, StockPrediction } from '@/types';
 import {
   Brain,
   TrendingUp,
-  AlertTriangle,
   ShoppingCart,
   RefreshCw,
   Loader2,
   Activity,
   ArrowRight,
-  Clock,
   ShieldAlert,
   Zap,
-  Package,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -30,55 +27,6 @@ import {
 // catchean slate-*). Antes usaba style={{ background: linear-gradient(...) }}
 // inline, lo que rompía el modo claro.
 const panelClasses = 'bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors';
-
-const panelHoverGlow = (color: string) => ({
-  background: `radial-gradient(ellipse at 50% 0%, ${color}, transparent 70%)`,
-});
-
-// ============================================
-// AI STATUS BADGE
-// ============================================
-
-export function AIStatusBadge() {
-  const { t } = useTranslation();
-  const [isOnline, setIsOnline] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const online = await aiApi.healthCheck();
-        setIsOnline(online);
-      } catch {
-        setIsOnline(false);
-      }
-    };
-    checkStatus();
-    const interval = setInterval(checkStatus, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      <div
-        className={cn(
-          'w-2 h-2 rounded-full',
-          isOnline === null
-            ? 'bg-slate-500'
-            : isOnline
-            ? 'bg-emerald-500 animate-pulse'
-            : 'bg-red-500'
-        )}
-      />
-      <span className="text-slate-400">
-        {isOnline === null
-          ? t('common.loading')
-          : isOnline
-          ? t('ai.active')
-          : 'IA Offline'}
-      </span>
-    </div>
-  );
-}
 
 // ============================================
 // SHARED: PANEL SHELL
