@@ -1,4 +1,14 @@
 <svg width="256" height="256" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Vanguard" role="img">
-  <path fill-rule="evenodd" clip-rule="evenodd" fill="#2b62b0"
-    d="M9 14 L32 56 L55 14 Z M22 19 L32 37 L42 19 Z M16 19 L19.5 19 L30 42 L26.5 42 Z"/>
+  <defs>
+    <linearGradient id="vg-v" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f8ff7"/>
+      <stop offset="1" stop-color="#1e4fa8"/>
+    </linearGradient>
+    <linearGradient id="vg-bar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8bbcff"/>
+      <stop offset="1" stop-color="#3a74db"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#vg-bar)" d="M2.91 8.5 L13.41 8.5 L35.5 55.5 L25 55.5 Z"/>
+  <path fill="url(#vg-v)" d="M16.91 8.5 L27.41 8.5 L39 33.16 L50.59 8.5 L61.09 8.5 L39 55.5 Z"/>
 </svg>

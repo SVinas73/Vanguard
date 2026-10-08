@@ -15,8 +15,8 @@ export const config = {
      * - /api/cron/* (Vercel Cron; se autentica con CRON_SECRET)
      * - /api/health (health check público)
      * - /_next/* (archivos estáticos)
-     * - Archivos públicos (manifest, service worker, íconos, logo)
+     * - Archivos públicos (manifest, service worker, íconos, logo, apple-icon)
      */
-    "/((?!login|register|api/auth|api/cron|api/health|_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-|icons/|vang.png|vanguard-logo.svg).*)",
+    "/((?!login|register|api/auth|api/cron|api/health|_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-|icons/|vang.png|vanguard-logo.svg|apple-icon).*)",
   ],
 };

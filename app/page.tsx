@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
+import { VanguardLoader } from '@/components/ui/VanguardLoader';
 import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
 import { CommandPalette, useCommandPalette, type CommandAction } from '@/components/ui/command-palette';
@@ -322,12 +323,10 @@ export default function HomePage() {
   // ============================================
 
   // Mostrar loading mientras verifica autenticación
+  // (mismo componente en ambos estados de carga: React lo conserva y la
+  // animación sigue fluida en vez de reiniciarse)
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-emerald-400">{t('common.loading')}</div>
-      </div>
-    );
+    return <VanguardLoader fullscreen={false} mensajes={['Verificando sesión']} />;
   }
 
   if (!user) {
@@ -342,26 +341,25 @@ export default function HomePage() {
   // Mostrar loading mientras carga los datos del store
   if (!isInitialized || storeLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="inline-flex h-12 w-12 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent"></div>
-          <div className="text-emerald-400">{t('common.loadingData', 'Cargando inventario...')}</div>
-          {storeError && (
-            <div className="text-red-400 text-sm max-w-md mx-auto mt-4">
-              {storeError}
-              <button 
-                onClick={() => {
-                  fetchProducts();
-                  fetchMovements();
-                }}
-                className="block mx-auto mt-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 rounded-lg text-slate-950 font-medium"
-              >
-                Reintentar
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      <VanguardLoader
+        fullscreen={false}
+        mensajes={['Cargando inventario', 'Sincronizando movimientos', 'Calculando valuación']}
+      >
+        {storeError && (
+          <div className="text-red-400 text-sm max-w-md mx-auto text-center">
+            {storeError}
+            <button
+              onClick={() => {
+                fetchProducts();
+                fetchMovements();
+              }}
+              className="block mx-auto mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium"
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
+      </VanguardLoader>
     );
   }
 
@@ -403,7 +401,7 @@ export default function HomePage() {
   };
 
   // Add product handler - INSERT directo a Supabase (sin store) para que los
-  // errores no se silencien. Mismo patrón que usó PR #63 en NuevoProductoModal.
+  // errores no se silencien.
   const handleAddProduct = async () => {
     if (!newProduct.codigo || !newProduct.descripcion || !newProduct.categoria) {
       alert('Completá código, descripción y categoría.');
@@ -509,6 +507,7 @@ export default function HomePage() {
           // Lote del stock inicial: sin él, la valuación FIFO dejaba estas
           // unidades afuera en cuanto entraba otra compra con lote.
           const { error: loteError } = await supabase.from('lotes').insert({
+            producto_id: prodRow.id,
             codigo: codigoFinal,
             cantidad_inicial: stockInicial,
             cantidad_disponible: stockInicial,

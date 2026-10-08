@@ -141,9 +141,14 @@ async function rmaAbiertos(params: any) {
 async function trazarLote(params: any) {
   try {
     if (!params.lote_numero) return { error: 'Falta lote_numero' };
-    const { data: lote } = await supabase
-      .from('lotes').select('*').eq('numero', params.lote_numero).maybeSingle();
-    if (!lote) return { error: 'Lote no encontrado' };
+    // `lotes` no tiene columna "numero": el identificador es el id (o se
+    // buscan los lotes del producto si viene un código).
+    const ref = String(params.lote_numero).trim();
+    const { data: lotes } = /^\d+$/.test(ref)
+      ? await supabase.from('lotes').select('*').eq('id', Number(ref)).limit(1)
+      : await supabase.from('lotes').select('*').eq('codigo', ref).order('fecha_compra', { ascending: false }).limit(10);
+    const lote = lotes && lotes.length === 1 ? lotes[0] : lotes;
+    if (!lotes || lotes.length === 0) return { error: 'Lote no encontrado' };
     const { data: stock } = await supabase
       .from('wms_stock_ubicacion')
       .select('ubicacion_codigo, cantidad')
@@ -156,7 +161,7 @@ async function trazarSerial(params: any) {
   try {
     if (!params.serial) return { error: 'Falta serial' };
     const { data: serie } = await supabase
-      .from('seriales').select('*').eq('numero_serie', params.serial).maybeSingle();
+      .from('productos_seriales').select('*').eq('numero_serie', params.serial).maybeSingle();
     if (!serie) return { error: 'Serial no encontrado' };
     return { serial: serie };
   } catch (e: any) { return { error: e.message }; }
@@ -210,12 +215,12 @@ async function analisisTendencias(params: any) {
     const dias = params.dias || 60;
     const fechaInicio = new Date(); fechaInicio.setDate(fechaInicio.getDate() - dias);
     const { data: movs } = await supabase
-      .from('movimientos').select('producto_codigo, cantidad, created_at, codigo')
+      .from('movimientos').select('codigo, cantidad, created_at')
       .eq('tipo', 'salida').gte('created_at', fechaInicio.toISOString());
     const hace30 = new Date(); hace30.setDate(hace30.getDate() - 30);
     const por: Record<string, { reciente: number; anterior: number }> = {};
     (movs || []).forEach((m: any) => {
-      const cod = m.producto_codigo || m.codigo; if (!cod) return;
+      const cod = m.codigo; if (!cod) return;
       if (!por[cod]) por[cod] = { reciente: 0, anterior: 0 };
       const f = new Date(m.created_at);
       if (f >= hace30) por[cod].reciente += m.cantidad;
@@ -241,11 +246,11 @@ async function recomendacionesReposicion(params: any) {
       .is('deleted_at', null);
     const hace30 = new Date(); hace30.setDate(hace30.getDate() - 30);
     const { data: movs } = await supabase
-      .from('movimientos').select('producto_codigo, codigo, cantidad')
+      .from('movimientos').select('codigo, cantidad')
       .eq('tipo', 'salida').gte('created_at', hace30.toISOString());
     const consumo: Record<string, number> = {};
     (movs || []).forEach((m: any) => {
-      const c = m.producto_codigo || m.codigo;
+      const c = m.codigo;
       consumo[c] = (consumo[c] || 0) + m.cantidad;
     });
     const recs = (prods || []).map((p: any) => {
@@ -423,6 +428,7 @@ async function crearMovimiento(params: any, usuario: string) {
     // Si entran unidades, lote al costo promedio vigente (valuación FIFO).
     if (nuevoStock > stockAnterior) {
       await supabase.from('lotes').insert({
+        producto_id: producto.id,
         codigo: producto.codigo,
         cantidad_inicial: nuevoStock - stockAnterior,
         cantidad_disponible: nuevoStock - stockAnterior,

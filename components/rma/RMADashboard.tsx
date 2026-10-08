@@ -655,6 +655,7 @@ export default function RMAEnterprise() {
               // Lote al costo promedio vigente: la devolución no es una compra,
               // pero las unidades vuelven a valer en el inventario.
               await supabase.from('lotes').insert({
+                producto_id: prod.id,
                 codigo: item.productoCodigo,
                 cantidad_inicial: cantidadReingreso,
                 cantidad_disponible: cantidadReingreso,

@@ -682,6 +682,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       // Sin costo informado, el lote entra al promedio vigente (no a 0).
       const { error: loteError } = await safeQuery(
         () => supabase.from('lotes').insert({
+          producto_id: productData.id,
           codigo: movementData.codigo,
           cantidad_inicial: movementData.cantidad,
           cantidad_disponible: movementData.cantidad,

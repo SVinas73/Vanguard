@@ -31,9 +31,11 @@ interface ImportResult {
 interface ImportCSVProps {
   onImportComplete?: () => void;
   userEmail: string;
+  /** Clases extra para el botón que abre el importador. */
+  triggerClassName?: string;
 }
 
-export function ImportCSV({ onImportComplete, userEmail }: ImportCSVProps) {
+export function ImportCSV({ onImportComplete, userEmail, triggerClassName }: ImportCSVProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -209,6 +211,7 @@ export function ImportCSV({ onImportComplete, userEmail }: ImportCSVProps) {
             });
             if (diff > 0) {
               await supabase.from('lotes').insert({
+                producto_id: existing.id,
                 codigo,
                 cantidad_inicial: diff,
                 cantidad_disponible: diff,
@@ -257,6 +260,7 @@ export function ImportCSV({ onImportComplete, userEmail }: ImportCSVProps) {
             });
             await supabase.from('productos').update({ stock: stockInicial }).eq('codigo', codigo);
             await supabase.from('lotes').insert({
+              producto_id: creado?.id ?? null,
               codigo,
               cantidad_inicial: stockInicial,
               cantidad_disponible: stockInicial,
@@ -302,7 +306,7 @@ export function ImportCSV({ onImportComplete, userEmail }: ImportCSVProps) {
 
   return (
     <>
-      <Button variant="secondary" onClick={() => { resetState(); setIsOpen(true); }}>
+      <Button variant="secondary" className={triggerClassName} onClick={() => { resetState(); setIsOpen(true); }}>
         <Upload size={18} className="mr-2" />
         {t('stock.import')}
       </Button>

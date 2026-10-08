@@ -315,6 +315,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         // e) lote para valuación FIFO, con el costo y la moneda reales. Sin
         //    costo informado, el lote entra al costo promedio vigente.
         await supabase.from('lotes').insert({
+          producto_id: (prod as any).id,
           codigo: codigoProducto,
           cantidad_inicial: ir.cantidad_recibida,
           cantidad_disponible: ir.cantidad_recibida,

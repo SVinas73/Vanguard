@@ -703,7 +703,9 @@ export default function TallerEnterprise() {
     const { data, error } = await supabase
       .from('productos')
       .select('id, descripcion, codigo, precio, stock, stock_reservado')
-      .eq('activo', true)
+      // `productos` no tiene columna `activo`: el filtro hacía fallar la carga
+      // completa del Taller. Los productos dados de baja tienen deleted_at.
+      .is('deleted_at', null)
       .order('descripcion');
 
     if (error) throw error;

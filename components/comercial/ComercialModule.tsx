@@ -1,15 +1,19 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ClipboardList } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { ClipboardList, LayoutDashboard, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useInventoryStore } from '@/store';
-import { supabase } from '@/lib/supabase';
+import { getAlmacenesInsumoIds } from '@/lib/wms-insumos-filter';
 import { DashboardView } from '@/components/dashboard';
 
 import SolicitudesInsumosPanel from '@/components/insumos/SolicitudesInsumosPanel';
 import InsumosPendientes from '@/components/insumos/InsumosPendientes';
 import OrdenInternaInsumos from '@/components/insumos/OrdenInternaInsumos';
+
+// Reportes en USD: se carga solo al abrirlo (incluye gráficos y PDF).
+const ReportesInsumosUSD = dynamic(() => import('@/components/insumos/ReportesInsumosUSD'), { ssr: false });
 
 interface ComercialModuleProps {
   userEmail: string;
@@ -23,31 +27,20 @@ export default function ComercialModule({
   // - 'analisis'  → DashboardView (réplica del Dashboard) filtrado a insumos
   const [insumosSubTab, setInsumosSubTab] = useState<'solicitud' | 'orden_interna' | 'pendientes' | 'analisis'>('solicitud');
   const [insumosPeriod, setInsumosPeriod] = useState('30d');
+  // Dentro de "Análisis de insumos": panel (dashboard) o reportes en USD.
+  const [analisisVista, setAnalisisVista] = useState<'panel' | 'reportes'>('panel');
 
   // Datos del store para el "Análisis de insumos"
   const { products: allProducts, movements: allMovements, predictions, fetchProducts, fetchMovements } = useInventoryStore();
 
-  // Lista de almacenes para identificar cuáles son de insumos (nombre contiene "insumo")
-  const [almacenes, setAlmacenes] = useState<Array<{ id: string; nombre: string }>>([]);
+  // Almacenes de insumos: mismo criterio que el resto del sistema (flag
+  // es_insumos o nombre que contenga "insumo").
+  const [insumosAlmacenIds, setInsumosAlmacenIds] = useState<Set<string>>(new Set());
   useEffect(() => {
     let cancelled = false;
-    supabase
-      .from('almacenes')
-      .select('id, nombre')
-      .then(({ data }) => {
-        if (!cancelled && data) setAlmacenes(data);
-      });
+    getAlmacenesInsumoIds().then(ids => { if (!cancelled) setInsumosAlmacenIds(ids); });
     return () => { cancelled = true; };
   }, []);
-
-  const insumosAlmacenIds = useMemo(
-    () => new Set(
-      almacenes
-        .filter(a => (a.nombre || '').toLowerCase().includes('insumo'))
-        .map(a => a.id)
-    ),
-    [almacenes]
-  );
 
   // Productos / movimientos filtrados al/los almacén(es) de insumos
   const insumosProducts = useMemo(
@@ -109,6 +102,35 @@ export default function ComercialModule({
         {insumosSubTab === 'pendientes' && <InsumosPendientes />}
 
         {insumosSubTab === 'analisis' && (
+          <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800">
+            {([
+              { id: 'panel' as const, label: 'Panel', icon: LayoutDashboard },
+              { id: 'reportes' as const, label: 'Reportes en USD', icon: FileText },
+            ]).map(v => {
+              const Icon = v.icon;
+              const activo = analisisVista === v.id;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setAnalisisVista(v.id)}
+                  className={cn(
+                    'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                    activo ? 'bg-blue-500/15 text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-200',
+                  )}
+                >
+                  <Icon size={15} /> {v.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {insumosSubTab === 'analisis' && analisisVista === 'reportes' && (
+          <ReportesInsumosUSD userEmail={userEmail} />
+        )}
+
+        {insumosSubTab === 'analisis' && analisisVista === 'panel' && (
           <DashboardView
             products={insumosProducts}
             movements={insumosMovements}

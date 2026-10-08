@@ -28,6 +28,7 @@ async function getLogoDataUri(): Promise<string | null> {
   return _logoCache;
 }
 import autoTable from 'jspdf-autotable';
+import { dibujarLogoVanguard } from '@/lib/pdf-brand';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -40,32 +41,6 @@ const ESTADO_LABEL: Record<string, string> = {
   cerrada: 'Cerrada',
   cancelada: 'Cancelada',
 };
-
-// =====================================================
-// Escudo Vanguard COMPLETO — réplica fiel del SVG de Logo.tsx
-// =====================================================
-// =====================================================
-// Logo Vanguard — doble "V" (solo el símbolo)
-// =====================================================
-// Dos trazos en V azul dentro de un cuadrado de lado `size` (mm).
-// viewBox lógico 64x64. Mismo trazo que el componente Logo.
-function dibujarEscudoVanguard(doc: jsPDF, x: number, y: number, size = 14) {
-  const s = size / 64;
-  // V como banda azul (jsPDF no soporta evenodd holes fácil, así que la
-  // dibujamos como dos brazos rellenos que dejan el centro vacío).
-  doc.setFillColor(43, 98, 176); // #2b62b0
-  // Brazo izquierdo: 9,14 -> 22,19 -> 32,37(inner) -> 32,56(punta)
-  doc.lines(
-    [[13, 5], [10, 18], [0, 19], [-23, -42]],
-    x + 9 * s, y + 14 * s, [s, s], 'F', true,
-  );
-  // Brazo derecho: 55,14 -> 42,19 -> 32,37 -> 32,56
-  doc.lines(
-    [[-13, 5], [-10, 18], [0, 19], [23, -42]],
-    x + 55 * s, y + 14 * s, [s, s], 'F', true,
-  );
-  doc.setFillColor(0, 0, 0); // reset
-}
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireAuth();
@@ -129,10 +104,10 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
     try {
       doc.addImage(logoUri, 'PNG', margin, margin, escudoSize, escudoSize);
     } catch {
-      dibujarEscudoVanguard(doc, margin, margin, escudoSize);
+      dibujarLogoVanguard(doc, margin, margin, escudoSize);
     }
   } else {
-    dibujarEscudoVanguard(doc, margin, margin, escudoSize);
+    dibujarLogoVanguard(doc, margin, margin, escudoSize);
   }
 
   // Texto al lado del escudo, centrado verticalmente con shield (no banner)
