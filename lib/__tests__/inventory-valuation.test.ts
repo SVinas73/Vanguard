@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { valuarInventarioSync } from '@/lib/inventory-valuation';
+import { buildRatesTable } from '@/lib/currency';
 
 // =====================================================
 // Tests de la lib unificada de valuación
@@ -65,10 +66,44 @@ describe('inventory-valuation — valuarInventarioSync', () => {
       [{ codigo: 'X1', descripcion: 'X', stock: 100, costoPromedio: 10 }],
       [{ codigo: 'X1', cantidad_disponible: 30, costo_unitario: 100 }],
     );
-    // FIFO gana, pero queda flag de desincronizado
-    expect(r.total).toBe(3000);
+    // 30 unidades por FIFO (lote) + 70 sin lote al costo promedio.
+    // Antes se ignoraban las 70 unidades y el inventario quedaba subvaluado.
+    expect(r.total).toBe(3000 + 70 * 10);
     expect(r.porProducto[0].desincronizado).toBe(true);
     expect(r.calidad.desincronizados).toBe(1);
+  });
+
+  it('si los lotes suman más que el stock, descarta los lotes más viejos (FIFO)', () => {
+    const r = valuarInventarioSync(
+      [{ codigo: 'F1', descripcion: 'F', stock: 5, costoPromedio: 0 }],
+      [
+        { codigo: 'F1', cantidad_disponible: 10, costo_unitario: 100, fecha_compra: '2025-01-01' },
+        { codigo: 'F1', cantidad_disponible: 3, costo_unitario: 200, fecha_compra: '2025-06-01' },
+      ],
+    );
+    // Quedan las 5 unidades más nuevas: 3 × 200 + 2 × 100
+    expect(r.total).toBe(800);
+  });
+
+  it('convierte cada lote desde su propia moneda (USD → UYU)', () => {
+    const rates = buildRatesTable([{ moneda_origen: 'USD', moneda_destino: 'UYU', tasa: 40, fecha: '2025-01-01' }]);
+    const r = valuarInventarioSync(
+      [{ codigo: 'M1', descripcion: 'M', stock: 3, costoPromedio: 400, moneda: 'UYU' }],
+      [
+        { codigo: 'M1', cantidad_disponible: 2, costo_unitario: 10, moneda: 'USD', fecha_compra: '2025-01-01' },
+        { codigo: 'M1', cantidad_disponible: 1, costo_unitario: 500, moneda: 'UYU', fecha_compra: '2025-02-01' },
+      ],
+      { rates, monedaBase: 'UYU' },
+    );
+    expect(r.total).toBe(2 * 400 + 500);
+  });
+
+  it('sin tasas cargadas usa la cotización de referencia para productos en USD', () => {
+    const r = valuarInventarioSync(
+      [{ codigo: 'U1', descripcion: 'U', stock: 2, costoPromedio: 10, moneda: 'USD' }],
+      [],
+    );
+    expect(r.total).toBe(2 * 10 * 40);
   });
 
   it('desglose por almacén suma correctamente', () => {

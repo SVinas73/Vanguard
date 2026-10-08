@@ -1002,21 +1002,15 @@ button.hover\:bg-teal-500:hover, button.hover\:bg-green-500:hover {
 .light-mode .hover\:border-\[\#4A4A4A\]:hover, .light-mode .hover\:border-\[\#475569\]:hover { border-color: #b0b8c4 !important; }
 .light-mode .text-\[\#f8fafc\], .light-mode .text-\[\#F1F1F1\], .light-mode .text-\[\#f1f1f1\] { color: #1a2030 !important; }
 
-/* =====================================================
-   Escudo de fondo en la pantalla de Inicio — flotar lento
-   ===================================================== */
-@keyframes vgHomeFloat {
-  0%   { transform: translateY(0) scale(1); opacity: 0.05; }
-  50%  { transform: translateY(-18px) scale(1.04); opacity: 0.08; }
-  100% { transform: translateY(0) scale(1); opacity: 0.05; }
-}
-.vg-home-shield {
-  animation: vgHomeFloat 9s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-@media (prefers-reduced-motion: reduce) {
-  .vg-home-shield { animation: none; }
-}
+/* Modales y formularios (Modal usa bg-[#131313]): antes quedaban negros en
+   modo claro con el texto ya oscurecido → no se leía nada. */
+.light-mode .bg-\[\#131313\] { background-color: #ffffff !important; }
+.light-mode .bg-\[\#2E2E2E\], .light-mode .bg-\[\#2A2A2A\] { background-color: #e3e7ee !important; }
+.light-mode .text-\[\#6B6B6B\] { color: #5b6472 !important; }
+.light-mode .text-\[\#A0A0A0\] { color: #3f4655 !important; }
+.light-mode .text-\[\#4A4A4A\] { color: #8a93a3 !important; }
+.light-mode .placeholder\:text-\[\#4A4A4A\]::placeholder { color: #9aa3b2 !important; }
+.light-mode .shadow-black\/50, .light-mode .shadow-black\/40 { --tw-shadow-color: rgba(15, 23, 42, 0.12) !important; }
 
 /* =====================================================
    SIDEBAR — modo claro: texto más legible, hover notorio,

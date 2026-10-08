@@ -57,6 +57,13 @@ export interface TipoCambio {
  */
 export type RatesTable = Map<string, TipoCambio>;
 
+/**
+ * Cotización de referencia (pesos uruguayos por 1 dólar). Se usa cuando la
+ * organización no tiene ninguna cotización USD↔UYU cargada, para que los
+ * productos en USD nunca se sumen como si fueran pesos.
+ */
+export const TC_REFERENCIA_UYU_POR_USD = 40;
+
 const key = (from: Moneda, to: Moneda) => `${from}->${to}`;
 
 export function buildRatesTable(rates: TipoCambio[]): RatesTable {
@@ -66,6 +73,14 @@ export function buildRatesTable(rates: TipoCambio[]): RatesTable {
   for (const r of sorted) {
     const k = key(r.moneda_origen, r.moneda_destino);
     if (!table.has(k)) table.set(k, r);
+  }
+  if (!table.has(key('USD', 'UYU')) && !table.has(key('UYU', 'USD'))) {
+    table.set(key('USD', 'UYU'), {
+      moneda_origen: 'USD',
+      moneda_destino: 'UYU',
+      tasa: TC_REFERENCIA_UYU_POR_USD,
+      fecha: '1970-01-01',
+    });
   }
   return table;
 }

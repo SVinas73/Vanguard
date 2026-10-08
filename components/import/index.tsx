@@ -6,6 +6,21 @@ import { useTranslation } from 'react-i18next';
 import { Button, Modal } from '@/components/ui';
 import { Upload, FileSpreadsheet, CheckCircle, XCircle, AlertTriangle, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { registrarAuditoria } from '@/lib/audit';
+
+/**
+ * Número desde texto de planilla: acepta "1234.56", "1234,56" y "1.234,56".
+ * Devuelve null si la celda está vacía o no es un número.
+ */
+function parseNumero(valor: unknown): number | null {
+  const s = String(valor ?? '').trim();
+  if (!s) return null;
+  let norm = s.replace(/\s/g, '');
+  if (norm.includes(',') && norm.includes('.')) norm = norm.replace(/\./g, '').replace(',', '.');
+  else if (norm.includes(',')) norm = norm.replace(',', '.');
+  const n = parseFloat(norm);
+  return Number.isFinite(n) ? n : null;
+}
 
 interface ImportResult {
   total: number;
@@ -143,55 +158,116 @@ export function ImportCSV({ onImportComplete, userEmail }: ImportCSVProps) {
           continue;
         }
 
-        const precio = parseFloat(row[headerMap.precio]) || 0;
-        const categoria = row[headerMap.categoria] || 'General';
-        const stock = parseInt(row[headerMap.stock]) || 0;
-        const stockMinimo = parseInt(row[headerMap.stock_minimo]) || 10;
-        const costo = parseFloat(row[headerMap.costo]) || 0;
+        // Solo se toman las columnas que vienen en el CSV con valor. Antes, si el
+        // archivo no traía (por ejemplo) la columna costo, se pisaba el costo del
+        // producto con 0; lo mismo con precio, categoría y stock mínimo.
+        const celda = (campo: string) => (headerMap[campo] ? row[headerMap[campo]] : undefined);
+        const precio = parseNumero(celda('precio'));
+        const categoriaCsv = String(celda('categoria') ?? '').trim() || null;
+        const stockCsv = parseNumero(celda('stock'));
+        const stockMinimoCsv = parseNumero(celda('stock_minimo'));
+        const costoCsv = parseNumero(celda('costo'));
 
         // Verificar si el producto ya existe
         const { data: existing } = await supabase
           .from('productos')
-          .select('codigo')
+          .select('id, codigo, descripcion, precio, categoria, stock, stock_minimo, costo_promedio, moneda')
           .eq('codigo', codigo)
-          .single();
+          .maybeSingle();
 
         if (existing) {
-          // Actualizar
+          const update: Record<string, any> = {
+            descripcion,
+            actualizado_por: userEmail,
+            actualizado_at: new Date().toISOString(),
+          };
+          if (precio != null) update.precio = precio;
+          if (categoriaCsv) update.categoria = categoriaCsv;
+          if (stockCsv != null) update.stock = Math.max(0, Math.round(stockCsv));
+          if (stockMinimoCsv != null) update.stock_minimo = Math.max(0, Math.round(stockMinimoCsv));
+          if (costoCsv != null) update.costo_promedio = costoCsv;
+
           const { error } = await supabase
             .from('productos')
-            .update({
-              descripcion,
-              precio,
-              categoria,
-              stock,
-              stock_minimo: stockMinimo,
-              costo_promedio: costo,
-              actualizado_por: userEmail,
-              actualizado_at: new Date().toISOString(),
-            })
+            .update(update)
             .eq('codigo', codigo);
 
           if (error) throw error;
-        } else {
-          // Insertar
-          const { error } = await supabase
-            .from('productos')
-            .insert({
+
+          // Cambio de stock: queda en el historial del producto y, si sube, con
+          // un lote para que la valuación lo contemple.
+          const stockAnterior = Number(existing.stock) || 0;
+          if (update.stock != null && update.stock !== stockAnterior) {
+            const diff = update.stock - stockAnterior;
+            await supabase.from('movimientos').insert({
+              producto_id: existing.id,
               codigo,
-              descripcion,
-              precio,
-              categoria,
-              stock,
-              stock_minimo: stockMinimo,
-              costo_promedio: costo,
-              creado_por: userEmail,
-              creado_at: new Date().toISOString(),
-              actualizado_por: userEmail,
-              actualizado_at: new Date().toISOString(),
+              tipo: 'ajuste',
+              cantidad: Math.abs(diff),
+              notas: `Importación CSV: stock ${stockAnterior} → ${update.stock}`,
+              usuario_email: userEmail,
             });
+            if (diff > 0) {
+              await supabase.from('lotes').insert({
+                codigo,
+                cantidad_inicial: diff,
+                cantidad_disponible: diff,
+                costo_unitario: costoCsv ?? (Number(existing.costo_promedio) || 0),
+                moneda: existing.moneda || 'UYU',
+                usuario: userEmail,
+                notas: 'Importación CSV',
+              });
+            }
+          }
+
+          await registrarAuditoria('productos', 'ACTUALIZAR', codigo, existing, { ...update, origen: 'Importación CSV' }, userEmail);
+        } else {
+          const nuevo = {
+            codigo,
+            descripcion,
+            precio: precio ?? 0,
+            categoria: categoriaCsv || 'General',
+            stock: 0,
+            stock_minimo: stockMinimoCsv != null ? Math.max(0, Math.round(stockMinimoCsv)) : 10,
+            costo_promedio: costoCsv ?? 0,
+            creado_por: userEmail,
+            creado_at: new Date().toISOString(),
+            actualizado_por: userEmail,
+            actualizado_at: new Date().toISOString(),
+          };
+          const { data: creado, error } = await supabase
+            .from('productos')
+            .insert(nuevo)
+            .select('id')
+            .single();
 
           if (error) throw error;
+
+          const stockInicial = stockCsv != null ? Math.max(0, Math.round(stockCsv)) : 0;
+          if (stockInicial > 0) {
+            await supabase.from('movimientos').insert({
+              producto_id: creado?.id ?? null,
+              codigo,
+              tipo: 'entrada',
+              cantidad: stockInicial,
+              costo_compra: costoCsv,
+              moneda_costo: 'UYU',
+              notas: 'Stock inicial por importación CSV',
+              usuario_email: userEmail,
+            });
+            await supabase.from('productos').update({ stock: stockInicial }).eq('codigo', codigo);
+            await supabase.from('lotes').insert({
+              codigo,
+              cantidad_inicial: stockInicial,
+              cantidad_disponible: stockInicial,
+              costo_unitario: costoCsv ?? 0,
+              moneda: 'UYU',
+              usuario: userEmail,
+              notas: 'Importación CSV',
+            });
+          }
+
+          await registrarAuditoria('productos', 'CREAR', codigo, null, { ...nuevo, stock: stockInicial, origen: 'Importación CSV' }, userEmail);
         }
 
         results.success++;

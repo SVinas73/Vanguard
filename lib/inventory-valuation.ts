@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { convertir, type RatesTable } from '@/lib/currency';
+import { convertir, buildRatesTable, type RatesTable } from '@/lib/currency';
 import type { Moneda } from '@/types';
 
 // =====================================================
@@ -10,7 +10,13 @@ import type { Moneda } from '@/types';
 //
 // REGLA: el valor de un producto se calcula así:
 //   1. Si tiene lotes activos (cantidad_disponible > 0)
-//      → FIFO real: Σ (cantidad_disponible × costo_unitario)
+//      → FIFO real sobre las `stock` unidades más NUEVAS:
+//        Σ (cantidad × costo_unitario) convirtiendo cada lote
+//        desde SU moneda. Si los lotes suman más unidades que el
+//        stock (salidas que no descontaron lotes), se descartan
+//        los más viejos. Si suman menos (stock inicial, ajustes,
+//        devoluciones sin lote), las unidades faltantes se valúan
+//        al costo promedio del producto.
 //   2. Si NO tiene lotes pero tiene stock y costo_promedio
 //      → Fallback: stock × costo_promedio
 //   3. Si no tiene ni lotes ni costo → 0 (data quality issue)
@@ -43,6 +49,10 @@ export interface LoteMinimo {
   codigo: string;          // codigo de producto (no del lote)
   cantidad_disponible: number;
   costo_unitario: number;
+  /** Moneda del costo del lote. Si falta, se asume la del producto. */
+  moneda?: Moneda | null;
+  /** Fecha de compra (para descartar los lotes más viejos primero). */
+  fecha_compra?: string | null;
 }
 
 export interface ValuacionProducto {
@@ -93,52 +103,72 @@ export function valuarInventarioSync(
   opts?: ValuacionOpts,
 ): ResultadoValuacion {
   const monedaBase: Moneda = opts?.monedaBase ?? 'UYU';
-  const rates = opts?.rates;
-  // Normaliza un valor desde la moneda del producto a la moneda base, para que
-  // todo se sume en la misma moneda (productos en USD + en UYU). Si no hay
-  // tasa, deja el valor como está.
+  // Sin tasas cargadas se usa la cotización de referencia (USD↔UYU).
+  const rates = opts?.rates ?? buildRatesTable([]);
+  // Normaliza un valor desde su moneda a la moneda base, para que todo se
+  // sume en la misma moneda (productos/lotes en USD + en UYU).
   const aBase = (valor: number, moneda?: Moneda): number => {
-    if (!valor || !rates || !moneda || moneda === monedaBase) return valor;
+    if (!valor || !moneda || moneda === monedaBase) return valor;
     const conv = convertir(valor, moneda, monedaBase, rates);
     return conv == null ? valor : conv;
   };
-  // Agrupar lotes por codigo de producto
-  const lotesByCodigo = new Map<string, { unidades: number; valor: number }>();
+  // Agrupar lotes por codigo de producto (orden: más viejo primero)
+  const lotesByCodigo = new Map<string, LoteMinimo[]>();
   for (const l of lotes) {
-    const cur = lotesByCodigo.get(l.codigo) ?? { unidades: 0, valor: 0 };
-    cur.unidades += l.cantidad_disponible;
-    cur.valor    += l.cantidad_disponible * l.costo_unitario;
-    lotesByCodigo.set(l.codigo, cur);
+    if (!(l.cantidad_disponible > 0)) continue;
+    const arr = lotesByCodigo.get(l.codigo) ?? [];
+    arr.push(l);
+    lotesByCodigo.set(l.codigo, arr);
+  }
+  for (const arr of lotesByCodigo.values()) {
+    arr.sort((a, b) => (a.fecha_compra ?? '').localeCompare(b.fecha_compra ?? ''));
   }
 
   // Valuar cada producto
   const porProducto: ValuacionProducto[] = productos.map((p) => {
-    const lote = lotesByCodigo.get(p.codigo);
-    const unidadesEnLotes = lote?.unidades ?? 0;
-    const valorFifo      = lote?.valor ?? 0;
-    const valorPromedio  = p.stock * p.costoPromedio;
+    const lotesProd = lotesByCodigo.get(p.codigo) ?? [];
+    const stock = Math.max(0, Number(p.stock) || 0);
+    const unidadesEnLotes = lotesProd.reduce((s, l) => s + l.cantidad_disponible, 0);
+    // Costo promedio expresado en la moneda base.
+    const costoPromBase = aBase(p.costoPromedio || 0, p.moneda);
+    const valorPromedio  = stock * costoPromBase;
+
+    // FIFO: las unidades en stock son las de los lotes más nuevos.
+    let valorFifo = 0;
+    let unidadesValuadas = 0;
+    let aDescartar = Math.max(0, unidadesEnLotes - stock);
+    for (const l of lotesProd) {
+      let cant = l.cantidad_disponible;
+      if (aDescartar > 0) {
+        const quita = Math.min(aDescartar, cant);
+        cant -= quita;
+        aDescartar -= quita;
+      }
+      if (cant <= 0) continue;
+      valorFifo += cant * aBase(l.costo_unitario || 0, (l.moneda as Moneda) || p.moneda);
+      unidadesValuadas += cant;
+    }
 
     let valor = 0;
     let fuente: ValuacionProducto['fuente'] = 'sin_valuar';
-    if (valorFifo > 0) {
-      valor = valorFifo;
+    if (unidadesValuadas > 0 && valorFifo > 0) {
+      // Unidades en stock que no tienen lote → al costo promedio.
+      const sinLote = Math.max(0, stock - unidadesValuadas);
+      valor = valorFifo + sinLote * costoPromBase;
       fuente = 'fifo';
     } else if (valorPromedio > 0) {
       valor = valorPromedio;
       fuente = 'promedio';
     }
-    // Normalizamos a la moneda base (ej. todo a UYU) para sumar correctamente
-    // inventario en distintas monedas.
-    valor = aBase(valor, p.moneda);
 
     // ¿Desincronizado? Si tiene lotes pero el stock de productos
     // no coincide con la suma de lotes (puede ser por ajustes
     // manuales o falta de movimientos cierre).
-    const desincronizado = unidadesEnLotes > 0 && Math.abs(p.stock - unidadesEnLotes) > 0.5;
+    const desincronizado = unidadesEnLotes > 0 && Math.abs(stock - unidadesEnLotes) > 0.5;
 
     return {
       codigo: p.codigo,
-      unidades: p.stock,
+      unidades: stock,
       unidadesEnLotes,
       valorFifo,
       valorPromedio,
@@ -223,15 +253,29 @@ export async function valuarInventario(input?: {
   }
 
   if (!lotes) {
-    const { data } = await supabase
-      .from('lotes')
-      .select('codigo, cantidad_disponible, costo_unitario')
-      .gt('cantidad_disponible', 0);
-    lotes = (data || []).map((l: any) => ({
-      codigo: l.codigo,
-      cantidad_disponible: l.cantidad_disponible || 0,
-      costo_unitario: parseFloat(l.costo_unitario) || 0,
-    }));
+    // Paginado: Supabase devuelve como máximo 1000 filas por request.
+    const acumulado: LoteMinimo[] = [];
+    for (let page = 0; page < 200; page++) {
+      const from = page * 1000;
+      const { data } = await supabase
+        .from('lotes')
+        .select('codigo, cantidad_disponible, costo_unitario, moneda, fecha_compra')
+        .gt('cantidad_disponible', 0)
+        .order('fecha_compra', { ascending: true })
+        .range(from, from + 999);
+      const rows = data || [];
+      for (const l of rows as any[]) {
+        acumulado.push({
+          codigo: l.codigo,
+          cantidad_disponible: Number(l.cantidad_disponible) || 0,
+          costo_unitario: parseFloat(l.costo_unitario) || 0,
+          moneda: l.moneda ?? null,
+          fecha_compra: l.fecha_compra ?? null,
+        });
+      }
+      if (rows.length < 1000) break;
+    }
+    lotes = acumulado;
   }
 
   return valuarInventarioSync(productos, lotes, { rates: input?.rates, monedaBase: input?.monedaBase });

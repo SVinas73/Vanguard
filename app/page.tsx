@@ -41,6 +41,7 @@ import { TabType, CategorySuggestion, AnomalyResult, Product } from '@/types';
 import { useInventoryStore } from '@/store';
 import { CATEGORIAS_VENTA } from '@/lib/constants';
 import { formatDate } from '@/lib/utils';
+import { registrarAuditoria } from '@/lib/audit';
 import {
   suggestCategory,
   checkMovementAnomaly,
@@ -505,6 +506,18 @@ export default function HomePage() {
             .from('productos')
             .update({ stock: stockInicial })
             .eq('codigo', codigoFinal);
+          // Lote del stock inicial: sin él, la valuación FIFO dejaba estas
+          // unidades afuera en cuanto entraba otra compra con lote.
+          const { error: loteError } = await supabase.from('lotes').insert({
+            codigo: codigoFinal,
+            cantidad_inicial: stockInicial,
+            cantidad_disponible: stockInicial,
+            costo_unitario: costoInicial > 0 ? costoInicial : 0,
+            moneda: newProduct.moneda,
+            usuario: userEmail,
+            notas: 'Stock inicial al crear producto',
+          });
+          if (loteError) console.warn('No se pudo crear el lote inicial:', loteError.message);
           // Si se eligió una ubicación (solo Depósito de Ventas), colocamos ahí
           // el stock inicial para que el picker lo vea.
           if (newProduct.ubicacionId && !esInsumoDestino) {
@@ -539,7 +552,22 @@ export default function HomePage() {
       }
     }
 
-    // 3. Refrescar el catálogo en memoria + broadcast a otros módulos
+    // 3. Auditoría del alta (antes no quedaba registrada).
+    await registrarAuditoria(
+      'productos',
+      'CREAR',
+      codigoFinal,
+      null,
+      {
+        ...productoData,
+        stock_inicial: stockInicial,
+        costo_inicial: costoInicial > 0 ? costoInicial : null,
+        observaciones: newProduct.comentarios.trim() || null,
+      },
+      userEmail,
+    );
+
+    // 4. Refrescar el catálogo en memoria + broadcast a otros módulos
     await fetchProducts();
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('vg:stock-changed', {

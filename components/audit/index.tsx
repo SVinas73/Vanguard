@@ -9,6 +9,7 @@ import {
   ArrowLeftRight, Download, ChevronLeft, ChevronRight,
   Shield, Truck, ShoppingCart, ShoppingBag, RotateCcw,
   Wrench, FolderKanban, Clock, AlertTriangle, FileText,
+  ClipboardList, ShieldCheck, Ticket, Building2, Activity, Lock,
 } from 'lucide-react';
 
 interface AuditLog {
@@ -36,7 +37,44 @@ const TABLA_CONFIG: Record<string, { label: string; icon: React.ReactNode; color
   almacenes: { label: 'Almacenes', icon: <Package size={14} />, color: 'text-slate-300' },
   lotes: { label: 'Lotes', icon: <FileText size={14} />, color: 'text-slate-400' },
   usuarios: { label: 'Usuarios', icon: <User size={14} />, color: 'text-slate-300' },
+  users: { label: 'Usuarios', icon: <User size={14} />, color: 'text-slate-300' },
+  solicitudes_insumos: { label: 'Solicitudes de insumos', icon: <ClipboardList size={14} />, color: 'text-slate-300' },
+  org_categorias_insumos_routing: { label: 'Routing de insumos', icon: <ClipboardList size={14} />, color: 'text-slate-300' },
+  almacen_insumos: { label: 'Almacén de insumos', icon: <Package size={14} />, color: 'text-slate-300' },
+  cotizaciones_taller: { label: 'Presupuestos de taller', icon: <Wrench size={14} />, color: 'text-slate-300' },
+  reservas_stock: { label: 'Reservas de stock', icon: <Package size={14} />, color: 'text-slate-300' },
+  garantias: { label: 'Garantías', icon: <ShieldCheck size={14} />, color: 'text-slate-300' },
+  tickets_soporte: { label: 'Tickets', icon: <Ticket size={14} />, color: 'text-slate-300' },
+  tickets: { label: 'Tickets', icon: <Ticket size={14} />, color: 'text-slate-300' },
+  organizaciones: { label: 'Empresas', icon: <Building2 size={14} />, color: 'text-slate-300' },
+  usuario_organizacion: { label: 'Miembros de empresa', icon: <Building2 size={14} />, color: 'text-slate-300' },
+  pdm: { label: 'Mantenimiento predictivo', icon: <Activity size={14} />, color: 'text-slate-300' },
+  seguridad: { label: 'Seguridad', icon: <Lock size={14} />, color: 'text-slate-300' },
+  gdpr_solicitudes: { label: 'Privacidad (GDPR)', icon: <Lock size={14} />, color: 'text-slate-300' },
 };
+
+/** Secciones que la app registra, aunque todavía no tengan filas recientes. */
+const TABLAS_CONOCIDAS = [
+  'productos', 'movimientos', 'transferencias', 'almacenes', 'lotes',
+  'solicitudes_insumos', 'org_categorias_insumos_routing',
+  'ordenes_taller', 'cotizaciones_taller', 'reservas_stock',
+  'garantias', 'tickets_soporte', 'rma', 'organizaciones', 'users',
+];
+
+/** "ESTADO_EN_TRANSITO" → "Estado: en tránsito"; "CAMBIO_MASIVO_CATEGORIA" → "Cambio masivo categoria" */
+function humanizar(codigo: string): string {
+  const limpio = codigo.replace(/_/g, ' ').toLowerCase();
+  if (limpio.startsWith('estado ')) return `Estado: ${limpio.slice(7)}`;
+  return limpio.charAt(0).toUpperCase() + limpio.slice(1);
+}
+
+/** Límite inferior/superior de un día LOCAL (Uruguay) en ISO-UTC para filtrar. */
+function inicioDiaLocal(fecha: string): string {
+  return new Date(`${fecha}T00:00:00`).toISOString();
+}
+function finDiaLocal(fecha: string): string {
+  return new Date(`${fecha}T23:59:59.999`).toISOString();
+}
 
 const ACCION_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
   CREAR: { label: 'Crear', icon: <Plus size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
@@ -48,11 +86,16 @@ const ACCION_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
   ESTADO_EN_TRANSITO: { label: 'En Tránsito', icon: <Truck size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
   ESTADO_COMPLETADA: { label: 'Completada', icon: <ChevronRight size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
   ESTADO_CANCELADA: { label: 'Cancelada', icon: <Trash2 size={12} />, color: 'text-slate-400', bg: 'bg-slate-500/10 border-slate-500/20' },
+  TRANSFERENCIA: { label: 'Transferencia', icon: <ArrowLeftRight size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
+  AJUSTE: { label: 'Ajuste', icon: <Edit size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
+  EDITAR: { label: 'Editar', icon: <Edit size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
+  CAMBIO_ESTADO: { label: 'Cambio de estado', icon: <RefreshCw size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
+  DESACTIVAR: { label: 'Desactivar', icon: <Trash2 size={12} />, color: 'text-slate-300', bg: 'bg-slate-800/40 border-slate-700/40' },
 };
 
 function getAccionCfg(accion: string) {
   return ACCION_CONFIG[accion.toUpperCase()] || {
-    label: accion,
+    label: humanizar(accion),
     icon: <History size={12} />,
     color: 'text-slate-400',
     bg: 'bg-slate-500/10 border-slate-500/20',
@@ -60,7 +103,7 @@ function getAccionCfg(accion: string) {
 }
 
 function getTablaCfg(tabla: string) {
-  return TABLA_CONFIG[tabla] || { label: tabla, icon: <FileText size={14} />, color: 'text-slate-400' };
+  return TABLA_CONFIG[tabla] || { label: humanizar(tabla), icon: <FileText size={14} />, color: 'text-slate-400' };
 }
 
 function formatDateTime(dateStr: string) {
@@ -108,18 +151,27 @@ export function AuditLogPanel() {
   const [availableActions, setAvailableActions] = useState<string[]>([]);
 
   const fetchMeta = useCallback(async () => {
-    const [tablesRes, actionsRes] = await Promise.all([
-      supabase.from('auditoria').select('tabla').limit(1000),
-      supabase.from('auditoria').select('accion').limit(1000),
-    ]);
-    if (tablesRes.data) {
-      const unique = [...new Set(tablesRes.data.map((r: any) => r.tabla))].sort();
-      setAvailableTables(unique);
+    // Supabase devuelve como máximo 1000 filas por request: recorremos varias
+    // páginas (las más recientes) y sumamos las secciones conocidas, para que
+    // los filtros no omitan secciones/acciones.
+    const tablas = new Set<string>(TABLAS_CONOCIDAS);
+    const acciones = new Set<string>();
+    for (let page = 0; page < 10; page++) {
+      const from = page * 1000;
+      const { data } = await supabase
+        .from('auditoria')
+        .select('tabla, accion')
+        .order('created_at', { ascending: false })
+        .range(from, from + 999);
+      const rows = data || [];
+      rows.forEach((r: any) => {
+        if (r.tabla) tablas.add(r.tabla);
+        if (r.accion) acciones.add(r.accion);
+      });
+      if (rows.length < 1000) break;
     }
-    if (actionsRes.data) {
-      const unique = [...new Set(actionsRes.data.map((r: any) => r.accion))].sort();
-      setAvailableActions(unique);
-    }
+    setAvailableTables([...tablas].sort((a, b) => getTablaCfg(a).label.localeCompare(getTablaCfg(b).label)));
+    setAvailableActions([...acciones].sort());
   }, []);
 
   const fetchLogs = useCallback(async () => {
@@ -138,8 +190,8 @@ export function AuditLogPanel() {
         const q = `%${searchQuery.trim()}%`;
         query = query.or(`codigo.ilike.${q},usuario_email.ilike.${q}`);
       }
-      if (dateFrom) query = query.gte('created_at', `${dateFrom}T00:00:00`);
-      if (dateTo) query = query.lte('created_at', `${dateTo}T23:59:59`);
+      if (dateFrom) query = query.gte('created_at', inicioDiaLocal(dateFrom));
+      if (dateTo) query = query.lte('created_at', finDiaLocal(dateTo));
 
       const { data, error: err, count } = await query;
       if (err) {
@@ -171,23 +223,31 @@ export function AuditLogPanel() {
 
   // Export CSV
   const handleExport = useCallback(async () => {
-    let query = supabase
-      .from('auditoria')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(5000);
+    // Exporta TODOS los registros que cumplen el filtro (paginando de a 1000;
+    // antes se cortaba en silencio en las primeras 1000 filas).
+    const data: AuditLog[] = [];
+    for (let page = 0; page < 100; page++) {
+      const from = page * 1000;
+      let query = supabase
+        .from('auditoria')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, from + 999);
 
-    if (filtroTabla !== 'todas') query = query.eq('tabla', filtroTabla);
-    if (filtroAccion !== 'todas') query = query.eq('accion', filtroAccion);
-    if (searchQuery.trim()) {
-      const q = `%${searchQuery.trim()}%`;
-      query = query.or(`codigo.ilike.${q},usuario_email.ilike.${q}`);
+      if (filtroTabla !== 'todas') query = query.eq('tabla', filtroTabla);
+      if (filtroAccion !== 'todas') query = query.eq('accion', filtroAccion);
+      if (searchQuery.trim()) {
+        const q = `%${searchQuery.trim()}%`;
+        query = query.or(`codigo.ilike.${q},usuario_email.ilike.${q}`);
+      }
+      if (dateFrom) query = query.gte('created_at', inicioDiaLocal(dateFrom));
+      if (dateTo) query = query.lte('created_at', finDiaLocal(dateTo));
+
+      const { data: rows } = await query;
+      data.push(...((rows || []) as AuditLog[]));
+      if (!rows || rows.length < 1000) break;
     }
-    if (dateFrom) query = query.gte('created_at', `${dateFrom}T00:00:00`);
-    if (dateTo) query = query.lte('created_at', `${dateTo}T23:59:59`);
-
-    const { data } = await query;
-    if (!data || data.length === 0) return;
+    if (data.length === 0) return;
 
     const headers = ['Fecha', 'Hora', 'Sección', 'Acción', 'Código', 'Usuario', 'Datos Anteriores', 'Datos Nuevos'];
     const rows = data.map((log: AuditLog) => {
@@ -195,8 +255,8 @@ export function AuditLogPanel() {
       return [
         fecha,
         hora,
-        log.tabla,
-        log.accion,
+        getTablaCfg(log.tabla).label,
+        getAccionCfg(log.accion).label,
         log.codigo || '',
         log.usuario_email || '',
         JSON.stringify(log.datos_anteriores || ''),

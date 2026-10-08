@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase, safeQuery } from '@/lib/supabase';
 import { Product, Movement, StockPrediction } from '@/types';
 import { predictAllProducts } from '@/lib/ai';
+import { calcularCostoPromedio, convertirCosto, normalizarMoneda, obtenerTasaUyuPorUsd } from '@/lib/costeo';
 import { 
   cacheProducts, 
   getCachedProducts, 
@@ -65,6 +66,32 @@ interface InventoryState {
 
 const QUERY_TIMEOUT = 15000; // 15 segundos
 const QUERY_RETRIES = 1;    // 1 reintento
+// Supabase devuelve como máximo 1000 filas por request: paginamos para no
+// perder historial (movimientos viejos) ni productos.
+const PAGE_SIZE = 1000;
+const MAX_PAGES = 200;
+
+/**
+ * Trae TODAS las filas de una consulta paginando de a PAGE_SIZE.
+ * Devuelve el primer error/timeout que aparezca.
+ */
+async function fetchAllPages<T>(
+  build: (from: number, to: number) => any,
+): Promise<{ data: T[] | null; error: any; timedOut?: boolean }> {
+  const out: T[] = [];
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const from = page * PAGE_SIZE;
+    const { data, error, timedOut } = await safeQuery<T[]>(
+      () => build(from, from + PAGE_SIZE - 1),
+      { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
+    );
+    if (timedOut || error) return { data: page === 0 ? null : out, error, timedOut };
+    const rows = data || [];
+    out.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+  }
+  return { data: out, error: null };
+}
 
 // ============================================
 // HELPERS
@@ -147,16 +174,16 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     
     // Query con timeout y reintentos
     // IMPORTANTE: filtrar deleted_at IS NULL para no contar borrados
-    const { data, error, timedOut } = await safeQuery<any[]>(
-      () => supabase
+    const { data, error, timedOut } = await fetchAllPages<any>(
+      (from, to) => supabase
         .from('productos')
         .select(`
           *,
           almacen:almacenes(id, codigo, nombre)
         `)
         .is('deleted_at', null)
-        .order('codigo'),
-      { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
+        .order('codigo')
+        .range(from, to)
     );
 
     // Manejar timeout
@@ -486,12 +513,12 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       return;
     }
     
-    const { data, error, timedOut } = await safeQuery<any[]>(
-      () => supabase
+    const { data, error, timedOut } = await fetchAllPages<any>(
+      (from, to) => supabase
         .from('movimientos')
         .select('*')
-        .order('created_at', { ascending: false }),
-      { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
+        .order('created_at', { ascending: false })
+        .range(from, to)
     );
 
     // Manejar timeout
@@ -547,6 +574,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       timestamp: new Date(m.created_at),
       notas: m.notas,
       costoCompra: m.costo_compra ? parseFloat(m.costo_compra) : undefined,
+      monedaCosto: m.moneda_costo ?? undefined,
     }));
 
     set({ 
@@ -612,7 +640,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     const { data: productData, error: productError, timedOut: productTimedOut } = await safeQuery<any>(
       () => supabase
         .from('productos')
-        .select('id, stock, costo_promedio')
+        .select('id, stock, costo_promedio, moneda')
         .eq('codigo', movementData.codigo)
         .single(),
       { timeout: QUERY_TIMEOUT, retries: QUERY_RETRIES }
@@ -628,22 +656,37 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       return;
     }
 
-    const currentStock = productData.stock || 0;
-    const currentCostoPromedio = productData.costo_promedio || 0;
+    const currentStock = Number(productData.stock) || 0;
+    const currentCostoPromedio = Number(productData.costo_promedio) || 0;
+    const monedaProducto = normalizarMoneda(productData.moneda);
     let newStock = currentStock;
     let newCostoPromedio = currentCostoPromedio;
 
+    // Costo real pagado y su moneda (puede diferir de la del producto).
+    const costoCompra = movementData.tipo === 'entrada' && movementData.costoCompra && movementData.costoCompra > 0
+      ? movementData.costoCompra
+      : null;
+    const monedaCosto = costoCompra != null
+      ? normalizarMoneda(movementData.monedaCosto ?? monedaProducto)
+      : monedaProducto;
+
     if (movementData.tipo === 'entrada') {
-      // ===== ENTRADA: Crear lote y recalcular costo promedio =====
-      const costoCompra = movementData.costoCompra || 0;
-      
-      // Crear lote
+      // ===== ENTRADA: lote con el costo real + costo promedio ponderado =====
+      const tasa = costoCompra != null && monedaCosto !== monedaProducto
+        ? await obtenerTasaUyuPorUsd(supabase)
+        : undefined;
+      const costoEnMonedaProducto = costoCompra != null
+        ? convertirCosto(costoCompra, monedaCosto, monedaProducto, tasa)
+        : null;
+
+      // Sin costo informado, el lote entra al promedio vigente (no a 0).
       const { error: loteError } = await safeQuery(
         () => supabase.from('lotes').insert({
           codigo: movementData.codigo,
           cantidad_inicial: movementData.cantidad,
           cantidad_disponible: movementData.cantidad,
-          costo_unitario: costoCompra,
+          costo_unitario: costoCompra ?? currentCostoPromedio,
+          moneda: monedaCosto,
           usuario: userEmail,
           notas: movementData.notas || null,
         }),
@@ -657,11 +700,10 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         console.warn('No se pudo crear el lote, sigo con el movimiento:', loteError.message);
       }
 
-      // Calcular nuevo costo promedio ponderado
-      const valorActual = currentStock * currentCostoPromedio;
-      const valorNuevo = movementData.cantidad * costoCompra;
       newStock = currentStock + movementData.cantidad;
-      newCostoPromedio = newStock > 0 ? (valorActual + valorNuevo) / newStock : 0;
+      newCostoPromedio = calcularCostoPromedio(
+        currentStock, currentCostoPromedio, movementData.cantidad, costoEnMonedaProducto,
+      );
 
     } else {
       // ===== SALIDA: Descontar de lotes FIFO =====
@@ -711,9 +753,9 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         codigo: movementData.codigo,
         tipo: movementData.tipo,
         cantidad: movementData.cantidad,
-        costo_compra: movementData.costoCompra || null,
+        costo_compra: costoCompra,
         // Moneda del costo (UYU/USD): los reportes la usan para normalizar.
-        moneda_costo: movementData.monedaCosto || 'UYU',
+        moneda_costo: monedaCosto,
         notas: movementData.notas || null,
         usuario_email: userEmail,
       }),
@@ -749,11 +791,15 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       'movimientos',
       movementData.tipo.toUpperCase(),
       movementData.codigo,
-      { stock_anterior: currentStock },
+      { stock_anterior: currentStock, costo_promedio_anterior: currentCostoPromedio },
       { 
         stock_nuevo: newStock, 
         cantidad: movementData.cantidad,
-        costo_compra: movementData.costoCompra 
+        costo_compra: costoCompra,
+        moneda_costo: costoCompra != null ? monedaCosto : null,
+        costo_promedio_nuevo: newCostoPromedio,
+        moneda_producto: monedaProducto,
+        notas: movementData.notas || null,
       },
       userEmail
     );

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { X, TrendingUp, TrendingDown, Minus, Loader2, History, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, MessageSquare } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatMoney } from '@/lib/currency';
+import { convertirCosto, normalizarMoneda, obtenerTasaUyuPorUsd } from '@/lib/costeo';
 import type { Moneda } from '@/types';
 
 // Evento unificado del historial del producto: cambio de costo o movimiento.
@@ -20,6 +21,8 @@ interface Evento {
   mov_tipo?: string;              // entrada | salida | ajuste | transferencia
   cantidad?: number | null;
   costo_unitario?: number | null;
+  /** Moneda en la que se pagó (movimientos.moneda_costo). */
+  moneda_costo?: Moneda | null;
   notas?: string | null;
   usuario?: string | null;
 }
@@ -40,16 +43,19 @@ interface Props {
 export default function HistorialCostoModal({ codigo, descripcion, moneda = 'UYU', costoActual, onClose }: Props) {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tasa, setTasa] = useState<number>(40);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [costosRes, movsRes] = await Promise.all([
+      const [costosRes, movsRes, tasaVigente] = await Promise.all([
         supabase.from('historial_costos').select('*, proveedor:proveedores(nombre)').eq('codigo', codigo).limit(200),
-        supabase.from('movimientos').select('*').eq('codigo', codigo).order('created_at', { ascending: false }).limit(200),
+        supabase.from('movimientos').select('*').eq('codigo', codigo).order('created_at', { ascending: false }).limit(500),
+        obtenerTasaUyuPorUsd(supabase),
       ]);
       if (cancelled) return;
+      setTasa(tasaVigente);
 
       const evCostos: Evento[] = (costosRes.data || []).map((h: any) => ({
         id: `c-${h.id}`,
@@ -69,6 +75,7 @@ export default function HistorialCostoModal({ codigo, descripcion, moneda = 'UYU
         mov_tipo: m.tipo,
         cantidad: m.cantidad ?? null,
         costo_unitario: m.costo_compra != null ? parseFloat(m.costo_compra) : (m.costo_unitario != null ? parseFloat(m.costo_unitario) : null),
+        moneda_costo: m.moneda_costo ?? null,
         notas: m.notas ?? m.motivo ?? null,
         usuario: m.usuario_email ?? m.usuario ?? null,
       }));
@@ -82,7 +89,27 @@ export default function HistorialCostoModal({ codigo, descripcion, moneda = 'UYU
     return () => { cancelled = true; };
   }, [codigo]);
 
-  const fmt = (n: number) => formatMoney(n, moneda, { minimumFractionDigits: 2 });
+  const fmt = (n: number, m: Moneda = moneda) => formatMoney(n, m, { minimumFractionDigits: 2 });
+
+  // Evolución del PRECIO DE COMPRA: cada compra puede haber salido distinto
+  // (y en otra moneda). Se normaliza a la moneda del producto para comparar.
+  const compras = eventos
+    .filter(e => e.tipo === 'movimiento' && e.mov_tipo === 'entrada' && (e.costo_unitario ?? 0) > 0)
+    .map(e => ({
+      fecha: e.fecha,
+      costo: convertirCosto(
+        e.costo_unitario as number,
+        normalizarMoneda(e.moneda_costo ?? moneda),
+        normalizarMoneda(moneda),
+        tasa,
+      ),
+    }))
+    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+  const ultima = compras[0]?.costo ?? null;
+  const anterior = compras[1]?.costo ?? null;
+  const variacion = ultima != null && anterior ? ((ultima - anterior) / anterior) * 100 : null;
+  const minimo = compras.length ? Math.min(...compras.map(c => c.costo)) : null;
+  const maximo = compras.length ? Math.max(...compras.map(c => c.costo)) : null;
   const fechaFmt = (iso: string) => {
     try { return new Date(iso).toLocaleString('es-UY', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
     catch { return iso; }
@@ -111,10 +138,28 @@ export default function HistorialCostoModal({ codigo, descripcion, moneda = 'UYU
           </button>
         </div>
 
-        <div className="px-5 py-3 border-b border-slate-800 bg-slate-900/60">
-          <span className="text-xs text-slate-500">Costo promedio actual</span>
-          <div className="text-lg font-mono text-slate-100">
-            {costoActual != null && costoActual > 0 ? fmt(costoActual) : '—'}
+        <div className="px-5 py-3 border-b border-slate-800 bg-slate-900/60 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div>
+            <span className="text-[11px] text-slate-500">Costo promedio</span>
+            <div className="text-base font-mono text-slate-100">
+              {costoActual != null && costoActual > 0 ? fmt(costoActual) : '—'}
+            </div>
+          </div>
+          <div>
+            <span className="text-[11px] text-slate-500">Última compra</span>
+            <div className="text-base font-mono text-slate-100">{ultima != null ? fmt(ultima) : '—'}</div>
+          </div>
+          <div>
+            <span className="text-[11px] text-slate-500">Vs. compra anterior</span>
+            <div className={`text-base font-mono ${variacion == null ? 'text-slate-500' : variacion > 0 ? 'text-red-400' : variacion < 0 ? 'text-emerald-400' : 'text-slate-300'}`}>
+              {variacion == null ? '—' : `${variacion > 0 ? '+' : ''}${variacion.toFixed(1)}%`}
+            </div>
+          </div>
+          <div>
+            <span className="text-[11px] text-slate-500">Mín. / Máx.</span>
+            <div className="text-xs font-mono text-slate-300 mt-0.5">
+              {minimo != null && maximo != null ? `${fmt(minimo)} / ${fmt(maximo)}` : '—'}
+            </div>
           </div>
         </div>
 
@@ -175,7 +220,7 @@ export default function HistorialCostoModal({ codigo, descripcion, moneda = 'UYU
                         <span className={`text-[10px] uppercase tracking-wide mr-2 ${cfg.color}`}>{cfg.label}</span>
                         {e.cantidad != null && e.cantidad !== 0 && <span className="font-mono">{e.cantidad} u.</span>}
                         {e.costo_unitario != null && e.costo_unitario > 0 && (
-                          <span className="text-slate-400 ml-2">· {fmt(e.costo_unitario)} c/u</span>
+                          <span className="text-slate-400 ml-2">· {fmt(e.costo_unitario, (e.moneda_costo as Moneda) || moneda)} c/u</span>
                         )}
                       </div>
                       {e.notas && <div className="text-xs text-slate-300 mt-0.5 flex items-start gap-1"><MessageSquare className="w-3 h-3 mt-0.5 shrink-0 text-slate-500" />{e.notas}</div>}

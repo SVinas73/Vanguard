@@ -13,6 +13,7 @@
 
 import 'server-only';
 import { createClient } from '@supabase/supabase-js';
+import { registrarAuditoriaSegura } from '@/lib/security/audit-enhanced';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -380,27 +381,71 @@ async function resumenMiDia(params: any, _usuario: string) {
 
 async function crearMovimiento(params: any, usuario: string) {
   try {
+    const tipo = String(params.tipo || '');
+    const cantidad = Number(params.cantidad);
+    if (!['entrada', 'salida', 'ajuste'].includes(tipo)) {
+      return { error: 'Tipo inválido: usá entrada, salida o ajuste' };
+    }
+    if (!Number.isFinite(cantidad) || cantidad < 0 || (tipo !== 'ajuste' && cantidad === 0)) {
+      return { error: 'Cantidad inválida' };
+    }
     const { data: producto } = await supabase
-      .from('productos').select('codigo, stock').eq('codigo', params.producto_codigo).single();
+      .from('productos')
+      .select('id, codigo, stock, costo_promedio, moneda')
+      .eq('codigo', params.producto_codigo)
+      .single();
     if (!producto) return { error: 'Producto no encontrado' };
-    let nuevoStock = producto.stock;
-    if (params.tipo === 'entrada') nuevoStock += params.cantidad;
-    else if (params.tipo === 'salida') {
-      if (producto.stock < params.cantidad) return { error: 'Stock insuficiente' };
-      nuevoStock -= params.cantidad;
-    } else nuevoStock = params.cantidad;
-    await supabase.from('movimientos').insert({
-      producto_codigo: params.producto_codigo, tipo: params.tipo,
-      cantidad: params.cantidad, stock_anterior: producto.stock,
-      stock_nuevo: nuevoStock, motivo: params.motivo || 'Movimiento vía Asistente',
-      creado_por: usuario, usuario_email: usuario,
+
+    const stockAnterior = Number(producto.stock) || 0;
+    let nuevoStock = stockAnterior;
+    if (tipo === 'entrada') nuevoStock += cantidad;
+    else if (tipo === 'salida') {
+      if (stockAnterior < cantidad) return { error: 'Stock insuficiente' };
+      nuevoStock -= cantidad;
+    } else nuevoStock = cantidad;
+
+    const motivo = params.motivo || 'Movimiento vía Asistente';
+    // Columnas reales de `movimientos` (antes se usaban nombres inexistentes
+    // y el insert fallaba en silencio mientras el stock sí cambiaba).
+    const { error: errMov } = await supabase.from('movimientos').insert({
+      producto_id: producto.id,
+      codigo: producto.codigo,
+      tipo,
+      cantidad: tipo === 'ajuste' ? Math.abs(nuevoStock - stockAnterior) : cantidad,
+      notas: tipo === 'ajuste' ? `${motivo} (stock ${stockAnterior} → ${nuevoStock})` : motivo,
+      usuario_email: usuario,
     });
+    if (errMov) return { error: `No se pudo registrar el movimiento: ${errMov.message}` };
+
     await supabase.from('productos').update({ stock: nuevoStock })
-      .eq('codigo', params.producto_codigo);
+      .eq('codigo', producto.codigo);
+
+    // Si entran unidades, lote al costo promedio vigente (valuación FIFO).
+    if (nuevoStock > stockAnterior) {
+      await supabase.from('lotes').insert({
+        codigo: producto.codigo,
+        cantidad_inicial: nuevoStock - stockAnterior,
+        cantidad_disponible: nuevoStock - stockAnterior,
+        costo_unitario: Number(producto.costo_promedio) || 0,
+        moneda: producto.moneda || 'UYU',
+        usuario,
+        notas: motivo,
+      });
+    }
+
+    await registrarAuditoriaSegura({
+      tabla: 'movimientos',
+      accion: tipo.toUpperCase(),
+      codigo: producto.codigo,
+      datosAnteriores: { stock_anterior: stockAnterior },
+      datosNuevos: { stock_nuevo: nuevoStock, cantidad, origen: 'Asistente IA', motivo },
+      usuarioEmail: usuario,
+    });
+
     return {
       exito: true,
-      mensaje: `Movimiento creado: ${params.tipo} de ${params.cantidad} unidades`,
-      stock_anterior: producto.stock, stock_nuevo: nuevoStock,
+      mensaje: `Movimiento creado: ${tipo} de ${cantidad} unidades`,
+      stock_anterior: stockAnterior, stock_nuevo: nuevoStock,
     };
   } catch (e: any) { return { error: e.message }; }
 }

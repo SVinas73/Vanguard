@@ -13,6 +13,7 @@ import { puedeAprobarProveedor, aprobadorRequerido } from '@/lib/insumos/proveed
 import { registrarAuditoriaSegura, extraerContextoAudit } from '@/lib/security/audit-enhanced';
 import { crearNotificacion } from '@/lib/notifications';
 import { reportarError } from '@/lib/security/error-reporting';
+import { calcularCostoPromedio, convertirCosto, normalizarMoneda, obtenerTasaUyuPorUsd } from '@/lib/costeo';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -129,7 +130,13 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     //   d) Incrementar productos.stock con la cantidad recibida.
     //   e) Crear lote (FIFO) para mantener la valuación coherente con
     //      Dashboard / Reportes / Centro de Costos.
-    if (parsed.data.estado === 'recibida' && parsed.data.items_recibidos?.length) {
+    // Solo se suma stock en la TRANSICIÓN a 'recibida'. Si la solicitud ya
+    // estaba recibida (doble click, reintento del navegador), no se vuelve a
+    // sumar: antes eso duplicaba el stock y los lotes.
+    const esRecepcionNueva = parsed.data.estado === 'recibida' && actual.estado !== 'recibida';
+    if (esRecepcionNueva && parsed.data.items_recibidos?.length) {
+      // Cotización vigente para convertir costos USD↔UYU al promediar.
+      const tasaUyuPorUsd = await obtenerTasaUyuPorUsd(supabase, actual.organizacion_id);
       for (const ir of parsed.data.items_recibidos) {
         // a) cantidad recibida
         await supabase
@@ -174,7 +181,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
         let { data: prod } = await supabase
           .from('productos')
-          .select('id, stock, costo_promedio')
+          .select('id, stock, costo_promedio, moneda')
           .eq('codigo', codigoProducto)
           .maybeSingle();
 
@@ -208,7 +215,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
               actualizado_por: auth.user.email,
               actualizado_at: new Date().toISOString(),
             })
-            .select('id, stock, costo_promedio')
+            .select('id, stock, costo_promedio, moneda')
             .single();
 
           if (errCrear || !creado) {
@@ -225,57 +232,52 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
             .eq('id', item.id);
         }
 
-        // c) movimiento de entrada (nombres reales de columna)
-        await supabase.from('movimientos').insert({
+        // Moneda del producto: su costo_promedio está expresado en ella.
+        const monedaProducto = normalizarMoneda((prod as any).moneda ?? monedaItem);
+        const stockPrevio = Number(prod.stock) || 0;
+        const costoPrevio = Number(prod.costo_promedio) || 0;
+        const stockNuevo = stockPrevio + Number(ir.cantidad_recibida);
+
+        // c) movimiento de entrada (nombres reales de columna): guarda el
+        //    costo REAL pagado y su moneda.
+        const { error: errMov } = await supabase.from('movimientos').insert({
           producto_id: prod.id,
           codigo: codigoProducto,
           tipo: 'entrada',
           cantidad: ir.cantidad_recibida,
           costo_compra: costoUnit,
-          moneda_costo: monedaItem,
+          moneda_costo: costoUnit != null ? monedaItem : monedaProducto,
           notas: `Ingreso por solicitud de insumo ${actual.numero}`,
           usuario_email: auth.user.email,
         });
+        if (errMov) {
+          reportarError(errMov, { modulo: 'insumos', accion: 'recepcion-movimiento', extra: { solicitud: actual.numero, codigo: codigoProducto } });
+        }
 
         // d) sumar al stock del producto
         await supabase
           .from('productos')
-          .update({ stock: (prod.stock ?? 0) + Number(ir.cantidad_recibida) })
+          .update({ stock: stockNuevo })
           .eq('codigo', codigoProducto);
 
-        // d.1) AUDITORÍA: registrar la entrada igual que el "+" de Stock
-        //      (tabla movimientos, acción ENTRADA), para que las compras de
-        //      insumos figuren en el módulo Auditoría como cualquier entrada.
-        await registrarAuditoriaSegura({
-          tabla: 'movimientos',
-          accion: 'ENTRADA',
-          codigo: codigoProducto,
-          datosAnteriores: { stock_anterior: Number(prod.stock) || 0 },
-          datosNuevos: {
-            stock_nuevo: (Number(prod.stock) || 0) + Number(ir.cantidad_recibida),
-            cantidad: Number(ir.cantidad_recibida),
-            costo_compra: costoUnit,
-            origen: `Solicitud de insumos ${actual.numero}`,
-          },
-          usuarioEmail: auth.user.email,
-          contexto: extraerContextoAudit(request),
-        });
-
-        // d.2) costo: si se confirmó un costo unitario al recibir, actualizar
-        //      costo_promedio ponderado + último costo y registrar el historial
-        //      de costos (igual criterio que la recepción de compras).
+        // d.1) costo: si se confirmó un costo unitario al recibir, actualizar
+        //      el costo promedio ponderado (convirtiendo a la moneda del
+        //      producto) y registrar el historial de costos.
+        let nuevoCostoRedondeado = costoPrevio;
         if (costoUnit != null) {
-          const stockPrevio = Number(prod.stock) || 0;
-          const costoPrevio = Number(prod.costo_promedio) || 0;
-          const stockNuevo = stockPrevio + Number(ir.cantidad_recibida);
-          const nuevoCosto = stockNuevo > 0
-            ? ((stockPrevio * costoPrevio) + (Number(ir.cantidad_recibida) * costoUnit)) / stockNuevo
-            : costoUnit;
-          const nuevoCostoRedondeado = Math.round(nuevoCosto * 100) / 100;
+          const costoEnMonedaProducto = convertirCosto(costoUnit, monedaItem, monedaProducto, tasaUyuPorUsd);
+          nuevoCostoRedondeado = Math.round(
+            calcularCostoPromedio(stockPrevio, costoPrevio, Number(ir.cantidad_recibida), costoEnMonedaProducto) * 100,
+          ) / 100;
 
           await supabase
             .from('productos')
-            .update({ costo_promedio: nuevoCostoRedondeado, costo_ultima_compra: costoUnit })
+            .update({ costo_promedio: nuevoCostoRedondeado })
+            .eq('codigo', codigoProducto);
+          // Columna opcional: si no existe en la BD, no bloquea lo anterior.
+          await supabase
+            .from('productos')
+            .update({ costo_ultima_compra: costoEnMonedaProducto })
             .eq('codigo', codigoProducto);
 
           await supabase.from('historial_costos').insert({
@@ -289,13 +291,35 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           });
         }
 
-        // e) lote para valuación FIFO
+        // d.2) AUDITORÍA: registrar la entrada igual que el "+" de Stock
+        //      (tabla movimientos, acción ENTRADA), para que las compras de
+        //      insumos figuren en el módulo Auditoría como cualquier entrada.
+        await registrarAuditoriaSegura({
+          tabla: 'movimientos',
+          accion: 'ENTRADA',
+          codigo: codigoProducto,
+          datosAnteriores: { stock_anterior: stockPrevio, costo_promedio_anterior: costoPrevio },
+          datosNuevos: {
+            stock_nuevo: stockNuevo,
+            cantidad: Number(ir.cantidad_recibida),
+            costo_compra: costoUnit,
+            moneda_costo: costoUnit != null ? monedaItem : null,
+            costo_promedio_nuevo: nuevoCostoRedondeado,
+            moneda_producto: monedaProducto,
+            origen: `Solicitud de insumos ${actual.numero}`,
+          },
+          usuarioEmail: auth.user.email,
+          contexto: extraerContextoAudit(request),
+        });
+
+        // e) lote para valuación FIFO, con el costo y la moneda reales. Sin
+        //    costo informado, el lote entra al costo promedio vigente.
         await supabase.from('lotes').insert({
           codigo: codigoProducto,
           cantidad_inicial: ir.cantidad_recibida,
           cantidad_disponible: ir.cantidad_recibida,
-          costo_unitario: costoUnit ?? 0,
-          moneda: 'UYU',
+          costo_unitario: costoUnit ?? costoPrevio,
+          moneda: costoUnit != null ? monedaItem : monedaProducto,
           usuario: auth.user.email,
           notas: `Solicitud ${actual.numero}`,
         });
