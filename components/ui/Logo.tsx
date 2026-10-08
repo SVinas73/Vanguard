@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { cn } from '@/lib/utils';
+import { VANGUARD_V_PATH, VANGUARD_BAR_PATH, VANGUARD_COLORS } from '@/lib/brand';
 
 // =====================================================
-// Vanguard Logo — doble "V" (solo el símbolo)
+// Vanguard Logo — "V" + barra recta separada (solo el símbolo)
 // =====================================================
-// SVG con fondo TRANSPARENTE: solo los trazos azules de la V. El hueco
-// entre los dos trazos deja ver el fondo del sistema (se camufla con el
-// color de fondo que haya en ese momento). Sin texto.
+// SVG con fondo TRANSPARENTE. La barra es paralela a la pata izquierda,
+// separada de ella y del mismo tamaño; va en un tono más claro para dar
+// profundidad. Sin texto.
 //
 //   <Logo />            icono 32px
 //   <Logo size={64} />  tamaño custom
@@ -24,18 +25,22 @@ interface LogoProps {
   gradientId?: string;
 }
 
-
 export function Logo({
   size = 32,
   className,
   withText = false,
   textClassName,
+  gradientId,
 }: LogoProps) {
+  // Ids únicos por instancia: varios logos en la misma página no deben
+  // compartir el mismo <linearGradient>.
+  const reactId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  const base = gradientId ?? `vg-logo-${reactId}`;
+  const gV = `${base}-v`;
+  const gBar = `${base}-bar`;
+
   return (
     <div className={cn('inline-flex items-center gap-2.5', className)}>
-      {/* SVG inline: transparente (se camufla con el fondo del sistema),
-          siempre se renderiza y llena el cuadro (sin margen muerto como
-          tenía el PNG). */}
       <svg
         width={size}
         height={size}
@@ -46,12 +51,18 @@ export function Logo({
         role="img"
         style={{ display: 'block' }}
       >
-        <path
-          fillRule="evenodd"
-          clipRule="evenodd"
-          fill="#2b62b0"
-          d="M4 12 L32 60 L60 12 L48 12 L32 41 L16 12 Z M22 17 L25 17 L33.5 44 L31 44 Z"
-        />
+        <defs>
+          <linearGradient id={gV} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={VANGUARD_COLORS.vTop} />
+            <stop offset="1" stopColor={VANGUARD_COLORS.vBottom} />
+          </linearGradient>
+          <linearGradient id={gBar} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={VANGUARD_COLORS.barTop} />
+            <stop offset="1" stopColor={VANGUARD_COLORS.barBottom} />
+          </linearGradient>
+        </defs>
+        <path fill={`url(#${gBar})`} d={VANGUARD_BAR_PATH} />
+        <path fill={`url(#${gV})`} d={VANGUARD_V_PATH} />
       </svg>
       {withText && (
         <span

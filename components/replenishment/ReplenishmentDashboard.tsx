@@ -7,6 +7,7 @@ import {
   Sparkles, Info, Truck, Wallet, ChevronRight, Package,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { convertirCosto, normalizarMoneda, obtenerTasaUyuPorUsd } from '@/lib/costeo';
 import { cn } from '@/lib/utils';
 import { useAlmacenes } from '@/hooks/useAlmacenes';
 import { AlmacenSelector } from '@/components/common/AlmacenSelector';
@@ -63,25 +64,44 @@ export function ReplenishmentDashboard() {
     const hace365 = new Date();
     hace365.setFullYear(hace365.getFullYear() - 1);
 
-    const [resProd, resMovs, resOcAbiertas] = await Promise.all([
-      supabase
+    // PostgREST devuelve como máximo 1000 filas por consulta: paginamos.
+    const todas = async (build: (from: number, to: number) => any) => {
+      const filas: any[] = [];
+      for (let p = 0; p < 200; p++) {
+        const { data, error } = await build(p * 1000, p * 1000 + 999);
+        if (error) return { data: filas.length ? filas : null, error };
+        filas.push(...(data || []));
+        if (!data || data.length < 1000) break;
+      }
+      return { data: filas, error: null };
+    };
+
+    const [resProd, resMovs, resOcAbiertas, tasaUyuPorUsd] = await Promise.all([
+      todas((from, to) => supabase
         .from('productos')
-        .select('codigo, descripcion, stock, costo_promedio, precio, categoria, almacen_id')
+        .select('codigo, descripcion, stock, costo_promedio, precio, categoria, almacen_id, moneda')
         .gt('stock', -1)
-        .limit(2000),
-      supabase
+        .order('codigo')
+        .range(from, to)),
+      // La tabla movimientos usa `codigo` y `created_at` (antes se pedían
+      // `producto_codigo` y `fecha`, que no existen: la consulta fallaba y
+      // la demanda quedaba en cero).
+      todas((from, to) => supabase
         .from('movimientos')
-        .select('producto_codigo, cantidad, fecha, tipo')
-        .gte('fecha', hace365.toISOString())
-        .in('tipo', ['salida', 'venta'])
-        .limit(20000),
+        .select('codigo, cantidad, created_at, tipo')
+        .gte('created_at', hace365.toISOString())
+        .eq('tipo', 'salida')
+        .order('created_at', { ascending: true })
+        .range(from, to)),
       // Órdenes de compra abiertas (enviadas/parciales) → su stock está
       // "en tránsito" hasta que se reciba.
       supabase
         .from('ordenes_compra')
         .select('id, estado')
         .in('estado', ['enviada', 'parcial']),
+      obtenerTasaUyuPorUsd(supabase),
     ]);
+    if (resMovs.error) console.error('Reabastecimiento: error leyendo movimientos', resMovs.error.message);
 
     // Stock en tránsito por producto = Σ (cantidad_ordenada - cantidad_recibida)
     // de los items de órdenes de compra abiertas.
@@ -114,15 +134,17 @@ export function ReplenishmentDashboard() {
       nombre: p.descripcion || p.codigo,
       stock_actual: Number(p.stock) || 0,
       stock_en_transito: enTransitoPorCodigo.get(p.codigo) || 0,
-      costo_promedio: Number(p.costo_promedio) || 0,
-      precio_venta: Number(p.precio) || 0,
+      // Montos en pesos: los productos en USD se convierten para no sumar
+      // dólares como si fueran pesos en el capital inmovilizado.
+      costo_promedio: convertirCosto(Number(p.costo_promedio) || 0, normalizarMoneda(p.moneda), 'UYU', tasaUyuPorUsd),
+      precio_venta: convertirCosto(Number(p.precio) || 0, normalizarMoneda(p.moneda), 'UYU', tasaUyuPorUsd),
       categoria: p.categoria,
     }));
 
     const movimientos: MovimientoSalida[] = (resMovs.data || []).map((m: any) => ({
-      producto_codigo: m.producto_codigo,
+      producto_codigo: m.codigo,
       cantidad: Number(m.cantidad) || 0,
-      fecha: m.fecha,
+      fecha: m.created_at,
     }));
 
     const sugs = optimizarReabastecimiento(productos, movimientos);

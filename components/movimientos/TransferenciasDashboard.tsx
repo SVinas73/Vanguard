@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Product, Almacen, Transferencia, TransferenciaItem, TransferenciaEstado } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { registrarAuditoria } from '@/lib/audit';
 import {
   ArrowLeftRight, Plus, Search, Package, Warehouse,
   ChevronRight, Clock, CheckCircle2, XCircle, Truck,
@@ -40,6 +41,73 @@ interface TransferenciaItemRow {
   cantidad_solicitada: number;
   cantidad_enviada: number;
   cantidad_recibida: number;
+}
+
+// Paso a paso de cómo se aplica cada ítem de una transferencia.
+interface PlanItem {
+  codigo: string;
+  cantidad: number;
+  origenRowId: string;
+  stockOrigen: number;
+  destinoRowId: string | null;
+  stockDestino: number;
+  /** true = el artículo entero cambia de almacén (no existe en destino). */
+  trasladoTotal: boolean;
+}
+
+/**
+ * Valida y planifica una transferencia ANTES de tocar el stock.
+ *
+ * Cada código de artículo vive en una fila de `productos` con un único
+ * almacén. Por eso:
+ *   - Si el artículo ya existe en el almacén destino → se descuenta en
+ *     origen y se suma en destino.
+ *   - Si NO existe en destino y se transfiere TODO su stock → el artículo
+ *     se traslada al almacén destino (conserva historial, lotes y costos).
+ *   - Si NO existe en destino y se transfiere una parte → no se puede (antes
+ *     el stock se descontaba del origen y no se sumaba en ningún lado).
+ */
+async function planificarTransferencia(
+  items: { codigo: string; cantidad: number }[],
+  origenId: string,
+  destinoId: string,
+): Promise<{ plan: PlanItem[]; errores: string[] }> {
+  const plan: PlanItem[] = [];
+  const errores: string[] = [];
+  for (const it of items) {
+    const { data: filas } = await supabase
+      .from('productos')
+      .select('id, codigo, stock, almacen_id')
+      .eq('codigo', it.codigo);
+    const origen = (filas || []).find((f: any) => f.almacen_id === origenId);
+    const destino = (filas || []).find((f: any) => f.almacen_id === destinoId);
+    if (!origen) {
+      errores.push(`${it.codigo}: ya no está en el almacén de origen.`);
+      continue;
+    }
+    const stockOrigen = Number(origen.stock) || 0;
+    if (it.cantidad <= 0 || stockOrigen < it.cantidad) {
+      errores.push(`${it.codigo}: stock insuficiente en origen (${stockOrigen} disponibles, se piden ${it.cantidad}).`);
+      continue;
+    }
+    const trasladoTotal = !destino && it.cantidad === stockOrigen;
+    if (!destino && !trasladoTotal) {
+      errores.push(
+        `${it.codigo}: no existe en el almacén destino. Transferí el total (${stockOrigen} u.) para trasladar el artículo, o crealo primero en el destino.`,
+      );
+      continue;
+    }
+    plan.push({
+      codigo: it.codigo,
+      cantidad: it.cantidad,
+      origenRowId: origen.id,
+      stockOrigen,
+      destinoRowId: destino?.id ?? null,
+      stockDestino: Number(destino?.stock) || 0,
+      trasladoTotal,
+    });
+  }
+  return { plan, errores };
 }
 
 const ESTADO_CONFIG: Record<TransferenciaEstado, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -151,6 +219,13 @@ export function TransferenciasDashboard({ products, userEmail, onRefreshProducts
     setSubmitting(true);
 
     try {
+      // Validar ANTES de crear: así el usuario se entera ahora y no al completar.
+      const { errores } = await planificarTransferencia(form.items, form.almacenOrigenId, form.almacenDestinoId);
+      if (errores.length > 0) {
+        alert(`No se puede crear la transferencia:\n\n${errores.join('\n')}`);
+        return;
+      }
+
       const numero = `TRF-${Date.now().toString(36).toUpperCase()}`;
 
       const { data: transferencia, error } = await supabase
@@ -206,57 +281,85 @@ export function TransferenciasDashboard({ products, userEmail, onRefreshProducts
     if (nuevoEstado === 'completada') {
       updates.fecha_recepcion = new Date().toISOString();
 
-      // Fetch items for this transfer
       const { data: items } = await supabase
         .from('transferencia_items')
         .select('*')
         .eq('transferencia_id', transferencia.id);
 
-      if (items && items.length > 0) {
-        for (const item of items) {
-          const qty = item.cantidad_solicitada;
+      const lista = (items || []).map((it: any) => ({
+        id: it.id as string,
+        codigo: it.producto_codigo as string,
+        cantidad: Number(it.cantidad_solicitada) || 0,
+      }));
 
-          // Deduct from origin
-          const { data: originProd } = await supabase
+      // 1. Validar TODO antes de mover una sola unidad.
+      const { plan, errores } = await planificarTransferencia(
+        lista, transferencia.almacen_origen_id, transferencia.almacen_destino_id,
+      );
+      if (errores.length > 0) {
+        alert(`No se puede completar la transferencia ${transferencia.numero}:\n\n${errores.join('\n')}`);
+        return;
+      }
+
+      const origenNombre = transferencia.origen?.nombre || 'origen';
+      const destinoNombre = transferencia.destino?.nombre || 'destino';
+
+      // 2. Aplicar: stock, movimiento, auditoría por artículo.
+      for (const p of plan) {
+        if (p.trasladoTotal) {
+          await supabase
             .from('productos')
-            .select('stock')
-            .eq('codigo', item.producto_codigo)
-            .eq('almacen_id', transferencia.almacen_origen_id)
-            .single();
-
-          if (originProd) {
-            await supabase
-              .from('productos')
-              .update({ stock: Math.max(0, originProd.stock - qty) })
-              .eq('codigo', item.producto_codigo)
-              .eq('almacen_id', transferencia.almacen_origen_id);
-          }
-
-          // Add to destination — check if product exists there
-          const { data: destProd } = await supabase
+            .update({ almacen_id: transferencia.almacen_destino_id, actualizado_por: userEmail, actualizado_at: new Date().toISOString() })
+            .eq('id', p.origenRowId);
+        } else {
+          await supabase
             .from('productos')
-            .select('stock')
-            .eq('codigo', item.producto_codigo)
-            .eq('almacen_id', transferencia.almacen_destino_id)
-            .single();
+            .update({ stock: p.stockOrigen - p.cantidad })
+            .eq('id', p.origenRowId);
+          await supabase
+            .from('productos')
+            .update({ stock: p.stockDestino + p.cantidad })
+            .eq('id', p.destinoRowId);
+        }
 
-          if (destProd) {
-            await supabase
-              .from('productos')
-              .update({ stock: destProd.stock + qty })
-              .eq('codigo', item.producto_codigo)
-              .eq('almacen_id', transferencia.almacen_destino_id);
-          }
+        const { error: errMov } = await supabase.from('movimientos').insert({
+          producto_id: p.origenRowId,
+          codigo: p.codigo,
+          tipo: 'transferencia',
+          cantidad: p.cantidad,
+          notas: `Transferencia ${transferencia.numero}: ${origenNombre} → ${destinoNombre}`,
+          usuario_email: userEmail,
+        });
+        if (errMov) console.warn('No se pudo registrar el movimiento de transferencia:', errMov.message);
 
-          // Update item as sent and received
+        await registrarAuditoria(
+          'productos',
+          'TRANSFERENCIA',
+          p.codigo,
+          { almacen_id: transferencia.almacen_origen_id, almacen: origenNombre, stock_origen: p.stockOrigen },
+          {
+            almacen_id: transferencia.almacen_destino_id,
+            almacen: destinoNombre,
+            cantidad: p.cantidad,
+            modo: p.trasladoTotal ? 'traslado_total' : 'parcial',
+            transferencia: transferencia.numero,
+          },
+          userEmail,
+        );
+
+        const item = lista.find(i => i.codigo === p.codigo);
+        if (item) {
           await supabase
             .from('transferencia_items')
-            .update({ cantidad_enviada: qty, cantidad_recibida: qty })
+            .update({ cantidad_enviada: p.cantidad, cantidad_recibida: p.cantidad })
             .eq('id', item.id);
         }
       }
 
       onRefreshProducts();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('vg:stock-changed', { detail: { source: 'transferencia', numero: transferencia.numero } }));
+      }
     }
 
     await supabase.from('transferencias').update(updates).eq('id', transferencia.id);
@@ -492,6 +595,9 @@ export function TransferenciasDashboard({ products, userEmail, onRefreshProducts
                 })}
               </tbody>
             </table>
+            <p className="px-3 py-2 text-[11px] text-slate-500 border-t border-slate-800/50">
+              Si el artículo no existe en el almacén destino, transferí su stock total: el artículo se traslada con su historial y costos.
+            </p>
           </div>
         )}
 

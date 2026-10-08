@@ -13,10 +13,9 @@ import {
 import { ProductThumbnail } from './product-image';
 import HistorialCostoModal from './HistorialCostoModal';
 import { supabase } from '@/lib/supabase';
-import { formatMoney, convertir } from '@/lib/currency';
-import { valuarInventario, type ResultadoValuacion } from '@/lib/inventory-valuation';
-import { useModulosHabilitados } from '@/hooks/useModulosHabilitados';
-import { useTiposCambio } from '@/hooks/useTiposCambio';
+import { formatMoney } from '@/lib/currency';
+import { useResumenInventario } from '@/hooks/useResumenInventario';
+import { useInventoryStore } from '@/store';
 import type { Moneda } from '@/types';
 
 // ============================================
@@ -142,6 +141,8 @@ interface ProductTableProps {
   onQuickMovement?: (product: Product, tipo: 'entrada' | 'salida') => void;
   onBulkAction?: (action: string, products: Product[], value?: string) => void;
   showAlmacen?: boolean;
+  /** Muestra la barra de cantidad / valor / críticos (Stock ya la muestra en tarjetas). */
+  showSummary?: boolean;
 }
 
 type SortCol = 'codigo' | 'descripcion' | 'categoria' | 'precio' | 'costo' | 'stock';
@@ -160,6 +161,7 @@ export function ProductTable({
   onQuickMovement,
   onBulkAction,
   showAlmacen = true,
+  showSummary = true,
 }: ProductTableProps) {
   const { t } = useTranslation();
   const [sortCol, setSortCol] = useState<SortCol>('codigo');
@@ -195,6 +197,22 @@ export function ProductTable({
     })();
     return () => { cancelled = true; };
   }, [products]);
+
+  // Última compra (entrada con costo) por producto, en la moneda en que se
+  // pagó. Se muestra junto al costo promedio para ver de un vistazo si el
+  // artículo se está comprando más caro o más barato que su promedio.
+  const movements = useInventoryStore((s) => s.movements);
+  const ultimaCompraPorCodigo = useMemo(() => {
+    const map: Record<string, { costo: number; moneda: Moneda; fecha: Date }> = {};
+    for (const m of movements) {
+      if (m.tipo !== 'entrada' || !m.costoCompra || m.costoCompra <= 0) continue;
+      const prev = map[m.codigo];
+      if (!prev || m.timestamp > prev.fecha) {
+        map[m.codigo] = { costo: m.costoCompra, moneda: m.monedaCosto ?? 'UYU', fecha: m.timestamp };
+      }
+    }
+    return map;
+  }, [movements]);
 
   const handleSort = useCallback((col: SortCol) => {
     if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -235,16 +253,22 @@ export function ProductTable({
   );
 
   const handleExport = useCallback((toExport: Product[]) => {
-    const headers = ['Código', 'Descripción', 'Categoría', 'Almacén', 'Último costo', 'Stock', 'Stock Mínimo'];
-    const rows = toExport.map(p => [
-      p.codigo,
-      `"${p.descripcion}"`,
-      p.categoria,
-      p.almacen?.nombre || 'Sin almacén',
-      (p.costoPromedio || 0).toFixed(2),
-      p.stock,
-      p.stockMinimo,
-    ]);
+    const headers = ['Código', 'Descripción', 'Categoría', 'Almacén', 'Moneda', 'Costo promedio', 'Última compra', 'Moneda última compra', 'Stock', 'Stock Mínimo'];
+    const rows = toExport.map(p => {
+      const uc = ultimaCompraPorCodigo[p.codigo];
+      return [
+        p.codigo,
+        `"${p.descripcion.replace(/"/g, '""')}"`,
+        p.categoria,
+        p.almacen?.nombre || 'Sin almacén',
+        p.moneda ?? 'UYU',
+        (p.costoPromedio || 0).toFixed(2),
+        uc ? uc.costo.toFixed(2) : '',
+        uc ? uc.moneda : '',
+        p.stock,
+        p.stockMinimo,
+      ];
+    });
     const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -253,7 +277,7 @@ export function ProductTable({
     a.download = `stock_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, []);
+  }, [ultimaCompraPorCodigo]);
 
   const handleDelete = (e: React.MouseEvent, codigo: string) => {
     e.stopPropagation();
@@ -265,54 +289,8 @@ export function ProductTable({
     onEdit?.(product);
   };
 
-  // Valuación unificada: misma fuente de verdad que Dashboard y Reportes
-  // (FIFO sobre lotes + fallback a costo_promedio). Antes calculábamos
-  // localmente con `stock × (costoPromedio || precio)`, lo que daba
-  // números distintos al Dashboard porque caía al precio de VENTA.
-  const [valuacion, setValuacion] = useState<ResultadoValuacion | null>(null);
-  // Tasas + moneda destino arriba: la valuación necesita las tasas para
-  // normalizar productos en USD a UYU antes de sumar (igual que el card de
-  // "Análisis de insumos"). Sin esto, los costos en USD se sumaban mal.
-  const { config: orgConfig } = useModulosHabilitados();
-  const { rates: ratesTable } = useTiposCambio();
-  const monedaBase: Moneda = 'UYU';
-  const monedaTarget: Moneda = (orgConfig.display_currency as Moneda) ?? 'UYU';
-
-  useEffect(() => {
-    let cancelled = false;
-    valuarInventario({
-      productos: products.map(p => ({
-        codigo: p.codigo,
-        descripcion: p.descripcion,
-        stock: p.stock,
-        stockMinimo: p.stockMinimo,
-        costoPromedio: p.costoPromedio || 0,
-        categoria: p.categoria,
-        moneda: p.moneda,
-        almacenId: p.almacenId,
-        almacen: p.almacen,
-      })),
-      rates: ratesTable,
-      monedaBase: 'UYU',
-    }).then(r => { if (!cancelled) setValuacion(r); });
-    return () => { cancelled = true; };
-  }, [products, ratesTable]);
-
-  const summary = useMemo(() => {
-    const critical = products.filter(p => p.stock <= p.stockMinimo).length;
-    const valorBase = valuacion?.total ?? 0;
-    const conv = monedaTarget === monedaBase
-      ? valorBase
-      : convertir(valorBase, monedaBase, monedaTarget, ratesTable);
-    return {
-      count: products.length,
-      valor: conv,
-      valorOrigen: valorBase,
-      monedaOrigen: monedaBase,
-      sinTasa: conv === null,
-      critical,
-    };
-  }, [products, valuacion, monedaBase, monedaTarget, ratesTable]);
+  // Valuación unificada (FIFO + costo promedio, multi-moneda).
+  const summary = useResumenInventario(products, showSummary);
 
   const thClass = 'px-3 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider cursor-pointer select-none group';
 
@@ -320,6 +298,7 @@ export function ProductTable({
     <div className="space-y-3">
       {/* Summary bar */}
       <div className="flex items-center gap-3 flex-wrap">
+        {showSummary && (
         <div className="flex items-center gap-6 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
           <span className="flex items-center gap-1.5 text-slate-400">
             <Package size={13} />
@@ -330,19 +309,20 @@ export function ProductTable({
             Valor: <strong className="text-white">
               {summary.sinTasa
                 ? `${formatMoney(summary.valorOrigen, summary.monedaOrigen)} *`
-                : formatMoney(summary.valor ?? 0, monedaTarget)}
+                : formatMoney(summary.valor ?? 0, summary.monedaDestino)}
             </strong>
             {summary.sinTasa && (
               <span title="Falta tasa de cambio en Configuración" className="text-amber-400">⚠</span>
             )}
           </span>
-          {summary.critical > 0 && (
+          {summary.criticos > 0 && (
             <span className="flex items-center gap-1.5 text-red-400">
               <AlertCircle size={13} />
-              <strong>{summary.critical}</strong> críticos
+              <strong>{summary.criticos}</strong> críticos
             </span>
           )}
         </div>
+        )}
 
         <div className="ml-auto flex items-center gap-2">
           {someSelected && (
@@ -425,7 +405,10 @@ export function ProductTable({
                   Ubicación
                 </th>
                 <th className={cn(thClass, 'text-right')} onClick={() => handleSort('costo')}>
-                  <span className="flex items-center justify-end gap-1">Último costo <SortIcon active={sortCol === 'costo'} dir={sortDir} /></span>
+                  <span className="flex items-center justify-end gap-1">Costo prom. <SortIcon active={sortCol === 'costo'} dir={sortDir} /></span>
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Últ. compra
                 </th>
                 <th className="px-3 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Historial
@@ -488,6 +471,22 @@ export function ProductTable({
                           ? formatMoney(product.costoPromedio, product.moneda ?? 'UYU', { minimumFractionDigits: 2 })
                           : '—'}
                       </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      {ultimaCompraPorCodigo[product.codigo] ? (
+                        <span
+                          className="font-mono text-sm text-slate-400"
+                          title={`Comprado el ${ultimaCompraPorCodigo[product.codigo].fecha.toLocaleDateString('es-UY')}`}
+                        >
+                          {formatMoney(
+                            ultimaCompraPorCodigo[product.codigo].costo,
+                            ultimaCompraPorCodigo[product.codigo].moneda,
+                            { minimumFractionDigits: 2 },
+                          )}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-600">—</span>
+                      )}
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex justify-center">

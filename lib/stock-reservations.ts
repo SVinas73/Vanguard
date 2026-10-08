@@ -245,12 +245,13 @@ export async function consumirReservaIndividual(
     productoCodigo: reserva.producto_codigo,
     productoId: reserva.producto_id,
   });
+  const stockAnterior = ref ? Number(ref.stock) || 0 : null;
+  const stockNuevo = ref ? Math.max(0, (ref.stock || 0) - parseFloat(reserva.cantidad)) : null;
   if (ref) {
-    const nuevoStock = Math.max(0, (ref.stock || 0) - parseFloat(reserva.cantidad));
     const matcher = ref.id ? { id: ref.id } : { codigo: ref.codigo };
     await supabase
       .from('productos')
-      .update({ stock: nuevoStock })
+      .update({ stock: stockNuevo })
       .match(matcher as any);
   }
 
@@ -266,6 +267,15 @@ export async function consumirReservaIndividual(
     notas: motivo,
     usuario_email: usuario,
   });
+
+  await registrarAuditoria(
+    'movimientos',
+    'SALIDA',
+    reserva.producto_codigo || ref?.codigo || null,
+    { stock_anterior: stockAnterior },
+    { stock_nuevo: stockNuevo, cantidad: parseFloat(reserva.cantidad), origen: motivo, reserva_id: reservaId },
+    usuario,
+  );
 
   return true;
 }

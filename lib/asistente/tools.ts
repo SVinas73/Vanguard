@@ -13,6 +13,7 @@
 
 import 'server-only';
 import { createClient } from '@supabase/supabase-js';
+import { registrarAuditoriaSegura } from '@/lib/security/audit-enhanced';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -140,9 +141,14 @@ async function rmaAbiertos(params: any) {
 async function trazarLote(params: any) {
   try {
     if (!params.lote_numero) return { error: 'Falta lote_numero' };
-    const { data: lote } = await supabase
-      .from('lotes').select('*').eq('numero', params.lote_numero).maybeSingle();
-    if (!lote) return { error: 'Lote no encontrado' };
+    // `lotes` no tiene columna "numero": el identificador es el id (o se
+    // buscan los lotes del producto si viene un código).
+    const ref = String(params.lote_numero).trim();
+    const { data: lotes } = /^\d+$/.test(ref)
+      ? await supabase.from('lotes').select('*').eq('id', Number(ref)).limit(1)
+      : await supabase.from('lotes').select('*').eq('codigo', ref).order('fecha_compra', { ascending: false }).limit(10);
+    const lote = lotes && lotes.length === 1 ? lotes[0] : lotes;
+    if (!lotes || lotes.length === 0) return { error: 'Lote no encontrado' };
     const { data: stock } = await supabase
       .from('wms_stock_ubicacion')
       .select('ubicacion_codigo, cantidad')
@@ -155,7 +161,7 @@ async function trazarSerial(params: any) {
   try {
     if (!params.serial) return { error: 'Falta serial' };
     const { data: serie } = await supabase
-      .from('seriales').select('*').eq('numero_serie', params.serial).maybeSingle();
+      .from('productos_seriales').select('*').eq('numero_serie', params.serial).maybeSingle();
     if (!serie) return { error: 'Serial no encontrado' };
     return { serial: serie };
   } catch (e: any) { return { error: e.message }; }
@@ -209,12 +215,12 @@ async function analisisTendencias(params: any) {
     const dias = params.dias || 60;
     const fechaInicio = new Date(); fechaInicio.setDate(fechaInicio.getDate() - dias);
     const { data: movs } = await supabase
-      .from('movimientos').select('producto_codigo, cantidad, created_at, codigo')
+      .from('movimientos').select('codigo, cantidad, created_at')
       .eq('tipo', 'salida').gte('created_at', fechaInicio.toISOString());
     const hace30 = new Date(); hace30.setDate(hace30.getDate() - 30);
     const por: Record<string, { reciente: number; anterior: number }> = {};
     (movs || []).forEach((m: any) => {
-      const cod = m.producto_codigo || m.codigo; if (!cod) return;
+      const cod = m.codigo; if (!cod) return;
       if (!por[cod]) por[cod] = { reciente: 0, anterior: 0 };
       const f = new Date(m.created_at);
       if (f >= hace30) por[cod].reciente += m.cantidad;
@@ -240,11 +246,11 @@ async function recomendacionesReposicion(params: any) {
       .is('deleted_at', null);
     const hace30 = new Date(); hace30.setDate(hace30.getDate() - 30);
     const { data: movs } = await supabase
-      .from('movimientos').select('producto_codigo, codigo, cantidad')
+      .from('movimientos').select('codigo, cantidad')
       .eq('tipo', 'salida').gte('created_at', hace30.toISOString());
     const consumo: Record<string, number> = {};
     (movs || []).forEach((m: any) => {
-      const c = m.producto_codigo || m.codigo;
+      const c = m.codigo;
       consumo[c] = (consumo[c] || 0) + m.cantidad;
     });
     const recs = (prods || []).map((p: any) => {
@@ -380,27 +386,72 @@ async function resumenMiDia(params: any, _usuario: string) {
 
 async function crearMovimiento(params: any, usuario: string) {
   try {
+    const tipo = String(params.tipo || '');
+    const cantidad = Number(params.cantidad);
+    if (!['entrada', 'salida', 'ajuste'].includes(tipo)) {
+      return { error: 'Tipo inválido: usá entrada, salida o ajuste' };
+    }
+    if (!Number.isFinite(cantidad) || cantidad < 0 || (tipo !== 'ajuste' && cantidad === 0)) {
+      return { error: 'Cantidad inválida' };
+    }
     const { data: producto } = await supabase
-      .from('productos').select('codigo, stock').eq('codigo', params.producto_codigo).single();
+      .from('productos')
+      .select('id, codigo, stock, costo_promedio, moneda')
+      .eq('codigo', params.producto_codigo)
+      .single();
     if (!producto) return { error: 'Producto no encontrado' };
-    let nuevoStock = producto.stock;
-    if (params.tipo === 'entrada') nuevoStock += params.cantidad;
-    else if (params.tipo === 'salida') {
-      if (producto.stock < params.cantidad) return { error: 'Stock insuficiente' };
-      nuevoStock -= params.cantidad;
-    } else nuevoStock = params.cantidad;
-    await supabase.from('movimientos').insert({
-      producto_codigo: params.producto_codigo, tipo: params.tipo,
-      cantidad: params.cantidad, stock_anterior: producto.stock,
-      stock_nuevo: nuevoStock, motivo: params.motivo || 'Movimiento vía Asistente',
-      creado_por: usuario, usuario_email: usuario,
+
+    const stockAnterior = Number(producto.stock) || 0;
+    let nuevoStock = stockAnterior;
+    if (tipo === 'entrada') nuevoStock += cantidad;
+    else if (tipo === 'salida') {
+      if (stockAnterior < cantidad) return { error: 'Stock insuficiente' };
+      nuevoStock -= cantidad;
+    } else nuevoStock = cantidad;
+
+    const motivo = params.motivo || 'Movimiento vía Asistente';
+    // Columnas reales de `movimientos` (antes se usaban nombres inexistentes
+    // y el insert fallaba en silencio mientras el stock sí cambiaba).
+    const { error: errMov } = await supabase.from('movimientos').insert({
+      producto_id: producto.id,
+      codigo: producto.codigo,
+      tipo,
+      cantidad: tipo === 'ajuste' ? Math.abs(nuevoStock - stockAnterior) : cantidad,
+      notas: tipo === 'ajuste' ? `${motivo} (stock ${stockAnterior} → ${nuevoStock})` : motivo,
+      usuario_email: usuario,
     });
+    if (errMov) return { error: `No se pudo registrar el movimiento: ${errMov.message}` };
+
     await supabase.from('productos').update({ stock: nuevoStock })
-      .eq('codigo', params.producto_codigo);
+      .eq('codigo', producto.codigo);
+
+    // Si entran unidades, lote al costo promedio vigente (valuación FIFO).
+    if (nuevoStock > stockAnterior) {
+      await supabase.from('lotes').insert({
+        producto_id: producto.id,
+        codigo: producto.codigo,
+        cantidad_inicial: nuevoStock - stockAnterior,
+        cantidad_disponible: nuevoStock - stockAnterior,
+        costo_unitario: Number(producto.costo_promedio) || 0,
+        moneda: producto.moneda || 'UYU',
+        usuario,
+        notas: motivo,
+      });
+    }
+
+    await registrarAuditoriaSegura({
+      tabla: 'movimientos',
+      accion: tipo.toUpperCase(),
+      codigo: producto.codigo,
+      datosAnteriores: { stock_anterior: stockAnterior },
+      datosNuevos: { stock_nuevo: nuevoStock, cantidad, origen: 'Asistente IA', motivo },
+      usuarioEmail: usuario,
+    });
+
     return {
       exito: true,
-      mensaje: `Movimiento creado: ${params.tipo} de ${params.cantidad} unidades`,
-      stock_anterior: producto.stock, stock_nuevo: nuevoStock,
+      mensaje: `Movimiento creado: ${tipo} de ${cantidad} unidades`,
+      stock_anterior: stockAnterior, stock_nuevo: nuevoStock,
     };
   } catch (e: any) { return { error: e.message }; }
 }

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Plus, Minus, ArrowDownLeft, ArrowUpRight, Loader2, FileText, User, Clock } from 'lucide-react';
 import { Product } from '@/types';
 import { formatDate } from '@/lib/utils';
+import { formatMoney } from '@/lib/currency';
 
 interface QuickMovementModalProps {
   product: Product;
@@ -104,7 +105,7 @@ export function QuickMovementModal({ product, tipo, userEmail, onSubmit, onClose
               <span>Stock actual: <strong className="text-white">{product.stock}</strong></span>
               <span>Mínimo: <strong className="text-slate-300">{product.stockMinimo}</strong></span>
               {product.costoPromedio ? (
-                <span>Costo prom: <strong className="text-slate-300">${product.costoPromedio.toFixed(2)}</strong></span>
+                <span>Costo prom.: <strong className="text-slate-300">{formatMoney(product.costoPromedio, product.moneda ?? 'UYU', { minimumFractionDigits: 2 })}</strong></span>
               ) : null}
             </div>
           </div>
@@ -153,7 +154,7 @@ export function QuickMovementModal({ product, tipo, userEmail, onSubmit, onClose
                   step="0.01"
                   value={costoCompra}
                   onChange={(e) => setCostoCompra(e.target.value)}
-                  placeholder={product.costoPromedio ? `Último: ${product.costoPromedio.toFixed(2)}` : '0.00'}
+                  placeholder={product.costoPromedio ? `Prom.: ${product.costoPromedio.toFixed(2)} ${product.moneda ?? 'UYU'}` : '0.00'}
                   className="flex-1 px-3 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
                 />
                 <select

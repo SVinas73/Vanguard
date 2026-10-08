@@ -25,7 +25,7 @@ interface Props {
 /**
  * Formulario para definir un ARTÍCULO NUEVO dentro de una solicitud de insumo.
  *
- * A diferencia del viejo NuevoProductoModal, este NO inserta en `productos`:
+ * Este modal NO inserta en `productos`:
  * solo captura los datos (código, descripción, stock mínimo, categoría) que
  * se guardan en el item de la solicitud. El producto se crea en Stock recién
  * cuando la compra se recibe, con la cantidad realmente recibida.

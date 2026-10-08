@@ -1002,21 +1002,22 @@ button.hover\:bg-teal-500:hover, button.hover\:bg-green-500:hover {
 .light-mode .hover\:border-\[\#4A4A4A\]:hover, .light-mode .hover\:border-\[\#475569\]:hover { border-color: #b0b8c4 !important; }
 .light-mode .text-\[\#f8fafc\], .light-mode .text-\[\#F1F1F1\], .light-mode .text-\[\#f1f1f1\] { color: #1a2030 !important; }
 
-/* =====================================================
-   Escudo de fondo en la pantalla de Inicio — flotar lento
-   ===================================================== */
-@keyframes vgHomeFloat {
-  0%   { transform: translateY(0) scale(1); opacity: 0.05; }
-  50%  { transform: translateY(-18px) scale(1.04); opacity: 0.08; }
-  100% { transform: translateY(0) scale(1); opacity: 0.05; }
-}
-.vg-home-shield {
-  animation: vgHomeFloat 9s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-@media (prefers-reduced-motion: reduce) {
-  .vg-home-shield { animation: none; }
-}
+/* Modales y formularios (Modal usa bg-[#131313]): antes quedaban negros en
+   modo claro con el texto ya oscurecido → no se leía nada. */
+.light-mode .bg-\[\#131313\] { background-color: #ffffff !important; }
+.light-mode .bg-\[\#2E2E2E\], .light-mode .bg-\[\#2A2A2A\] { background-color: #e3e7ee !important; }
+.light-mode .text-\[\#6B6B6B\] { color: #5b6472 !important; }
+.light-mode .text-\[\#A0A0A0\] { color: #3f4655 !important; }
+.light-mode .text-\[\#4A4A4A\] { color: #8a93a3 !important; }
+.light-mode .placeholder\:text-\[\#4A4A4A\]::placeholder { color: #9aa3b2 !important; }
+.light-mode .shadow-black\/50, .light-mode .shadow-black\/40 { --tw-shadow-color: rgba(15, 23, 42, 0.12) !important; }
+.light-mode .hover\:text-\[\#F1F1F1\]:hover { color: #1a2030 !important; }
+.light-mode .text-blue-300 { color: #2563EB !important; }
+/* Botón primario (Button variant="primary" usa bg-blue-500 + text-white): sin
+   esto, .text-white se oscurecía en modo claro y el texto quedaba ilegible. */
+.light-mode button.bg-blue-500 { background-color: #3b82f6 !important; color: #ffffff !important; }
+.light-mode button.bg-blue-500:hover { background-color: #2563eb !important; }
+.light-mode button.bg-blue-500 svg { color: #ffffff !important; }
 
 /* =====================================================
    SIDEBAR — modo claro: texto más legible, hover notorio,
@@ -1046,3 +1047,50 @@ button.hover\:bg-teal-500:hover, button.hover\:bg-green-500:hover {
 /* Labels de ítems y títulos de sección un poco más claros para que se lean */
 aside .text-\[\#A0A0A0\] { color: #c4c9d4 !important; }
 aside .text-\[\#6B6B6B\] { color: #8d95a3 !important; }
+
+/* =====================================================
+   VANGUARD LOADER — pantalla de carga (components/ui/VanguardLoader)
+   Colores en clases (no inline) para que el modo claro los ajuste.
+   ===================================================== */
+.vg-loader {
+  background:
+    radial-gradient(900px circle at 50% 36%, rgba(37, 78, 160, 0.28) 0%, rgba(37, 78, 160, 0) 60%),
+    linear-gradient(180deg, rgb(7, 11, 20) 0%, rgb(4, 6, 12) 100%);
+}
+.vg-loader__glow {
+  background: radial-gradient(circle, rgba(79, 143, 247, 0.38) 0%, rgba(79, 143, 247, 0.08) 45%, rgba(79, 143, 247, 0) 70%);
+  filter: blur(18px);
+}
+.vg-loader__word { color: #e8eef8; }
+.vg-loader__tag { color: rgba(148, 163, 184, 0.7); }
+.vg-loader__status { color: #a7b3c6; }
+.vg-loader__track { background: rgba(148, 163, 184, 0.16); }
+.vg-loader__fill {
+  background: linear-gradient(90deg, #3a74db 0%, #8bbcff 100%);
+  box-shadow: 0 0 10px rgba(91, 157, 255, 0.7), 0 0 2px rgba(139, 188, 255, 0.9);
+}
+.vg-loader__indet { animation: vgLoaderIndet 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+@keyframes vgLoaderIndet {
+  0%   { transform: translateX(-110%); }
+  100% { transform: translateX(270%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vg-loader__indet { animation: none; transform: none; }
+}
+.light-mode .vg-loader {
+  background:
+    radial-gradient(900px circle at 50% 36%, rgba(79, 143, 247, 0.14) 0%, rgba(79, 143, 247, 0) 60%),
+    linear-gradient(180deg, #fbfcfe 0%, #eef2f8 100%) !important;
+}
+.light-mode .vg-loader__glow {
+  background: radial-gradient(circle, rgba(79, 143, 247, 0.22) 0%, rgba(79, 143, 247, 0) 70%);
+}
+.light-mode .vg-loader__word { color: #142033 !important; }
+.light-mode .vg-loader__tag, .light-mode .vg-loader__status { color: #5b6472 !important; }
+.light-mode .vg-loader__track { background: rgba(30, 79, 168, 0.12); }
+
+/* Selectores de fecha nativos legibles en ambos modos */
+.vg-date { color-scheme: dark; }
+.light-mode .vg-date { color-scheme: light; }
+.light-mode .border-blue-500\/50 { border-color: rgba(37, 99, 235, 0.45) !important; }
+.light-mode .hover\:border-blue-500\/80:hover { border-color: rgba(37, 99, 235, 0.75) !important; }

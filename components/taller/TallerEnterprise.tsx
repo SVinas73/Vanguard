@@ -703,7 +703,9 @@ export default function TallerEnterprise() {
     const { data, error } = await supabase
       .from('productos')
       .select('id, descripcion, codigo, precio, stock, stock_reservado')
-      .eq('activo', true)
+      // `productos` no tiene columna `activo`: el filtro hacía fallar la carga
+      // completa del Taller. Los productos dados de baja tienen deleted_at.
+      .is('deleted_at', null)
       .order('descripcion');
 
     if (error) throw error;
@@ -771,7 +773,7 @@ export default function TallerEnterprise() {
       if (error) throw error;
 
       // Registrar en historial
-      await registrarHistorial(data.id, undefined, 'recepcion', 'Orden creada');
+      await registrarHistorial(data.id, undefined, 'recepcion', 'Orden creada', false);
 
       await registrarAuditoria('ordenes_taller', 'CREAR', numero, null, {
         numero, cliente_nombre: ingresoForm.clienteNombre, tipo_equipo: ingresoForm.tipoEquipo,
@@ -858,7 +860,7 @@ export default function TallerEnterprise() {
       }
 
       // Registrar en historial
-      await registrarHistorial(orden.id, orden.estado, nuevoEstado, datos?.descripcion || `Estado cambiado a ${ESTADO_CONFIG[nuevoEstado].label}`);
+      await registrarHistorial(orden.id, orden.estado, nuevoEstado, datos?.descripcion || `Estado cambiado a ${ESTADO_CONFIG[nuevoEstado].label}`, false);
 
       await registrarAuditoria('ordenes_taller', `ESTADO_${nuevoEstado.toUpperCase()}`, orden.numero, { estado: orden.estado }, updateData, user?.email || '');
 
@@ -977,7 +979,8 @@ export default function TallerEnterprise() {
         ordenSeleccionada.id,
         ordenSeleccionada.estado,
         'cotizacion',
-        `Cotización creada: ${numeroCot} - Total: ${formatCurrency(total)}`
+        `Cotización creada: ${numeroCot} - Total: ${formatCurrency(total)}`,
+        false
       );
 
       await registrarAuditoria('cotizaciones_taller', 'CREAR', numeroCot, null, {
@@ -1130,7 +1133,8 @@ export default function TallerEnterprise() {
         ordenSeleccionada.id,
         ordenSeleccionada.estado,
         'reparado',
-        `Reparación completada: ${reparacionForm.trabajoRealizado.substring(0, 100)}...`
+        `Reparación completada: ${reparacionForm.trabajoRealizado.substring(0, 100)}...`,
+        false
       );
 
       await registrarAuditoria('ordenes_taller', 'REPARACION_FINALIZADA', ordenSeleccionada.numero, { estado: ordenSeleccionada.estado }, {
@@ -1352,7 +1356,9 @@ export default function TallerEnterprise() {
     ordenId: string,
     estadoAnterior: EstadoOrden | undefined,
     estadoNuevo: EstadoOrden,
-    descripcion: string
+    descripcion: string,
+    // false cuando el llamador ya registra su propia auditoría (evita duplicados)
+    auditar: boolean = true
   ) => {
     const { error } = await supabase.from('historial_ordenes_taller').insert({
       orden_id: ordenId,
@@ -1362,6 +1368,20 @@ export default function TallerEnterprise() {
       realizado_por: user?.email,
     });
     if (error) throw error;
+
+    // Todo paso de la OT queda también en Auditoría.
+    if (auditar) {
+      const numero = ordenes.find(o => o.id === ordenId)?.numero
+        ?? (ordenSeleccionada?.id === ordenId ? ordenSeleccionada.numero : ordenId);
+      await registrarAuditoria(
+        'ordenes_taller',
+        estadoAnterior === estadoNuevo ? 'ACTUALIZAR' : `ESTADO_${estadoNuevo.toUpperCase()}`,
+        numero,
+        { estado: estadoAnterior ?? null },
+        { estado: estadoNuevo, detalle: descripcion },
+        user?.email || ''
+      );
+    }
   };
 
   // ============================================

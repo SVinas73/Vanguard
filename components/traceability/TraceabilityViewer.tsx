@@ -482,7 +482,8 @@ export default function TraceabilityEnterprise({
         const { data } = await supabase
           .from('lotes')
           .select('id, codigo, cantidad_disponible')
-          .order('created_at', { ascending: false })
+          // `lotes` no tiene created_at (fallaba y el desplegable quedaba vacío)
+          .order('fecha_compra', { ascending: false })
           .limit(100);
         opciones = (data || []).map(l => ({
           value: l.codigo,

@@ -633,7 +633,7 @@ export default function RMAEnterprise() {
             // Actualizar stock
             const { data: prod } = await supabase
               .from('productos')
-              .select('stock')
+              .select('id, stock, costo_promedio, moneda')
               .eq('codigo', item.productoCodigo)
               .single();
 
@@ -644,12 +644,31 @@ export default function RMAEnterprise() {
 
               // Registrar movimiento
               await supabase.from('movimientos').insert({
+                producto_id: prod.id,
                 codigo: item.productoCodigo,
                 tipo: 'entrada',
                 cantidad: cantidadReingreso,
                 notas: `Reingreso RMA ${selectedRMA.numero}`,
                 usuario_email: user?.email,
               });
+
+              // Lote al costo promedio vigente: la devolución no es una compra,
+              // pero las unidades vuelven a valer en el inventario.
+              await supabase.from('lotes').insert({
+                producto_id: prod.id,
+                codigo: item.productoCodigo,
+                cantidad_inicial: cantidadReingreso,
+                cantidad_disponible: cantidadReingreso,
+                costo_unitario: Number(prod.costo_promedio) || 0,
+                moneda: prod.moneda || 'UYU',
+                usuario: user?.email,
+                notas: `Reingreso RMA ${selectedRMA.numero}`,
+              });
+
+              await registrarAuditoria('movimientos', 'ENTRADA', item.productoCodigo,
+                { stock_anterior: prod.stock },
+                { stock_nuevo: prod.stock + cantidadReingreso, cantidad: cantidadReingreso, origen: `Reingreso RMA ${selectedRMA.numero}` },
+                user?.email || '');
             }
           }
         }
