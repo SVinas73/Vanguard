@@ -1,13 +1,14 @@
 // =====================================================
-// Carga de datos para el reporte de insumos en USD
+// Datos de insumos para el Análisis y el Reporte en USD
 // =====================================================
-// Trae TODO el historial necesario, paginando (PostgREST corta en 1000
-// filas por consulta):
-//   • insumos (productos de almacenes de insumos),
-//   • movimientos de esos insumos desde el inicio hasta la fecha "hasta"
-//     (el historial previo hace falta para el costo promedio móvil),
-//   • solicitudes de insumos del período con sus ítems,
-//   • valor actual del inventario de insumos en USD.
+// Una sola carga con TODO el historial (paginando: PostgREST corta en 1000
+// filas por consulta), compartida por el panel de Análisis de insumos y por
+// el Reporte, así los dos muestran exactamente los mismos números:
+//   • insumos (productos de almacenes de insumos, incluidos los dados de baja),
+//   • todos los movimientos de esos insumos (hace falta el historial completo
+//     para el costo promedio móvil y la variación de precios),
+//   • todas las solicitudes de insumos con sus ítems,
+//   • valor actual de cada insumo en USD (FIFO por lote + costo promedio).
 // =====================================================
 
 import { supabase } from '@/lib/supabase';
@@ -25,6 +26,8 @@ import {
 const PAGINA = 1000;
 const MAX_PAGINAS = 500;
 const CODIGOS_POR_CONSULTA = 120;
+/** Los datos se reutilizan durante este tiempo (entre panel y reporte). */
+const VIGENCIA_CACHE_MS = 3 * 60 * 1000;
 
 async function paginar<T>(build: (from: number, to: number) => any): Promise<T[]> {
   const out: T[] = [];
@@ -43,12 +46,16 @@ export interface ProgresoCarga {
   paso: string;
 }
 
-export async function cargarReporteInsumosUSD(
-  desde: Date,
-  hasta: Date,
-  onProgreso?: (p: ProgresoCarga) => void,
-  opciones: { todoElHistorial?: boolean } = {},
-): Promise<ReporteInsumosUSD> {
+export interface DatosInsumos {
+  productos: ProductoReporte[];
+  movimientos: MovimientoReporte[];
+  solicitudes: SolicitudReporte[];
+  categoriaLabels: Record<string, string>;
+  inventarioPorCodigoUsd: Record<string, number>;
+  cargadoEn: Date;
+}
+
+export async function cargarDatosInsumos(onProgreso?: (p: ProgresoCarga) => void): Promise<DatosInsumos> {
   onProgreso?.({ paso: 'Buscando almacenes de insumos' });
   const almacenes = Array.from(await getAlmacenesInsumoIds());
 
@@ -56,15 +63,13 @@ export async function cargarReporteInsumosUSD(
   const productosRaw = almacenes.length === 0 ? [] : await paginar<any>((from, to) =>
     supabase
       .from('productos')
-      .select('codigo, descripcion, categoria, moneda, costo_promedio, stock, almacen_id, deleted_at')
+      .select('codigo, descripcion, categoria, moneda, costo_promedio, stock, stock_minimo, almacen_id, deleted_at')
       .in('almacen_id', almacenes)
       .order('codigo')
       .range(from, to),
   );
   // Los insumos dados de baja se incluyen: su historial de compras y
-  // consumos sigue contando para el período. Solo se excluyen del valor
-  // del inventario actual.
-  const activos = new Set(productosRaw.filter(p => !p.deleted_at).map(p => p.codigo));
+  // consumos sigue contando. Solo quedan fuera del stock y del valor actual.
   const productos: ProductoReporte[] = productosRaw.map(p => ({
     codigo: p.codigo,
     descripcion: p.descripcion || p.codigo,
@@ -72,11 +77,12 @@ export async function cargarReporteInsumosUSD(
     moneda: p.moneda,
     costoPromedio: Number(p.costo_promedio) || 0,
     stock: Number(p.stock) || 0,
+    stockMinimo: Number(p.stock_minimo) || 0,
+    activo: !p.deleted_at,
   }));
 
-  onProgreso?.({ paso: 'Cargando historial de movimientos' });
+  onProgreso?.({ paso: 'Cargando historial de compras y consumos' });
   const codigos = productos.map(p => p.codigo);
-  const hastaIso = hasta.toISOString();
   const movimientos: MovimientoReporte[] = [];
   for (let i = 0; i < codigos.length; i += CODIGOS_POR_CONSULTA) {
     const lote = codigos.slice(i, i + CODIGOS_POR_CONSULTA);
@@ -85,7 +91,6 @@ export async function cargarReporteInsumosUSD(
         .from('movimientos')
         .select('id, codigo, tipo, cantidad, costo_compra, moneda_costo, notas, usuario_email, created_at')
         .in('codigo', lote)
-        .lte('created_at', hastaIso)
         .order('created_at', { ascending: true })
         .order('id', { ascending: true })
         .range(from, to),
@@ -111,8 +116,6 @@ export async function cargarReporteInsumosUSD(
       supabase
         .from('solicitudes_insumos')
         .select('numero, categoria, estado, solicitado_por, fecha_solicitud, items:solicitudes_insumos_items(*)')
-        .gte('fecha_solicitud', desde.toISOString())
-        .lte('fecha_solicitud', hastaIso)
         .order('fecha_solicitud', { ascending: true })
         .range(from, to),
     );
@@ -131,7 +134,7 @@ export async function cargarReporteInsumosUSD(
       })),
     }));
   } catch (e) {
-    console.warn('Reporte insumos: no se pudieron cargar las solicitudes', e);
+    console.warn('Insumos USD: no se pudieron cargar las solicitudes', e);
   }
 
   // Etiquetas de categorías de insumos (si están configuradas)
@@ -144,10 +147,10 @@ export async function cargarReporteInsumosUSD(
   } catch { /* opcional */ }
 
   onProgreso?.({ paso: 'Valorizando inventario actual' });
-  let inventarioActualUsd: number | null = null;
+  const inventarioPorCodigoUsd: Record<string, number> = {};
   try {
     const val = await valuarInventario({
-      productos: productos.filter(p => activos.has(p.codigo)).map(p => ({
+      productos: productos.filter(p => p.activo !== false).map(p => ({
         codigo: p.codigo,
         descripcion: p.descripcion,
         stock: p.stock,
@@ -155,24 +158,60 @@ export async function cargarReporteInsumosUSD(
         categoria: p.categoria,
         moneda: (p.moneda === 'USD' ? 'USD' : 'UYU'),
       })),
-      // Tabla vacía → cotización de referencia 40, igual que el resto del reporte.
+      // Tabla vacía → cotización de referencia 40, igual que el resto.
       rates: buildRatesTable([]),
       monedaBase: 'USD',
     });
-    inventarioActualUsd = Math.round(val.total * 100) / 100;
+    for (const v of val.porProducto) inventarioPorCodigoUsd[v.codigo] = Math.round(v.valor * 100) / 100;
   } catch (e) {
-    console.warn('Reporte insumos: no se pudo valorizar el inventario', e);
+    console.warn('Insumos USD: no se pudo valorizar el inventario', e);
   }
 
-  onProgreso?.({ paso: 'Calculando reporte' });
+  return { productos, movimientos, solicitudes, categoriaLabels, inventarioPorCodigoUsd, cargadoEn: new Date() };
+}
+
+// ---------------------------------------------------
+// Caché compartida (panel ↔ reporte)
+// ---------------------------------------------------
+let cache: { promesa: Promise<DatosInsumos>; en: number; version?: number } | null = null;
+
+export function invalidarDatosInsumos() {
+  cache = null;
+}
+
+/**
+ * `version`: algo que cambia cuando hay movimientos nuevos (p. ej. la cantidad
+ * de movimientos del store). Si cambió, no se reutiliza la caché.
+ */
+export function obtenerDatosInsumos(opts: { forzar?: boolean; version?: number; onProgreso?: (p: ProgresoCarga) => void } = {}): Promise<DatosInsumos> {
+  const vigente = cache
+    && Date.now() - cache.en < VIGENCIA_CACHE_MS
+    && (opts.version === undefined || cache.version === opts.version);
+  if (!opts.forzar && vigente) return cache!.promesa;
+  const promesa = cargarDatosInsumos(opts.onProgreso);
+  cache = { promesa, en: Date.now(), version: opts.version };
+  promesa.catch(() => { if (cache?.promesa === promesa) cache = null; });
+  return promesa;
+}
+
+export interface FiltrosReporte {
+  desde: Date;
+  hasta: Date;
+  /** Claves de categoría (vacío = todas). */
+  categorias?: string[];
+  todoElHistorial?: boolean;
+}
+
+export function reporteDesdeDatos(datos: DatosInsumos, f: FiltrosReporte): ReporteInsumosUSD {
   return generarReporteInsumosUSD({
-    desde,
-    hasta,
-    productos,
-    movimientos,
-    solicitudes,
-    inventarioActualUsd,
-    categoriaLabels,
-    recortarInicio: opciones.todoElHistorial,
+    desde: f.desde,
+    hasta: f.hasta,
+    productos: datos.productos,
+    movimientos: datos.movimientos,
+    solicitudes: datos.solicitudes,
+    inventarioPorCodigoUsd: datos.inventarioPorCodigoUsd,
+    categoriaLabels: datos.categoriaLabels,
+    categorias: f.categorias,
+    recortarInicio: f.todoElHistorial,
   });
 }

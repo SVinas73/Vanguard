@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { VanguardLoader } from '@/components/ui/VanguardLoader';
+import {
+  VanguardLoader, SPLASH_MIN_MS, SPLASH_BARRA_MS, marcarSplashVisto,
+} from '@/components/ui/VanguardLoader';
 
 const SESSION_KEY = 'vg:intro:shown';
-const DURACION_MS = 3400;
+const DURACION_MS = SPLASH_MIN_MS;
 
 interface IntroAnimationProps {
   /** Si true, fuerza mostrar la intro incluso si ya se mostró en la sesión */
@@ -34,6 +36,8 @@ export default function IntroAnimation({ force = false, onComplete }: IntroAnima
     const timer = setTimeout(() => {
       setVisible(false);
       try { sessionStorage.setItem(SESSION_KEY, '1'); } catch { /* */ }
+      // Ya se vio la animación completa: al entrar al sistema no se repite.
+      marcarSplashVisto();
       onComplete?.();
     }, DURACION_MS);
     return () => clearTimeout(timer);
@@ -52,7 +56,7 @@ export default function IntroAnimation({ force = false, onComplete }: IntroAnima
           <VanguardLoader
             fullscreen={false}
             className="h-full"
-            duracionMs={DURACION_MS - 900}
+            duracionMs={SPLASH_BARRA_MS}
             mensajes={['Conectando', 'Verificando seguridad', 'Preparando módulos']}
           />
         </motion.div>

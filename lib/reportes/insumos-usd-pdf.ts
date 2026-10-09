@@ -9,7 +9,7 @@
 import type { jsPDF as JsPDF } from 'jspdf';
 import { dibujarLogoVanguard } from '@/lib/pdf-brand';
 import {
-  agruparSerie, fmtFecha, fmtNum, fmtUsd, type ReporteInsumosUSD,
+  agruparSerie, ETIQUETA_GRANULARIDAD, fmtFecha, fmtNum, fmtUsd, type ReporteInsumosUSD,
 } from '@/lib/reportes/insumos-usd';
 
 type RGB = [number, number, number];
@@ -158,27 +158,28 @@ export async function construirPdfReporteInsumos(rep: ReporteInsumosUSD, opts: O
   doc.setTextColor(...BLUE_LIGHT);
   doc.text('Compras, consumos y costos expresados en dólares', M, 48.5);
 
-  // Bloque derecho: período y moneda
+  // Bloque derecho: período, categorías y moneda
   const xr = PAGE_W - M;
-  doc.setFontSize(6.5);
-  doc.setTextColor(...SOFT);
-  doc.text('PERÍODO', xr, 17, { align: 'right', charSpace: 0.8 });
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(255, 255, 255);
-  doc.text(tx(periodo), xr, 22.5, { align: 'right' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.5);
-  doc.setTextColor(...SOFT);
-  doc.text('MONEDA', xr, 31, { align: 'right', charSpace: 0.8 });
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(255, 255, 255);
-  doc.text('Dólares (USD)', xr, 36.5, { align: 'right' });
+  const etiquetaDerecha = (label: string, valor: string, yLabel: number) => {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(...SOFT);
+    doc.text(label, xr, yLabel, { align: 'right', charSpace: 0.8 });
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    let tam = 10;
+    doc.setFontSize(tam);
+    while (tam > 7 && doc.getTextWidth(valor) > 88) { tam -= 0.5; doc.setFontSize(tam); }
+    doc.text(valor, xr, yLabel + 5.5, { align: 'right' });
+  };
+  const categoriasTxt = rep.categoriasFiltradas.length > 0 ? rep.categoriasFiltradas.join(', ') : 'Todas las categorías';
+  etiquetaDerecha('PERÍODO', tx(periodo), 13.5);
+  etiquetaDerecha('CATEGORÍAS', tx(categoriasTxt), 26);
+  etiquetaDerecha('MONEDA', 'Dólares (USD)', 38.5);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(...BLUE_LIGHT);
-  doc.text(`TC de referencia: ${fmtNum(rep.tasa)} UYU = 1 USD`, xr, 41.5, { align: 'right' });
+  doc.text(`TC de referencia: ${fmtNum(rep.tasa)} UYU = 1 USD`, xr, 48.5, { align: 'right' });
 
   // Línea de metadatos
   let y = BANDA_H + 8;
@@ -294,13 +295,13 @@ export async function construirPdfReporteInsumos(rep: ReporteInsumosUSD, opts: O
     { label: 'Compras', valor: fmtUsd(k.comprasUsd), hint: `${fmtNum(k.cantidadCompras)} compras · ${fmtNum(k.unidadesCompradas)} uds.` },
     { label: 'Consumo', valor: fmtUsd(k.consumoUsd), hint: `${fmtNum(k.cantidadConsumos)} salidas · ${fmtNum(k.ordenesInternas)} órdenes internas`, color: BLUE_LIGHT },
     { label: 'Compras - consumo', valor: fmtUsd(k.netoUsd), hint: k.netoUsd >= 0 ? 'Aumento neto de stock' : 'Reducción neta de stock', color: k.netoUsd >= 0 ? GREEN : RED },
-    { label: 'Inventario hoy', valor: k.inventarioActualUsd != null ? fmtUsd(k.inventarioActualUsd) : '—', hint: 'Insumos valorizados al costo', color: NAVY },
+    { label: 'Inventario hoy', valor: k.inventarioActualUsd != null ? fmtUsd(k.inventarioActualUsd) : '—', hint: `${fmtNum(k.insumosActivos)} insumos valorizados al costo`, color: NAVY },
   ], 25);
   tarjetas([
     { label: 'Solicitudes', valor: fmtNum(k.solicitudes), hint: `${fmtNum(k.solicitudesRecibidas)} recibidas · ${fmtNum(k.solicitudesAbiertas)} abiertas` },
     { label: 'Estimado solicitado', valor: fmtUsd(k.estimadoSolicitudesUsd), hint: 'Sin contar las canceladas' },
     { label: 'Subas de precio', valor: fmtNum(k.insumosConAumento), hint: `${fmtNum(k.insumosConBaja)} insumos bajaron de precio`, color: k.insumosConAumento > 0 ? RED : GREEN },
-    { label: 'Insumos movidos', valor: fmtNum(k.insumosConMovimiento), hint: `${fmtNum(k.otrosIngresosUnidades)} uds. ingresaron sin costo` },
+    { label: 'Consumo por día', valor: fmtUsd(k.consumoDiarioUsd), hint: `Promedio de ${fmtNum(rep.dias)} días`, color: GREEN },
   ], 21);
 
   // ---------------------------------------------------
@@ -350,8 +351,12 @@ export async function construirPdfReporteInsumos(rep: ReporteInsumosUSD, opts: O
   // ---------------------------------------------------
   // Evolución mensual (gráfico vectorial + tabla)
   // ---------------------------------------------------
-  const serie = agruparSerie(rep.mensual);
-  const unidad = rep.mensual.length > 72 ? 'año' : rep.mensual.length > 24 ? 'trimestre' : 'mes';
+  const serie = rep.serie;
+  const unidad = ETIQUETA_GRANULARIDAD[rep.granularidad];
+  // Tabla: por día solo los días con movimiento; si no, la misma serie.
+  const filasTabla = rep.granularidad === 'dia'
+    ? serie.filter(s => s.comprasUsd > 0 || s.consumoUsd > 0)
+    : rep.granularidad === 'mes' ? agruparSerie(rep.mensual) : serie;
   titulo('Evolución de compras y consumo', `Importes en USD por ${unidad}`);
   if (serie.length === 0 || serie.every(s => s.comprasUsd === 0 && s.consumoUsd === 0)) {
     vacio('Sin compras ni consumos en el período.');
@@ -400,8 +405,8 @@ export async function construirPdfReporteInsumos(rep: ReporteInsumosUSD, opts: O
     y += altoG;
 
     tabla({
-      head: [[unidad === 'mes' ? 'Mes' : unidad === 'trimestre' ? 'Trimestre' : 'Año', 'Compras', 'Consumo', 'Compras - consumo']],
-      body: serie.map(s => [s.etiqueta, tx(fmtUsd(s.comprasUsd)), tx(fmtUsd(s.consumoUsd)), tx(fmtUsd(s.comprasUsd - s.consumoUsd))]),
+      head: [[unidad.charAt(0).toUpperCase() + unidad.slice(1), 'Compras', 'Consumo', 'Compras - consumo']],
+      body: filasTabla.map(s => [s.etiqueta, tx(fmtUsd(s.comprasUsd)), tx(fmtUsd(s.consumoUsd)), tx(fmtUsd(s.comprasUsd - s.consumoUsd))]),
       foot: [['Total', tx(fmtUsd(k.comprasUsd)), tx(fmtUsd(k.consumoUsd)), tx(fmtUsd(k.netoUsd))]],
       columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
       didParseCell: (d: any) => {
@@ -537,6 +542,39 @@ export async function construirPdfReporteInsumos(rep: ReporteInsumosUSD, opts: O
   }
 
   // ---------------------------------------------------
+  // Estado de stock (hoy): insumos para reponer
+  // ---------------------------------------------------
+  const criticos = rep.stock
+    .filter(st => st.stock <= 0 || (st.stockMinimo > 0 && st.stock <= st.stockMinimo))
+    .sort((a, b) => a.stock - a.stockMinimo - (b.stock - b.stockMinimo))
+    .slice(0, 25);
+  titulo('Insumos para reponer (stock de hoy)', `${fmtNum(k.insumosAgotados)} agotados y ${fmtNum(k.insumosBajoMinimo)} bajo el mínimo · cobertura al ritmo de consumo del período`);
+  if (criticos.length === 0) {
+    vacio('Ningún insumo agotado ni bajo el mínimo.');
+  } else {
+    tabla({
+      head: [['Código', 'Descripción', 'Stock', 'Mínimo', 'Uso/día', 'Cobertura', 'Últ. precio', 'Valor']],
+      body: criticos.map(st => [
+        st.codigo, tx(st.descripcion), fmtNum(st.stock), fmtNum(st.stockMinimo),
+        st.consumoDiario > 0 ? fmtNum(st.consumoDiario, 2) : '—',
+        st.stock <= 0 ? 'Agotado' : st.diasCobertura != null ? `${fmtNum(st.diasCobertura)} días` : 'Sin consumo',
+        tx(fmtUsd(st.ultimoPrecioUsd ?? st.costoPromedioUsd)), tx(fmtUsd(st.valorUsd)),
+      ]),
+      columnStyles: {
+        0: { cellWidth: 20, fontStyle: 'bold' }, 2: { halign: 'right', cellWidth: 13 }, 3: { halign: 'right', cellWidth: 14 },
+        4: { halign: 'right', cellWidth: 19 }, 5: { halign: 'right', cellWidth: 20 }, 6: { halign: 'right', cellWidth: 21 }, 7: { halign: 'right', cellWidth: 21 },
+      },
+      didParseCell: (d: any) => {
+        if (d.section === 'head' && d.column.index > 1) d.cell.styles.halign = 'right';
+        if (d.section === 'body' && d.column.index === 5) {
+          const st = criticos[d.row.index];
+          d.cell.styles.textColor = st.stock <= 0 || (st.diasCobertura != null && st.diasCobertura < 7) ? RED : MUTED;
+        }
+      },
+    });
+  }
+
+  // ---------------------------------------------------
   // Detalle de compras
   // ---------------------------------------------------
   titulo('Detalle de compras', 'Precio real de cada compra, en su moneda original y convertido a USD');
@@ -547,8 +585,10 @@ export async function construirPdfReporteInsumos(rep: ReporteInsumosUSD, opts: O
       head: [['Fecha', 'Código', 'Descripción', 'Cant.', 'Costo unit.\noriginal', 'Costo unit.\nUSD', 'Total USD']],
       body: rep.compras.map(c => [
         fmtFecha(c.fecha), c.codigo, tx(c.descripcion), fmtNum(c.cantidad, c.cantidad % 1 ? 2 : 0),
-        c.monedaOriginal === 'USD' ? tx(fmtUsd(c.costoUnitOriginal)) : tx(`$ ${fmtNum(c.costoUnitOriginal, 2)} UYU`),
-        tx(fmtUsd(c.costoUnitUsd)), tx(fmtUsd(c.totalUsd)),
+        c.costoEstimado
+          ? 'Sin costo cargado'
+          : c.monedaOriginal === 'USD' ? tx(fmtUsd(c.costoUnitOriginal)) : tx(`$ ${fmtNum(c.costoUnitOriginal, 2)} UYU`),
+        tx(fmtUsd(c.costoUnitUsd)) + (c.costoEstimado ? ' *' : ''), tx(fmtUsd(c.totalUsd)),
       ]),
       foot: [[{ content: `${fmtNum(rep.compras.length)} compras`, colSpan: 3 }, fmtNum(k.unidadesCompradas), '', '', tx(fmtUsd(k.comprasUsd))]],
       columnStyles: {
@@ -557,7 +597,8 @@ export async function construirPdfReporteInsumos(rep: ReporteInsumosUSD, opts: O
       },
       didParseCell: (d: any) => {
         if ((d.section === 'head' || d.section === 'foot') && d.column.index > 2) d.cell.styles.halign = 'right';
-        if (d.section === 'body' && d.column.index === 4 && rep.compras[d.row.index]?.monedaOriginal === 'UYU') {
+        const c = d.section === 'body' ? rep.compras[d.row.index] : null;
+        if (c && d.column.index === 4 && (c.monedaOriginal === 'UYU' || c.costoEstimado)) {
           d.cell.styles.textColor = MUTED;
         }
       },
@@ -597,11 +638,13 @@ export async function construirPdfReporteInsumos(rep: ReporteInsumosUSD, opts: O
   const notas = [
     'Todos los importes están expresados en dólares estadounidenses (USD).',
     `Los costos cargados en pesos uruguayos se convierten a USD con un tipo de cambio de referencia de ${fmtNum(rep.tasa)} UYU por dólar. Los cargados en dólares se toman tal cual.`,
-    'Compras: precio real pagado en cada compra (entradas con costo), en su moneda original. Un mismo insumo puede tener precios distintos en distintas fechas; cada compra se cuenta a su propio precio.',
+    'Los insumos solo se compran y se usan: el reporte no incluye ventas ni márgenes.',
+    'Compras: cada entrada de un insumo es una compra y se cuenta al precio real pagado, en su moneda original. Un mismo insumo puede comprarse a precios distintos en distintas fechas; cada compra se cuenta a su propio precio. Si una compra no tiene costo cargado, se valoriza al costo promedio vigente (marcada con *).',
     'Consumos: valorizados al costo promedio ponderado móvil vigente en la fecha de cada salida, calculado con todo el historial de compras del insumo (también el anterior al período).',
-    'Los ingresos sin costo (devoluciones, ajustes) no se cuentan como compras y no modifican el costo promedio. Ajustes y transferencias no son compras ni consumos.',
+    'No son compras: la carga de stock inicial (alta del producto o importación) ni las devoluciones. Ajustes y transferencias no son compras ni consumos.',
     'Inventario hoy: valuación FIFO por lote (cada lote en su moneda de compra) y costo promedio para unidades sin lote, convertida con la misma referencia.',
     ...rep.advertencias.map(a => `Aviso: ${a}`),
+    ...(rep.compras.some(c => c.costoEstimado) ? ['* Compra sin costo cargado: se valorizó al costo promedio vigente del insumo.'] : []),
     ...(rep.consumos.some(c => c.costoEstimado) ? ['* Consumo sin compras previas con costo: se usó el costo promedio actual del insumo.'] : []),
   ];
   doc.setFont('helvetica', 'normal');
@@ -652,5 +695,8 @@ export async function construirPdfReporteInsumos(rep: ReporteInsumosUSD, opts: O
 
 export function nombreArchivoReporte(rep: ReporteInsumosUSD): string {
   const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  return `Vanguard_Reporte_Insumos_USD_${iso(rep.desde)}_al_${iso(rep.hasta)}.pdf`;
+  const cat = rep.categoriasFiltradas.length === 1
+    ? `_${rep.categoriasFiltradas[0].normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_')}`
+    : rep.categoriasFiltradas.length > 1 ? '_Varias_categorias' : '';
+  return `Vanguard_Reporte_Insumos_USD${cat}_${iso(rep.desde)}_al_${iso(rep.hasta)}.pdf`;
 }
