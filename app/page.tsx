@@ -3,7 +3,9 @@
 import dynamic from 'next/dynamic';
 
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
-import { VanguardLoader } from '@/components/ui/VanguardLoader';
+import {
+  VanguardLoader, SPLASH_MIN_MS, SPLASH_BARRA_MS, splashYaVisto, marcarSplashVisto,
+} from '@/components/ui/VanguardLoader';
 import { GlobalSearch } from '@/components/search';
 import { ChatbotWidget } from '@/components/chatbot';
 import { CommandPalette, useCommandPalette, type CommandAction } from '@/components/ui/command-palette';
@@ -318,34 +320,42 @@ export default function HomePage() {
     return !!alm && (alm.nombre || '').toLowerCase().includes('insumo');
   }, [editProduct?.almacenId, almacenes]);
 
+  // Pantalla de carga SOLO en la carga inicial. Antes se mostraba cada vez
+  // que el store cargaba (cada movimiento y el auto-refresh de 5 minutos):
+  // desmontaba el módulo abierto y se perdía lo que el usuario estaba haciendo.
+  const [cargaInicialLista, setCargaInicialLista] = useState(false);
+  useEffect(() => {
+    if (isInitialized && !storeLoading) setCargaInicialLista(true);
+  }, [isInitialized, storeLoading]);
+
+  // La animación de arranque se ve completa al menos una vez por sesión.
+  const [splashCompleto, setSplashCompleto] = useState(false);
+  useEffect(() => {
+    if (splashYaVisto()) { setSplashCompleto(true); return; }
+    const t = setTimeout(() => {
+      marcarSplashVisto();
+      setSplashCompleto(true);
+    }, SPLASH_MIN_MS);
+    return () => clearTimeout(t);
+  }, []);
+
   // ============================================
   // RETURNS CONDICIONALES (después de todos los hooks)
   // ============================================
 
-  // Mostrar loading mientras verifica autenticación
-  // (mismo componente en ambos estados de carga: React lo conserva y la
-  // animación sigue fluida en vez de reiniciarse)
-  if (loading) {
-    return <VanguardLoader fullscreen={false} mensajes={['Verificando sesión']} />;
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  // Mostrar error si hay
-  if (storeError) {
-    console.error('Error de Supabase:', storeError);
-  }
-
-  // Mostrar loading mientras carga los datos del store
-  if (!isInitialized || storeLoading) {
+  // Pantalla de carga: verificación de sesión + carga inicial de datos + la
+  // animación completa la primera vez. Un único <VanguardLoader> en la misma
+  // posición: React lo conserva y la animación no se reinicia entre estados.
+  if (loading || (user && (!cargaInicialLista || !splashCompleto))) {
     return (
       <VanguardLoader
         fullscreen={false}
-        mensajes={['Cargando inventario', 'Sincronizando movimientos', 'Calculando valuación']}
+        duracionMs={splashCompleto ? undefined : SPLASH_BARRA_MS}
+        mensajes={loading
+          ? ['Verificando sesión']
+          : ['Verificando sesión', 'Cargando inventario', 'Sincronizando movimientos', 'Preparando módulos']}
       >
-        {storeError && (
+        {storeError && !cargaInicialLista && (
           <div className="text-red-400 text-sm max-w-md mx-auto text-center">
             {storeError}
             <button
@@ -361,6 +371,15 @@ export default function HomePage() {
         )}
       </VanguardLoader>
     );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  // Mostrar error si hay
+  if (storeError) {
+    console.error('Error de Supabase:', storeError);
   }
 
   // ============================================

@@ -19,6 +19,22 @@ import { VANGUARD_BAR_PATH, VANGUARD_COLORS, VANGUARD_V_PATH } from '@/lib/brand
 // el modo claro los pueda ajustar.
 // =====================================================
 
+/**
+ * Splash de arranque: la animación completa (dibujo de la V, barra, nombre,
+ * brillo y progreso) se muestra entera al menos una vez por sesión.
+ */
+export const SPLASH_SESSION_KEY = 'vg:splash:visto';
+export const SPLASH_MIN_MS = 4800;
+/** Duración de la barra de progreso dentro del splash (arranca a los 0,5 s). */
+export const SPLASH_BARRA_MS = 4000;
+
+export function splashYaVisto(): boolean {
+  try { return sessionStorage.getItem(SPLASH_SESSION_KEY) === '1'; } catch { return false; }
+}
+export function marcarSplashVisto() {
+  try { sessionStorage.setItem(SPLASH_SESSION_KEY, '1'); } catch { /* sin storage */ }
+}
+
 const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const EASE_IN_OUT: [number, number, number, number] = [0.65, 0, 0.35, 1];
 
@@ -45,8 +61,8 @@ export function VanguardMarkAnimated({ size = 128, loop = true }: { size?: numbe
       role="img"
       aria-label="Vanguard"
       style={{ overflow: 'visible', display: 'block' }}
-      animate={bucle ? { y: [0, -2.2, 0] } : undefined}
-      transition={bucle ? { duration: 3.4, repeat: Infinity, ease: 'easeInOut', delay: 1.8 } : undefined}
+      animate={bucle ? { y: [0, -3.2, 0] } : undefined}
+      transition={bucle ? { duration: 2.8, repeat: Infinity, ease: 'easeInOut', delay: 1.5 } : undefined}
     >
       <defs>
         <linearGradient id={gV} x1="0" y1="0" x2="0" y2="1">
@@ -63,7 +79,7 @@ export function VanguardMarkAnimated({ size = 128, loop = true }: { size?: numbe
         </linearGradient>
         <linearGradient id={gSheen} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor="#ffffff" stopOpacity="0" />
-          <stop offset="0.5" stopColor="#ffffff" stopOpacity="0.5" />
+          <stop offset="0.5" stopColor="#ffffff" stopOpacity="0.62" />
           <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
         <clipPath id={clip}>
@@ -81,8 +97,8 @@ export function VanguardMarkAnimated({ size = 128, loop = true }: { size?: numbe
         <motion.path
           d={VANGUARD_BAR_PATH}
           fill={`url(#${gBar})`}
-          animate={bucle ? { x: [0, -BAR_AXIS.x * 2.4, 0], y: [0, -BAR_AXIS.y * 2.4, 0] } : undefined}
-          transition={bucle ? { duration: 2.6, repeat: Infinity, ease: 'easeInOut', delay: 2 } : undefined}
+          animate={bucle ? { x: [0, -BAR_AXIS.x * 4, 0], y: [0, -BAR_AXIS.y * 4, 0] } : undefined}
+          transition={bucle ? { duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: 1.7 } : undefined}
         />
       </motion.g>
 
@@ -116,7 +132,7 @@ export function VanguardMarkAnimated({ size = 128, loop = true }: { size?: numbe
           <motion.g
             initial={{ x: -36 }}
             animate={{ x: [-36, 96] }}
-            transition={{ duration: 1.4, delay: 1.9, repeat: Infinity, repeatDelay: 1.8, ease: EASE_IN_OUT }}
+            transition={{ duration: 1.2, delay: 1.6, repeat: Infinity, repeatDelay: 0.9, ease: EASE_IN_OUT }}
           >
             <rect x="0" y="-8" width="14" height="80" fill={`url(#${gSheen})`} transform="skewX(-24)" />
           </motion.g>

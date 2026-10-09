@@ -1,18 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ClipboardList, LayoutDashboard, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useInventoryStore } from '@/store';
-import { getAlmacenesInsumoIds } from '@/lib/wms-insumos-filter';
-import { DashboardView } from '@/components/dashboard';
 
 import SolicitudesInsumosPanel from '@/components/insumos/SolicitudesInsumosPanel';
 import InsumosPendientes from '@/components/insumos/InsumosPendientes';
 import OrdenInternaInsumos from '@/components/insumos/OrdenInternaInsumos';
 
-// Reportes en USD: se carga solo al abrirlo (incluye gráficos y PDF).
+// Análisis y Reportes en USD: se cargan solo al abrirlos (gráficos y PDF).
+const AnalisisInsumosPanel = dynamic(() => import('@/components/insumos/AnalisisInsumosPanel'), { ssr: false });
 const ReportesInsumosUSD = dynamic(() => import('@/components/insumos/ReportesInsumosUSD'), { ssr: false });
 
 interface ComercialModuleProps {
@@ -22,35 +20,10 @@ interface ComercialModuleProps {
 export default function ComercialModule({
   userEmail,
 }: ComercialModuleProps) {
-  // Sub-subtabs internos del panel "Solicitudes de insumos":
-  // - 'solicitud' → SolicitudesInsumosPanel (lo actual)
-  // - 'analisis'  → DashboardView (réplica del Dashboard) filtrado a insumos
+  // Sub-subtabs internos del panel "Solicitudes de insumos". En "Análisis de
+  // insumos" hay dos vistas con el mismo motor en USD: panel y reportes.
   const [insumosSubTab, setInsumosSubTab] = useState<'solicitud' | 'orden_interna' | 'pendientes' | 'analisis'>('solicitud');
-  const [insumosPeriod, setInsumosPeriod] = useState('30d');
-  // Dentro de "Análisis de insumos": panel (dashboard) o reportes en USD.
   const [analisisVista, setAnalisisVista] = useState<'panel' | 'reportes'>('panel');
-
-  // Datos del store para el "Análisis de insumos"
-  const { products: allProducts, movements: allMovements, predictions, fetchProducts, fetchMovements } = useInventoryStore();
-
-  // Almacenes de insumos: mismo criterio que el resto del sistema (flag
-  // es_insumos o nombre que contenga "insumo").
-  const [insumosAlmacenIds, setInsumosAlmacenIds] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    let cancelled = false;
-    getAlmacenesInsumoIds().then(ids => { if (!cancelled) setInsumosAlmacenIds(ids); });
-    return () => { cancelled = true; };
-  }, []);
-
-  // Productos / movimientos filtrados al/los almacén(es) de insumos
-  const insumosProducts = useMemo(
-    () => allProducts.filter(p => p.almacenId != null && insumosAlmacenIds.has(p.almacenId)),
-    [allProducts, insumosAlmacenIds]
-  );
-  const insumosMovements = useMemo(() => {
-    const codes = new Set(insumosProducts.map(p => p.codigo));
-    return allMovements.filter(m => codes.has(m.codigo));
-  }, [allMovements, insumosProducts]);
 
   return (
     <div className="space-y-6">
@@ -130,19 +103,7 @@ export default function ComercialModule({
           <ReportesInsumosUSD userEmail={userEmail} />
         )}
 
-        {insumosSubTab === 'analisis' && analisisVista === 'panel' && (
-          <DashboardView
-            products={insumosProducts}
-            movements={insumosMovements}
-            predictions={predictions}
-            userName={userEmail?.split('@')[0]}
-            period={insumosPeriod}
-            onPeriodChange={setInsumosPeriod}
-            onNavigate={() => setInsumosSubTab('solicitud')}
-            onRefresh={() => { fetchProducts(); fetchMovements(); }}
-            flowSource="movements"
-          />
-        )}
+        {insumosSubTab === 'analisis' && analisisVista === 'panel' && <AnalisisInsumosPanel />}
       </div>
     </div>
   );
