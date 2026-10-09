@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { Check, ChevronDown, Tags, TrendingDown, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTemaGraficos } from '@/hooks/useTemaGraficos';
 import {
   ETIQUETA_GRANULARIDAD, fmtFecha, fmtNum, fmtUsd,
   type CategoriaDisponible, type FilaCategoria, type FilaSerie, type Granularidad,
@@ -158,6 +159,7 @@ export function GraficoComprasConsumo({ serie, granularidad, alto = 240 }: {
   serie: FilaSerie[]; granularidad: Granularidad; alto?: number;
 }) {
   const vacio = serie.every(s => s.comprasUsd === 0 && s.consumoUsd === 0);
+  const tema = useTemaGraficos();
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
@@ -166,8 +168,8 @@ export function GraficoComprasConsumo({ serie, granularidad, alto = 240 }: {
           <p className="text-xs text-slate-500">En USD, por {ETIQUETA_GRANULARIDAD[granularidad]}</p>
         </div>
         <div className="flex items-center gap-3 text-xs text-slate-400">
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-blue-600" /> Compras</span>
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-blue-300" /> Consumo</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: tema.serie[0] }} /> Compras</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: tema.serie[1] }} /> Consumo</span>
         </div>
       </div>
       {vacio ? (
@@ -178,13 +180,13 @@ export function GraficoComprasConsumo({ serie, granularidad, alto = 240 }: {
         <div style={{ height: alto }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={serie} barGap={2}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
-              <XAxis dataKey="etiqueta" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} minTickGap={12} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={70}
+              <CartesianGrid stroke={tema.grilla} vertical={false} />
+              <XAxis dataKey="etiqueta" tick={{ fontSize: 11, fill: tema.textoTenue }} tickLine={false} axisLine={{ stroke: tema.eje }} minTickGap={12} />
+              <YAxis tick={{ fontSize: 11, fill: tema.textoTenue }} tickLine={false} axisLine={false} width={70}
                 tickFormatter={(v: number) => (v >= 1000 ? `US$ ${fmtNum(v / 1000, 1)}k` : `US$ ${fmtNum(v)}`)} />
               <Tooltip content={<TooltipUsd />} cursor={{ fill: 'rgba(148,163,184,0.08)' }} />
-              <Bar dataKey="comprasUsd" name="Compras" fill="#2f6fdc" radius={[4, 4, 0, 0]} maxBarSize={28} />
-              <Bar dataKey="consumoUsd" name="Consumo" fill="#8bbcff" radius={[4, 4, 0, 0]} maxBarSize={28} />
+              <Bar dataKey="comprasUsd" name="Compras" fill={tema.serie[0]} radius={[4, 4, 0, 0]} maxBarSize={24} />
+              <Bar dataKey="consumoUsd" name="Consumo" fill={tema.serie[1]} radius={[4, 4, 0, 0]} maxBarSize={24} />
             </BarChart>
           </ResponsiveContainer>
         </div>

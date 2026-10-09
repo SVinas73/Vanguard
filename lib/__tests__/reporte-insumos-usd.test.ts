@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generarReporteInsumosUSD, aUsd, fmtUsd, type ReporteInput } from '@/lib/reportes/insumos-usd';
+import { generarReporteInsumosUSD, aUsd, fmtUsd, fichaInsumo, type ReporteInput } from '@/lib/reportes/insumos-usd';
 
 // =====================================================
 // Reporte de insumos en USD (TC de referencia 40)
@@ -270,5 +270,26 @@ describe('reporte insumos USD — categorías, serie y stock', () => {
     const largo = generarReporteInsumosUSD(conCategorias({ desde: d('2025-01-01'), hasta: d('2026-03-31') }));
     expect(largo.granularidad).toBe('mes');
     expect(largo.serie.reduce((s, f) => s + f.comprasUsd, 0)).toBeCloseTo(221, 2);
+  });
+});
+
+describe('ficha de insumo', () => {
+  it('historial de precios en USD, promedio ponderado y consumo mensual', () => {
+    const f = fichaInsumo({
+      productos: [{ codigo: 'P1', descripcion: 'Papel', categoria: 'Papelería', moneda: 'UYU', costoPromedio: 440, stock: 20, stockMinimo: 5 }],
+      movimientos: [
+        { codigo: 'P1', tipo: 'entrada', cantidad: 10, costoCompra: 400, monedaCosto: 'UYU', fecha: d('2026-07-01') }, // 10 USD
+        { codigo: 'P1', tipo: 'entrada', cantidad: 30, costoCompra: 12, monedaCosto: 'USD', fecha: d('2026-08-01') },
+        { codigo: 'P1', tipo: 'entrada', cantidad: 5, notas: 'Reingreso RMA', costoCompra: 99, monedaCosto: 'USD', fecha: d('2026-08-02') },
+        { codigo: 'P1', tipo: 'salida', cantidad: 9, fecha: d('2026-09-10') },
+      ],
+    }, 'P1', d('2026-10-01'))!;
+    expect(f.compras.map(c => c.usd)).toEqual([10, 12]);
+    expect(f.ultimoPrecioUsd).toBe(12);
+    expect(f.precioAnteriorUsd).toBe(10);
+    expect(f.promedioCompraUsd).toBe(11.5); // (10×10 + 30×12) / 40
+    expect(f.costoPromedioUsd).toBe(11);
+    expect(f.consumoMensual.find(m => m.clave === '2026-09')?.unidades).toBe(9);
+    expect(f.diasCobertura).toBe(200); // 20 / (9/90)
   });
 });
