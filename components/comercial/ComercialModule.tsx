@@ -43,7 +43,7 @@ export default function ComercialModule({
       {/* Content */}
       <div className="space-y-5">
         {/* Sub-subtabs internos (pestañas secundarias tipo pill) */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 overflow-x-auto -mx-1 px-1 pb-1">
           {([
             { id: 'solicitud' as const, label: 'Solicitud de insumos' },
             { id: 'orden_interna' as const, label: 'Orden Interna' },

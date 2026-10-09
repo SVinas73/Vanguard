@@ -52,3 +52,10 @@ export function desdeInputFecha(s: string, finDelDia: boolean): Date | null {
     : new Date(+m[1], +m[2] - 1, +m[3]);
   return Number.isNaN(d.getTime()) ? null : d;
 }
+
+/** Período anterior del mismo largo (para comparar). null para "todo". */
+export function rangoAnterior(desde: Date, hasta: Date): { desde: Date; hasta: Date } {
+  const largo = hasta.getTime() - desde.getTime();
+  const finAnterior = new Date(desde.getTime() - 1);
+  return { desde: new Date(finAnterior.getTime() - largo), hasta: finAnterior };
+}

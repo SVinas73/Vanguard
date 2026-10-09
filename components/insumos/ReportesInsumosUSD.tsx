@@ -10,7 +10,7 @@
 
 import React, { useMemo, useState } from 'react';
 import {
-  AlertTriangle, CalendarRange, ClipboardList, Download, FileSpreadsheet, Info, Loader2,
+  AlertTriangle, CalendarRange, ClipboardList, Download, FileSpreadsheet, Loader2,
   PackageMinus, RefreshCw, Scale, ShoppingCart, TrendingUp, Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,7 +18,7 @@ import { Logo } from '@/components/ui/Logo';
 import { useOrganizacion } from '@/hooks/useOrganizacion';
 import { useDatosInsumos } from '@/hooks/useDatosInsumos';
 import { reporteDesdeDatos } from '@/lib/reportes/insumos-usd-data';
-import { fmtFecha, fmtNum, fmtUsd, TASA_REPORTE_UYU_POR_USD, type ReporteInsumosUSD } from '@/lib/reportes/insumos-usd';
+import { fmtFecha, fmtNum, fmtUsd, type ReporteInsumosUSD } from '@/lib/reportes/insumos-usd';
 import {
   aInputFecha, desdeInputFecha, ETIQUETAS_PERIODO, INICIO_HISTORIAL, rangoPreset, type PresetPeriodo,
 } from '@/lib/reportes/periodos';
@@ -109,9 +109,6 @@ export default function ReportesInsumosUSD({ userEmail }: { userEmail?: string }
               <h3 className="text-lg font-bold text-white">Reportes de insumos</h3>
               <p className="text-sm text-slate-400">Compras, consumos y evolución de costos. Siempre en dólares.</p>
             </div>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400 font-medium">
-            <Scale size={13} /> USD · pesos a {fmtNum(TASA_REPORTE_UYU_POR_USD)} UYU por dólar
           </div>
         </div>
       </div>
@@ -260,15 +257,6 @@ export default function ReportesInsumosUSD({ userEmail }: { userEmail?: string }
           <TablaVariacionPrecios filas={reporte.variacionPrecios} limite={10} />
           <TablaTopInsumos filas={reporte.porProducto} limite={10} />
 
-          {/* Notas */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-500 space-y-1.5">
-            <div className="flex items-center gap-2 text-slate-400 font-medium"><Info size={14} /> Cómo se calcula</div>
-            <p>Compras al precio real de cada compra (USD tal cual; pesos ÷ {fmtNum(reporte.tasa)}). Consumos al costo promedio móvil vigente en cada fecha, usando todo el historial.</p>
-            <p>El PDF incluye además el detalle completo de {fmtNum(reporte.compras.length)} compras y {fmtNum(reporte.consumos.length)} consumos.</p>
-            {reporte.advertencias.map(a => (
-              <p key={a} className="text-amber-400 flex items-start gap-1.5"><AlertTriangle size={12} className="mt-0.5 shrink-0" /> {a}</p>
-            ))}
-          </div>
         </div>
       )}
     </div>

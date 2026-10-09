@@ -820,6 +820,97 @@ export function generarReporteInsumosUSD(entrada: ReporteInput): ReporteInsumosU
   };
 }
 
+// ---------------------------------------------------
+// Ficha de un insumo: historial de precios de compra (USD) y consumo
+// ---------------------------------------------------
+export interface CompraHistorica {
+  fecha: Date;
+  cantidad: number;
+  costoOriginal: number;
+  monedaOriginal: 'USD' | 'UYU';
+  usd: number;
+}
+
+export interface FichaInsumo {
+  codigo: string;
+  descripcion: string;
+  categoria: string;
+  stock: number;
+  stockMinimo: number;
+  costoPromedioUsd: number;
+  valorUsd: number;
+  compras: CompraHistorica[];
+  ultimoPrecioUsd: number | null;
+  precioAnteriorUsd: number | null;
+  minUsd: number | null;
+  maxUsd: number | null;
+  promedioCompraUsd: number | null;
+  /** Unidades consumidas por mes, últimos 12 meses (incluye el actual). */
+  consumoMensual: Array<{ clave: string; etiqueta: string; unidades: number }>;
+  consumoDiario90: number;
+  diasCobertura: number | null;
+}
+
+export function fichaInsumo(
+  entrada: Pick<ReporteInput, 'productos' | 'movimientos' | 'inventarioPorCodigoUsd' | 'categoriaLabels' | 'tasaUyuPorUsd'>,
+  codigo: string,
+  hoy = new Date(),
+): FichaInsumo | null {
+  const prod = entrada.productos.find(p => p.codigo === codigo);
+  if (!prod) return null;
+  const tasa = entrada.tasaUyuPorUsd && entrada.tasaUyuPorUsd > 0 ? entrada.tasaUyuPorUsd : TASA_REPORTE_UYU_POR_USD;
+  const resolver = crearResolverCategorias(entrada.categoriaLabels, entrada.productos.map(p => p.categoria));
+  const movs = entrada.movimientos.filter(m => m.codigo === codigo).sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
+
+  const compras: CompraHistorica[] = [];
+  for (const m of movs) {
+    const costo = Number(m.costoCompra) || 0;
+    if (m.tipo !== 'entrada' || costo <= 0 || esDevolucion(m.notas)) continue;
+    const moneda = monedaDe(m.monedaCosto, prod.moneda);
+    compras.push({ fecha: m.fecha, cantidad: Math.abs(Number(m.cantidad) || 0), costoOriginal: costo, monedaOriginal: moneda, usd: r2(aUsd(costo, moneda, tasa)) });
+  }
+
+  const meses: Array<{ clave: string; etiqueta: string; unidades: number }> = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+    meses.push({ clave: claveMes(d), etiqueta: etiquetaMes(claveMes(d)), unidades: 0 });
+  }
+  const porMes = new Map(meses.map(m => [m.clave, m]));
+  const hace90 = hoy.getTime() - 90 * DIA_MS;
+  let uds90 = 0;
+  for (const m of movs) {
+    if (m.tipo !== 'salida') continue;
+    const cant = Math.abs(Number(m.cantidad) || 0);
+    const f = porMes.get(claveMes(m.fecha));
+    if (f) f.unidades += cant;
+    if (m.fecha.getTime() >= hace90 && m.fecha.getTime() <= hoy.getTime()) uds90 += cant;
+  }
+
+  const usds = compras.map(c => c.usd);
+  const totalUds = compras.reduce((s, c) => s + c.cantidad, 0);
+  const costoPromedioUsd = r2(aUsd(prod.costoPromedio || 0, monedaDe(prod.moneda, 'UYU'), tasa));
+  const stock = Number(prod.stock) || 0;
+  const consumoDiario90 = uds90 / 90;
+  return {
+    codigo,
+    descripcion: prod.descripcion,
+    categoria: resolver.etiqueta(prod.categoria),
+    stock,
+    stockMinimo: Number(prod.stockMinimo) || 0,
+    costoPromedioUsd,
+    valorUsd: r2(entrada.inventarioPorCodigoUsd?.[codigo] ?? Math.max(0, stock) * costoPromedioUsd),
+    compras,
+    ultimoPrecioUsd: compras.length ? compras[compras.length - 1].usd : null,
+    precioAnteriorUsd: compras.length > 1 ? compras[compras.length - 2].usd : null,
+    minUsd: usds.length ? Math.min(...usds) : null,
+    maxUsd: usds.length ? Math.max(...usds) : null,
+    promedioCompraUsd: totalUds > 0 ? r2(compras.reduce((s, c) => s + c.usd * c.cantidad, 0) / totalUds) : null,
+    consumoMensual: meses,
+    consumoDiario90: r2(consumoDiario90),
+    diasCobertura: consumoDiario90 > 0 ? Math.floor(Math.max(0, stock) / consumoDiario90) : null,
+  };
+}
+
 export const ETIQUETA_GRANULARIDAD: Record<Granularidad, string> = {
   dia: 'día',
   semana: 'semana',
